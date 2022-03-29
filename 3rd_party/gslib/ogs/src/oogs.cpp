@@ -518,12 +518,12 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
   {
     double nBytesExchange = (pwd->comm[send].total + pwd->comm[recv].total)*unit_size;
     MPI_Allreduce(MPI_IN_PLACE, &nBytesExchange, 1, MPI_DOUBLE, MPI_SUM, gs->comm);
-
+    MPI_Allreduce(MPI_IN_PLACE, &elapsedMaxMPI, 1, MPI_DOUBLE, MPI_MAX, gs->comm);
 
     int size;
     MPI_Comm_size(gs->comm, &size);
     nBytesExchange /= size; 
-    if(gs->rank == 0) { 
+    if(gs->rank == 0) {
       printf("\nused config: %d.%d.%d ", gs->mode, gs->modeExchange, gs->earlyPrepostRecv);
       if(ogs->NhaloGather > 0) {
         printf("(MPI exchange: %.2es / %.1fGB/s)\n", elapsedMaxMPI, nBytesExchange/elapsedMaxMPI/1e9);

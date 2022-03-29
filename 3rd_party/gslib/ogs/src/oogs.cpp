@@ -484,7 +484,7 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
   gs->mode = OOGS_DEFAULT;
 #endif
 
-  double elapsedMaxMPI = std::numeric_limits<double>::min();
+  double elapsedMinMPI = std::numeric_limits<double>::max();
   {
     const int earlyPrepostRecv = gs->earlyPrepostRecv;
     gs->earlyPrepostRecv = 0;
@@ -510,7 +510,7 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
         neighborAllToAll(unit_size, gs);
       else
         pairwiseExchange(unit_size, gs);
-      elapsedMaxMPI = std::max(elapsedMaxMPI, MPI_Wtime() - tStart);
+      elapsedMinMPI = std::min(elapsedMinMPI, MPI_Wtime() - tStart);
     }
     gs->earlyPrepostRecv = earlyPrepostRecv;
   }
@@ -518,7 +518,7 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
   {
     double nBytesExchange = (pwd->comm[send].total + pwd->comm[recv].total)*unit_size;
     MPI_Allreduce(MPI_IN_PLACE, &nBytesExchange, 1, MPI_DOUBLE, MPI_SUM, gs->comm);
-    MPI_Allreduce(MPI_IN_PLACE, &elapsedMaxMPI, 1, MPI_DOUBLE, MPI_MAX, gs->comm);
+    MPI_Allreduce(MPI_IN_PLACE, &elapsedMinMPI, 1, MPI_DOUBLE, MPI_MAX, gs->comm);
 
     int size;
     MPI_Comm_size(gs->comm, &size);
@@ -526,7 +526,7 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
     if(gs->rank == 0) {
       printf("\nused config: %d.%d.%d ", gs->mode, gs->modeExchange, gs->earlyPrepostRecv);
       if(ogs->NhaloGather > 0) {
-        printf("(MPI exchange: %.2es / %.1fGB/s)\n", elapsedMaxMPI, nBytesExchange/elapsedMaxMPI/1e9);
+        printf("(MPI exchange: %.2es / %.1fGB/s)\n", elapsedMinMPI, nBytesExchange/elapsedMinMPI/1e9);
       } else {
         printf("\n"); 
       }

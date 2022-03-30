@@ -17,6 +17,9 @@
 ## Breaking Changes
 
 * [udf] Rename `udfBuildKernel` => `oudfBuildKernel`
+* [par] Separate details of coarse grid discretization from coarse grid solver
+        e.g., `coarseSolver = SEMFEM+AmgX` is replaced by
+        `coarseSolver = AmgX` and `coarseGridDiscretization = SEMFEM`
 
 ## Known Bugs / Restrictions
 

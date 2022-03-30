@@ -13,7 +13,8 @@ residualTol = 1e-8+relative
 
 # p-MG multiplicative V-cycle, coarse grid solve
 preconditioner = multigrid+coarse
-coarseSolver = FEM+BoomerAMG #+Galerkin
+coarseSolver = BoomerAMG
+coarseGridDiscretization = FEM #+Galerkin
 smootherType = RAS+Chebyshev+degree=2 #+minEigenvalueBoundFactor=0.1+maxEigenvalueBoundFactor=1.1
 
 # p-MG, smooth on coarsest level rather than solve
@@ -22,7 +23,8 @@ smootherType = RAS+Chebyshev+degree=2 #+minEigenvalueBoundFactor=0.1+maxEigenval
 
 # p-MG, solve coarsest level using SEMFEM discretization
 #preconditioner = pmg+coarse
-#coarseSolver = SEMFEM+AmgX+FP32
+#coarseSolver = AmgX+FP32
+#coarseGridDiscretization = SEMFEM
 
 # p-MG additive V-cycle, overlapping coarse grid solve
 # requires smootherType = <ASM | RAS>

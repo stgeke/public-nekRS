@@ -133,6 +133,7 @@ static std::vector<std::string> commonKeys = {
     {"pMultigridCoarsening"},
     {"smootherType"},
     {"coarseSolver"},
+    {"coarseGridDiscretization"},
     {"boundaryTypeMap"},
     {"maxIterations"},
     {"regularization"},
@@ -490,6 +491,40 @@ void parseSolverTolerance(const int rank, setupAide &options, inipp::Ini *par, s
     }
   }
 }
+
+void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::Ini *par, std::string parScope)
+{
+  std::string parSectionName = parPrefixFromParSection(parScope);
+  UPPER(parSectionName);
+  std::string p_coarseGridDiscretization;
+  const bool continueParsing = par->extract(parScope, "coarsegriddiscretization", p_coarseGridDiscretization);
+  if (!continueParsing)
+    return;
+
+  const std::vector<std::string> validValues = {
+      {"semfem"},
+      {"fem"},
+      {"galerkin"},
+  };
+
+  const auto entries = serializeString(p_coarseSolver, '+');
+  for (auto &&s : entries) {
+    checkValidity(rank, validValues, s);
+  }
+
+  // coarse grid discretization
+  if (p_coarseSolver.find("semfem") != std::string::npos) {
+    options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "TRUE");
+  }
+  else if (p_coarseSolver.find("fem") != std::string::npos) {
+    options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "FALSE");
+    options.setArgs("GALERKIN COARSE OPERATOR", "FALSE");
+    if (p_coarseSolver.find("galerkin") != std::string::npos) {
+      options.setArgs("GALERKIN COARSE OPERATOR", "TRUE");
+    }
+  }
+}
+
 void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std::string parScope)
 {
   std::string parSectionName = parPrefixFromParSection(parScope);
@@ -500,14 +535,12 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
     return;
 
   const std::vector<std::string> validValues = {
-    {"boomeramg"},
-    {"amgx"},
-    {"semfem"},
-    {"fem"},
-    {"fp32"},
-    {"fp64"},
-    {"cpu"},
-    {"gpu"},
+      {"boomeramg"},
+      {"amgx"},
+      {"fp32"},
+      {"fp64"},
+      {"cpu"},
+      {"gpu"},
   };
 
   // solution methods
@@ -525,20 +558,6 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
     options.setArgs(parSectionName + "SEMFEM SOLVER PRECISION", "FP32");
     options.setArgs("AMG SOLVER LOCATION", "GPU");
   }
-
-  // coarse grid discretization
-  if(p_coarseSolver.find("semfem") != std::string::npos){
-    options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "TRUE");
-  }
-  else if(p_coarseSolver.find("fem") != std::string::npos){
-    options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "FALSE");
-    options.setArgs("GALERKIN COARSE OPERATOR", "FALSE");
-    options.setArgs(parSectionName + "USER SPECIFIED FEM COARSE SOLVER", "TRUE");
-    if(p_coarseSolver.find("galerkin") != std::string::npos){
-      options.setArgs("GALERKIN COARSE OPERATOR", "TRUE");
-    }
-  }
-
 
   // parse fp type + location
   std::vector<std::string> entries = serializeString(p_coarseSolver, '+');
@@ -1215,7 +1234,6 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("ELLIPTIC INTEGRATION", "NODAL");
 
   options.setArgs("PRESSURE MAXIMUM ITERATIONS", "200");
-  options.setArgs("GALERKIN COARSE MATRIX", "FALSE");
   options.setArgs("PRESSURE KRYLOV SOLVER", "PGMRES+FLEXIBLE");
   options.setArgs("PRESSURE PRECONDITIONER", "MULTIGRID");
   options.setArgs("PRESSURE DISCRETIZATION", "CONTINUOUS");
@@ -1811,6 +1829,7 @@ setupAide parRead(void *ppar, std::string setupFile, MPI_Comm comm) {
 
     parseSmoother(rank, options, par, "pressure");
 
+    parseCoarseGridDiscretization(rank, options, par, "pressure");
     parseCoarseSolver(rank, options, par, "pressure");
 
     if (par->sections.count("boomeramg")) {

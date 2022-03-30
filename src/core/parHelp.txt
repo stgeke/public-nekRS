@@ -96,12 +96,13 @@ smootherType                                                           smoother 
                               +minEigenvalueBoundFactor=<float> 
                               +maxEigenvalueBoundFactor=<float> 
 
-coarseSolver                FEM [D]                                    linear finite elment discretization
-                              +Galerkin                                coarse grid matrix by Galerkin projection 
-                            SEMFEM                                     linear FEM approx on high-order nodes
-                            +BoomerAMG [D]                             HYPRE's AMG solver
+coarseSolver                BoomerAMG [D]                              HYPRE's AMG solver
                             +AmgX                                      NVIDIA's AMG solver
                             +FP32 or FP64 [D]                          floating point precision
+
+coarseGridDiscretization    FEM [D]                                    linear finite elment discretization
+                              +Galerkin                                coarse grid matrix by Galerkin projection 
+                            SEMFEM                                     linear FEM approx on high-order nodes
 
 boundaryTypeMap             <...>, <...>, ...                          boundary type for each boundary ID
                             fixedValue                                 user specified Dirichlet

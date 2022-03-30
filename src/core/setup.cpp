@@ -54,13 +54,11 @@ determineMGLevels(std::string section)
     {
       if(platform->options.compareArgs(optionsPrefix + "MULTIGRID COARSE SOLVE", "TRUE")){
         // if the coarse level has p > 1 and requires solving the coarsest level,
-        // rather than just smoothing, then use the SEMFEM discretization
-        platform->options.setArgs(optionsPrefix + "MULTIGRID COARSE SEMFEM", "TRUE");
-        platform->options.setArgs(optionsPrefix + "MULTIGRID COARSE SEMFEM", "TRUE");
+        // rather than just smoothing, SEMFEM must be used for the discretization
+        const auto usesSEMFEM =
+            platform->options.compareArgs(optionsPrefix + "MULTIGRID COARSE SEMFEM", "TRUE");
 
-        // However, if the user explicitly asked for the FEM discretization, bail
-        if(platform->options.compareArgs(optionsPrefix + "USER SPECIFIED FEM COARSE SOLVER", "TRUE"))
-        {
+        if (!usesSEMFEM) {
           if(platform->comm.mpiRank == 0){
             printf("Error! FEM coarse discretization only supports p=1 for the coarsest level!\n");
           }

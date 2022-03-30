@@ -507,19 +507,19 @@ void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::In
       {"galerkin"},
   };
 
-  const auto entries = serializeString(p_coarseSolver, '+');
+  const auto entries = serializeString(p_coarseGridDiscretization, '+');
   for (auto &&s : entries) {
     checkValidity(rank, validValues, s);
   }
 
   // coarse grid discretization
-  if (p_coarseSolver.find("semfem") != std::string::npos) {
+  if (p_coarseGridDiscretization.find("semfem") != std::string::npos) {
     options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "TRUE");
   }
-  else if (p_coarseSolver.find("fem") != std::string::npos) {
+  else if (p_coarseGridDiscretization.find("fem") != std::string::npos) {
     options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "FALSE");
     options.setArgs("GALERKIN COARSE OPERATOR", "FALSE");
-    if (p_coarseSolver.find("galerkin") != std::string::npos) {
+    if (p_coarseGridDiscretization.find("galerkin") != std::string::npos) {
       options.setArgs("GALERKIN COARSE OPERATOR", "TRUE");
     }
   }

@@ -331,11 +331,10 @@ void timer_t::printRunStat(int step, double tElapsedTime)
 
   printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tSolve);
  
-
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");
   printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tSolve);
   printStatEntry("      rhs               ", "velocity rhs", "DEVICE:MAX", tVelocity);
-  printStatEntry("      projection        ", "velocity proj", "DEVICE:MAX", tVelocity);
+  printStatEntry("      initial guess     ", "velocity proj", "DEVICE:MAX", tVelocity);
 
   const double tPressure = query("pressureSolve", "DEVICE:MAX");
   printStatEntry("    pressureSolve       ", "pressureSolve", "DEVICE:MAX", tSolve);
@@ -345,14 +344,16 @@ void timer_t::printRunStat(int step, double tElapsedTime)
   printStatEntry("      preconditioner    ", "pressure preconditioner", "DEVICE:MAX", tPressure);
   printStatEntry("        pMG smoother    ", "pressure preconditioner smoother", "DEVICE:MAX", tPressurePreco);
   printStatEntry("        coarse grid     ", "coarseSolve", "DEVICE:MAX", tPressurePreco);
-  printStatEntry("      projection        ", "pressure proj", "DEVICE:MAX", tPressure);
+  printStatEntry("      initial guess     ", "pressure proj", "DEVICE:MAX", tPressure);
 
   const double tScalar = query("scalarSolve", "DEVICE:MAX");
   printStatEntry("    scalarSolve         ", "scalarSolve", "DEVICE:MAX", tSolve);
   printStatEntry("      rhs               ", "scalar rhs", "DEVICE:MAX", tScalar);
-  printStatEntry("      projection        ", "scalar proj", "DEVICE:MAX", tScalar);
+  printStatEntry("      initial guess     ", "scalar proj", "DEVICE:MAX", tScalar);
 
+  const double tMesh = query("meshSolve", "DEVICE:MAX");
   printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tSolve);
+  printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
   printStatEntry("    gsMPI               ", gsTime, tSolve);
 

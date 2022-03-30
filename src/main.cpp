@@ -475,10 +475,10 @@ int main(int argc, char** argv)
     elapsedTimeSolve += elapsedStep;
     elapsedTime = timeSetup + elapsedTimeSolve;
 
-    nekrs::printInfo(time + dt, tStep, elapsedStep, elapsedTimeSolve);
+    nekrs::printInfo(time, tStep, elapsedStep, elapsedTimeSolve);
 
     if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep) 
-      nekrs::printRuntimeStatistics(tStep);
+      nekrs::printRuntimeStatistics(tStep, elapsedTime);
 
     if (tStep % 10 == 0) fflush(stdout);
   }

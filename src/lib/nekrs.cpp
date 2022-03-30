@@ -364,9 +364,9 @@ int runTimeStatFreq()
   return freq;
 } 
 
-void printRuntimeStatistics(int step)
+void printRuntimeStatistics(int step, double etime)
 {
-  platform->timer.printRunStat(step);
+  platform->timer.printRunStat(step, etime);
 #if 0
   const auto flopCount = platform->flopCounter->count();
   const auto tSolve = platform->timer.query("solve", "DEVICE:MAX");

@@ -48,7 +48,7 @@ void printDiagnostics(nrs_t *nrs, dfloat time, int tstep)
     const dfloat dissipationRate = (nrs->g0*energy - sum) / nrs->dt[0];
     const dfloat nuEff = -dissipationRate/(2*enstrophy);
     if(platform->comm.mpiRank == 0)
-      printf(", d(energy)/dt= %g, nuEff/nu= %g)", dissipationRate, nuEff/nu);
+      printf(", d(energy)/dt= %g, nuEff/nu= %g", dissipationRate, nuEff/nu);
   } else {
     energyComputed[0] = energy;
   }

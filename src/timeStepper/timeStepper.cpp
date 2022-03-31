@@ -12,6 +12,7 @@
 #include "tombo.hpp"
 #include "subCycling.hpp"
 #include "udf.hpp"
+#include "bcMap.hpp"
 
 namespace {
 
@@ -305,9 +306,16 @@ void applyDirichlet(nrs_t *nrs, double time)
     for (int sweep = 0; sweep < 2; sweep++) {
       nrs->meshV->velocityDirichletKernel(mesh->Nelements,
                                           nrs->fieldOffset,
+                                          time,
+                                          bcMap::useDerivedMeshBoundaryConditions(),
                                           mesh->o_sgeo,
+                                          mesh->o_x,
+                                          mesh->o_y,
+                                          mesh->o_z,
                                           mesh->o_vmapM,
+                                          mesh->o_EToB,
                                           nrs->o_EToBMesh,
+                                          nrs->o_usrwrk,
                                           nrs->o_U,
                                           platform->o_mempool.slice3);
 

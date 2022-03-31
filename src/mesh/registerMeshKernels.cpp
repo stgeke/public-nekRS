@@ -25,7 +25,7 @@ void registerMeshKernels(occa::properties kernelInfoBC) {
   {
     kernelName = "velocityDirichletBCHex3D";
     fileName = oklpath + "mesh/" + kernelName + ".okl";
-    platform->kernels.add(meshPrefix + kernelName, fileName, kernelInfo);
+    platform->kernels.add(meshPrefix + kernelName, fileName, kernelInfoBC);
 
     {
       int N;

@@ -577,6 +577,10 @@ c-----------------------------------------------------------------------
           endif
         else if (c.eq.'o  ' .or. c.eq.'O  ') then 
           ibc = 3
+          if(ismesh.eq.1) then
+            ! outflow remaps to SYM bounds for mesh solver
+            ibc = 7
+          endif
         else if (c.eq.'SYX') then 
           ibc = 4
         else if (c.eq.'SYY') then 
@@ -587,6 +591,10 @@ c-----------------------------------------------------------------------
           ibc = 7
          else if (c.eq.'SHL'.or.c.eq.'shl') then 
           ibc = 8
+          if(ismesh.eq.1) then
+            ! outflow remaps to SYM bounds for mesh solver
+            ibc = 7
+          endif
          else if (c.eq.'mv ') then 
           ibc = 2
         endif

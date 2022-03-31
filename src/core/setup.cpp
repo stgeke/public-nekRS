@@ -964,6 +964,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       ellipticSolveSetup(nrs->meshSolver);
     }
   }
+#if 0
   // set I.C. for U, W
   if(platform->options.compareArgs("MESH SOLVER", "ELASTICITY"))
   {
@@ -1014,7 +1015,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     );
     mesh->o_U.copyFrom(platform->o_mempool.slice0, nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
   }
-
+#endif
 
 }
 

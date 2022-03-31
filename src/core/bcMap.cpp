@@ -47,10 +47,12 @@ alignment_t computeAlignment(mesh_t *mesh, dlong element, dlong face)
 }
 } // namespace
 
+static bool meshConditionsDerived = false;
 static std::set<std::string> fields;
 // stores for every (field, boundaryID) pair a bcID
 static std::map<std::pair<std::string, int>, int> bToBc;
 static int nbid[] = {0, 0};
+static bool useNek5000StyleBounds = true;
 
 static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
@@ -89,48 +91,8 @@ static std::map<int, std::string> sBcIDToText = {
 };
 
 static void v_setup(std::string s);
-static void m_setup(std::string s);
 static void s_setup(std::string s);
 
-static void m_setup(std::string field, std::vector<std::string> slist)
-{
-  for(int i = 0; i < slist.size(); i++) {
-    std::string key = slist[i];
-    if (key.compare("p") == 0) key = "periodic";
-    if (key.compare("w") == 0) key = "zerovalue";
-    if (key.compare("wall") == 0) key = "zerovalue";
-    if (key.compare("inlet") == 0) key = "fixedvalue";
-    if (key.compare("v") == 0) key = "zerovalue"; // non-moving boundary, which is the same as a wall
-    if (key.compare("mv") == 0) key = "fixedvalue";
-    if (key.compare("outlet") == 0) key = "zerogradient";
-    if (key.compare("outflow") == 0) key = "zerogradient";
-    if (key.compare("o") == 0) key = "zerogradient";
-    if (key.compare("slipx") == 0) key = "zeroxvalue/zerogradient";
-    if (key.compare("slipy") == 0) key = "zeroyvalue/zerogradient";
-    if (key.compare("slipz") == 0) key = "zerozvalue/zerogradient";
-    if (key.compare("symx") == 0) key = "zeroxvalue/zerogradient";
-    if (key.compare("symy") == 0) key = "zeroyvalue/zerogradient";
-    if (key.compare("symz") == 0) key = "zerozvalue/zerogradient";
-    if (key.compare("sym") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("shl") == 0)
-      key = "zeronvalue/fixedgradient";
-
-    if (vBcTextToID.find(key) == vBcTextToID.end()) {
-      std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
-      ABORT(1);
-    }
-
-    try
-    {
-      bToBc[make_pair(field, i)] = vBcTextToID.at(key);
-    }
-    catch (const std::out_of_range& oor)
-    {
-      std::cout << "Out of Range error: " << oor.what() << "!\n";
-      ABORT(1);
-    }
-  }
-}
 static void v_setup(std::string field, std::vector<std::string> slist)
 {
   for(int i = 0; i < slist.size(); i++) {
@@ -139,7 +101,9 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     if (key.compare("w") == 0) key = "zerovalue";
     if (key.compare("wall") == 0) key = "zerovalue";
     if (key.compare("inlet") == 0) key = "fixedvalue";
-    if (key.compare("v") == 0 || key.compare("mv") == 0) key = "fixedvalue";
+    if (key.compare("v") == 0) key = "fixedvalue";
+    if (key.compare("mv") == 0) key = "fixedvalue";
+    if (key.compare("fixedvalue+moving") == 0) key = "fixedvalue";
     if (key.compare("outlet") == 0) key = "zerogradient";
     if (key.compare("outflow") == 0) key = "zerogradient";
     if (key.compare("o") == 0) key = "zerogradient";
@@ -209,6 +173,8 @@ void setup(std::vector<std::string> slist, std::string field)
 {
   if (slist.size() == 0 || slist[0].compare("none") == 0) return;
 
+  useNek5000StyleBounds = true;
+
   fields.insert(field);
 
   if (field.compare(0, 8, "scalar00") == 0) /* tmesh */ 
@@ -219,9 +185,61 @@ void setup(std::vector<std::string> slist, std::string field)
   if (field.compare("velocity") == 0)
     v_setup(field, slist);
   else if (field.compare("mesh") == 0)
-    m_setup(field, slist);
+    v_setup(field, slist);
   else if (field.compare(0, 6, "scalar") == 0)
     s_setup(field, slist);
+}
+
+void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
+{
+  if (velocityBCs.size() == 0 || velocityBCs[0].compare("none") == 0) return;
+
+  meshConditionsDerived = true;
+
+  const std::string field = "mesh";
+
+  fields.insert(field);
+
+  for(int i = 0; i < velocityBCs.size(); i++) {
+    std::string key = velocityBCs[i];
+    if (key.compare("p") == 0) key = "periodic";
+    if (key.compare("w") == 0) key = "zerovalue";
+    if (key.compare("wall") == 0) key = "zerovalue";
+    if (key.compare("inlet") == 0) key = "zerovalue";
+    if (key.compare("v") == 0) key = "zerovalue";
+    if (key.compare("mv") == 0) key = "fixedvalue";
+    if (key.compare("fixedvalue+moving") == 0) key = "fixedvalue";
+
+    // all other bounds map to SYM
+    if (key.compare("outlet") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("outflow") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("o") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("slipx") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("slipy") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("slipz") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("symx") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("symy") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("symz") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("sym") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("shl") == 0)
+      key = "zeronvalue/zerogradient";
+
+    if (vBcTextToID.find(key) == vBcTextToID.end()) {
+      std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
+      ABORT(1);
+    }
+
+    try
+    {
+      bToBc[make_pair(field, i)] = vBcTextToID.at(key);
+    }
+    catch (const std::out_of_range& oor)
+    {
+      std::cout << "Out of Range error: " << oor.what() << "!\n";
+      ABORT(1);
+    }
+  }
+
 }
 
 int id(int bid, std::string field)
@@ -302,6 +320,7 @@ int type(int bid, std::string field)
       bcType = ZERO_NORMAL;
     if (bcID == 8)
       bcType = ZERO_NORMAL;
+    if (bcID == 2) oudfFindDirichlet(field);
   } else if (field.compare("y-mesh") == 0) {
     const int bcID = bToBc[{"mesh", bid - 1}];
     if (bcID == 1) bcType = DIRICHLET;
@@ -317,6 +336,7 @@ int type(int bid, std::string field)
       bcType = ZERO_NORMAL;
     if (bcID == 8)
       bcType = ZERO_NORMAL;
+    if (bcID == 2) oudfFindDirichlet(field);
   } else if (field.compare("z-mesh") == 0) {
     const int bcID = bToBc[{"mesh", bid - 1}];
     if (bcID == 1) bcType = DIRICHLET;
@@ -332,6 +352,7 @@ int type(int bid, std::string field)
       bcType = ZERO_NORMAL;
     if (bcID == 8)
       bcType = ZERO_NORMAL;
+    if (bcID == 2) oudfFindDirichlet(field);
   } else if (field.compare("pressure") == 0) {
     const int bcID = bToBc[{"velocity", bid - 1}];
     if (bcID == 1)
@@ -392,6 +413,16 @@ int size(int isTmesh)
 {
   return isTmesh ? nbid[1] : nbid[0];
 }
+
+bool useDerivedMeshBoundaryConditions()
+{
+  if(useNek5000StyleBounds){
+    return true;
+  } else {
+    return meshConditionsDerived;
+  }
+}
+
 
 void check(mesh_t* mesh)
 {

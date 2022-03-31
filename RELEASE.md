@@ -32,6 +32,9 @@
 We are grateful to all who added new features, filed issues or helped resolve them, 
 asked and answered questions, and were part of inspiring discussions.
 
+A special shout out to Tim Warburton at VT for tuning some critical kernels. 
+
+
 # Release v21.1
 
 ## What is new? 

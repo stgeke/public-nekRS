@@ -232,7 +232,7 @@ std::string printPercentage(double num, double dom)
 {
   char buf[4096];
   double frac = num/dom;
-  snprintf(buf, sizeof(buf), "%7.2f", frac);
+  snprintf(buf, sizeof(buf), "%4.2f", frac);
   return std::string(buf);
 }
 
@@ -265,7 +265,7 @@ void timer_t::printStatEntry(std::string name, double time, double tNorm)
   } 
 }
 
-void timer_t::printRunStat(int step, double tElapsedTime)
+void timer_t::printRunStat(int step, double tElapsedTimeSolve)
 {
   int rank;
   MPI_Comm_rank(comm_, &rank);
@@ -292,9 +292,10 @@ void timer_t::printRunStat(int step, double tElapsedTime)
   int outPrecisionSave = std::cout.precision();
   std::cout.precision(5);
 
-  if(rank == 0) std::cout <<   "name                    " << "time          " << "time(%)  " << "calls\n";
+  if(rank == 0) std::cout <<   "name                    " << "time          " << "   %  " << "calls\n";
 
   const double tSetup = query("setup", "DEVICE:MAX");
+  const double tElapsedTime = tSetup + tElapsedTimeSolve;
   printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
   printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);
 
@@ -310,11 +311,12 @@ void timer_t::printRunStat(int step, double tElapsedTime)
 
   if(tSolve > 0 && rank == 0) {
 
+  printStatEntry("  elapsedStepSum        ", tElapsedTimeSolve, tElapsedTime);
   printStatEntry("  solve                 ", tSolve, tElapsedTime);
   std::cout <<   "    min                 " << tMinSolveStep << "s\n";
   std::cout <<   "    max                 " << tMaxSolveStep << "s\n";
   if (flops > 0 && printFlops)
-  std::cout <<   "    FLOPS/s             " << flops/tSolve << "\n";
+  std::cout <<   "    flop/s              " << flops/tSolve << "\n";
 
   }
   std::cout << std::endl;

@@ -478,7 +478,7 @@ int main(int argc, char** argv)
     nekrs::printInfo(time, tStep, elapsedStep, elapsedTimeSolve);
 
     if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep) 
-      nekrs::printRuntimeStatistics(tStep, elapsedTime);
+      nekrs::printRuntimeStatistics(tStep, elapsedTimeSolve);
 
     if (tStep % 10 == 0) fflush(stdout);
   }

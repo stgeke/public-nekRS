@@ -95,6 +95,8 @@
 
 #ifdef smXX
 #pragma unroll p_Nq
+#else
+#pragma nounroll
 #endif
         for(int c = 0; c < p_Nq; ++c) {
             @barrier("local");

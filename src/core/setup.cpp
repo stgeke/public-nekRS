@@ -160,34 +160,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
        platform->options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
   }
 
-  if(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE"))
-  {
-    platform->options.getArgs("FLOW RATE", nrs->flowRate);
-    nrs->fromBID = -1;
-    nrs->toBID = -1;
-    platform->options.getArgs("CONSTANT FLOW FROM BID", nrs->fromBID);
-    platform->options.getArgs("CONSTANT FLOW TO BID", nrs->toBID);
-    if(platform->options.compareArgs("CONSTANT FLOW DIRECTION", "X"))
-    {
-      nrs->flowDirection[0] = 1.0;
-      nrs->flowDirection[1] = 0.0;
-      nrs->flowDirection[2] = 0.0;
-    }
-    if(platform->options.compareArgs("CONSTANT FLOW DIRECTION", "Y"))
-    {
-      nrs->flowDirection[0] = 0.0;
-      nrs->flowDirection[1] = 1.0;
-      nrs->flowDirection[2] = 0.0;
-    }
-    if(platform->options.compareArgs("CONSTANT FLOW DIRECTION", "Z"))
-    {
-      nrs->flowDirection[0] = 0.0;
-      nrs->flowDirection[1] = 0.0;
-      nrs->flowDirection[2] = 1.0;
-    }
-  }
-
-
   // init nek
   {  
     int rank, size;

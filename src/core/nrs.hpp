@@ -68,12 +68,6 @@ struct nrs_t
   dfloat* U, * P;
   dfloat* BF, * FU;
 
-  // unit normal flow direction for constant flow rate
-  dfloat flowDirection[3];
-  int fromBID;
-  int toBID;
-  dfloat flowRate;
-
   //RK Subcycle Data
   int nRK;
   dfloat* coeffsfRK, * weightsRK, * nodesRK;

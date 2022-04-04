@@ -316,10 +316,8 @@ void timer_t::printRunStat(int step, double tElapsedTimeSolve)
   std::cout <<   "    min                 " << tMinSolveStep << "s\n";
   std::cout <<   "    max                 " << tMaxSolveStep << "s\n";
   if (flops > 0 && printFlops)
-  std::cout <<   "    flop/s              " << flops/tSolve << "\n";
-
+  std::cout <<   "    flop/s              " << flops/tSolve << "\n\n";
   }
-  std::cout << std::endl;
 
   printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tSolve);
 

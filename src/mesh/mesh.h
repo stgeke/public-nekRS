@@ -42,6 +42,8 @@
 #define TETRAHEDRA 6
 #define HEXAHEDRA 12
 
+struct nrs_t;
+
 struct mesh_t
 {
   dfloat avgBoundaryValue(int BID, occa::memory o_fld);
@@ -243,6 +245,8 @@ void parallelSort(int size, int rank, MPI_Comm comm,
 
 #define mymax(a,b) (((a) > (b))?(a):(b))
 #define mymin(a,b) (((a) < (b))?(a):(b))
+
+void meshSolve(nrs_t* nrs, dfloat time, occa::memory o_U, int stage);
 
 /* dimension independent mesh operations */
 void meshConnect(mesh_t* mesh);

@@ -121,7 +121,7 @@
             bc.v = U[idM + 1 * offset];
             bc.w = U[idM + 2 * offset];
 
-            bc.wrk = W;
+            bc.wrk = work;
             bc.fieldOffset = offset;
 
             meshVelocityDirichletConditions(&bc);

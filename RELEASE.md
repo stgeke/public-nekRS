@@ -23,6 +23,7 @@
 
 ## Known Bugs / Restrictions
 
+* Mesh solver does not support unaligned sym or shl
 * [729](https://github.com/Nek5000/Nek5000/issues/729)
 * [300](https://github.com/Nek5000/nekRS/issues/300)
 * [258](https://github.com/Nek5000/nekRS/issues/258)

@@ -58,36 +58,40 @@ static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
     {"zerovalue", 1},
     {"fixedvalue", 2},
+    {"codedFixedvalue", 2},
     {"zerogradient", 3},
     {"zeroxvalue/zerogradient", 4},
     {"zeroyvalue/zerogradient", 5},
     {"zerozvalue/zerogradient", 6},
     {"zeronvalue/zerogradient", 7},
     {"zeronvalue/fixedgradient", 8},
+    {"zeronvalue/codedFixedgradient", 8}
 };
 
 static std::map<int, std::string> vBcIDToText = {{0, "periodic"},
                                                  {1, "zeroValue"},
-                                                 {2, "fixedValue"},
+                                                 {2, "codedFixedValue"},
                                                  {3, "zeroGradient"},
                                                  {4, "zeroXValue/zeroGradient"},
                                                  {5, "zeroYValue/zeroGradient"},
                                                  {6, "zeroZValue/zeroGradient"},
                                                  {7, "zeroNValue/zeroGradient"},
-                                                 {8, "zeroNValue/fixedGradient"}};
+                                                 {8, "zeroNValue/codedFixedGradient"}};
 
 static std::map<std::string, int> sBcTextToID = {
   {"periodic", 0},
   {"fixedvalue", 1},
+  {"codedFixedvalue", 1},
   {"zerogradient", 2},
-  {"fixedgradient", 3}
+  {"fixedgradient", 3},
+  {"codedFixedgradient", 3}
 };
 
 static std::map<int, std::string> sBcIDToText = {
   {0, "periodic"     },
-  {1, "fixedValue"   },
+  {1, "codedFixedValue"   },
   {2, "zeroGradient" },
-  {3, "fixedGradient"}
+  {3, "codedFixedGradient"}
 };
 
 static void v_setup(std::string s);

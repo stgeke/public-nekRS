@@ -208,6 +208,7 @@ set(SRC
     src/cds/cds.cpp
     src/cds/registerCdsKernels.cpp
     src/io/parReader.cpp
+    src/io/re2Reader.cpp
     src/core/configReader.cpp
     src/core/timer.cpp
     src/core/platform.cpp

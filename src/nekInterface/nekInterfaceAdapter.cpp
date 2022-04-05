@@ -4,6 +4,7 @@
 #include "nekInterfaceAdapter.hpp"
 #include "bcMap.hpp"
 #include "io.hpp"
+#include "re2Reader.hpp"
 
 nekdata_private nekData;
 static int rank;
@@ -464,6 +465,7 @@ void mkSIZE(int lx1, int lxd, int lelt, hlong lelg, int ldim, int lpmin, int ldi
   fflush(stdout);
 }
 
+
 void buildNekInterface(int ldimt, int N, int np, setupAide& options)
 {
   int buildRank = rank;
@@ -490,33 +492,13 @@ void buildNekInterface(int ldimt, int N, int np, setupAide& options)
       const std::string usrname = options.getArgs("CASENAME");
       const std::string meshFile = options.getArgs("MESH FILE");
 
-      // create SIZE
-      strcpy(buf, meshFile.c_str());
-      FILE *fp = fopen(buf, "r");
-      if (!fp) {
-        if(rank == 0) printf("\nERROR: Cannot find %s!\n", buf);
-        ABORT(EXIT_FAILURE);
-      }
-      fgets(buf, 80, fp);
-      fclose(fp);
-
-      char ver[10];
-      int ndim;
-      int nelgv, nelgt;
-      // has to match header in re2
-      sscanf(buf, "%5s %9d %1d %9d", ver, &nelgt, &ndim, &nelgv);
-      if(ndim != 3) {
-        if(rank == 0) printf("\nERROR: Unsupported ndim=%d read from re2 header!\n", ndim);
-        ABORT(EXIT_FAILURE);
-      }
-      if(nelgt <= 0 || nelgv <=0 || nelgv > nelgt) {
-        if(rank == 0) printf("\nERROR: Invalid nelgt=%lld / nelgv=%lld read from re2 header!\n", nelgt, nelgv);
-        ABORT(EXIT_FAILURE);
-      }
+      int nelgt, nelgv;
+      const int ndim = 3;
+      re2::nelg(meshFile, nelgt, nelgv, NULL); 
 
       int lelt = (int)(nelgt/np) + 3;
       if(lelt > nelgt) lelt = (int)nelgt;
-      sprintf(buf,"%s/SIZE",cache_dir.c_str()); 
+      sprintf(buf,"%s/SIZE",cache_dir.c_str());
       mkSIZE(N + 1, 1, lelt, nelgt, ndim, np, ldimt, options, buf);
 
       // generate usr

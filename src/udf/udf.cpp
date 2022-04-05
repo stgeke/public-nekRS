@@ -248,7 +248,7 @@ void* udfLoadFunction(const char* fname, int errchk)
   sprintf(udfLib, "%s/udf/libUDF.so", cache_dir);
 
   void* h, * fptr;
-  h = dlopen(udfLib, RTLD_LAZY | RTLD_GLOBAL);
+  h = dlopen(udfLib, RTLD_NOW | RTLD_GLOBAL);
   if (!h) goto errOpen;
 
   fptr = dlsym(h,fname);

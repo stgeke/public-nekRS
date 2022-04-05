@@ -179,6 +179,7 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         cmdOpt->backend.assign(optarg);
         break;
       case 'h':
+        printHelp++;
         if(!optarg && argv[optind] != NULL && argv[optind][0] != '-')
           helpCat.assign(argv[optind++]);
         break;

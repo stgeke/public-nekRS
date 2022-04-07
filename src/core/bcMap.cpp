@@ -437,6 +437,24 @@ void check(mesh_t* mesh)
   int err = 0;
   int found = 0;
 
+  int minEToB = std::numeric_limits<int>::max();
+  int maxEToB = std::numeric_limits<int>::min(); 
+  for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {
+    if(mesh->EToB[f] > -1) {
+      minEToB = std::min(mesh->EToB[f], minEToB);
+      maxEToB = std::max(mesh->EToB[f], maxEToB);
+    }
+  }
+  MPI_Allreduce(MPI_IN_PLACE, &minEToB, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
+  MPI_Allreduce(MPI_IN_PLACE, &maxEToB, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
+  if (maxEToB - minEToB != nid - 1) {
+    err++;
+    if (platform->comm.mpiRank == 0) {
+      printf("boundary IDs are not one-based or contiguous!\n");
+    }
+  }
+  if (err) EXIT_AND_FINALIZE(EXIT_FAILURE);
+
   for (int id = 1; id <= nid; id++) {
     found = 0;
     for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {

@@ -16,5 +16,5 @@ Box
 0 1 1               x0 x1 ratio  !! Rescaled in usrdat2().
 0 1 1               y0 y1 ratio 
 0 1 1               z0 z1 ratio 
-P  ,P  ,SYM,SYM,E  ,E   BCs (3 characters each!)
+P  ,P  ,W  ,SYM,E  ,E   BCs (3 characters each!)
 #v  ,v  ,v  ,v  ,v  ,v   BCs (3 characters each!)

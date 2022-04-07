@@ -246,9 +246,45 @@ void applyDirichlet(nrs_t *nrs, double time)
         cds->solver[is]->o_maskIds, platform->o_mempool.slice2, o_Si);
     }
   }
+
+
+  auto applyUnZero = [&](elliptic_t* solver, occa::memory& o_x)
+  {
+    mesh_t* mesh = solver->mesh;
+    if (solver->UNormalZero) {
+      dlong Nelems = mesh->NlocalGatherElements;
+
+      if (Nelems > 0) {
+        occa::memory &o_elemList = solver->mesh->o_localGatherElementList;
+        solver->enforceUnKernel(Nelems,
+                        solver->Ntotal,
+                        o_elemList,
+                        mesh->o_sgeo,
+                        mesh->o_vmapM,
+                        mesh->o_EToB,
+                        solver->o_BCType,
+                        o_x);
+      }
+
+      Nelems = mesh->NglobalGatherElements;
+      if (Nelems > 0) {
+        occa::memory &o_elemList = solver->mesh->o_globalGatherElementList;
+        solver->enforceUnKernel(Nelems,
+                        solver->Ntotal,
+                        o_elemList,
+                        mesh->o_sgeo,
+                        mesh->o_vmapM,
+                        mesh->o_EToB,
+                        solver->o_BCType,
+                        o_x);
+      }
+    }
+  };
+
   
   if(nrs->flow) {
     mesh_t* mesh = nrs->meshV;
+
     platform->linAlg->fill((1+nrs->NVfields)*nrs->fieldOffset, -1.0*std::numeric_limits<dfloat>::max(), 
                            platform->o_mempool.slice6);
     for (int sweep = 0; sweep < 2; sweep++) {
@@ -288,6 +324,7 @@ void applyDirichlet(nrs_t *nrs, double time)
                                                    platform->o_mempool.slice6, nrs->o_P);
  
     if (nrs->uvwSolver) {
+      applyUnZero(nrs->uvwSolver, platform->o_mempool.slice7);
       if (nrs->uvwSolver->Nmasked) nrs->maskCopyKernel(nrs->uvwSolver->Nmasked, 0*nrs->fieldOffset, nrs->uvwSolver->o_maskIds,
                                                        platform->o_mempool.slice7, nrs->o_U);
     } else {
@@ -322,6 +359,7 @@ void applyDirichlet(nrs_t *nrs, double time)
       if(sweep == 0) oogs::startFinish(platform->o_mempool.slice3, nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsMax, nrs->gsh);
       if(sweep == 1) oogs::startFinish(platform->o_mempool.slice3, nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsMin, nrs->gsh);
     }
+    applyUnZero(nrs->meshSolver, platform->o_mempool.slice3);
     if (nrs->meshSolver->Nmasked) nrs->maskCopyKernel(nrs->meshSolver->Nmasked, 0*nrs->fieldOffset, nrs->meshSolver->o_maskIds,
         platform->o_mempool.slice3, mesh->o_U);
   }

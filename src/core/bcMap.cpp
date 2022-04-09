@@ -15,7 +15,7 @@
 #include "alignment.hpp"
 
 namespace {
-alignment_t computeAlignment(mesh_t *mesh, dlong element, dlong face)
+boundaryAlignment_t computeAlignment(mesh_t *mesh, dlong element, dlong face)
 {
   const dfloat alignmentTol = 1e-3;
   dfloat nxDiff = 0.0;
@@ -37,13 +37,13 @@ alignment_t computeAlignment(mesh_t *mesh, dlong element, dlong face)
   nzDiff /= mesh->Nfp;
 
   if (nxDiff < alignmentTol)
-    return alignment_t::X;
+    return boundaryAlignment_t::X;
   if (nyDiff < alignmentTol)
-    return alignment_t::Y;
+    return boundaryAlignment_t::Y;
   if (nzDiff < alignmentTol)
-    return alignment_t::Z;
+    return boundaryAlignment_t::Z;
 
-  return alignment_t::UNALIGNED;
+  return boundaryAlignment_t::UNALIGNED;
 }
 } // namespace
 
@@ -544,24 +544,24 @@ void checkBoundaryAlignment(mesh_t *mesh)
     if (field != std::string("velocity") && field != std::string("mesh"))
       continue;
 
-    std::map<int, alignment_t> expectedAlignmentInvalidBIDs;
-    std::map<int, std::set<alignment_t>> actualAlignmentsInvalidBIDs;
+    std::map<int, boundaryAlignment_t> expectedAlignmentInvalidBIDs;
+    std::map<int, std::set<boundaryAlignment_t>> actualAlignmentsInvalidBIDs;
 
     for (int e = 0; e < mesh->Nelements; e++) {
       for (int f = 0; f < mesh->Nfaces; f++) {
         int bid = mesh->EToB[e * mesh->Nfaces + f];
         int bc = id(bid, field);
         if (bc == 4 || bc == 5 || bc == 6) {
-          auto expectedAlignment = alignment_t::UNALIGNED;
+          auto expectedAlignment = boundaryAlignment_t::UNALIGNED;
           switch (bc) {
           case 4:
-            expectedAlignment = alignment_t::X;
+            expectedAlignment = boundaryAlignment_t::X;
             break;
           case 5:
-            expectedAlignment = alignment_t::Y;
+            expectedAlignment = boundaryAlignment_t::Y;
             break;
           case 6:
-            expectedAlignment = alignment_t::Z;
+            expectedAlignment = boundaryAlignment_t::Z;
             break;
           }
 
@@ -591,10 +591,11 @@ void checkBoundaryAlignment(mesh_t *mesh)
       for (auto &&bidAndAlignments : actualAlignmentsInvalidBIDs) {
         const auto bid = bidAndAlignments.first;
         const auto &alignments = bidAndAlignments.second;
-        encounteredAlignments[(bid - 1) * nAlignments + 0] = (alignments.count(alignment_t::X));
-        encounteredAlignments[(bid - 1) * nAlignments + 1] = (alignments.count(alignment_t::Y));
-        encounteredAlignments[(bid - 1) * nAlignments + 2] = (alignments.count(alignment_t::Z));
-        encounteredAlignments[(bid - 1) * nAlignments + 3] = (alignments.count(alignment_t::UNALIGNED));
+        encounteredAlignments[(bid - 1) * nAlignments + 0] = (alignments.count(boundaryAlignment_t::X));
+        encounteredAlignments[(bid - 1) * nAlignments + 1] = (alignments.count(boundaryAlignment_t::Y));
+        encounteredAlignments[(bid - 1) * nAlignments + 2] = (alignments.count(boundaryAlignment_t::Z));
+        encounteredAlignments[(bid - 1) * nAlignments + 3] =
+            (alignments.count(boundaryAlignment_t::UNALIGNED));
         expectedAlignments[(bid - 1)] = static_cast<int>(expectedAlignmentInvalidBIDs[bid]);
       }
       MPI_Allreduce(MPI_IN_PLACE, valid.data(), nid, MPI_INT, MPI_MIN, platform->comm.mpiComm);
@@ -612,7 +613,7 @@ void checkBoundaryAlignment(mesh_t *mesh)
           if (valid[bid - 1] == 0) {
             std::cout << "\tBoundary ID " << bid << ":\n";
             std::cout << "\t\texpected alignment : "
-                      << to_string(static_cast<alignment_t>(expectedAlignments[bid - 1])) << "\n";
+                      << to_string(static_cast<boundaryAlignment_t>(expectedAlignments[bid - 1])) << "\n";
             std::cout << "\t\tencountered alignments:\n";
             if (encounteredAlignments[(bid - 1) * nAlignments + 0])
               std::cout << "\t\t\tX\n";
@@ -645,7 +646,7 @@ void remapUnalignedBoundaries(mesh_t *mesh)
       continue;
 
     std::map<int, bool> remapBID;
-    std::map<int, alignment_t> alignmentBID;
+    std::map<int, boundaryAlignment_t> alignmentBID;
 
     int nid = nbid[0];
     if (mesh->cht)
@@ -666,7 +667,7 @@ void remapUnalignedBoundaries(mesh_t *mesh)
         }
 
         auto previousAlignment = alignmentBID[bid];
-        remapBID[bid] &= (alignment != alignment_t::UNALIGNED) && (alignment == previousAlignment);
+        remapBID[bid] &= (alignment != boundaryAlignment_t::UNALIGNED) && (alignment == previousAlignment);
       }
     }
 
@@ -679,13 +680,13 @@ void remapUnalignedBoundaries(mesh_t *mesh)
 
         int newBcType = 0;
         switch (alignmentType) {
-        case alignment_t::X:
+        case boundaryAlignment_t::X:
           newBcType = 4;
           break;
-        case alignment_t::Y:
+        case boundaryAlignment_t::Y:
           newBcType = 5;
           break;
-        case alignment_t::Z:
+        case boundaryAlignment_t::Z:
           newBcType = 6;
           break;
         default:

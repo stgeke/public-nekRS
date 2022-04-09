@@ -102,9 +102,6 @@ struct elliptic_t
 
   dfloat tau;
 
-  int* BCType;
-  int NBCType;
-
   bool allNeumann;
 
   // HOST shadow copies
@@ -122,6 +119,8 @@ struct elliptic_t
   occa::memory o_maskIds;
   occa::memory o_maskIdsGlobal;
   occa::memory o_maskIdsLocal;
+
+  occa::memory o_EToB;
 
   occa::memory o_x;
   occa::memory o_x0;
@@ -181,7 +180,6 @@ struct elliptic_t
 
   occa::kernel enforceUnKernel;
   occa::kernel enforceUnPfloatKernel;
-  occa::memory o_BCType;
 };
 
 #include "ellipticMultiGrid.h"
@@ -260,8 +258,7 @@ void ellipticOgs(mesh_t *mesh,
                  dlong mNlocal,
                  int nFields,
                  dlong offset,
-                 int *BCType,
-                 int BCTypeOffset,
+                 int *EToB,
                  bool &UNormalZero,
                  dlong &Nmasked,
                  occa::memory &o_maskIds,
@@ -269,6 +266,5 @@ void ellipticOgs(mesh_t *mesh,
                  occa::memory &o_maskIdsLocal,
                  dlong &NmaskedGlobal,
                  occa::memory &o_maskIdsGlobal,
-                 occa::memory &o_BCType,
                  ogs_t **ogs);
 #endif

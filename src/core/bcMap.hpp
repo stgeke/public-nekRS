@@ -7,6 +7,7 @@
 
 namespace bcMap
 {
+bool useNekBCs();
 void setup(std::vector<std::string> slist, std::string field);
 int id(int bid, std::string field);
 int type(int bid, std::string field);

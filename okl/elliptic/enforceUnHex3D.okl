@@ -4,7 +4,6 @@
                                          @restrict const dfloat*  sgeo,
                                          @restrict const dlong*  vmapM,
                                          @restrict const int*  EToB,
-                                         @restrict const int*  BToBCType,
                                          @restrict outputType*  U)
 {
   for(dlong element = 0; element < Nelements; element++; @outer(0)) {
@@ -20,9 +19,7 @@
         const dlong idM = vmapM[sk];
         const dlong bid = EToB[f + p_Nfaces * e];
 
-        const dlong bcType = bid >= 0 ? BToBCType[bid] : -1;
-
-        if(bcType == p_ZERO_NORMAL) {
+        if(bid == p_ZERO_NORMAL) {
 
           const dfloat t1x = sgeo[sid * p_Nsgeo + p_T1XID];
           const dfloat t1y = sgeo[sid * p_Nsgeo + p_T1YID];

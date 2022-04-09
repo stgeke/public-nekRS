@@ -565,9 +565,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
   // setup elliptic solvers
 
-  const int nbrBIDs = bcMap::size(0);
-  int NBCType = nbrBIDs + 1;
-
   if(nrs->Nscalar) {
     cds_t* cds = nrs->cds;
 
@@ -588,12 +585,9 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
       int nbrBIDs = bcMap::size(0);
       if(nrs->cht && is == 0) nbrBIDs = bcMap::size(1);
-      int* sBCType = (int*) calloc(nbrBIDs + 1, sizeof(int));
- 
       for (int bID = 1; bID <= nbrBIDs; bID++) {
         std::string bcTypeText(bcMap::text(bID, "scalar" + sid));
         if(platform->comm.mpiRank == 0) printf("bID %d -> bcType %s\n", bID, bcTypeText.c_str());
-        sBCType[bID] = bcMap::type(bID, "scalar" + sid);
       }
  
       cds->solver[is] = new elliptic_t();
@@ -605,9 +599,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       cds->solver[is]->mesh = mesh;
       cds->solver[is]->dim = cds->dim;
       cds->solver[is]->elementType = cds->elementType;
-      cds->solver[is]->BCType = (int*) calloc(nbrBIDs + 1,sizeof(int));
-      memcpy(cds->solver[is]->BCType,sBCType,(nbrBIDs + 1) * sizeof(int));
-      free(sBCType);
 
       const int coeffField = platform->options.compareArgs("SCALAR" + sid + " COEFF FIELD", "TRUE");
       cds->solver[is]->coeffField = coeffField;
@@ -617,8 +608,15 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       platform->linAlg->fill(2*nrs->fieldOffset, 1.0, nrs->o_ellipticCoeff);
       cds->solver[is]->o_lambda = cds->o_ellipticCoeff;
       cds->solver[is]->loffset = 0;
- 
       cds->solver[is]->options = cds->options[is];
+
+      cds->solver[is]->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
+      for (dlong e = 0; e < mesh->Nelements; e++) {
+        for (int f = 0; f < mesh->Nfaces; f++) {
+          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          cds->solver[is]->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "scalar" + sid);
+        }
+      }
 
       ellipticSolveSetup(cds->solver[is]);
     }
@@ -642,18 +640,9 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     if(platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
       nrs->uvwSolver = new elliptic_t();
 
-    int* uvwBCType = (int*) calloc(3 * NBCType, sizeof(int));
-    int* uBCType = uvwBCType + 0 * NBCType;
-    int* vBCType = uvwBCType + 1 * NBCType;
-    int* wBCType = uvwBCType + 2 * NBCType;
-
-    for (int bID = 1; bID <= nbrBIDs; bID++) {
+    for (int bID = 1; bID <= bcMap::size(0); bID++) {
       std::string bcTypeText(bcMap::text(bID, "velocity"));
       if(platform->comm.mpiRank == 0) printf("bID %d -> bcType %s\n", bID, bcTypeText.c_str());
-
-      uBCType[bID] = bcMap::type(bID, "x-velocity");
-      vBCType[bID] = bcMap::type(bID, "y-velocity");
-      wBCType[bID] = bcMap::type(bID, "z-velocity");
     }
 
     nrs->vOptions = options;
@@ -723,14 +712,25 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uvwSolver->options = nrs->vOptions;
       nrs->uvwSolver->dim = nrs->dim;
       nrs->uvwSolver->elementType = nrs->elementType;
-      nrs->uvwSolver->NBCType = NBCType;
-      nrs->uvwSolver->BCType = (int*) calloc(nrs->NVfields * NBCType,sizeof(int));
-      memcpy(nrs->uvwSolver->BCType,uvwBCType,nrs->NVfields * NBCType * sizeof(int));
       nrs->uvwSolver->coeffField = velCoeffField;
       nrs->uvwSolver->coeffFieldPreco = velCoeffField;
       nrs->uvwSolver->o_lambda = nrs->o_ellipticCoeff;
       nrs->uvwSolver->loffset = 0; // use same ellipticCoeff for u,v and w
       nrs->uvwSolver->poisson = 0;
+      nrs->uvwSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces * nrs->uvwSolver->Nfields,sizeof(int));
+      for(int fld = 0; fld < nrs->uvwSolver->Nfields; fld++) {
+        for (dlong e = 0; e < mesh->Nelements; e++) {
+          for (int f = 0; f < mesh->Nfaces; f++) {
+            const int offset = fld * mesh->Nelements * mesh->Nfaces;
+            const int bID = mesh->EToB[e * mesh->Nfaces + f];
+            std::string key;
+            if(fld == 0) key = "x-velocity";
+            if(fld == 1) key = "y-velocity";
+            if(fld == 2) key = "z-velocity";
+            nrs->uvwSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::type(bID, key);
+          }
+        }
+      }
 
       ellipticSolveSetup(nrs->uvwSolver);
     } else {
@@ -743,14 +743,18 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uSolver->options = nrs->vOptions;
       nrs->uSolver->dim = nrs->dim;
       nrs->uSolver->elementType = nrs->elementType;
-      nrs->uSolver->NBCType = NBCType;
-      nrs->uSolver->BCType = (int*) calloc(NBCType,sizeof(int));
-      memcpy(nrs->uSolver->BCType,uBCType,NBCType * sizeof(int));
       nrs->uSolver->coeffField = velCoeffField;
       nrs->uSolver->coeffFieldPreco = velCoeffField;
       nrs->uSolver->o_lambda = nrs->o_ellipticCoeff;
       nrs->uSolver->loffset = 0;
       nrs->uSolver->poisson = 0;
+      nrs->uSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
+      for (dlong e = 0; e < mesh->Nelements; e++) {
+        for (int f = 0; f < mesh->Nfaces; f++) {
+          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          nrs->uSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "x-velocity");
+        }
+      }
 
       ellipticSolveSetup(nrs->uSolver);
 
@@ -763,38 +767,44 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->vSolver->options = nrs->vOptions;
       nrs->vSolver->dim = nrs->dim;
       nrs->vSolver->elementType = nrs->elementType;
-      nrs->vSolver->NBCType = NBCType;
-      nrs->vSolver->BCType = (int*) calloc(NBCType,sizeof(int));
-      memcpy(nrs->vSolver->BCType,vBCType,NBCType * sizeof(int));
       nrs->vSolver->coeffField = velCoeffField;
       nrs->vSolver->coeffFieldPreco = velCoeffField;
       nrs->vSolver->o_lambda = nrs->o_ellipticCoeff;
       nrs->vSolver->loffset = 0;
       nrs->vSolver->poisson = 0;
+      nrs->vSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
+      for (dlong e = 0; e < mesh->Nelements; e++) {
+        for (int f = 0; f < mesh->Nfaces; f++) {
+          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          nrs->vSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "y-velocity");
+        }
+      }
 
       ellipticSolveSetup(nrs->vSolver);
 
-      if (nrs->dim == 3) {
-        nrs->wSolver = new elliptic_t();
-        nrs->wSolver->blockSolver = 0;
-        nrs->wSolver->Nfields = 1;
-        nrs->wSolver->Ntotal = nrs->fieldOffset;
-        nrs->wSolver->o_wrk = o_mempoolElliptic;
-        nrs->wSolver->mesh = mesh;
-        nrs->wSolver->options = nrs->vOptions;
-        nrs->wSolver->dim = nrs->dim;
-        nrs->wSolver->elementType = nrs->elementType;
-        nrs->wSolver->NBCType = NBCType;
-        nrs->wSolver->BCType = (int*) calloc(NBCType,sizeof(int));
-        memcpy(nrs->wSolver->BCType,wBCType,NBCType * sizeof(int));
-        nrs->wSolver->coeffField = velCoeffField;
-        nrs->wSolver->coeffFieldPreco = velCoeffField;
-        nrs->wSolver->o_lambda = nrs->o_ellipticCoeff;
-        nrs->wSolver->loffset = 0;
-        nrs->wSolver->poisson = 0;
-
-        ellipticSolveSetup(nrs->wSolver);
+      nrs->wSolver = new elliptic_t();
+      nrs->wSolver->blockSolver = 0;
+      nrs->wSolver->Nfields = 1;
+      nrs->wSolver->Ntotal = nrs->fieldOffset;
+      nrs->wSolver->o_wrk = o_mempoolElliptic;
+      nrs->wSolver->mesh = mesh;
+      nrs->wSolver->options = nrs->vOptions;
+      nrs->wSolver->dim = nrs->dim;
+      nrs->wSolver->elementType = nrs->elementType;
+      nrs->wSolver->coeffField = velCoeffField;
+      nrs->wSolver->coeffFieldPreco = velCoeffField;
+      nrs->wSolver->o_lambda = nrs->o_ellipticCoeff;
+      nrs->wSolver->loffset = 0;
+      nrs->wSolver->poisson = 0;
+      nrs->wSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
+      for (dlong e = 0; e < mesh->Nelements; e++) {
+        for (int f = 0; f < mesh->Nfaces; f++) {
+          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          nrs->wSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "z-velocity");
+        }
       }
+
+      ellipticSolveSetup(nrs->wSolver);
     }
 
     if(platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
@@ -808,10 +818,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
   if (nrs->flow) {
     if (platform->comm.mpiRank == 0) printf("================ ELLIPTIC SETUP PRESSURE ================\n");
-
-    int* pBCType = (int*) calloc(NBCType, sizeof(int));
-    for (int bID = 1; bID <= nbrBIDs; bID++)
-      pBCType[bID] = bcMap::type(bID, "pressure");
 
     nrs->pOptions = options;
     nrs->pOptions.setArgs("PGMRES RESTART",       options.getArgs("PRESSURE PGMRES RESTART"));
@@ -859,11 +865,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pSolver->mesh = mesh;
     nrs->pSolver->dim = nrs->dim;
     nrs->pSolver->elementType = nrs->elementType;
-    nrs->pSolver->BCType = (int*) calloc(nbrBIDs + 1,sizeof(int));
-    memcpy(nrs->pSolver->BCType,pBCType,(nbrBIDs + 1) * sizeof(int));
 
     int pCoeffField = 0;
-
     if(platform->options.compareArgs("LOWMACH", "TRUE"))
       pCoeffField = 1;
 
@@ -871,14 +874,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pSolver->coeffFieldPreco = pCoeffField;
     nrs->pSolver->poisson = 1;
 
-    // lambda0 = 1/rho
-    // lambda1 = 0
+    // lambda0 = 1/rho  lambda1 = 0
     platform->linAlg->fill(2*nrs->fieldOffset, 0.0, nrs->o_ellipticCoeff);
     nrs->o_ellipticCoeff.copyFrom(nrs->o_rho, nrs->fieldOffset * sizeof(dfloat));
     platform->linAlg->ady(mesh->Nlocal, 1.0, nrs->o_ellipticCoeff);
     nrs->pSolver->o_lambda = nrs->o_ellipticCoeff;
     nrs->pSolver->loffset = 0; // Poisson
-
+    nrs->pSolver->options = nrs->pOptions;
     {
       const std::vector<int> levels = determineMGLevels("pressure");
       nrs->pSolver->nLevels = levels.size();
@@ -886,8 +888,14 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       for(int i = 0; i < nrs->pSolver->nLevels; ++i)
         nrs->pSolver->levels[i] = levels.at(i);
     }
+    nrs->pSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
+    for (dlong e = 0; e < mesh->Nelements; e++) {
+      for (int f = 0; f < mesh->Nfaces; f++) {
+        const int bID = mesh->EToB[e * mesh->Nfaces + f];
+        nrs->pSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "pressure");
+      }
+    }
 
-    nrs->pSolver->options = nrs->pOptions;
     ellipticSolveSetup(nrs->pSolver);
 
   } // flow
@@ -904,18 +912,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       }
 
       if (platform->comm.mpiRank == 0) printf("================ ELLIPTIC SETUP MESH ================\n");
-      int* uvwMeshBCType = (int*) calloc(3 * NBCType, sizeof(int));
-      int* uMeshBCType = uvwMeshBCType + 0 * NBCType;
-      int* vMeshBCType = uvwMeshBCType + 1 * NBCType;
-      int* wMeshBCType = uvwMeshBCType + 2 * NBCType;
 
-      for (int bID = 1; bID <= nbrBIDs; bID++) {
+      for (int bID = 1; bID <= bcMap::size(0); bID++) {
         std::string bcTypeText(bcMap::text(bID, "mesh"));
         if(platform->comm.mpiRank == 0) printf("bID %d -> bcType %s\n", bID, bcTypeText.c_str());
-
-        uMeshBCType[bID] = bcMap::type(bID, "x-mesh");
-        vMeshBCType[bID] = bcMap::type(bID, "y-mesh");
-        wMeshBCType[bID] = bcMap::type(bID, "z-mesh");
       }
 
       const int meshCoeffField = platform->options.compareArgs("MESH COEFF FIELD", "TRUE");
@@ -932,14 +932,26 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->meshSolver->options = nrs->mOptions;
       nrs->meshSolver->dim = nrs->dim;
       nrs->meshSolver->elementType = nrs->elementType;
-      nrs->meshSolver->NBCType = NBCType;
-      nrs->meshSolver->BCType = (int*) calloc(nrs->NVfields * NBCType,sizeof(int));
-      memcpy(nrs->meshSolver->BCType,uvwMeshBCType,nrs->NVfields * NBCType * sizeof(int));
       nrs->meshSolver->coeffField = meshCoeffField;
       nrs->meshSolver->coeffFieldPreco = meshCoeffField;
       nrs->meshSolver->o_lambda = nrs->o_ellipticCoeff;
       nrs->meshSolver->loffset = 0; // use same ellipticCoeff for u,v and w
       nrs->meshSolver->poisson = 0;
+
+      nrs->meshSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields,sizeof(int));
+      for(int fld = 0; fld < nrs->meshSolver->Nfields; fld++) {
+        for (dlong e = 0; e < mesh->Nelements; e++) {
+          for (int f = 0; f < mesh->Nfaces; f++) {
+            const int offset = fld * mesh->Nelements * mesh->Nfaces;
+            const int bID = mesh->EToB[e * mesh->Nfaces + f];
+            std::string key;
+            if(fld == 0) key = "x-mesh";
+            if(fld == 1) key = "y-mesh";
+            if(fld == 2) key = "z-mesh";
+            nrs->meshSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::type(bID, key);
+          }
+        }
+      }
 
       ellipticSolveSetup(nrs->meshSolver);
     }

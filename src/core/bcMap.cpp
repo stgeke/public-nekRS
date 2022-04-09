@@ -52,7 +52,7 @@ static std::set<std::string> fields;
 // stores for every (field, boundaryID) pair a bcID
 static std::map<std::pair<std::string, int>, int> bToBc;
 static int nbid[] = {0, 0};
-static bool useNek5000StyleBCs = true;
+static bool importFromNek = true;
 
 static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
@@ -99,8 +99,8 @@ static void s_setup(std::string s);
 
 static void v_setup(std::string field, std::vector<std::string> slist)
 {
-  for(int i = 0; i < slist.size(); i++) {
-    std::string key = slist[i];
+  for(int bid = 0; bid < slist.size(); bid++) {
+    std::string key = slist[bid];
     if (key.compare("p") == 0) key = "periodic";
     if (key.compare("w") == 0) key = "zerovalue";
     if (key.compare("wall") == 0) key = "zerovalue";
@@ -126,22 +126,14 @@ static void v_setup(std::string field, std::vector<std::string> slist)
       ABORT(1);
     }
 
-    try
-    {
-      bToBc[make_pair(field, i)] = vBcTextToID.at(key);
-    }
-    catch (const std::out_of_range& oor)
-    {
-      std::cout << "Out of Range error: " << oor.what() << "!\n";
-      ABORT(1);
-    }
+    bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
 }
 
 static void s_setup(std::string field, std::vector<std::string> slist)
 {
-  for(int i = 0; i < slist.size(); i++) {
-    std::string key = slist[i];
+  for(int bid = 0; bid < slist.size(); bid++) {
+    std::string key = slist[bid];
     if (key.compare("p") == 0) key = "periodic";
     if (key.compare("t") == 0) key = "fixedvalue";
     if (key.compare("inlet") == 0) key = "fixedvalue";
@@ -159,25 +151,24 @@ static void s_setup(std::string field, std::vector<std::string> slist)
       ABORT(1);
     }
 
-    try
-    {
-      bToBc[make_pair(field, i)] = sBcTextToID.at(key);
-    }
-    catch (const std::out_of_range& oor)
-    {
-      std::cout << "Out of Range error: " << oor.what() << "!\n";
-      ABORT(1);
-    }
+    bToBc[make_pair(field, bid)] = sBcTextToID.at(key);
   }
 }
 
 namespace bcMap
 {
+bool useNekBCs()
+{
+  return importFromNek;
+}
+
 void setup(std::vector<std::string> slist, std::string field)
 {
-  if (slist.size() == 0 || slist[0].compare("none") == 0) return;
+  if (slist.size() == 0) return;
 
-  useNek5000StyleBCs = false;
+  importFromNek = false;
+
+  if (slist[0].compare("none") == 0) return;
 
   fields.insert(field);
 
@@ -204,8 +195,8 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
 
   fields.insert(field);
 
-  for(int i = 0; i < velocityBCs.size(); i++) {
-    std::string key = velocityBCs[i];
+  for(int bid = 0; bid < velocityBCs.size(); bid++) {
+    std::string key = velocityBCs[bid];
     if (key.compare("p") == 0) key = "periodic";
     if (key.compare("w") == 0) key = "zerovalue";
     if (key.compare("wall") == 0) key = "zerovalue";
@@ -233,25 +224,25 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
       ABORT(1);
     }
 
-    try
-    {
-      bToBc[make_pair(field, i)] = vBcTextToID.at(key);
-    }
-    catch (const std::out_of_range& oor)
-    {
-      std::cout << "Out of Range error: " << oor.what() << "!\n";
-      ABORT(1);
-    }
+    bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
 
 }
 
+// return boundary type id for a given boundary id
 int id(int bid, std::string field)
 {
   if (bid < 1)
     return NO_OP;
 
-  return bToBc[{field, bid - 1}];
+  try
+  {
+    return bToBc.at({field, bid - 1});
+  }  
+  catch (const std::out_of_range& oor)
+  {
+    return NO_OP;
+  }
 }
 
 int type(int bid, std::string field)
@@ -259,154 +250,160 @@ int type(int bid, std::string field)
   if (bid < 1)
     return NO_OP;
 
-  int bcType = -1;
+  //printf("%d %s\n", bid, field.c_str());
 
-  if (field.compare("x-velocity") == 0) {
-    const int bcID = bToBc[{"velocity", bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2) bcType = DIRICHLET;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 4) bcType = DIRICHLET;
-    if (bcID == 5)
-      bcType = NEUMANN;
-    if (bcID == 6)
-      bcType = NEUMANN;
-    if (bcID == 7)
-      bcType = ZERO_NORMAL;
-    if (bcID == 8)
-      bcType = ZERO_NORMAL;
-    if (bcID == 2) oudfFindDirichlet(field);
-  } else if (field.compare("y-velocity") == 0) {
-    const int bcID = bToBc[{"velocity", bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2) bcType = DIRICHLET;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 4)
-      bcType = NEUMANN;
-    if (bcID == 5) bcType = DIRICHLET;
-    if (bcID == 6)
-      bcType = NEUMANN;
-    if (bcID == 7)
-      bcType = ZERO_NORMAL;
-    if (bcID == 8)
-      bcType = ZERO_NORMAL;
-    if (bcID == 2) oudfFindDirichlet(field);
-  } else if (field.compare("z-velocity") == 0) {
-    const int bcID = bToBc[{"velocity", bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2) bcType = DIRICHLET;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 4)
-      bcType = NEUMANN;
-    if (bcID == 5)
-      bcType = NEUMANN;
-    if (bcID == 6) bcType = DIRICHLET;
-    if (bcID == 7)
-      bcType = ZERO_NORMAL;
-    if (bcID == 8)
-      bcType = ZERO_NORMAL;
-    if (bcID == 2) oudfFindDirichlet(field);
-  } else if (field.compare("x-mesh") == 0) {
-    const int bcID = bToBc[{"mesh", bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2) bcType = DIRICHLET;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 4) bcType = DIRICHLET;
-    if (bcID == 5)
-      bcType = NEUMANN;
-    if (bcID == 6)
-      bcType = NEUMANN;
-    if (bcID == 7)
-      bcType = ZERO_NORMAL;
-    if (bcID == 8)
-      bcType = ZERO_NORMAL;
-    if (bcID == 2) oudfFindDirichlet(field);
-  } else if (field.compare("y-mesh") == 0) {
-    const int bcID = bToBc[{"mesh", bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2) bcType = DIRICHLET;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 4)
-      bcType = NEUMANN;
-    if (bcID == 5) bcType = DIRICHLET;
-    if (bcID == 6)
-      bcType = NEUMANN;
-    if (bcID == 7)
-      bcType = ZERO_NORMAL;
-    if (bcID == 8)
-      bcType = ZERO_NORMAL;
-    if (bcID == 2) oudfFindDirichlet(field);
-  } else if (field.compare("z-mesh") == 0) {
-    const int bcID = bToBc[{"mesh", bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2) bcType = DIRICHLET;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 4)
-      bcType = NEUMANN;
-    if (bcID == 5)
-      bcType = NEUMANN;
-    if (bcID == 6) bcType = DIRICHLET;
-    if (bcID == 7)
-      bcType = ZERO_NORMAL;
-    if (bcID == 8)
-      bcType = ZERO_NORMAL;
-    if (bcID == 2) oudfFindDirichlet(field);
-  } else if (field.compare("pressure") == 0) {
-    const int bcID = bToBc[{"velocity", bid - 1}];
-    if (bcID == 1)
-      bcType = NEUMANN;
-    if (bcID == 2)
-      bcType = NEUMANN;
-    if (bcID == 3) bcType = DIRICHLET;
-    if (bcID == 4)
-      bcType = NEUMANN;
-    if (bcID == 5)
-      bcType = NEUMANN;
-    if (bcID == 6)
-      bcType = NEUMANN;
-    if (bcID == 7)
-      bcType = NEUMANN;
-    if (bcID == 8)
-      bcType = NEUMANN;
-    if (bcID == 3) oudfFindDirichlet(field);
-  } else if (field.compare(0, 6, "scalar") == 0) {
-    const int bcID = bToBc[{field, bid - 1}];
-    if (bcID == 1) bcType = DIRICHLET;
-    if (bcID == 2)
-      bcType = NEUMANN;
-    if (bcID == 3)
-      bcType = NEUMANN;
-    if (bcID == 1) oudfFindDirichlet(field);
-    if (bcID == 3) oudfFindNeumann(field);
+  try
+  {
+    int bcType;
+    if (field.compare("x-velocity") == 0) {
+      const int bcID = bToBc.at({"velocity", bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = NEUMANN;
+      if (bcID == 4) bcType = DIRICHLET;
+      if (bcID == 5)
+        bcType = NEUMANN;
+      if (bcID == 6)
+        bcType = NEUMANN;
+      if (bcID == 7)
+        bcType = ZERO_NORMAL;
+      if (bcID == 8)
+        bcType = ZERO_NORMAL;
+    } else if (field.compare("y-velocity") == 0) {
+      const int bcID = bToBc.at({"velocity", bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = NEUMANN;
+      if (bcID == 4)
+        bcType = NEUMANN;
+      if (bcID == 5) bcType = DIRICHLET;
+      if (bcID == 6)
+        bcType = NEUMANN;
+      if (bcID == 7)
+        bcType = ZERO_NORMAL;
+      if (bcID == 8)
+        bcType = ZERO_NORMAL;
+    } else if (field.compare("z-velocity") == 0) {
+      const int bcID = bToBc.at({"velocity", bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = NEUMANN;
+      if (bcID == 4)
+        bcType = NEUMANN;
+      if (bcID == 5)
+        bcType = NEUMANN;
+      if (bcID == 6) bcType = DIRICHLET;
+      if (bcID == 7)
+        bcType = ZERO_NORMAL;
+      if (bcID == 8)
+        bcType = ZERO_NORMAL;
+    } else if (field.compare("x-mesh") == 0) {
+      const int bcID = bToBc.at({"mesh", bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = NEUMANN;
+      if (bcID == 4) bcType = DIRICHLET;
+      if (bcID == 5)
+        bcType = NEUMANN;
+      if (bcID == 6)
+        bcType = NEUMANN;
+      if (bcID == 7)
+        bcType = ZERO_NORMAL;
+      if (bcID == 8)
+        bcType = ZERO_NORMAL;
+    } else if (field.compare("y-mesh") == 0) {
+      const int bcID = bToBc.at({"mesh", bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = NEUMANN;
+      if (bcID == 4)
+        bcType = NEUMANN;
+      if (bcID == 5) bcType = DIRICHLET;
+      if (bcID == 6)
+        bcType = NEUMANN;
+      if (bcID == 7)
+        bcType = ZERO_NORMAL;
+      if (bcID == 8)
+        bcType = ZERO_NORMAL;
+    } else if (field.compare("z-mesh") == 0) {
+      const int bcID = bToBc.at({"mesh", bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = NEUMANN;
+      if (bcID == 4)
+        bcType = NEUMANN;
+      if (bcID == 5)
+        bcType = NEUMANN;
+      if (bcID == 6) bcType = DIRICHLET;
+      if (bcID == 7)
+        bcType = ZERO_NORMAL;
+      if (bcID == 8)
+        bcType = ZERO_NORMAL;
+    } else if (field.compare("pressure") == 0) {
+      const int bcID = bToBc.at({"velocity", bid - 1});
+      if (bcID == 1)
+        bcType = NEUMANN;
+      if (bcID == 2)
+        bcType = NEUMANN;
+      if (bcID == 3) bcType = DIRICHLET;
+      if (bcID == 4)
+        bcType = NEUMANN;
+      if (bcID == 5)
+        bcType = NEUMANN;
+      if (bcID == 6)
+        bcType = NEUMANN;
+      if (bcID == 7)
+        bcType = NEUMANN;
+      if (bcID == 8)
+        bcType = NEUMANN;
+    } else if (field.compare(0, 6, "scalar") == 0) {
+      const int bcID = bToBc.at({field, bid - 1});
+      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = NEUMANN;
+      if (bcID == 3)
+        bcType = NEUMANN;
+    }
+    return bcType;
+  }  
+  catch (const std::out_of_range& oor)
+  {
+    return NO_OP;
   }
-
-  if(bcType < 0) {
-    std::cout << __func__ << "(): Unexpected error occured!" << std::endl;
-    ABORT(1);
-  }
-
-  return bcType;
 }
 
 std::string text(int bid, std::string field)
 {
   if (bid < 1) return std::string();
 
-  const int bcID = bToBc[{field, bid - 1}];
+  const int bcID = bToBc.at({field, bid - 1});
+
+  if(field.compare("velocity") == 0 && bcID == 2)
+    oudfFindDirichlet(field);
+  if(field.compare("mesh") == 0 && bcID == 2)
+    oudfFindDirichlet(field);
+  if(field.compare("pressure") == 0 && bcID == 3)
+    oudfFindDirichlet(field);
+  if(field.compare(0, 6, "scalar") == 0 && bcID == 1)
+    oudfFindDirichlet(field);
+
+  if(field.compare("velocity") == 0 && bcID == 8)
+    oudfFindNeumann(field);
+  if(field.compare("mesh") == 0 && bcID == 8)
+    oudfFindNeumann(field);
+  if(field.compare(0, 6, "scalar") == 0 && bcID == 3)
+    oudfFindNeumann(field);
+
   if (field.compare("velocity") == 0 || field.compare("mesh") == 0)
-
     return vBcIDToText[bcID];
-
   else if (field.compare(0, 6, "scalar") == 0)
-
     return sBcIDToText[bcID];
-
 
   std::cout << __func__ << "(): Unexpected error occured!" << std::endl;
   ABORT(1);
@@ -420,7 +417,7 @@ int size(int isTmesh)
 
 bool useDerivedMeshBoundaryConditions()
 {
-  if(useNek5000StyleBCs){
+  if(importFromNek){
     return true;
   } else {
     return meshConditionsDerived;
@@ -436,24 +433,6 @@ void check(mesh_t* mesh)
 
   int err = 0;
   int found = 0;
-
-  int minEToB = std::numeric_limits<int>::max();
-  int maxEToB = std::numeric_limits<int>::min(); 
-  for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {
-    if(mesh->EToB[f] > -1) {
-      minEToB = std::min(mesh->EToB[f], minEToB);
-      maxEToB = std::max(mesh->EToB[f], maxEToB);
-    }
-  }
-  MPI_Allreduce(MPI_IN_PLACE, &minEToB, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
-  MPI_Allreduce(MPI_IN_PLACE, &maxEToB, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
-  if (maxEToB - minEToB != nid - 1) {
-    err++;
-    if (platform->comm.mpiRank == 0) {
-      printf("boundary IDs are not one-based or contiguous!\n");
-    }
-  }
-  if (err) EXIT_AND_FINALIZE(EXIT_FAILURE);
 
   for (int id = 1; id <= nid; id++) {
     found = 0;
@@ -471,8 +450,10 @@ void check(mesh_t* mesh)
   if (err) EXIT_AND_FINALIZE(EXIT_FAILURE);
 
   found = 0;
-  for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++)
-    if (mesh->EToB[f] < -1 || mesh->EToB[f] == 0 || mesh->EToB[f] > nid) found = 1;
+  for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {
+    if (mesh->EToB[f] < -1 || mesh->EToB[f] == 0 || mesh->EToB[f] > nid) 
+     found = 1;
+  }  
   MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
   if (found) {
     if (platform->comm.mpiRank == 0) printf("WARNING: Mesh has unmapped boundary IDs!\n");
@@ -488,15 +469,7 @@ void setBcMap(std::string field, int* map, int nIDs)
   else
     nbid[0] = nIDs;
 
-  try
-  {
-    for(int i = 0; i < nIDs; i++) bToBc[make_pair(field, i)] = map[i];
-  }
-  catch (const std::out_of_range& oor)
-  {
-    std::cout << "Out of Range error: " << oor.what() << "!\n";
-    ABORT(1);
-  }
+  for(int i = 0; i < nIDs; i++) bToBc[make_pair(field, i)] = map[i];
 }
 namespace {
 void checkOpposingFaces(mesh_t *mesh)
@@ -719,7 +692,7 @@ void remapUnalignedBoundaries(mesh_t *mesh)
           break;
         }
 
-        bToBc[{field, bid - 1}] = newBcType;
+        bToBc.at({field, bid - 1}) = newBcType;
       }
     }
   }

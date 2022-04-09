@@ -17,8 +17,7 @@ void applyMask(elliptic_t *solver, occa::memory &o_x, std::string precision)
                       o_elemList,
                       mesh->o_sgeo,
                       mesh->o_vmapM,
-                      mesh->o_EToB,
-                      solver->o_BCType,
+                      solver->o_EToB,
                       o_x);
     }
 
@@ -30,8 +29,7 @@ void applyMask(elliptic_t *solver, occa::memory &o_x, std::string precision)
                       o_elemList,
                       mesh->o_sgeo,
                       mesh->o_vmapM,
-                      mesh->o_EToB,
-                      solver->o_BCType,
+                      solver->o_EToB,
                       o_x);
     }
   }
@@ -58,8 +56,7 @@ void applyMaskInterior(elliptic_t *solver, occa::memory &o_x, std::string precis
                       o_elemList,
                       mesh->o_sgeo,
                       mesh->o_vmapM,
-                      mesh->o_EToB,
-                      solver->o_BCType,
+                      solver->o_EToB,
                       o_x);
     }
   }
@@ -90,8 +87,7 @@ void applyMaskExterior(elliptic_t *solver, occa::memory &o_x, std::string precis
                       o_elemList,
                       mesh->o_sgeo,
                       mesh->o_vmapM,
-                      mesh->o_EToB,
-                      solver->o_BCType,
+                      solver->o_EToB,
                       o_x);
     }
   }

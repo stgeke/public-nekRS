@@ -656,11 +656,8 @@ int setup(nrs_t* nrs_in)
   options->getArgs("MESH CONNECTIVITY TOL", meshConTol);
 
   int nBcRead = 1;
-  int bcInPar = 1;
-  if(bcMap::size(0) == 0 && bcMap::size(1) == 0) {
-    bcInPar = 0;
+  if(bcMap::useNekBCs())
     nBcRead = flow + nscal;
-  }
 
   dfloat rho;
   options->getArgs("DENSITY", rho);
@@ -744,8 +741,9 @@ int setup(nrs_t* nrs_in)
   int cht = 0;
   if (nekData.nelv != nekData.nelt && nscal) cht = 1;
 
-  // import BCs from nek if not specified in par
-  if(!bcInPar) {
+  if(bcMap::useNekBCs()) {
+    if(rank == 0)
+      printf("import BCs from nek\n");
     gen_bcmap();
     if(flow) {
       int isTMesh = 0;

@@ -5,8 +5,7 @@ void ellipticOgs(mesh_t *mesh,
                  dlong mNlocal,
                  int nFields,
                  dlong offset,
-                 int *BCType,
-                 int BCTypeOffset,
+                 int *EToB,
                  bool &UNormalZero,
                  dlong &Nmasked,
                  occa::memory &o_maskIds,
@@ -14,7 +13,6 @@ void ellipticOgs(mesh_t *mesh,
                  occa::memory &o_maskIdsLocal,
                  dlong &NmaskedGlobal,
                  occa::memory &o_maskIdsGlobal,
-                 occa::memory &o_BCType,
                  ogs_t **ogs)
 {
   UNormalZero = false;
@@ -27,13 +25,12 @@ void ellipticOgs(mesh_t *mesh,
       for (int n = 0; n < mesh->Np; n++)
         mapB[n + e * mesh->Np + fld * offset] = largeNumber;
       for (int f = 0; f < mesh->Nfaces; f++) {
-        int bc = mesh->EToB[f + e * mesh->Nfaces];
+        int bc = EToB[f + e * mesh->Nfaces];
         if (bc > 0) {
-          int BCFlag = BCType[bc + BCTypeOffset * fld];
           for (int n = 0; n < mesh->Nfp; n++) {
             int fid = mesh->faceNodes[n + f * mesh->Nfp];
             mapB[fid + e * mesh->Np + fld * offset] =
-              mymin(BCFlag, mapB[fid + e * mesh->Np + fld * offset]);
+              mymin(bc, mapB[fid + e * mesh->Np + fld * offset]);
           }
         }
       }
@@ -141,6 +138,4 @@ void ellipticOgs(mesh_t *mesh,
     free(maskedGlobalIds);
   }
   free(maskIds);
-
-  o_BCType = platform->device.malloc(BCTypeOffset * nFields * sizeof(int), BCType);
 }

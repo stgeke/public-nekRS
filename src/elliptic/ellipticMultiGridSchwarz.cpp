@@ -252,7 +252,7 @@ void compute_element_boundary_conditions(int* lbr,
   for(int iface = 0; iface < 6; ++iface) {
     const int id = lookup[iface];
     int bc = elliptic->EToB[6 * e + id];
-    assert(bc > -1 && bc < 3);
+    assert(bc == NO_OP || DIRICHLET || NEUMANN);
     fbc[iface] = bc;
   }
   *lbr = fbc[0];
@@ -650,21 +650,22 @@ mesh_t* create_extended_mesh(elliptic_t* elliptic, hlong* maskedGlobalIds)
 
   const int bigNum = 1E9;
   dlong Ntotal = mesh->Np * mesh->Nelements;
+
   //make a node-wise bc flag using the gsop (prioritize Dirichlet boundaries over Neumann)
   int* mapB = (int*) calloc(mesh->Nelements * mesh->Np,sizeof(int));
   for (dlong e = 0; e < mesh->Nelements; e++) {
     for (int n = 0; n < mesh->Np; n++) mapB[n + e * mesh->Np] = bigNum;
     for (int f = 0; f < mesh->Nfaces; f++) {
-      const int bc = mesh->EToB[f + e * mesh->Nfaces];
+      const int bc = elliptic->EToB[f + e * mesh->Nfaces];
       if (bc > 0) {
         for (int n = 0; n < mesh->Nfp; n++) {
-          const int BCFlag = elliptic->BCType[bc];
           const int fid = mesh->faceNodes[n + f * mesh->Nfp];
-          mapB[fid + e * mesh->Np] = mymin(BCFlag,mapB[fid + e * mesh->Np]);
+          mapB[fid + e * mesh->Np] = mymin(bc, mapB[fid + e * mesh->Np]);
         }
       }
     }
   }
+
   ogsGatherScatter(mapB, ogsInt, ogsMin, mesh->ogs);
   //use the bc flags to find masked ids
   dlong Nmasked = 0;
@@ -677,7 +678,7 @@ mesh_t* create_extended_mesh(elliptic_t* elliptic, hlong* maskedGlobalIds)
       Nmasked++;
     else if (mapB[n] == bigNum)
       mapB[n] = 0.;
-    else if (mapB[n] == 1)     //Dirichlet boundary
+    else if (mapB[n] == DIRICHLET)
       Nmasked++;
   }
   dlong* maskIds = (dlong*) calloc(Nmasked, sizeof(dlong));

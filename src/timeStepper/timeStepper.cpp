@@ -261,8 +261,7 @@ void applyDirichlet(nrs_t *nrs, double time)
                         o_elemList,
                         mesh->o_sgeo,
                         mesh->o_vmapM,
-                        mesh->o_EToB,
-                        solver->o_BCType,
+                        solver->o_EToB,
                         o_x);
       }
 
@@ -274,8 +273,7 @@ void applyDirichlet(nrs_t *nrs, double time)
                         o_elemList,
                         mesh->o_sgeo,
                         mesh->o_vmapM,
-                        mesh->o_EToB,
-                        solver->o_BCType,
+                        solver->o_EToB,
                         o_x);
       }
     }

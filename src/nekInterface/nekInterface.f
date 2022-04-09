@@ -248,19 +248,21 @@ c-----------------------------------------------------------------------
       call mapelpr 
       call read_re2_data(ifbswap, .true., .true., .true.)
 
-      call izero(boundaryID, size(boundaryID))
       ifld_bId = 2
       if(ifflow) ifld_bId = 1
       do iel = 1,nelv
       do ifc = 1,2*ndim
-         boundaryID(ifc,iel) = bc(5,ifc,iel,ifld_bId)
+         boundaryID(ifc,iel) = -1
+         if(bc(5,ifc,iel,ifld_bId).gt.0)
+     $     boundaryID(ifc,iel) = bc(5,ifc,iel,ifld_bId)
       enddo
       enddo
-      call izero(boundaryIDt, size(boundaryIDt))
       if(nelgt.ne.nelgv) then 
         do iel = 1,nelt
         do ifc = 1,2*ndim
-           boundaryIDt(ifc,iel) = bc(5,ifc,iel,2)
+         boundaryIDt(ifc,iel) = -1
+         if(bc(5,ifc,iel,2).gt.0)
+     $     boundaryIDt(ifc,iel) = bc(5,ifc,iel,2)
         enddo
         enddo
       endif
@@ -649,22 +651,31 @@ c-----------------------------------------------------------------------
       include 'SIZE'
       include 'TOTAL'
 
-      n = 0
+      common /nekmpi/ mid,mp,nekcomm,nekgroup,nekreal
+
+      integer sum
+      integer*8 bid8(2*ldim*lelt)
+
       if(isTmsh.eq.1) then
-        do iel = 1,nelt
-        do ifc = 1,2*ndim
-           n = max(n,boundaryIDt(ifc,iel))
-        enddo
+        n = 2*ndim*nelt
+        do i = 1,n
+           bid8(i) = boundaryIDt(i,1)
         enddo
       else
-        do iel = 1,nelv
-        do ifc = 1,2*ndim
-           n = max(n,boundaryID(ifc,iel))
-        enddo
+        n = 2*ndim*nelv
+        do i = 1,n
+           bid8(i) = boundaryID(i,1)
         enddo
       endif
 
-      nekf_nbid = iglmax(n,1)
+      call fgslib_gs_unique(bid8, n, nekcomm, np)
+
+      sum = 0 
+      do i = 1,n
+        if(bid8(i).gt.0) sum = sum + 1
+      enddo
+
+      nekf_nbid = iglsum(sum,1)
 
       return
       end
@@ -723,8 +734,8 @@ c
       logical ifalg,ifnorx,ifnory,ifnorz
       character*3 cb 
 
-      call izero(boundaryID, size(boundaryID))
-      call izero(boundaryIDt, size(boundaryIDt))
+      call ifill(boundaryID, -1, size(boundaryID))
+      call ifill(boundaryIDt,-1, size(boundaryIDt))
 
       call izero(map, size(map))
 

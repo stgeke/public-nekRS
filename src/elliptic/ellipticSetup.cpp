@@ -118,11 +118,11 @@ void ellipticSolveSetup(elliptic_t* elliptic)
 
   elliptic->NelementsGlobal = NelementsGlobal;
 
-  elliptic->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces * elliptic->Nfields,sizeof(int));
-  int* allNeumann = (int*)calloc(elliptic->Nfields, sizeof(int));
-
   dfloat* lambda = (dfloat*) calloc(2*elliptic->Ntotal, sizeof(dfloat));
   elliptic->o_lambda.copyTo(lambda, 2*elliptic->Ntotal*sizeof(dfloat));
+
+
+  int* allNeumann = (int*)calloc(elliptic->Nfields, sizeof(int));
   // check based on the coefficient
   for(int fld = 0; fld < elliptic->Nfields; fld++) {
     if(elliptic->coeffField) {
@@ -141,18 +141,20 @@ void ellipticSolveSetup(elliptic_t* elliptic)
 
   free(lambda);
 
-  // check based on BC
-  for(int fld = 0; fld < elliptic->Nfields; fld++)
-    for (dlong e = 0; e < mesh->Nelements; e++)
-      for (int f = 0; f < mesh->Nfaces; f++) {
-        int bc = mesh->EToB[e * mesh->Nfaces + f];
-        if (bc > 0) {
-          int BC = elliptic->BCType[bc + elliptic->NBCType * fld];
-          elliptic->EToB[f + e * mesh->Nfaces + fld * mesh->Nelements * mesh->Nfaces] = BC; //record it
-          if (BC != 2) allNeumann[fld] = 0; //check if its a Dirchlet for each field
-        }
-      }
+  elliptic->o_EToB = 
+    platform->device.malloc(mesh->Nelements * mesh->Nfaces * elliptic->Nfields * sizeof(int), elliptic->EToB);
 
+  // check based on BC
+  for(int fld = 0; fld < elliptic->Nfields; fld++) {
+    for (dlong e = 0; e < mesh->Nelements; e++) {
+      for (int f = 0; f < mesh->Nfaces; f++) {
+        const int offset = fld * mesh->Nelements * mesh->Nfaces;
+        const int bc = elliptic->EToB[f + e * mesh->Nfaces + offset];
+        bool isDirichlet = (bc != NO_OP && bc != NEUMANN);
+        if(isDirichlet) allNeumann[fld] = 0;
+      }
+    }
+  }
   elliptic->allNeumann = 0;
   int* allBlockNeumann = (int*)calloc(elliptic->Nfields, sizeof(int));
   for(int fld = 0; fld < elliptic->Nfields; fld++) {
@@ -160,9 +162,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
     lallNeumann = allNeumann[fld] ? 0:1;
     MPI_Allreduce(&lallNeumann, &gallNeumann, 1, MPI_INT, MPI_SUM, platform->comm.mpiComm);
     allBlockNeumann[fld] = (gallNeumann > 0) ? 0: 1;
-    // even if there is a single allNeumann activate Null space correction
-    if(allBlockNeumann[fld])
-      elliptic->allNeumann = 1;
+    if(allBlockNeumann[fld]) elliptic->allNeumann = 1;
   }
   free(allBlockNeumann);
 
@@ -181,8 +181,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
                 elliptic->Ntotal,
                 elliptic->Nfields,
                 elliptic->Ntotal,
-                elliptic->BCType,
-                elliptic->NBCType,
+                elliptic->EToB,
                 elliptic->UNormalZero,
                 elliptic->Nmasked,
                 elliptic->o_maskIds,
@@ -190,7 +189,6 @@ void ellipticSolveSetup(elliptic_t* elliptic)
                 elliptic->o_maskIdsLocal,
                 elliptic->NmaskedGlobal,
                 elliptic->o_maskIdsGlobal,
-                elliptic->o_BCType,
                 &ogs);
     elliptic->ogs = ogs;
     elliptic->o_invDegree = elliptic->ogs->o_invDegree;

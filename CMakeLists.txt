@@ -198,7 +198,7 @@ set(SRC
     src/regularization/avm.cpp
     src/core/bcMap.cpp
     src/core/compileKernels.cpp
-    src/core/setup.cpp
+    src/setup/setup.cpp
     src/core/alignment.cpp
     src/core/registerNrsKernels.cpp
     src/timeStepper/timeStepper.cpp
@@ -257,6 +257,8 @@ target_compile_definitions(nekrs-lib PUBLIC
 target_include_directories(nekrs-lib 
   PUBLIC 
   ${CMAKE_CURRENT_BINARY_DIR}
+  src
+  src/setup
   src/core
   src/utils
   src/lib
@@ -351,7 +353,7 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/config/install_examples.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/install_examples.cmake @ONLY)
 install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_examples.cmake)
 
-install(FILES src/core/parHelp.txt DESTINATION include)
+install(FILES src/io/parHelp.txt DESTINATION include)
 
 message(NOTICE "")
 message(NOTICE "----------------- Summary -----------------")

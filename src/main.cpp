@@ -434,7 +434,7 @@ int main(int argc, char** argv)
 
   double elapsedTime = timeSetup;
   int lastStep = nekrs::lastStep(time, tStep, elapsedTime);
-  double elapsedTimeSolve = 0;
+  double elapsedStepSum = 0;
 
   if (rank == 0 && !lastStep) {
     if (nekrs::endTime() > nekrs::startTime())
@@ -472,14 +472,16 @@ int main(int argc, char** argv)
     if(tStep % updCheckFreq) nekrs::processUpdFile();
 
     MPI_Barrier(comm);
-    const double elapsedStep = MPI_Wtime() - timeStart;  
-    elapsedTimeSolve += elapsedStep;
-    elapsedTime = timeSetup + elapsedTimeSolve;
+    const double elapsedStep = MPI_Wtime() - timeStart;
+    elapsedStepSum += elapsedStep;
+    elapsedTime += elapsedStep;
+    nekrs::updateTimer("elapsedStep", elapsedStep);
+    nekrs::updateTimer("elapsedStepSum", elapsedStepSum);
 
-    nekrs::printInfo(time, tStep, elapsedStep, elapsedTimeSolve);
+    nekrs::printInfo(time, tStep);
 
     if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep) 
-      nekrs::printRuntimeStatistics(tStep, elapsedTimeSolve);
+      nekrs::printRuntimeStatistics(tStep);
 
     if (tStep % 10 == 0) fflush(stdout);
   }

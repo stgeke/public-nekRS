@@ -265,7 +265,7 @@ void timer_t::printStatEntry(std::string name, double time, double tNorm)
   } 
 }
 
-void timer_t::printRunStat(int step, double tElapsedTimeSolve)
+void timer_t::printRunStat(int step)
 {
   int rank;
   MPI_Comm_rank(comm_, &rank);
@@ -294,8 +294,10 @@ void timer_t::printRunStat(int step, double tElapsedTimeSolve)
 
   if(rank == 0) std::cout <<   "name                    " << "time          " << "   %  " << "calls\n";
 
+  const double tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
   const double tSetup = query("setup", "DEVICE:MAX");
   const double tElapsedTime = tSetup + tElapsedTimeSolve;
+
   printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
   printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);
 

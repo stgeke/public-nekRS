@@ -772,20 +772,19 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
 void parsePreconditioner(const int rank, setupAide &options,
                          inipp::Ini *par, std::string parScope) {
   const std::vector<std::string> validValues = {
-    {"none"},
-    {"jac"},
-    {"semfem"},
-    {"pmg"},
-    {"multigrid"},
-    {"semg"},
-    {"semfem"},
-    {"amgx"},
-    {"fp32"},
-    {"fp64"},
-    {"additive"},
-    {"multiplicative"},
-    {"overlap"},
-    {"coarse"},
+      {"none"},
+      {"jac"},
+      {"semfem"},
+      {"pmg"},
+      {"multigrid"},
+      {"semfem"},
+      {"amgx"},
+      {"fp32"},
+      {"fp64"},
+      {"additive"},
+      {"multiplicative"},
+      {"overlap"},
+      {"coarse"},
   };
 
   std::string parSection =
@@ -836,10 +835,9 @@ void parsePreconditioner(const int rank, setupAide &options,
           append_error(error.str());
       }
     }
-
-  } else if (p_preconditioner.find("semg") != std::string::npos ||
-             p_preconditioner.find("multigrid") != std::string::npos ||
-             p_preconditioner.find("pmg") != std::string::npos) {
+  }
+  else if (p_preconditioner.find("multigrid") != std::string::npos ||
+           p_preconditioner.find("pmg") != std::string::npos) {
     options.setArgs(parSection + " PRECONDITIONER", "MULTIGRID");
     std::string key = "VCYCLE";
     if (p_preconditioner.find("additive") != std::string::npos)

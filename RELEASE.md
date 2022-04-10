@@ -20,6 +20,7 @@
 * [par] Separate details of coarse grid discretization from coarse grid solver
         e.g., `coarseSolver = SEMFEM+AmgX` is replaced by
         `coarseSolver = AmgX` and `coarseGridDiscretization = SEMFEM`
+* [par] Remove `preconditioner=semg` and `preconditioner=semg_amg`
 
 ## Known Bugs / Restrictions
 

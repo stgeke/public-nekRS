@@ -469,6 +469,7 @@ void setBcMap(std::string field, int* map, int nIDs)
   else
     nbid[0] = nIDs;
 
+  fields.insert(field);
   for(int i = 0; i < nIDs; i++) bToBc[make_pair(field, i)] = map[i];
 }
 namespace {
@@ -494,8 +495,9 @@ void checkOpposingFaces(mesh_t *mesh)
         int bc = id(bid, field);
 
         // only applicable for unaligned SYM/SHL boundaries
-        if (bc != 7 || bc != 8)
+        if (bc != 7 && bc != 8)
           continue;
+
         for (int of = 0; of < mesh->Nfaces; of++) {
           if (of == opposing)
             continue;
@@ -503,7 +505,7 @@ void checkOpposingFaces(mesh_t *mesh)
             continue;
           int obid = mesh->EToB[e * mesh->Nfaces + of];
           int obc = id(obid, field);
-          if (obc == bc) {
+          if (obc == 7 || obc == 8) {
             valid[bid - 1] = 0;
             valid[obid - 1] = 0;
             err = 1;
@@ -518,7 +520,8 @@ void checkOpposingFaces(mesh_t *mesh)
       bail = true;
       MPI_Allreduce(MPI_IN_PLACE, valid.data(), nid, MPI_INT, MPI_MIN, platform->comm.mpiComm);
       if (platform->comm.mpiRank == 0) {
-        std::cout << "Encountered shared SYM/SYM edge within an element for field \"" << field << "\".\n";
+        std::cout << "Encountered shared SYM/SYM, SHL/SYM, or SHL/SHL edge within an element for field \""
+                  << field << "\".\n";
         std::cout << "The following boundary IDs are :\n";
         int bid = 1;
         for (auto &&v : valid) {

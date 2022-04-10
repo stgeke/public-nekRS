@@ -359,8 +359,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   int cnt = 0;
   for (int e = 0; e < mesh->Nelements; e++) {
     for (int f = 0; f < mesh->Nfaces; f++) {
-      int bc = bcMap::id(mesh->EToB[f + e * mesh->Nfaces], "velocity");
-      nrs->EToB[cnt] = bc;
+      nrs->EToB[cnt] = bcMap::id(mesh->EToB[f + e * mesh->Nfaces], "velocity");
       cnt++;
     }
   }
@@ -373,7 +372,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     for (int e = 0; e < mesh->Nelements; e++) {
       for (int f = 0; f < mesh->Nfaces; f++) {
         int bc = bcMap::id(mesh->EToB[f + e * mesh->Nfaces], "mesh");
-        nrs->EToBMesh[cnt] = bc;
+        nrs->EToBMesh[cnt] = bcMap::id(mesh->EToB[f + e * mesh->Nfaces], "mesh");
         cnt++;
       }
     }
@@ -613,7 +612,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       cds->solver[is]->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
-          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          const int bID = mesh->EToB[f + e * mesh->Nfaces];
           cds->solver[is]->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "scalar" + sid);
         }
       }
@@ -719,14 +718,14 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uvwSolver->poisson = 0;
       nrs->uvwSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces * nrs->uvwSolver->Nfields,sizeof(int));
       for(int fld = 0; fld < nrs->uvwSolver->Nfields; fld++) {
+        std::string key;
+        if(fld == 0) key = "x-velocity";
+        if(fld == 1) key = "y-velocity";
+        if(fld == 2) key = "z-velocity";
         for (dlong e = 0; e < mesh->Nelements; e++) {
           for (int f = 0; f < mesh->Nfaces; f++) {
             const int offset = fld * mesh->Nelements * mesh->Nfaces;
-            const int bID = mesh->EToB[e * mesh->Nfaces + f];
-            std::string key;
-            if(fld == 0) key = "x-velocity";
-            if(fld == 1) key = "y-velocity";
-            if(fld == 2) key = "z-velocity";
+            const int bID = mesh->EToB[f + e * mesh->Nfaces];
             nrs->uvwSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::type(bID, key);
           }
         }
@@ -751,7 +750,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
-          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          const int bID = mesh->EToB[f + e * mesh->Nfaces];
           nrs->uSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "x-velocity");
         }
       }
@@ -775,7 +774,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->vSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
-          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          const int bID = mesh->EToB[f + e * mesh->Nfaces];
           nrs->vSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "y-velocity");
         }
       }
@@ -799,7 +798,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->wSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
-          const int bID = mesh->EToB[e * mesh->Nfaces + f];
+          const int bID = mesh->EToB[f + e * mesh->Nfaces];
           nrs->wSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "z-velocity");
         }
       }
@@ -891,7 +890,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
     for (dlong e = 0; e < mesh->Nelements; e++) {
       for (int f = 0; f < mesh->Nfaces; f++) {
-        const int bID = mesh->EToB[e * mesh->Nfaces + f];
+        const int bID = mesh->EToB[f + e * mesh->Nfaces];
         nrs->pSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "pressure");
       }
     }
@@ -940,14 +939,14 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
       nrs->meshSolver->EToB = (int*) calloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields,sizeof(int));
       for(int fld = 0; fld < nrs->meshSolver->Nfields; fld++) {
+        std::string key;
+        if(fld == 0) key = "x-mesh";
+        if(fld == 1) key = "y-mesh";
+        if(fld == 2) key = "z-mesh";
         for (dlong e = 0; e < mesh->Nelements; e++) {
           for (int f = 0; f < mesh->Nfaces; f++) {
             const int offset = fld * mesh->Nelements * mesh->Nfaces;
-            const int bID = mesh->EToB[e * mesh->Nfaces + f];
-            std::string key;
-            if(fld == 0) key = "x-mesh";
-            if(fld == 1) key = "y-mesh";
-            if(fld == 2) key = "z-mesh";
+            const int bID = mesh->EToB[f + e * mesh->Nfaces];
             nrs->meshSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::type(bID, key);
           }
         }
@@ -1108,8 +1107,7 @@ cds_t* cdsSetup(nrs_t* nrs, setupAide options)
     int cnt = 0;
     for (int e = 0; e < mesh->Nelements; e++) {
       for (int f = 0; f < mesh->Nfaces; f++) {
-        int bc = bcMap::id(mesh->EToB[f + e * mesh->Nfaces], "scalar" + sid);
-        EToB[cnt] = bc;
+        EToB[cnt] = bcMap::id(mesh->EToB[f + e * mesh->Nfaces], "scalar" + sid); 
         cnt++;
       }
     }

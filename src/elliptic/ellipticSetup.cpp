@@ -166,7 +166,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   }
   free(allBlockNeumann);
 
-  if(platform->comm.mpiRank == 0)
+  if(platform->comm.mpiRank == 0 && elliptic->allNeumann)
     printf("allNeumann = %d \n", elliptic->allNeumann);
 
   if(mesh->ogs == NULL) {
@@ -180,7 +180,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
     ellipticOgs(mesh,
                 elliptic->Ntotal,
                 elliptic->Nfields,
-                elliptic->Ntotal,
+                /* offset */ elliptic->Ntotal,
                 elliptic->EToB,
                 elliptic->UNormalZero,
                 elliptic->Nmasked,

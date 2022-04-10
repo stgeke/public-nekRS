@@ -1020,7 +1020,6 @@ cds_t* cdsSetup(nrs_t* nrs, setupAide options)
   }
 
   cds->dt  = nrs->dt;
-  cds->sdt = nrs->sdt;
 
   cds->prop = (dfloat*) calloc(2 * cds->fieldOffsetSum,sizeof(dfloat));
 

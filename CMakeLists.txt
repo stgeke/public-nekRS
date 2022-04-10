@@ -193,7 +193,7 @@ set(SRC
     src/utils/setupAide.cpp
     src/core/numberActiveFields.cpp
     src/core/printHeader.cpp
-    src/navierStokes/cfl.cpp
+    src/timeStepper/cfl.cpp
     src/regularization/filter.cpp
     src/regularization/avm.cpp
     src/core/bcMap.cpp

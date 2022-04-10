@@ -39,49 +39,36 @@ struct nrs_t
   dlong ellipticWrkOffset;
 
   int flow;
-
+  int cht;
   int Nscalar;
+  int NVfields, NTfields;
   dlong fieldOffset;
   dlong cubatureOffset;
   setupAide vOptions, pOptions, mOptions;
 
-  int NVfields, NTfields;
-
   int converged;
 
   dfloat dt[3], idt;
-  dfloat p0th[3] = {0.0, 0.0, 0.0};
-  dfloat CFL;
-  dfloat unitTimeCFL;
-
-  dfloat dp0thdt;
-  int lastStep;
   dfloat g0, ig0;
+  dfloat CFL, unitTimeCFL;
 
-  int cht;
+  dfloat p0th[3] = {0.0, 0.0, 0.0};
+  dfloat dp0thdt;
 
   int nEXT;
   int nBDF;
+  int lastStep;
   int isOutputStep;
   int outputForceStep;
 
-  dfloat* U, * P;
-  dfloat* BF, * FU;
-
-  //RK Subcycle Data
-  int nRK;
+  int nRK, Nsubsteps;
   dfloat* coeffsfRK, * weightsRK, * nodesRK;
   occa::memory o_coeffsfRK, o_weightsRK;
 
-  //ARK data
-  int Nrk;
-  dfloat* rkC;
+  dfloat* U, * P;
+  occa::memory o_U, o_P;
 
-  //EXTBDF data
-  dfloat* coeffEXT, * coeffBDF, * coeffSubEXT;
-
-  int Nsubsteps;
-  dfloat* Ue, sdt;
+  dfloat* Ue;
   occa::memory o_Ue;
 
   dfloat* div;
@@ -94,51 +81,56 @@ struct nrs_t
   dfloat* usrwrk;
   occa::memory o_usrwrk;
 
-  occa::memory o_idH; // i.e. inverse of 1D Gll Spacing for quad and Hex
+  occa::memory o_idH;
 
-  int filterNc; // filter cut modes i.e. below is not touched
-  dfloat* filterM, filterS;
-  occa::memory o_filterMT; // transpose of filter matrix
-  occa::kernel filterRTKernel; // Relaxation-Term based filtering
-  occa::kernel advectMeshVelocityKernel;
-
-  occa::kernel pressureAddQtlKernel;
-  occa::kernel pressureStressKernel;
-
-  occa::kernel subCycleVolumeKernel,  subCycleCubatureVolumeKernel;
-  occa::kernel subCycleSurfaceKernel, subCycleCubatureSurfaceKernel;
-  occa::kernel subCycleRKUpdateKernel;
-  occa::kernel extrapolateKernel;
-  occa::kernel subCycleRKKernel;
-  occa::kernel subCycleInitU0Kernel;
-  occa::kernel nStagesSum3Kernel;
-
-  occa::kernel wgradientVolumeKernel;
-
-  occa::kernel subCycleStrongCubatureVolumeKernel;
-  occa::kernel subCycleStrongVolumeKernel;
-
-  occa::kernel computeFaceCentroidKernel;
-  occa::kernel computeFieldDotNormalKernel;
-
-  occa::memory o_U, o_P;
-
-  occa::memory o_Uc, o_Pc;
-  occa::memory o_prevProp;
-
-  occa::memory o_relUrst;
-  occa::memory o_Urst;
-  occa::kernel UrstCubatureKernel;
-  occa::kernel UrstKernel;
-
+  dfloat* BF, * FU;
   occa::memory o_BF;
   occa::memory o_FU;
 
   dfloat* prop;
   occa::memory o_prop, o_ellipticCoeff;
 
-  //EXTBDF data
+  dfloat* coeffEXT, * coeffBDF, * coeffSubEXT;
   occa::memory o_coeffEXT, o_coeffBDF, o_coeffSubEXT;
+
+  int* EToB;
+  int* EToBMesh;
+  occa::memory o_EToB;
+  occa::memory o_EToBMesh;
+
+  occa::memory o_Uc, o_Pc;
+  occa::memory o_prevProp;
+
+  occa::memory o_relUrst;
+  occa::memory o_Urst;
+
+  occa::properties *kernelInfo;
+
+  int filterNc;
+  dfloat* filterM, filterS;
+  occa::memory o_filterMT;
+
+  occa::kernel filterRTKernel;
+  occa::kernel advectMeshVelocityKernel;
+  occa::kernel pressureAddQtlKernel;
+  occa::kernel pressureStressKernel;
+  occa::kernel extrapolateKernel;
+  occa::kernel subCycleRKKernel;
+  occa::kernel subCycleInitU0Kernel;
+  occa::kernel nStagesSum3Kernel;
+  occa::kernel wgradientVolumeKernel;
+
+  occa::kernel subCycleVolumeKernel,  subCycleCubatureVolumeKernel;
+  occa::kernel subCycleSurfaceKernel, subCycleCubatureSurfaceKernel;
+  occa::kernel subCycleRKUpdateKernel;
+  occa::kernel subCycleStrongCubatureVolumeKernel;
+  occa::kernel subCycleStrongVolumeKernel;
+
+  occa::kernel computeFaceCentroidKernel;
+  occa::kernel computeFieldDotNormalKernel;
+
+  occa::kernel UrstCubatureKernel;
+  occa::kernel UrstKernel;
 
   occa::kernel advectionVolumeKernel;
   occa::kernel advectionCubatureVolumeKernel;
@@ -169,13 +161,6 @@ struct nrs_t
   occa::kernel curlKernel;
   occa::kernel maskCopyKernel;
   occa::kernel maskKernel;
-
-  int* EToB;
-  int* EToBMesh;
-  occa::memory o_EToB;
-  occa::memory o_EToBMesh;
-
-  occa::properties *kernelInfo;
 };
 
 

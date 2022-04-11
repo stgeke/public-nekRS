@@ -118,8 +118,6 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
 
   if(debug) platform->options.setArgs("VERBOSE","TRUE");
 
-  platform->timer.tic("setup", 1);
-
   int buildRank = rank;
   const bool buildNodeLocal = useNodeLocalCache();
   if(buildNodeLocal)
@@ -180,16 +178,13 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
 
   nrsSetup(comm, options, nrs);
 
-  platform->timer.toc("setup");
   const double setupTime = platform->timer.query("setup", "DEVICE:MAX");
   if(rank == 0) {
     std::cout << "\nsettings:\n" << std::endl << options << std::endl;
     std::cout << "occa memory usage: " << platform->device.occaDevice().memoryAllocated()/1e9 << " GB" << std::endl;
-    std::cout << "initialization took " << setupTime << " s" << std::endl;
   }
   fflush(stdout);
 
-  platform->timer.set("setup", setupTime);
   platform->flopCounter->clear();
 }
 

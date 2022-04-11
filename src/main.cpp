@@ -75,6 +75,7 @@
 #include <algorithm>
 #include <sstream>
 #include <fcntl.h>
+#include <chrono>
 
 #include "nekrs.hpp"
 
@@ -345,6 +346,7 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
 
 int main(int argc, char** argv)
 {
+  const auto timeStart = std::chrono::high_resolution_clock::now();
   {
     int request = MPI_THREAD_SINGLE;
     const char* env_val = std::getenv ("NEKRS_MPI_THREAD_MULTIPLE");
@@ -429,10 +431,17 @@ int main(int argc, char** argv)
 
   nekrs::udfExecuteStep(time, tStep, /* outputStep */ 0);
 
-  MPI_Barrier(comm);
-  const double timeSetup = MPI_Wtime() - time0;
+  double elapsedTime = 0;
+  {
+    MPI_Barrier(comm);
+    const auto timeStop = std::chrono::high_resolution_clock::now();
+    elapsedTime += std::chrono::duration<double, std::milli>(timeStop - timeStart).count()/1e3;
+    MPI_Allreduce(MPI_IN_PLACE, &elapsedTime, 1, MPI_DOUBLE, MPI_MAX, comm);
+    nekrs::updateTimer("setup", elapsedTime);
+    if (rank == 0)
+      std::cout << "initialization took " << elapsedTime << " s" << std::endl;
+  }
 
-  double elapsedTime = timeSetup;
   int lastStep = nekrs::lastStep(time, tStep, elapsedTime);
   double elapsedStepSum = 0;
 
@@ -442,10 +451,12 @@ int main(int argc, char** argv)
     else
       std::cout << "\ntimestepping for " << nekrs::numSteps() << " steps ...\n";
   }
+
+  fflush(stdout);
   MPI_Pcontrol(1);
   while (!lastStep) {
     MPI_Barrier(comm);
-    const double timeStart = MPI_Wtime();
+    const double timeStartStep = MPI_Wtime();
 
     ++tStep;
     lastStep = nekrs::lastStep(time, tStep, elapsedTime);
@@ -472,11 +483,12 @@ int main(int argc, char** argv)
     if(tStep % updCheckFreq) nekrs::processUpdFile();
 
     MPI_Barrier(comm);
-    const double elapsedStep = MPI_Wtime() - timeStart;
+    const double elapsedStep = MPI_Wtime() - timeStartStep;
     elapsedStepSum += elapsedStep;
     elapsedTime += elapsedStep;
     nekrs::updateTimer("elapsedStep", elapsedStep);
     nekrs::updateTimer("elapsedStepSum", elapsedStepSum);
+    nekrs::updateTimer("elapsed", elapsedTime);
 
     nekrs::printInfo(time, tStep);
 
@@ -487,15 +499,13 @@ int main(int argc, char** argv)
   }
   MPI_Pcontrol(0);
 
-  if (rank == 0) {
-    std::cout << "elapsedTime: " << elapsedTime << " s\n";
-    std::cout << "End\n";
-  }
-  fflush(stdout);
-
   nekrs::finalize();
 
   MPI_Barrier(commGlobal);
+  if (rank == 0)
+    std::cout << "End\n";
+
   MPI_Finalize();
+
   return EXIT_SUCCESS;
 }

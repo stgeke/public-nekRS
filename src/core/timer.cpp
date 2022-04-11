@@ -286,7 +286,11 @@ void timer_t::printRunStat(int step)
   double gsTime = ogsTime(/* reportHostTime */ true);
   MPI_Allreduce(MPI_IN_PLACE, &gsTime, 1, MPI_DOUBLE, MPI_MAX, comm_);
 
-  if(rank == 0) std::cout << "\n>>> runtime statistics (step = " << step << "):\n";
+  const double tElapsedTime = query("elapsed", "DEVICE:MAX");
+
+  if(rank == 0) std::cout << "\n>>> runtime statistics (step= " << step 
+                          << "  elapsed= " << tElapsedTime << "s"
+                          << "):\n";
 
   std::cout.setf(std::ios::scientific);
   int outPrecisionSave = std::cout.precision();
@@ -296,7 +300,6 @@ void timer_t::printRunStat(int step)
 
   const double tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
   const double tSetup = query("setup", "DEVICE:MAX");
-  const double tElapsedTime = tSetup + tElapsedTimeSolve;
 
   printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
   printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);

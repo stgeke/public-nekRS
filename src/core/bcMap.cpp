@@ -401,9 +401,9 @@ std::string text(int bid, std::string field)
     oudfFindNeumann(field);
 
   if (field.compare("velocity") == 0 || field.compare("mesh") == 0)
-    return vBcIDToText[bcID];
+    return vBcIDToText.at(bcID);
   else if (field.compare(0, 6, "scalar") == 0)
-    return sBcIDToText[bcID];
+    return sBcIDToText.at(bcID);
 
   std::cout << __func__ << "(): Unexpected error occured!" << std::endl;
   ABORT(1);

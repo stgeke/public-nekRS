@@ -638,6 +638,8 @@ int setup(nrs_t* nrs_in)
   nrs = nrs_in;
   MPI_Comm_rank(platform->comm.mpiComm, &rank);
 
+  bool meshSolver = options->compareArgs("MESH SOLVER", "ELASTICITY");
+
   std::string casename;
   options->getArgs("CASENAME", casename);
 
@@ -752,8 +754,10 @@ int setup(nrs_t* nrs_in)
       for(int id = 0; id < nIDs; id++) map[id] = bcmap(id + 1, 1, 0);
       bcMap::setBcMap("velocity", map, nIDs);
 
-      for(int id = 0; id < nIDs; id++) map[id] = bcmap(id + 1, 1, 1);
-      bcMap::setBcMap("mesh", map, nIDs);
+      if(meshSolver){
+        for(int id = 0; id < nIDs; id++) map[id] = bcmap(id + 1, 1, 1);
+        bcMap::setBcMap("mesh", map, nIDs);
+      }
 
       free(map);
     }

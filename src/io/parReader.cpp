@@ -1674,36 +1674,6 @@ setupAide parRead(void *ppar, std::string setupFile, MPI_Comm comm) {
       options.setArgs("MESH FILE", meshFile);
     }
 
-    std::string m_bcMap;
-    if(par->extract("mesh", "boundarytypemap", m_bcMap)) {
-      std::vector<std::string> sList;
-      sList = serializeString(m_bcMap,',');
-      bcMap::setup(sList, "mesh");
-    } else {
-      // use derived mapping based on fluid boundary conditions
-      std::string v_bcMap;
-      if(par->extract("velocity", "boundarytypemap", v_bcMap)) {
-        std::vector<std::string> sList;
-        sList = serializeString(v_bcMap,',');
-        bcMap::deriveMeshBoundaryConditions(sList);
-      }
-    }
- 
-    std::string meshPartitioner;
-    if (par->extract("mesh", "partitioner", meshPartitioner)){
-      if(meshPartitioner != "rcb" && meshPartitioner != "rcb+rsb"){
-        std::ostringstream error;
-        error << "Could not parse mesh::partitioner = " << meshPartitioner;
-        append_error(error.str());
-      }
-      options.setArgs("MESH PARTITIONER", meshPartitioner);
-    }
- 
-    std::string meshConTol;
-    if (par->extract("mesh", "connectivitytol", meshConTol)){
-      options.setArgs("MESH CONNECTIVITY TOL", meshConTol);
-    }
- 
     std::string meshSolver;
     if (par->extract("mesh", "solver", meshSolver)) {
       options.setArgs("MESH KRYLOV SOLVER", "PCG");
@@ -1727,6 +1697,39 @@ setupAide parRead(void *ppar, std::string setupFile, MPI_Comm comm) {
       }
     }
 
+
+    std::string m_bcMap;
+    if(par->extract("mesh", "boundarytypemap", m_bcMap)) {
+      std::vector<std::string> sList;
+      sList = serializeString(m_bcMap,',');
+      bcMap::setup(sList, "mesh");
+    } else {
+      if(meshSolver == "elasticity"){
+        // use derived mapping based on fluid boundary conditions
+        std::string v_bcMap;
+        if(par->extract("velocity", "boundarytypemap", v_bcMap)) {
+          std::vector<std::string> sList;
+          sList = serializeString(v_bcMap,',');
+          bcMap::deriveMeshBoundaryConditions(sList);
+        }
+      }
+    }
+ 
+    std::string meshPartitioner;
+    if (par->extract("mesh", "partitioner", meshPartitioner)){
+      if(meshPartitioner != "rcb" && meshPartitioner != "rcb+rsb"){
+        std::ostringstream error;
+        error << "Could not parse mesh::partitioner = " << meshPartitioner;
+        append_error(error.str());
+      }
+      options.setArgs("MESH PARTITIONER", meshPartitioner);
+    }
+ 
+    std::string meshConTol;
+    if (par->extract("mesh", "connectivitytol", meshConTol)){
+      options.setArgs("MESH CONNECTIVITY TOL", meshConTol);
+    }
+ 
     {
       const std::vector<std::string> validValues = {
         {"yes"},

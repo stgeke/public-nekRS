@@ -813,6 +813,10 @@ void MGLevel::build(
   const int Nq = elliptic->mesh->Nq;
   const int Np = elliptic->mesh->Np;
 
+  if(N == 1 && elliptic->options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE")){
+    return;
+  }
+
   const bool serial = (platform->device.mode() == "Serial" || platform->device.mode() == "OpenMP");
 
   overlap = false;

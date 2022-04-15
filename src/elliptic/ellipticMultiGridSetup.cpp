@@ -157,7 +157,7 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, precon_t* precon)
                     };
     ellipticCoarse->oogs   = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
     ellipticCoarse->oogsAx = ellipticCoarse->oogs;
-    if(options.compareArgs("GS OVERLAP", "TRUE"))
+    if(options.compareArgs("GS OVERLAP", "TRUE") && options.compareArgs("MULTIGRID COARSE SOLVE", "FALSE"))
       ellipticCoarse->oogsAx = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, callback, oogsMode);
   } else {
     ellipticCoarse = elliptic;

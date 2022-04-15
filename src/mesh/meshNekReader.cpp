@@ -50,9 +50,10 @@ void meshNekReaderHex3D(int N, mesh_t* mesh)
     }
 
   int Nbid = nekData.NboundaryIDt;
-  if(!mesh->cht) Nbid = nekData.NboundaryID;
+  if (!mesh->cht)
+    Nbid = nekData.NboundaryID;
   MPI_Allreduce(MPI_IN_PLACE, &NboundaryFaces, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
-  if(platform->comm.mpiRank == 0)
+  if (platform->comm.mpiRank == 0)
     printf("NboundaryIDs: %d, NboundaryFaces: %lld ", Nbid, NboundaryFaces);
 
   // boundary face tags (face numbering is in pre-processor notation)
@@ -63,18 +64,18 @@ void meshNekReaderHex3D(int N, mesh_t* mesh)
   if(!mesh->cht) bid = nekData.boundaryID;
 
   int minEToB = std::numeric_limits<int>::max();
-  int maxEToB = std::numeric_limits<int>::min(); 
+  int maxEToB = std::numeric_limits<int>::min();
   for(int e = 0; e < mesh->Nelements; e++) {
     for(int i = 0; i < mesh->Nfaces; i++) {
       const int ibc = bid[e * mesh->Nfaces + i];
-      if(ibc > 0) { // only valid ids
+      if (ibc > 0) { // only valid ids
         mesh->EToB[e * mesh->Nfaces + faceMap[i]] = ibc;
         minEToB = std::min(ibc, minEToB);
         maxEToB = std::max(ibc, maxEToB);
-      } 
+      }
     }
   }
-  if(Nbid > 0) {
+  if (Nbid > 0) {
     MPI_Allreduce(MPI_IN_PLACE, &minEToB, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
     if (minEToB != 1) {
       if (platform->comm.mpiRank == 0)
@@ -92,7 +93,7 @@ void meshNekReaderHex3D(int N, mesh_t* mesh)
   }
 
   // assign vertex coords
-  mesh->elementInfo = (dlong*) calloc(mesh->Nelements, sizeof(dlong));
+  mesh->elementInfo = (dlong *)calloc(mesh->Nelements, sizeof(dlong));
   double* VX = nekData.xc;
   double* VY = nekData.yc;
   double* VZ = nekData.zc;

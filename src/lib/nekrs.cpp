@@ -181,7 +181,8 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   const double setupTime = platform->timer.query("setup", "DEVICE:MAX");
   if(rank == 0) {
     std::cout << "\nsettings:\n" << std::endl << options << std::endl;
-    std::cout << "occa memory usage: " << platform->device.occaDevice().memoryAllocated()/1e9 << " GB" << std::endl;
+    std::cout << "occa memory usage: " << platform->device.occaDevice().memoryAllocated() / 1e9 << " GB"
+              << std::endl;
   }
   fflush(stdout);
 
@@ -357,12 +358,9 @@ int runTimeStatFreq()
   int freq = 500;
   platform->options.getArgs("RUNTIME STATISTICS FREQUENCY", freq);
   return freq;
-} 
-
-void printRuntimeStatistics(int step)
-{
-  platform->timer.printRunStat(step);
 }
+
+void printRuntimeStatistics(int step) { platform->timer.printRunStat(step); }
 
 void processUpdFile()
 {
@@ -430,10 +428,7 @@ void processUpdFile()
   }
 }
 
-void printInfo(double time, int tstep)
-{
-  timeStepper::printInfo(nrs, time, tstep);
-}
+void printInfo(double time, int tstep) { timeStepper::printInfo(nrs, time, tstep); }
 
 void verboseInfo(bool enabled)
 {
@@ -441,10 +436,7 @@ void verboseInfo(bool enabled)
   if(enabled) platform->options.setArgs("VERBOSE SOLVER INFO", "TRUE");
 }
 
-void updateTimer(const std::string& key, double time)
-{
-  platform->timer.set(key, time);
-}
+void updateTimer(const std::string &key, double time) { platform->timer.set(key, time); }
 
 } // namespace
 

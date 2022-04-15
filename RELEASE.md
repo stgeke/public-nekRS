@@ -11,7 +11,6 @@
 
 ## Good to know
 
-* Shared SYM/SYM edges within the same element are not supported
 * OpenCL support is disabled by default 
 
 ## Breaking Changes

@@ -3,7 +3,7 @@
 #include "nrs.hpp"
 #include "nekInterfaceAdapter.hpp"
 #include "bcMap.hpp"
-#include "io.hpp"
+#include "ioUtils.hpp"
 #include "re2Reader.hpp"
 
 nekdata_private nekData;
@@ -658,7 +658,7 @@ int setup(nrs_t* nrs_in)
   options->getArgs("MESH CONNECTIVITY TOL", meshConTol);
 
   int nBcRead = 1;
-  if(bcMap::useNekBCs())
+  if (bcMap::useNekBCs())
     nBcRead = flow + nscal;
 
   dfloat rho;
@@ -743,8 +743,8 @@ int setup(nrs_t* nrs_in)
   int cht = 0;
   if (nekData.nelv != nekData.nelt && nscal) cht = 1;
 
-  if(bcMap::useNekBCs()) {
-    if(rank == 0)
+  if (bcMap::useNekBCs()) {
+    if (rank == 0)
       printf("import BCs from nek\n");
     gen_bcmap();
     if(flow) {

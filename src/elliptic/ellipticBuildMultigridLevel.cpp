@@ -59,7 +59,6 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
                 /* nFields */ 1,
                 /* offset */ 0,
                 elliptic->EToB,
-                elliptic->UNormalZero,
                 elliptic->Nmasked,
                 elliptic->o_maskIds,
                 elliptic->NmaskedLocal,

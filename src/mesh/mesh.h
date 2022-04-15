@@ -97,6 +97,11 @@ struct mesh_t
   ogs_t* ogs; //occa gs pointer
   oogs_t* oogs; //occa gs pointer
 
+  // list of all elements
+  // elementList[e] = e
+  dlong *elementList;
+  occa::memory o_elementList;
+
   // list of elements that are needed for global gather-scatter
   dlong NglobalGatherElements;
   dlong* globalGatherElementList;

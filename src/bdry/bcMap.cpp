@@ -99,7 +99,7 @@ static void s_setup(std::string s);
 
 static void v_setup(std::string field, std::vector<std::string> slist)
 {
-  for(int bid = 0; bid < slist.size(); bid++) {
+  for (int bid = 0; bid < slist.size(); bid++) {
     std::string key = slist[bid];
     if (key.compare("p") == 0) key = "periodic";
     if (key.compare("w") == 0) key = "zerovalue";
@@ -132,7 +132,7 @@ static void v_setup(std::string field, std::vector<std::string> slist)
 
 static void s_setup(std::string field, std::vector<std::string> slist)
 {
-  for(int bid = 0; bid < slist.size(); bid++) {
+  for (int bid = 0; bid < slist.size(); bid++) {
     std::string key = slist[bid];
     if (key.compare("p") == 0) key = "periodic";
     if (key.compare("t") == 0) key = "fixedvalue";
@@ -157,18 +157,17 @@ static void s_setup(std::string field, std::vector<std::string> slist)
 
 namespace bcMap
 {
-bool useNekBCs()
-{
-  return importFromNek;
-}
+bool useNekBCs() { return importFromNek; }
 
 void setup(std::vector<std::string> slist, std::string field)
 {
-  if (slist.size() == 0) return;
+  if (slist.size() == 0)
+    return;
 
   importFromNek = false;
 
-  if (slist[0].compare("none") == 0) return;
+  if (slist[0].compare("none") == 0)
+    return;
 
   fields.insert(field);
 
@@ -195,7 +194,7 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
 
   fields.insert(field);
 
-  for(int bid = 0; bid < velocityBCs.size(); bid++) {
+  for (int bid = 0; bid < velocityBCs.size(); bid++) {
     std::string key = velocityBCs[bid];
     if (key.compare("p") == 0) key = "periodic";
     if (key.compare("w") == 0) key = "zerovalue";
@@ -226,7 +225,6 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
-
 }
 
 // return boundary type id for a given boundary id
@@ -235,12 +233,10 @@ int id(int bid, std::string field)
   if (bid < 1)
     return NO_OP;
 
-  try
-  {
+  try {
     return bToBc.at({field, bid - 1});
-  }  
-  catch (const std::out_of_range& oor)
-  {
+  }
+  catch (const std::out_of_range &oor) {
     return NO_OP;
   }
 }
@@ -250,18 +246,20 @@ int type(int bid, std::string field)
   if (bid < 1)
     return NO_OP;
 
-  //printf("%d %s\n", bid, field.c_str());
+  // printf("%d %s\n", bid, field.c_str());
 
-  try
-  {
+  try {
     int bcType;
     if (field.compare("x-velocity") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
-      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = DIRICHLET;
       if (bcID == 3)
         bcType = NEUMANN;
-      if (bcID == 4) bcType = DIRICHLET;
+      if (bcID == 4)
+        bcType = DIRICHLET;
       if (bcID == 5)
         bcType = NEUMANN;
       if (bcID == 6)
@@ -270,43 +268,55 @@ int type(int bid, std::string field)
         bcType = ZERO_NORMAL;
       if (bcID == 8)
         bcType = ZERO_NORMAL;
-    } else if (field.compare("y-velocity") == 0) {
+    }
+    else if (field.compare("y-velocity") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
-      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = DIRICHLET;
       if (bcID == 3)
         bcType = NEUMANN;
       if (bcID == 4)
         bcType = NEUMANN;
-      if (bcID == 5) bcType = DIRICHLET;
+      if (bcID == 5)
+        bcType = DIRICHLET;
       if (bcID == 6)
         bcType = NEUMANN;
       if (bcID == 7)
         bcType = ZERO_NORMAL;
       if (bcID == 8)
         bcType = ZERO_NORMAL;
-    } else if (field.compare("z-velocity") == 0) {
+    }
+    else if (field.compare("z-velocity") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
-      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = DIRICHLET;
       if (bcID == 3)
         bcType = NEUMANN;
       if (bcID == 4)
         bcType = NEUMANN;
       if (bcID == 5)
         bcType = NEUMANN;
-      if (bcID == 6) bcType = DIRICHLET;
+      if (bcID == 6)
+        bcType = DIRICHLET;
       if (bcID == 7)
         bcType = ZERO_NORMAL;
       if (bcID == 8)
         bcType = ZERO_NORMAL;
-    } else if (field.compare("x-mesh") == 0) {
+    }
+    else if (field.compare("x-mesh") == 0) {
       const int bcID = bToBc.at({"mesh", bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
-      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = DIRICHLET;
       if (bcID == 3)
         bcType = NEUMANN;
-      if (bcID == 4) bcType = DIRICHLET;
+      if (bcID == 4)
+        bcType = DIRICHLET;
       if (bcID == 5)
         bcType = NEUMANN;
       if (bcID == 6)
@@ -315,43 +325,53 @@ int type(int bid, std::string field)
         bcType = ZERO_NORMAL;
       if (bcID == 8)
         bcType = ZERO_NORMAL;
-    } else if (field.compare("y-mesh") == 0) {
+    }
+    else if (field.compare("y-mesh") == 0) {
       const int bcID = bToBc.at({"mesh", bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
-      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = DIRICHLET;
       if (bcID == 3)
         bcType = NEUMANN;
       if (bcID == 4)
         bcType = NEUMANN;
-      if (bcID == 5) bcType = DIRICHLET;
+      if (bcID == 5)
+        bcType = DIRICHLET;
       if (bcID == 6)
         bcType = NEUMANN;
       if (bcID == 7)
         bcType = ZERO_NORMAL;
       if (bcID == 8)
         bcType = ZERO_NORMAL;
-    } else if (field.compare("z-mesh") == 0) {
+    }
+    else if (field.compare("z-mesh") == 0) {
       const int bcID = bToBc.at({"mesh", bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
-      if (bcID == 2) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
+      if (bcID == 2)
+        bcType = DIRICHLET;
       if (bcID == 3)
         bcType = NEUMANN;
       if (bcID == 4)
         bcType = NEUMANN;
       if (bcID == 5)
         bcType = NEUMANN;
-      if (bcID == 6) bcType = DIRICHLET;
+      if (bcID == 6)
+        bcType = DIRICHLET;
       if (bcID == 7)
         bcType = ZERO_NORMAL;
       if (bcID == 8)
         bcType = ZERO_NORMAL;
-    } else if (field.compare("pressure") == 0) {
+    }
+    else if (field.compare("pressure") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
       if (bcID == 1)
         bcType = NEUMANN;
       if (bcID == 2)
         bcType = NEUMANN;
-      if (bcID == 3) bcType = DIRICHLET;
+      if (bcID == 3)
+        bcType = DIRICHLET;
       if (bcID == 4)
         bcType = NEUMANN;
       if (bcID == 5)
@@ -362,18 +382,19 @@ int type(int bid, std::string field)
         bcType = NEUMANN;
       if (bcID == 8)
         bcType = NEUMANN;
-    } else if (field.compare(0, 6, "scalar") == 0) {
+    }
+    else if (field.compare(0, 6, "scalar") == 0) {
       const int bcID = bToBc.at({field, bid - 1});
-      if (bcID == 1) bcType = DIRICHLET;
+      if (bcID == 1)
+        bcType = DIRICHLET;
       if (bcID == 2)
         bcType = NEUMANN;
       if (bcID == 3)
         bcType = NEUMANN;
     }
     return bcType;
-  }  
-  catch (const std::out_of_range& oor)
-  {
+  }
+  catch (const std::out_of_range &oor) {
     return NO_OP;
   }
 }
@@ -384,20 +405,20 @@ std::string text(int bid, std::string field)
 
   const int bcID = bToBc.at({field, bid - 1});
 
-  if(field.compare("velocity") == 0 && bcID == 2)
+  if (field.compare("velocity") == 0 && bcID == 2)
     oudfFindDirichlet(field);
-  if(field.compare("mesh") == 0 && bcID == 2)
+  if (field.compare("mesh") == 0 && bcID == 2)
     oudfFindDirichlet(field);
-  if(field.compare("pressure") == 0 && bcID == 3)
+  if (field.compare("pressure") == 0 && bcID == 3)
     oudfFindDirichlet(field);
-  if(field.compare(0, 6, "scalar") == 0 && bcID == 1)
+  if (field.compare(0, 6, "scalar") == 0 && bcID == 1)
     oudfFindDirichlet(field);
 
-  if(field.compare("velocity") == 0 && bcID == 8)
+  if (field.compare("velocity") == 0 && bcID == 8)
     oudfFindNeumann(field);
-  if(field.compare("mesh") == 0 && bcID == 8)
+  if (field.compare("mesh") == 0 && bcID == 8)
     oudfFindNeumann(field);
-  if(field.compare(0, 6, "scalar") == 0 && bcID == 3)
+  if (field.compare(0, 6, "scalar") == 0 && bcID == 3)
     oudfFindNeumann(field);
 
   if (field.compare("velocity") == 0 || field.compare("mesh") == 0)
@@ -417,9 +438,10 @@ int size(int isTmesh)
 
 bool useDerivedMeshBoundaryConditions()
 {
-  if(importFromNek){
+  if (importFromNek) {
     return true;
-  } else {
+  }
+  else {
     return meshConditionsDerived;
   }
 }
@@ -451,9 +473,9 @@ void check(mesh_t* mesh)
 
   found = 0;
   for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {
-    if (mesh->EToB[f] < -1 || mesh->EToB[f] == 0 || mesh->EToB[f] > nid) 
-     found = 1;
-  }  
+    if (mesh->EToB[f] < -1 || mesh->EToB[f] == 0 || mesh->EToB[f] > nid)
+      found = 1;
+  }
   MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
   if (found) {
     if (platform->comm.mpiRank == 0) printf("WARNING: Mesh has unmapped boundary IDs!\n");
@@ -470,73 +492,10 @@ void setBcMap(std::string field, int* map, int nIDs)
     nbid[0] = nIDs;
 
   fields.insert(field);
-  for(int i = 0; i < nIDs; i++) bToBc[make_pair(field, i)] = map[i];
+  for (int i = 0; i < nIDs; i++)
+    bToBc[make_pair(field, i)] = map[i];
 }
-namespace {
-void checkOpposingFaces(mesh_t *mesh)
-{
-  int nid = nbid[0];
-  if (mesh->cht)
-    nid = nbid[1];
 
-  bool bail = false;
-  std::map<int, int> opposingFaces = {{0, 5}, {1, 3}, {2, 4}, {3, 1}, {4, 2}, {5, 0}};
-  for (auto &&field : fields) {
-    if (field != std::string("velocity") && field != std::string("mesh"))
-      continue;
-
-    int err = 0;
-    std::vector<int> valid(nid, 1);
-
-    for (int e = 0; e < mesh->Nelements; e++) {
-      for (int f = 0; f < mesh->Nfaces; f++) {
-        const auto opposing = opposingFaces[f];
-        int bid = mesh->EToB[e * mesh->Nfaces + f];
-        int bc = id(bid, field);
-
-        // only applicable for unaligned SYM/SHL boundaries
-        if (bc != 7 && bc != 8)
-          continue;
-
-        for (int of = 0; of < mesh->Nfaces; of++) {
-          if (of == opposing)
-            continue;
-          if (of == f)
-            continue;
-          int obid = mesh->EToB[e * mesh->Nfaces + of];
-          int obc = id(obid, field);
-          if (obc == 7 || obc == 8) {
-            valid[bid - 1] = 0;
-            valid[obid - 1] = 0;
-            err = 1;
-            break;
-          }
-        }
-      }
-    }
-    MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
-
-    if (err > 0) {
-      bail = true;
-      MPI_Allreduce(MPI_IN_PLACE, valid.data(), nid, MPI_INT, MPI_MIN, platform->comm.mpiComm);
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Encountered shared SYM/SYM, SHL/SYM, or SHL/SHL edge within an element for field \""
-                  << field << "\".\n";
-        std::cout << "The following boundary IDs are :\n";
-        int bid = 1;
-        for (auto &&v : valid) {
-          if (v == 0)
-            std::cout << "\t" << bid << "\n";
-          bid++;
-        }
-      }
-    }
-  }
-  if (bail) {
-    ABORT(1);
-  }
-}
-} // namespace
 void checkBoundaryAlignment(mesh_t *mesh)
 {
   int nid = nbid[0];
@@ -638,8 +597,6 @@ void checkBoundaryAlignment(mesh_t *mesh)
   if (bail) {
     ABORT(1);
   }
-
-  checkOpposingFaces(mesh);
 }
 
 void remapUnalignedBoundaries(mesh_t *mesh)
@@ -674,10 +631,29 @@ void remapUnalignedBoundaries(mesh_t *mesh)
       }
     }
 
+    // if a single unaligned boundary with SYM/SHL is present, no remapping may occur.
+    int unalignedBoundaryPresent = 0;
+    for (int bid = 1; bid <= nid; ++bid) {
+      int canRemap = remapBID[bid];
+      int bc = id(bid, field);
+      bool unalignedBoundaryType = bc == 7 || bc == 8;
+      if (!canRemap && unalignedBoundaryType) {
+        unalignedBoundaryPresent++;
+      }
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, &unalignedBoundaryPresent, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
+    if (unalignedBoundaryPresent > 0) {
+      return;
+    }
+
     for (int bid = 1; bid <= nid; ++bid) {
       int canRemap = remapBID[bid];
       MPI_Allreduce(MPI_IN_PLACE, &canRemap, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
       if (canRemap) {
+        if(platform->comm.mpiRank == 0 && platform->options.compareArgs("VERBOSE","TRUE")){
+          std::cout << "Remapping bid " << bid << " to an aligned type!\n";
+        }
 
         auto alignmentType = alignmentBID[bid];
 

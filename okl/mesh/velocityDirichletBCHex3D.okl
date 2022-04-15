@@ -28,6 +28,7 @@
                                          const dfloat time,
                                          const bool useDerivedBoundaryCondition,
                                          @restrict const dfloat*  sgeo,
+                                         @restrict const dfloat*  mask,
                                          @restrict const dfloat*  x,
                                          @restrict const dfloat*  y,
                                          @restrict const dfloat*  z,
@@ -48,7 +49,10 @@
         const dlong idM = vmapM[sk];
         const dlong bcType = EToB[f + p_Nfaces * e];
 
-        if(bcType == 7) {
+        if(bcType == 7 || bcType == 8) {
+          const dfloat nx = sgeo[sid * p_Nsgeo + p_NXID];
+          const dfloat ny = sgeo[sid * p_Nsgeo + p_NYID];
+          const dfloat nz = sgeo[sid * p_Nsgeo + p_NZID];
 
           const dfloat t1x = sgeo[sid * p_Nsgeo + p_T1XID];
           const dfloat t1y = sgeo[sid * p_Nsgeo + p_T1YID];
@@ -58,16 +62,22 @@
           const dfloat t2y = sgeo[sid * p_Nsgeo + p_T2YID];
           const dfloat t2z = sgeo[sid * p_Nsgeo + p_T2ZID];
 
+          const dfloat maskN  = mask[idM + 0 * offset];
+          const dfloat maskT1 = mask[idM + 1 * offset];
+          const dfloat maskT2 = mask[idM + 2 * offset];
+
           const dfloat u = U[idM + 0 * offset];
           const dfloat v = U[idM + 1 * offset];
           const dfloat w = U[idM + 2 * offset];
 
-          const dfloat Rtn1 = (u * t1x + v * t1y + w * t1z);
-          const dfloat Rtn2 = (u * t2x + v * t2y + w * t2z);
+          const dfloat Rnor = (u * nx  + v * ny  + w * nz ) * maskN;
+          const dfloat Rtn1 = (u * t1x + v * t1y + w * t1z) * maskT1;
+          const dfloat Rtn2 = (u * t2x + v * t2y + w * t2z) * maskT2;
 
-          W[idM + 0 * offset] = Rtn1 * t1x + Rtn2 * t2x;
-          W[idM + 1 * offset] = Rtn1 * t1y + Rtn2 * t2y;
-          W[idM + 2 * offset] = Rtn1 * t1z + Rtn2 * t2z;
+          W[idM + 0 * offset] = Rnor * nx + Rtn1 * t1x + Rtn2 * t2x;
+          W[idM + 1 * offset] = Rnor * ny + Rtn1 * t1y + Rtn2 * t2y;
+          W[idM + 2 * offset] = Rnor * nz + Rtn1 * t1z + Rtn2 * t2z;
+
         }
         else if(bcType == 4) {
           W[idM + 0 * offset] = 0.0;

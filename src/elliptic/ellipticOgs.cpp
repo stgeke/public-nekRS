@@ -6,7 +6,6 @@ void ellipticOgs(mesh_t *mesh,
                  int nFields,
                  dlong offset,
                  int *EToB,
-                 bool &UNormalZero,
                  dlong &Nmasked,
                  occa::memory &o_maskIds,
                  dlong &NmaskedLocal,
@@ -15,7 +14,6 @@ void ellipticOgs(mesh_t *mesh,
                  occa::memory &o_maskIdsGlobal,
                  ogs_t **ogs)
 {
-  UNormalZero = false;
   const int Nlocal = (nFields == 1) ? mNlocal : nFields * offset;
   const int largeNumber = 1 << 20;
 
@@ -30,8 +28,7 @@ void ellipticOgs(mesh_t *mesh,
         if (bc > 0) {
           for (int n = 0; n < mesh->Nfp; n++) {
             int fid = mesh->faceNodes[n + f * mesh->Nfp];
-            mapB[fid + e * mesh->Np + fld * offset] =
-              mymin(bc, mapB[fid + e * mesh->Np + fld * offset]);
+            mapB[fid + e * mesh->Np + fld * offset] = mymin(bc, mapB[fid + e * mesh->Np + fld * offset]);
           }
         }
       }
@@ -52,9 +49,6 @@ void ellipticOgs(mesh_t *mesh,
       }
       else if (mapB[n + fld * offset] == DIRICHLET) {
         Nmasked++;
-      }
-      else if (mapB[n + fld * offset] == ZERO_NORMAL) {
-        UNormalZero = true;
       }
     }
   }

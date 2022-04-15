@@ -32,7 +32,7 @@ int writeControlRunTime(void);
 void processUpdFile();
 void printInfo(double time, int tstep);
 void verboseInfo(bool enabled);
-void updateTimer(const std::string& key, double time);
+void updateTimer(const std::string &key, double time);
 
 void* nrsPtr(void);
 void* nekPtr(const char* id);

@@ -288,9 +288,9 @@ void timer_t::printRunStat(int step)
 
   const double tElapsedTime = query("elapsed", "DEVICE:MAX");
 
-  if(rank == 0) std::cout << "\n>>> runtime statistics (step= " << step 
-                          << "  elapsed= " << tElapsedTime << "s"
-                          << "):\n";
+  if (rank == 0)
+    std::cout << "\n>>> runtime statistics (step= " << step << "  elapsed= " << tElapsedTime << "s"
+              << "):\n";
 
   std::cout.setf(std::ios::scientific);
   int outPrecisionSave = std::cout.precision();

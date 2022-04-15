@@ -121,8 +121,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   dfloat* lambda = (dfloat*) calloc(2*elliptic->Ntotal, sizeof(dfloat));
   elliptic->o_lambda.copyTo(lambda, 2*elliptic->Ntotal*sizeof(dfloat));
 
-
-  int* allNeumann = (int*)calloc(elliptic->Nfields, sizeof(int));
+  int *allNeumann = (int *)calloc(elliptic->Nfields, sizeof(int));
   // check based on the coefficient
   for(int fld = 0; fld < elliptic->Nfields; fld++) {
     if(elliptic->coeffField) {
@@ -141,17 +140,18 @@ void ellipticSolveSetup(elliptic_t* elliptic)
 
   free(lambda);
 
-  elliptic->o_EToB = 
-    platform->device.malloc(mesh->Nelements * mesh->Nfaces * elliptic->Nfields * sizeof(int), elliptic->EToB);
+  elliptic->o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * elliptic->Nfields * sizeof(int),
+                                             elliptic->EToB);
 
   // check based on BC
-  for(int fld = 0; fld < elliptic->Nfields; fld++) {
+  for (int fld = 0; fld < elliptic->Nfields; fld++) {
     for (dlong e = 0; e < mesh->Nelements; e++) {
       for (int f = 0; f < mesh->Nfaces; f++) {
         const int offset = fld * mesh->Nelements * mesh->Nfaces;
         const int bc = elliptic->EToB[f + e * mesh->Nfaces + offset];
         bool isDirichlet = (bc != NO_OP && bc != NEUMANN);
-        if(isDirichlet) allNeumann[fld] = 0;
+        if (isDirichlet)
+          allNeumann[fld] = 0;
       }
     }
   }
@@ -162,11 +162,12 @@ void ellipticSolveSetup(elliptic_t* elliptic)
     lallNeumann = allNeumann[fld] ? 0:1;
     MPI_Allreduce(&lallNeumann, &gallNeumann, 1, MPI_INT, MPI_SUM, platform->comm.mpiComm);
     allBlockNeumann[fld] = (gallNeumann > 0) ? 0: 1;
-    if(allBlockNeumann[fld]) elliptic->allNeumann = 1;
+    if (allBlockNeumann[fld])
+      elliptic->allNeumann = 1;
   }
   free(allBlockNeumann);
 
-  if(platform->comm.mpiRank == 0 && elliptic->allNeumann)
+  if (platform->comm.mpiRank == 0 && elliptic->allNeumann)
     printf("allNeumann = %d \n", elliptic->allNeumann);
 
   if(mesh->ogs == NULL) {
@@ -182,7 +183,6 @@ void ellipticSolveSetup(elliptic_t* elliptic)
                 elliptic->Nfields,
                 /* offset */ elliptic->Ntotal,
                 elliptic->EToB,
-                elliptic->UNormalZero,
                 elliptic->Nmasked,
                 elliptic->o_maskIds,
                 elliptic->NmaskedLocal,
@@ -202,8 +202,6 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   {
     mesh->maskKernel = platform->kernels.get("mask");
     mesh->maskPfloatKernel = platform->kernels.get("maskPfloat");
-    elliptic->enforceUnKernel = platform->kernels.get("enforceUn");
-    elliptic->enforceUnPfloatKernel = platform->kernels.get("enforceUnPfloat");
   }
 
   {

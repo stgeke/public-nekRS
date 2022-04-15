@@ -969,7 +969,7 @@ void MGLevel::smoothSchwarz(occa::memory& o_u, occa::memory& o_Su, bool xIsZero)
 
     oogs::startFinish(o_Su, 1, 0, ogsDataTypeString, ogsAdd, (oogs_t*) ogs);
   }
-  applyMask(elliptic, o_Su, pfloatString);
+  ellipticApplyMask(elliptic, o_Su, pfloatString);
 
   const auto Nqe = mesh->Nq + 2;
   const auto Npe = Nqe * Nqe * Nqe;

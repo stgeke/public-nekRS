@@ -435,7 +435,7 @@ int main(int argc, char** argv)
   {
     MPI_Barrier(comm);
     const auto timeStop = std::chrono::high_resolution_clock::now();
-    elapsedTime += std::chrono::duration<double, std::milli>(timeStop - timeStart).count()/1e3;
+    elapsedTime += std::chrono::duration<double, std::milli>(timeStop - timeStart).count() / 1e3;
     MPI_Allreduce(MPI_IN_PLACE, &elapsedTime, 1, MPI_DOUBLE, MPI_MAX, comm);
     nekrs::updateTimer("setup", elapsedTime);
     if (rank == 0)
@@ -492,7 +492,7 @@ int main(int argc, char** argv)
 
     nekrs::printInfo(time, tStep);
 
-    if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep) 
+    if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep)
       nekrs::printRuntimeStatistics(tStep);
 
     if (tStep % 10 == 0) fflush(stdout);

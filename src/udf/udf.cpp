@@ -5,7 +5,7 @@
 #include <regex>
 
 #include "udf.hpp"
-#include "io.hpp"
+#include "ioUtils.hpp"
 #include "platform.hpp"
 #include "bcMap.hpp"
 
@@ -278,7 +278,7 @@ occa::kernel oudfBuildKernel(occa::properties kernelInfo, const char *function)
 {
   std::string installDir;
   installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string bcDataFile = installDir + "/include/core/bcData.h";
+  const std::string bcDataFile = installDir + "/include/bdry/bcData.h";
   kernelInfo["includes"] += bcDataFile.c_str();
 
   // provide some common kernel args

@@ -196,16 +196,18 @@ set(SRC
     src/timeStepper/cfl.cpp
     src/regularization/filter.cpp
     src/regularization/avm.cpp
-    src/core/bcMap.cpp
+    src/bdry/bcMap.cpp
     src/core/compileKernels.cpp
     src/setup/setup.cpp
     src/core/alignment.cpp
     src/core/registerNrsKernels.cpp
+    src/bdry/createEToBV.cpp
+    src/bdry/applyDirichlet.cpp
     src/timeStepper/timeStepper.cpp
     src/timeStepper/subCycling.cpp
     src/navierStokes/tombo.cpp
     src/navierStokes/constantFlowRate.cpp
-    src/cds/cds.cpp
+    src/cds/cdsSolve.cpp
     src/cds/registerCdsKernels.cpp
     src/io/parReader.cpp
     src/io/re2Reader.cpp
@@ -259,6 +261,7 @@ target_include_directories(nekrs-lib
   ${CMAKE_CURRENT_BINARY_DIR}
   src
   src/setup
+  src/bdry
   src/core
   src/utils
   src/lib

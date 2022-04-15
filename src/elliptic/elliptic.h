@@ -174,12 +174,9 @@ struct elliptic_t
   int* levels;
 
   SolutionProjection* solutionProjection;
-  GmresData* gmresData;
+  GmresData *gmresData;
 
-  bool UNormalZero;
-
-  occa::kernel enforceUnKernel;
-  occa::kernel enforceUnPfloatKernel;
+  std::function<void(dlong Nelements, occa::memory &o_elementList, occa::memory &o_x)> applyZeroNormalMask;
 };
 
 #include "ellipticMultiGrid.h"
@@ -259,7 +256,6 @@ void ellipticOgs(mesh_t *mesh,
                  int nFields,
                  dlong offset,
                  int *EToB,
-                 bool &UNormalZero,
                  dlong &Nmasked,
                  occa::memory &o_maskIds,
                  dlong &NmaskedLocal,

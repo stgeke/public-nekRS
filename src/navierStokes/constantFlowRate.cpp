@@ -4,6 +4,8 @@
 #include "udf.hpp"
 #include <limits>
 #include "alignment.hpp"
+#include "bcMap.hpp"
+#include "bdry.hpp"
 
 namespace {
 static dfloat constantFlowScale = 0.0;
@@ -546,6 +548,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
           nrs->fieldOffset,
           time,
           mesh->o_sgeo,
+          nrs->o_zeroNormalMaskVelocity,
           mesh->o_x,
           mesh->o_y,
           mesh->o_z,
@@ -587,12 +590,19 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
             nrs->gsh);
     }
     if (nrs->uvwSolver) {
+
+      if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
+        applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, platform->o_mempool.slice3);
+      }
       if (nrs->uvwSolver->Nmasked)
         nrs->maskCopyKernel(nrs->uvwSolver->Nmasked,
             0 * nrs->fieldOffset,
             nrs->uvwSolver->o_maskIds,
             platform->o_mempool.slice3,
             nrs->o_Uc);
+      if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
+        applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Uc);
+      }
     } else {
       if (nrs->uSolver->Nmasked)
         nrs->maskCopyKernel(nrs->uSolver->Nmasked,

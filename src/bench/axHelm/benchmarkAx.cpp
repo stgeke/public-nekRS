@@ -160,17 +160,25 @@ occa::kernel benchmarkAx(int Nelements,
                     << " NRepetitions=" << Ntests;
         }
         if(verbosity > 0){
-          std::cout << " Ndim=" << Ndim
-                    << " N=" << N
-                    << " Ng=" << Ng
-                    << " Nelements=" << Nelements
-                    << " elapsed time=" << elapsed
-                    << " bkMode=" << BKmode
-                    << " wordSize=" << 8*wordSize
+          if(Ndim > 1)
+          std::cout << " Ndim=" << Ndim;
+
+	  std::cout << " N=" << N;
+	  if(Ng != N) 
+          std::cout << " Ng=" << Ng;
+
+	  if(verbosity > 1)
+          std::cout << " Nelements=" << Nelements;
+
+          if(verbosity > 1)
+          std::cout << " elapsed time=" << elapsed;
+
+          std::cout << " wordSize=" << 8*wordSize
                     << " GDOF/s=" << GDOFPerSecond
                     << " GB/s=" << bw
                     << " GFLOPS/s=" << gflops
-                    << " kernel=" << kernelVariant
+		    << " bkMode=" << BKmode
+                    << " kernelVer=" << kernelVariant
                     << "\n";
         }
       }

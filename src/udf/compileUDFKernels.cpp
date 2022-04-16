@@ -38,7 +38,7 @@ occa::properties compileUDFKernels()
   MPI_Barrier(platform->comm.mpiComm);
   const double loadTime = MPI_Wtime() - tStart;
   if (platform->comm.mpiRank == 0)
-    printf("done (%gs)\n\n", loadTime);
+    printf("done (%gs)\n", loadTime);
   fflush(stdout);
 
   return kernelInfoBC;

@@ -130,12 +130,25 @@ occa::kernel benchmarkFDM(int Nelements,
           std::cout << "FDM:";
         }
         if(verbosity > 1){
-          std::cout << "MPItasks=" << platform->comm.mpiCommSize << " OMPthreads=" << Nthreads << " NRepetitions=" << Ntests;
+          std::cout << "MPItasks=" << platform->comm.mpiCommSize 
+		    << " OMPthreads=" << Nthreads 
+		    << " NRepetitions=" << Ntests;
         }
         if(verbosity > 0){
-          std::cout << " N=" << N_e << " Nelements=" << Nelements << " elapsed time=" << elapsed
-                    << " wordSize=" << 8 * wordSize << " GDOF/s=" << GDOFPerSecond << " GB/s=" << bw
-                    << " GFLOPS/s=" << gflops << " kernel=" << kernelVariant << "\n";
+          std::cout << " N=" << N_e; 
+
+        if(verbosity > 1)
+          std::cout << " Nelements=" << Nelements;
+
+	if(verbosity > 1) 
+	  std::cout << " elapsed time=" << elapsed;
+
+          std::cout << " wordSize=" << 8 * wordSize 
+		    << " GDOF/s=" << GDOFPerSecond 
+		    << " GB/s=" << bw
+                    << " GFLOPS/s=" << gflops 
+		    << " kernelVer=" << kernelVariant 
+		    << "\n";
         }
       }
     };

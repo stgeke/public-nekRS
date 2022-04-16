@@ -334,25 +334,25 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
   platform->device.finish();
   MPI_Barrier(platform->comm.mpiComm);
   const double tPreStep = MPI_Wtime() - tStart;
+  tSolve += tPreStep;
 
   const int isOutputStep = nrs->isOutputStep;
   nrs->converged = false;
 
-  double tSolveStep = 0;
-  int stage = 0;
+  int iter = 0;
   do {
     platform->device.finish();
     MPI_Barrier(platform->comm.mpiComm);
-    const double tStartStage = MPI_Wtime();
+    const double tSolveStepStart = MPI_Wtime();
 
-    stage++;
+    iter++;
     const dfloat timeNew = time + nrs->dt[0];
 
     //////////////////////////////////////////////
     applyDirichlet(nrs, timeNew);
     
     if (nrs->Nscalar)
-      scalarSolve(nrs, timeNew, cds->o_S, stage);
+      scalarSolve(nrs, timeNew, cds->o_S, iter);
 
     evaluateProperties(nrs, timeNew);
 
@@ -362,21 +362,18 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       udf.div(nrs, timeNew, nrs->o_div);
     }
 
-    fluidSolve(nrs, timeNew, nrs->o_P, nrs->o_U, stage, tstep);
+    fluidSolve(nrs, timeNew, nrs->o_P, nrs->o_U, iter, tstep);
 
     if(platform->options.compareArgs("MESH SOLVER", "ELASTICITY"))
-      meshSolve(nrs, timeNew, nrs->meshV->o_U, stage);
+      meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
-    nrs->converged = (udf.converged) ? udf.converged(nrs, stage) : true; 
+    nrs->converged = (udf.converged) ? udf.converged(nrs, iter) : true; 
 
     platform->device.finish();
     MPI_Barrier(platform->comm.mpiComm);
-    double tSolveStage = MPI_Wtime() - tStartStage;
-    if (stage == 1) tSolveStage += tPreStep;
-    tSolveStep += tSolveStage;
-    tSolve += tSolveStage;
-    platform->timer.set("solve", tSolve);
+    double tSolveStep = MPI_Wtime() - tSolveStepStart;
+    tSolve += tSolveStep;
 
     if(tstep > 9) {
       tSolveStepMin = std::fmin(tSolveStep, tSolveStepMin); 
@@ -399,6 +396,8 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     if (!nrs->converged)
       printInfo(nrs, timeNew, tstep);
   } while (!nrs->converged);
+
+  platform->timer.set("solve", tSolve);
 
   nrs->dt[2] = nrs->dt[1];
   nrs->dt[1] = nrs->dt[0];

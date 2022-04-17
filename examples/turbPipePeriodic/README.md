@@ -4,7 +4,7 @@
 
 | CPU/GPU                | tSolve [s]  | 
 | ---------------------- | ------------|
-| Nvidia A100            | ?           |
+| Nvidia A100            | 15.3        |
 | Nvidia V100            | 27.7        |
 | AMD MI250X/1           | ?           |
 | AMD EPYC 7742          | ?           |

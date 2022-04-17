@@ -81,8 +81,11 @@ occa::kernel benchmarkAx(int Nelements,
 
     // only a single choice, no need to run benchmark
     if(kernelVariants.size() == 1 && !requiresBenchmark){
+
       auto newProps = props;
-      newProps["defines/p_knl"] = kernelVariants.back();
+      if(kernelName == "ellipticPartialAxHex3D"){
+        newProps["defines/p_knl"] = kernelVariants.back();
+      }
 
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;

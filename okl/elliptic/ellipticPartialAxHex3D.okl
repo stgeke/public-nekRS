@@ -1,27 +1,3 @@
-#ifndef p_knl
-#define p_knl 0
-#endif
-
-#if p_knl == 0
-#define ellipticPartialAxHex3D_v0 ellipticPartialAxHex3D
-#elif p_knl == 1
-#define ellipticPartialAxHex3D_v1 ellipticPartialAxHex3D
-#elif p_knl == 2
-#define ellipticPartialAxHex3D_v2 ellipticPartialAxHex3D
-#elif p_knl == 3 && p_Nq < 11
-#define ellipticPartialAxHex3D_v3 ellipticPartialAxHex3D
-#elif p_knl == 4
-#define ellipticPartialAxHex3D_v4 ellipticPartialAxHex3D
-#elif p_knl == 5
-#define ellipticPartialAxHex3D_v5 ellipticPartialAxHex3D
-#elif p_knl == 6
-#define ellipticPartialAxHex3D_v6 ellipticPartialAxHex3D
-#elif p_knl == 7
-#define ellipticPartialAxHex3D_v7 ellipticPartialAxHex3D
-#elif p_knl == 8
-#define ellipticPartialAxHex3D_v8 ellipticPartialAxHex3D
-#endif
-
 #if p_knl == 0
 // original kernel
 @kernel void ellipticPartialAxHex3D_v0(const dlong Nelements,

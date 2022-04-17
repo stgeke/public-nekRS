@@ -1,5 +1,7 @@
 #include <compileKernels.hpp>
 #include "elliptic.h"
+#include "re2Reader.hpp"
+#include "benchmarkAx.hpp"
 
 namespace{
 
@@ -138,6 +140,13 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
     AxKernelInfo["defines/p_poisson"] = 1;
   }
 
+  int nelgt, nelgv;
+  const std::string meshFile = platform->options.getArgs("MESH FILE");
+  re2::nelg(meshFile, nelgt, nelgv, platform->comm.mpiComm);
+  const int NelemBenchmark = nelgv/platform->comm.mpiCommSize;
+  bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
+  const int verbosity = verbose ? 2 : 1;
+
   for(auto&& coeffField : {true, false}){
     std::string kernelNamePrefix = "elliptic";
     if (blockSolver)
@@ -152,8 +161,23 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
     const std::string _kernelName = kernelNamePrefix + "Partial" + kernelName;
     const std::string prefix = (poissonEquation) ? "poisson-" : "";
     fileName = oklpath + _kernelName + fileNameExtension; 
+
+    auto axKernel = benchmarkAx(NelemBenchmark,
+                                N+1,
+                                N,
+                                !coeffField,
+                                poissonEquation,
+                                false,
+                                8*sizeof(dfloat),
+                                Nfields,
+                                verbosity,
+                                0.2,
+                                false);
+
+    auto axProps = axKernel.properties();
+
     platform->kernels.add(
-      prefix + _kernelName, fileName, AxKernelInfo);
+      prefix + _kernelName, fileName, axProps);
   }
 
   kernelName = "ellipticBlockBuildDiagonal" + suffix;

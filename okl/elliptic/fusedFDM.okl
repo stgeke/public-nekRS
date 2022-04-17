@@ -1,22 +1,3 @@
-#ifndef p_knl
-#define p_knl 0
-#endif
-
-#if p_knl == 0
-#define fusedFDM_v0 fusedFDM
-#elif p_knl == 1
-#define fusedFDM_v1 fusedFDM
-#elif p_knl == 2
-#define fusedFDM_v2 fusedFDM
-#elif p_knl == 3
-#define fusedFDM_v3 fusedFDM
-#elif p_knl == 4
-#define fusedFDM_v4 fusedFDM
-#else
-#define fusedFDM_v4 fusedFDM
-#endif
-
-
 #if p_knl == 0
 // old, nekRS baseline FDM kernel
 @kernel void fusedFDM_v0(const dlong Nelements,

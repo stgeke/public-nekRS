@@ -52,7 +52,7 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
         auto axKernel = benchmarkAx(NelemBenchmark,
                                     Nq,
                                     Nq - 1,
-                                    coeffField,
+                                    !coeffField,
                                     poissonEquation,
                                     false,
                                     wordSize,

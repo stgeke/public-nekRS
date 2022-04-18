@@ -61,7 +61,8 @@ occa::kernel benchmarkAx(int Nelements,
     constexpr int p_Nggeo {7};
 
     int Nkernels = 1;
-    if(kernelName == "ellipticPartialAxHex3D") Nkernels = 8;
+    if (kernelName == "ellipticPartialAxHex3D")
+      Nkernels = 7;
     std::vector<int> kernelVariants;
     if (platform->serial) {
       kernelVariants.push_back(0);
@@ -70,9 +71,8 @@ occa::kernel benchmarkAx(int Nelements,
       for (int knl = 0; knl < Nkernels; ++knl) {
 
         // v3 requires Nq^3 < 1024 (max threads/thread block on CUDA/HIP)
-        if(knl == 3 && Np > 1024) continue;
-        // v6 requires Nq % 2 == 0
-        if(knl == 6 && Nq % 2 == 1) continue;
+        if (knl == 3 && Np > 1024)
+          continue;
         kernelVariants.push_back(knl);
       }
     }

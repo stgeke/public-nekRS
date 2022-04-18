@@ -1131,20 +1131,21 @@
 
             if (r_e < Nelements) {
               // prefetch geometric factors
-              const dlong gbase = element * p_Nggeo * p_Np + p_Nggeo * (k * p_Nq * p_Nq + j * p_Nq + i);
 
-              r_G00 = ggeo[gbase + p_G00ID];
-              r_G01 = ggeo[gbase + p_G01ID];
-              r_G02 = ggeo[gbase + p_G02ID];
+              const dlong gbase = element * p_Nggeo * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
 
-              r_G11 = ggeo[gbase + p_G11ID];
-              r_G12 = ggeo[gbase + p_G12ID];
-              r_G22 = ggeo[gbase + p_G22ID];
+              r_G00 = ggeo[gbase + p_G00ID * p_Np];
+              r_G01 = ggeo[gbase + p_G01ID * p_Np];
+              r_G02 = ggeo[gbase + p_G02ID * p_Np];
+
+              r_G11 = ggeo[gbase + p_G11ID * p_Np];
+              r_G12 = ggeo[gbase + p_G12ID * p_Np];
+              r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
 #ifdef p_poisson
               r_GwJ = 0;
 #else
-              r_GwJ = ggeo[gbase + p_GWJID];
+              r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
             }
 
@@ -1271,222 +1272,6 @@
 #define p_NelementsPerBlk 1
 #endif
 
-#if p_knl == 6
-// requires p_Nq to be even!
-@kernel void ellipticPartialAxHex3D_v6(const dlong Nelements,
-                                       const dlong offset,
-                                       const dlong loffset,
-                                       @restrict const dlong *elementList,
-                                       @restrict const dfloat *ggeo,
-                                       @restrict const dfloat *D,
-                                       @restrict const dfloat *S,
-                                       @restrict const dfloat *lambda,
-                                       @restrict const dfloat *q,
-                                       @restrict dfloat *Aq)
-{
-
-  for (dlong eo = 0; eo < Nelements; eo += p_NelementsPerBlk; @outer(0)) {
-
-    @shared dfloat s_D[p_Nq][p_Nq + p_pad];
-    @shared dfloat s_q[p_Nq][p_Nq][p_Nq][p_NelementsPerBlk];
-
-    @exclusive dlong r_e, element;
-
-    for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-
-          // load D into local memory
-          //  s_D[i][j] = d \phi_i at node j
-          if (es == 0) {
-            s_D[j][i] = D[p_Nq * j + i]; // D is column major
-          }
-
-          r_e = es + eo;
-
-          if (r_e < Nelements) {
-            element = elementList[r_e];
-
-            const dlong base = i + j * p_Nq + element * p_Np;
-
-            // load pencil of u into register
-#pragma unroll p_Nq
-            for (int k = 0; k < p_Nq; k++) {
-              const dlong id = base + k * p_Nq * p_Nq;
-              s_q[k][j][i][es] = (id != -1) ? q[id] : 0.0;
-            }
-          }
-        }
-      }
-    }
-
-    @barrier("local");
-
-    @exclusive dfloat qr[p_Nq], qs[p_Nq], qt[p_Nq];
-
-    for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-
-          for (int n = 0; n < p_Nq; ++n) {
-            qr[n] = 0;
-            qs[n] = 0;
-            qt[n] = 0;
-          }
-
-#define p_halfNq (p_Nq / 2)
-
-#pragma unroll p_Nq
-          for (int n = 0; n < p_Nq; ++n) {
-            dfloat qnji1 = s_q[n][j][i][es];
-            dfloat qnji2 = s_q[p_Nq - 1 - n][j][i][es];
-#pragma unroll
-            for (int k = 0; k < p_halfNq; ++k) {
-              dfloat Dkn = s_D[k][n];
-              qt[k] += Dkn * qnji1;
-              qt[p_Nq - 1 - k] -= Dkn * qnji2;
-            }
-          }
-
-#pragma unroll p_Nq
-          for (int n = 0; n < p_Nq; ++n) {
-            dfloat Din = s_D[i][n];
-#pragma unroll p_Nq
-            for (int k = 0; k < p_Nq; ++k) {
-              qr[k] += Din * s_q[k][j][n][es];
-            }
-          }
-
-#pragma unroll p_Nq
-          for (int n = 0; n < p_Nq; ++n) {
-            dfloat Djn = s_D[j][n];
-#pragma unroll p_Nq
-            for (int k = 0; k < p_Nq; ++k) {
-              qs[k] += Djn * s_q[k][n][i][es];
-            }
-          }
-
-          if (r_e < Nelements) {
-            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22, r_GwJ;
-
-#pragma unroll
-            for (int k = 0; k < p_Nq; ++k) {
-              // prefetch geometric factors
-              const dlong gbase = element * p_Nggeo * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
-
-              r_G00 = ggeo[gbase + p_G00ID * p_Np];
-              r_G01 = ggeo[gbase + p_G01ID * p_Np];
-              r_G02 = ggeo[gbase + p_G02ID * p_Np];
-
-              r_G11 = ggeo[gbase + p_G11ID * p_Np];
-              r_G12 = ggeo[gbase + p_G12ID * p_Np];
-              r_G22 = ggeo[gbase + p_G22ID * p_Np];
-
-#ifdef p_poisson
-              r_GwJ = 0;
-#else
-              r_GwJ = ggeo[gbase + p_GWJID * p_Np];
-#endif
-              dfloat qx = r_G00 * qr[k] + r_G01 * qs[k] + r_G02 * qt[k];
-              dfloat qy = r_G01 * qr[k] + r_G11 * qs[k] + r_G12 * qt[k];
-              dfloat qz = r_G02 * qr[k] + r_G12 * qs[k] + r_G22 * qt[k];
-
-              qr[k] = qx;
-              qs[k] = qy;
-              qt[k] = qz;
-            }
-          }
-        }
-      }
-    }
-
-    @barrier("local");
-
-    for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-          for (int k = 0; k < p_Nq; ++k) {
-            s_q[k][j][i][es] = qr[k];
-            qr[k] = 0;
-          }
-
-          // do 'c' diff
-#pragma unroll p_Nq
-          for (int n = 0; n < p_Nq; ++n) {
-#pragma unroll
-            for (int k = 0; k < p_halfNq; ++k) {
-              dfloat Dnk = s_D[n][k];
-              qr[k] += Dnk * qt[n];
-              qr[p_Nq - 1 - k] += Dnk * qt[n];
-            }
-          }
-        }
-      }
-    }
-
-    @barrier("local");
-
-    for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-
-          // do 'a' diff
-#pragma unroll p_Nq
-          for (int n = 0; n < p_Nq; ++n) {
-            dfloat Din = s_D[n][i];
-#pragma unroll p_Nq
-            for (int k = 0; k < p_Nq; ++k) {
-              qr[k] += Din * s_q[k][j][n][es];
-            }
-          }
-        }
-      }
-    }
-
-    @barrier("local");
-
-    for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-          for (int k = 0; k < p_Nq; ++k) {
-            s_q[k][j][i][es] = qs[k];
-          }
-        }
-      }
-    }
-
-    @barrier("local");
-
-    for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-
-          // do 'a' diff
-#pragma unroll p_Nq
-          for (int n = 0; n < p_Nq; ++n) {
-            dfloat Djn = s_D[n][j];
-#pragma unroll p_Nq
-            for (int k = 0; k < p_Nq; ++k) {
-              qr[k] += Djn * s_q[k][n][i][es];
-            }
-          }
-
-          if (r_e < Nelements) {
-            const dlong id = element * p_Np + j * p_Nq + i;
-
-#pragma unroll p_Nq
-            for (int k = 0; k < p_Nq; k++) {
-              Aq[id + k * p_Nq * p_Nq] = qr[k];
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-#endif
-
 // padding for bank conflicts
 #if p_Nq == 16 || p_Nq == 14 || p_Nq == 12 || p_Nq == 10 || p_Nq == 8 || p_Nq == 6 || p_Nq == 4
 #define p_pad 0
@@ -1494,8 +1279,8 @@
 #define p_pad 1
 #endif
 
-#if p_knl == 7
-@kernel void ellipticPartialAxHex3D_v7(const dlong Nelements,
+#if p_knl == 6
+@kernel void ellipticPartialAxHex3D_v6(const dlong Nelements,
                                        const dlong offset,
                                        const dlong loffset,
                                        @restrict const dlong *elementList,

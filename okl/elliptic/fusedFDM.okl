@@ -289,7 +289,7 @@
     @exclusive dlong element;
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
 
@@ -320,10 +320,11 @@
           }
         }
       }
+    }
 
     // TW: we merge the boundary mods into a single write
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
 
@@ -339,9 +340,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int j = 0; j < p_Nq_e; j++; @inner) {
 #ifdef gfxXX
@@ -361,8 +363,9 @@
           }
         }
       }
+    }
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 #ifdef gfxXX
@@ -382,9 +385,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; j++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -408,9 +412,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int j = 0; j < p_Nq_e; j++; @inner) {
 #ifdef gfxXX
@@ -430,9 +435,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -452,9 +458,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; j++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -489,10 +496,13 @@
           }
         }
       }
+    }
+    
+    @barrier("local");
 
 #if (!p_restrict)
     // merged these three loops into one (however, the premise is shaky at best)
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
           if (i >= 1 && i < p_Nq_e - 1 && j >= 1 && j < p_Nq_e - 1) {
@@ -509,9 +519,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
           if (element != -1) {
@@ -523,6 +534,7 @@
           }
         }
       }
+    }
 
 #endif /* if (!p_restrict) */
   }
@@ -591,7 +603,7 @@
     @exclusive dlong element;
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
 
@@ -619,10 +631,11 @@
           }
         }
       }
+    }
 
     // TW: we merge the boundary mods into a single write
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
 
@@ -638,9 +651,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int j = 0; j < p_Nq_e; j++; @inner) {
           pfloat values[p_Nq_e];
@@ -660,9 +674,10 @@
             work2[k][j][i][es] = values[i];
         }
       }
+    }
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -683,9 +698,10 @@
             work1[k][j][i][es] = values[j];
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; j++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -713,9 +729,10 @@
           }
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int j = 0; j < p_Nq_e; j++; @inner) {
 
@@ -736,9 +753,10 @@
             work1[k][j][i][es] = values[i];
         }
       }
+    }
 
     @barrier("local");
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -759,6 +777,7 @@
             work2[k][j][i][es] = values[j];
         }
       }
+    }
 
     @barrier("local");
     for (int es = 0; es < p_Nblk; ++es; @inner) {
@@ -800,6 +819,8 @@
         }
       }
     }
+
+    @barrier("local");
 
 #if (!p_restrict)
     // merged these three loops into one (however, the premise is shaky at best)
@@ -902,7 +923,7 @@
 
     @exclusive dlong element;
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
 
@@ -930,11 +951,12 @@
           }
         }
       }
+    }
 
     // TW: we merge the boundary mods into a single write
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
         for (int i = 0; i < p_Nq_e; ++i; @inner) {
 
@@ -950,10 +972,11 @@
           }
         }
       }
+    }
 
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int j = 0; j < p_Nq_e; j++; @inner) {
           pfloat values[p_Nq_e];
@@ -979,10 +1002,11 @@
             work1[k][j][i][es] = values[i];
         }
       }
+    }
 
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -1009,10 +1033,11 @@
             work1[k][j][i][es] = values[j];
         }
       }
+    }
 
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; j++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -1045,10 +1070,11 @@
           }
         }
       }
+    }
 
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int j = 0; j < p_Nq_e; j++; @inner) {
 
@@ -1075,10 +1101,11 @@
             work1[k][j][i][es] = values[i];
         }
       }
+    }
 
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int k = 0; k < p_Nq_e; k++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -1104,10 +1131,11 @@
             work1[k][j][i][es] = values[j];
         }
       }
+    }
 
     @barrier("local");
 
-    for (int es = 0; es < p_Nblk; ++es; @inner)
+    for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; j++; @inner) {
         for (int i = 0; i < p_Nq_e; i++; @inner) {
 
@@ -1151,6 +1179,7 @@
 #endif
         }
       }
+    }
 
 #if (!p_restrict)
     @barrier("local");

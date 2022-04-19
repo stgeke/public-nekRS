@@ -591,9 +591,6 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
     }
     if (nrs->uvwSolver) {
 
-      if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
-        applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, platform->o_mempool.slice3);
-      }
       if (nrs->uvwSolver->Nmasked)
         nrs->maskCopyKernel(nrs->uvwSolver->Nmasked,
             0 * nrs->fieldOffset,

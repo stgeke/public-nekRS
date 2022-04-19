@@ -176,9 +176,6 @@ void applyDirichlet(nrs_t *nrs, double time)
                           nrs->o_P);
 
     if (nrs->uvwSolver) {
-      if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
-        applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, platform->o_mempool.slice7);
-      }
       if (nrs->uvwSolver->Nmasked)
         nrs->maskCopyKernel(nrs->uvwSolver->Nmasked,
                             0 * nrs->fieldOffset,
@@ -249,12 +246,6 @@ void applyDirichlet(nrs_t *nrs, double time)
                           nrs->gsh);
     }
 
-    if (bcMap::unalignedBoundary(mesh->cht, "mesh")) {
-      applyZeroNormalMask(nrs,
-                          nrs->meshSolver->o_EToB,
-                          nrs->o_zeroNormalMaskMeshVelocity,
-                          platform->o_mempool.slice3);
-    }
     if (nrs->meshSolver->Nmasked)
       nrs->maskCopyKernel(nrs->meshSolver->Nmasked,
                           0 * nrs->fieldOffset,

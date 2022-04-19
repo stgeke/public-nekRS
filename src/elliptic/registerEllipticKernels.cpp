@@ -168,7 +168,7 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
                                 !coeffField,
                                 poissonEquation,
                                 false,
-                                8*sizeof(dfloat),
+                                sizeof(dfloat),
                                 Nfields,
                                 verbosity,
                                 0.2,

@@ -268,7 +268,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
     if(platform->comm.mpiRank == 0 && !skipPrint){
 
       if(verbosity > 0){
-        std::cout << "advsub:";
+        std::cout << "advSub:";
       }
 
       if(verbosity > 1){

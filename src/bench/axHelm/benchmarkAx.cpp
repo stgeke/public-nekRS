@@ -7,6 +7,40 @@
 #include "kernelBenchmarker.hpp"
 #include "randomVector.hpp"
 #include "omp.h"
+#include <tuple>
+#include <map>
+
+namespace{
+struct CallParameters{
+  int Nelements;
+  int Nq;
+  int Ng;
+  bool constCoeff;
+  bool poisson;
+  bool computeGeom;
+  int wordSize;
+  int Ndim;
+};
+}
+
+namespace std
+{
+  template<> struct less<CallParameters>
+  {
+    bool operator() (const CallParameters& lhs, const CallParameters& rhs) const
+    {
+      auto tier = [](const CallParameters& v)
+      {
+        return std::tie(v.Nelements, v.Nq, v.Ng, v.constCoeff, v.poisson, v.computeGeom, v.wordSize, v.Ndim);
+      };
+      return tier(lhs) < tier(rhs);
+    }
+  };
+}
+
+namespace{
+std::map<CallParameters, occa::kernel> cachedResults;
+}
 
 template <typename T>
 occa::kernel benchmarkAx(int Nelements,
@@ -21,7 +55,23 @@ occa::kernel benchmarkAx(int Nelements,
                          T NtestsOrTargetTime,
                          bool requiresBenchmark)
 {
-  const auto N = Nq - 1;
+  CallParameters params{
+    Nelements,
+    Nq,
+    Ng,
+    constCoeff,
+    poisson,
+    computeGeom,
+    wordSize,
+    Ndim,
+  };
+
+  if(cachedResults.count(params) > 0){
+    return cachedResults.at(params);
+  }
+
+  const auto N = Nq-1;
+
   const auto Np = Nq * Nq * Nq;
   const auto Nq_g = Ng + 1;
   const int Np_g = Nq_g * Nq_g * Nq_g;
@@ -272,6 +322,8 @@ occa::kernel benchmarkAx(int Nelements,
     auto kernelAndTime = benchmarkAxWithPrecision(p);
     kernel = kernelAndTime.first;
   }
+  
+  cachedResults[params] = kernel;
 
   return kernel;
 }

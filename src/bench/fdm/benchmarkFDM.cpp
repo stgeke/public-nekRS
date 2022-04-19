@@ -7,6 +7,37 @@
 #include "randomVector.hpp"
 #include "kernelBenchmarker.hpp"
 #include "omp.h"
+#include <tuple>
+#include <map>
+
+namespace{
+struct CallParameters{
+  int Nelements;
+  int Nq_e;
+  int wordSize;
+  bool useRAS;
+  bool overlap;
+};
+}
+
+namespace std
+{
+  template<> struct less<CallParameters>
+  {
+    bool operator() (const CallParameters& lhs, const CallParameters& rhs) const
+    {
+      auto tier = [](const CallParameters& v)
+      {
+        return std::tie(v.Nelements, v.Nq_e, v.wordSize, v.useRAS, v.overlap);
+      };
+      return tier(lhs) < tier(rhs);
+    }
+  };
+}
+
+namespace{
+std::map<CallParameters, occa::kernel> cachedResults;
+}
 
 template <typename T>
 occa::kernel benchmarkFDM(int Nelements,
@@ -18,6 +49,18 @@ occa::kernel benchmarkFDM(int Nelements,
                           T NtestsOrTargetTime,
                           bool requiresBenchmark)
 {
+  CallParameters params{
+    Nelements,
+    Nq_e,
+    wordSize,
+    useRAS,
+    overlap,
+  };
+
+  if(cachedResults.count(params) > 0){
+    return cachedResults.at(params);
+  }
+
   const auto Nq = Nq_e - 2;
   const auto N_e = Nq_e - 1;
   const auto N = Nq - 1;
@@ -248,6 +291,8 @@ occa::kernel benchmarkFDM(int Nelements,
     auto kernelAndTime = benchmarkFDMWithPrecision(p);
     kernel = kernelAndTime.first;
   }
+
+  cachedResults[params] = kernel;
 
   return kernel;
 }

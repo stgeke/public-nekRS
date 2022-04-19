@@ -70,9 +70,15 @@ occa::kernel benchmarkAx(int Nelements,
     else {
       for (int knl = 0; knl < Nkernels; ++knl) {
 
+#if 0
         // v3 requires Nq^3 < 1024 (max threads/thread block on CUDA/HIP)
         if (knl == 3 && Np > 1024)
           continue;
+#else
+        // disable v3 for now, since correctness check is off
+        if (knl == 3)
+          continue;
+#endif
         kernelVariants.push_back(knl);
       }
     }

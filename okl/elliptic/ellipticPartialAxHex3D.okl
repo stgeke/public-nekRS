@@ -981,7 +981,7 @@
 
             s_w[j][i][es] = (r_G01 * ur + r_G11 * us + r_G12 * ut);
             s_v[j][i][es] = (r_G00 * ur + r_G01 * us + r_G02 * ut);
-            pfloat r_GDut = lambda0 * (r_G02 * ur + r_G12 * us + r_G22 * ut);
+            dfloat r_GDut = lambda0 * (r_G02 * ur + r_G12 * us + r_G22 * ut);
 
 #pragma unroll p_Nq
             for (int m = 0; m < p_Nq; m++) {

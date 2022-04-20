@@ -160,14 +160,14 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
 
   if(kernelVariants.size() == 1 && !requiresBenchmark){
     auto newProps = props;
-    newProps["defines/p_knl"] = kernelVariants.back();
+    if(!platform->serial) newProps["defines/p_knl"] = kernelVariants.back();
     return platform->device.buildKernel(fileName, newProps, true);
   }
 
   occa::kernel referenceKernel;
   {
     auto newProps = props;
-    newProps["defines/p_knl"] = kernelVariants.front();
+    if(!platform->serial) newProps["defines/p_knl"] = kernelVariants.front();
     referenceKernel = platform->device.buildKernel(fileName, newProps, true);
   }
 
@@ -212,7 +212,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
 
   auto advSubKernelBuilder = [&](int kernelVariant){
     auto newProps = props;
-    newProps["defines/p_knl"] = kernelVariant;
+    if(!platform->serial) newProps["defines/p_knl"] = kernelVariant;
     auto kernel = platform->device.buildKernel(fileName, newProps, true);
 
     // perform correctness check
@@ -301,11 +301,14 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
 
   auto kernelAndTime =
       benchmarkKernel(advSubKernelBuilder, kernelRunner, printCallBack, kernelVariants, NtestsOrTargetTime);
-  int bestKernelVariant = static_cast<int>(kernelAndTime.first.properties()["defines/p_knl"]);
+  
+  if(kernelAndTime.first.properties().has("defines/p_knl")){
+    int bestKernelVariant = static_cast<int>(kernelAndTime.first.properties()["defines/p_knl"]);
 
-  // print only the fastest kernel
-  if(verbosity == 1){
-    printPerformanceInfo(bestKernelVariant, kernelAndTime.second, 0, false);
+    // print only the fastest kernel
+    if(verbosity == 1){
+      printPerformanceInfo(bestKernelVariant, kernelAndTime.second, 0, false);
+    }
   }
 
   free(o_elementList);

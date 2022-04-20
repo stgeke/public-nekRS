@@ -33,6 +33,7 @@ struct CallParameters{
   int cubNq;
   int nEXT;
   bool dealias;
+  bool isScalar;
 };
 }
 
@@ -44,7 +45,7 @@ namespace std
     {
       auto tier = [](const CallParameters& v)
       {
-        return std::tie(v.Nfields, v.Nelements, v.Nq, v.cubNq, v.nEXT, v.dealias);
+        return std::tie(v.Nfields, v.Nelements, v.Nq, v.cubNq, v.nEXT, v.dealias, v.isScalar);
       };
       return tier(lhs) < tier(rhs);
     }
@@ -57,8 +58,22 @@ std::map<CallParameters, occa::kernel> cachedResults;
 
 template <typename T>
 occa::kernel
-benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool dealias, int verbosity, T NtestsOrTargetTime, bool requiresBenchmark)
+benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool dealias, bool isScalar, int verbosity, T NtestsOrTargetTime, bool requiresBenchmark)
 {
+  CallParameters params{
+    Nfields,
+    Nelements,
+    Nq,
+    cubNq,
+    nEXT,
+    dealias,
+    isScalar,
+  };
+
+  if(cachedResults.count(params) > 0){
+    return cachedResults.at(params);
+  }
+
   if(Nq > 14){
     if(platform->comm.mpiRank == 0){
       std::cout << "Error: maximum Nq of 14 has been exceed with Nq=" << Nq << ".\n";
@@ -130,7 +145,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
   fileName = 
     installDir + "/okl/nrs/" + kernelName + ext;
   
-  if(Nfields == 1){
+  if(isScalar){
     fileName = 
       installDir + "/okl/cds/" + kernelName + ext;
   }
@@ -138,13 +153,13 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
   // currently lacking a native implementation of the non-dealiased kernel
   if(!dealias) {
     fileName = installDir + "/okl/nrs/subCycleHex3D.okl";
-    if(Nfields == 1){
+    if(isScalar){
       fileName = installDir + "/okl/cds/subCycleHex3D.okl";
     }
   }
 
   std::vector<int> kernelVariants = {0};
-  if(!platform->serial && dealias && Nfields == 3){
+  if(!platform->serial && dealias && !isScalar){
     // TODO: reduce number of kernel variants
     constexpr int Nkernels = 14;
     for(int i = 1; i < Nkernels; ++i){
@@ -154,7 +169,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
 
       kernelVariants.push_back(i);
     }
-  } else if(!platform->serial && dealias && Nfields == 1){
+  } else if(!platform->serial && dealias && isScalar){
     kernelVariants.push_back(8);
   }
 
@@ -319,6 +334,8 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
   free(o_cubInterpT);
   free(o_Ud);
 
+  cachedResults[params] = kernelAndTime.first;
+
   return kernelAndTime.first;
 }
 
@@ -329,6 +346,7 @@ occa::kernel benchmarkAdvsub<int>(int Nfields,
                              int cubNq,
                              int nEXT,
                              bool dealias,
+                             bool isScalar,
                              int verbosity,
                              int Ntests,
                              bool requiresBenchmark);
@@ -340,6 +358,7 @@ occa::kernel benchmarkAdvsub<double>(int Nfields,
                              int cubNq,
                              int nEXT,
                              bool dealias,
+                             bool isScalar,
                              int verbosity,
                              double targetTime,
                              bool requiresBenchmark);

@@ -7,6 +7,7 @@ occa::kernel benchmarkAdvsub(int Nfields,
                              int cubNq,
                              int nEXT,
                              bool dealias,
+                             bool isScalar,
                              int verbosity,
                              T NtestsOrTargetTime,
                              bool requiresBenchmark);

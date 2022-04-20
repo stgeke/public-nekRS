@@ -155,6 +155,7 @@ void registerCdsKernels(occa::properties kernelInfoBC) {
         cubNq,
         nEXT,
         true,
+        true,
         verbosity,
         0.5,
         false);

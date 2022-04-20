@@ -150,10 +150,12 @@ int main(int argc, char** argv)
   platform = platform_t::getInstance(options, MPI_COMM_WORLD, MPI_COMM_WORLD); 
   const int Nthreads =  omp_get_max_threads();
 
+  bool isScalar = Nfields == 1;
+
   if(Ntests != -1){
-    benchmarkAdvsub(Nfields, Nelements, Nq, cubNq, nEXT, dealias, 2, Ntests, true);
+    benchmarkAdvsub(Nfields, Nelements, Nq, cubNq, nEXT, dealias, isScalar, 2, Ntests, true);
   } else {
-    benchmarkAdvsub(Nfields, Nelements, Nq, cubNq, nEXT, dealias, 2, 10.0, true);
+    benchmarkAdvsub(Nfields, Nelements, Nq, cubNq, nEXT, dealias, isScalar, 2, 10.0, true);
   }
 
   MPI_Finalize();

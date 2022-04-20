@@ -244,6 +244,7 @@ void registerNrsKernels(occa::properties kernelInfoBC)
         cubNq,
         nEXT,
         true,
+        false,
         verbosity,
         0.5,
         false);

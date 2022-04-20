@@ -400,6 +400,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
 
   platform->timer.tic("pressureSolve", 1);
   {
+    platform->timer.tic("pressure rhs", 1);
     occa::memory &o_gradPCoeff = platform->o_mempool.slice0;
     occa::memory &o_Prhs = platform->o_mempool.slice3;
 
@@ -470,12 +471,14 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
           platform->o_mempool.slice6,
           nrs->o_Pc);
 
+    platform->timer.toc("pressure rhs");
     ellipticSolve(nrs->pSolver, o_Prhs, nrs->o_Pc);
   }
   platform->timer.toc("pressureSolve");
 
   platform->timer.tic("velocitySolve", 1);
   {
+    platform->timer.tic("velocity rhs", 1);
     nrs->setEllipticCoeffKernel(mesh->Nlocal,
         nrs->g0 * nrs->idt,
         0 * nrs->fieldOffset,
@@ -620,6 +623,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
             platform->o_mempool.slice3,
             nrs->o_Uc);
     }
+    platform->timer.toc("velocity rhs");
 
     if (nrs->uvwSolver) {
       ellipticSolve(nrs->uvwSolver, o_RhsVel, nrs->o_Uc);

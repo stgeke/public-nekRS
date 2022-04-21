@@ -4,7 +4,24 @@
 
 ### NVIDIA V100
 ```
-TODO
+  elapsedStepSum        2.75499e+01s  0.04
+  solve                 2.75306e+01s  0.04
+    min                 6.94056e-02s
+    max                 1.15970e-01s
+    flop/s              8.64977e+11
+
+    makef               7.77846e+00s  0.28  200
+      udfUEqnSource     8.17821e-03s  0.00  200
+    udfProperties       4.75872e-04s  0.00  201
+    velocitySolve       6.81513e+00s  0.25  200
+      rhs               5.23179e-01s  0.08  200
+    pressureSolve       1.21465e+01s  0.44  200
+      rhs               9.96808e-01s  0.08  200
+      preconditioner    9.02532e+00s  0.74  784
+        pMG smoother    6.05024e+00s  0.67  3136
+        coarse grid     2.07123e+00s  0.23  784
+      initial guess     5.95400e-01s  0.05  200
+
 ```
 
 ### NVIDIA A100

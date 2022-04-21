@@ -764,7 +764,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep)
   cds_t *cds = nrs->cds;
 
   const double elapsedStep = platform->timer.query("elapsedStep", "DEVICE:MAX");
-  const double elapsed = platform->timer.query("elapsed", "DEVICE:MAX");
+  const double elapsedStepSum = platform->timer.query("elapsedStepSum", "DEVICE:MAX");
   bool verboseInfo = platform->options.compareArgs("VERBOSE SOLVER INFO", "TRUE");
   const dfloat cfl = computeCFL(nrs);
   dfloat divUErrVolAvg, divUErrL2;
@@ -936,7 +936,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep)
       if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
 
     if (nrs->converged)
-      printf("  elapsedStep= %.2es  elapsed= %.5es", elapsedStep, elapsed);
+      printf("  elapsedStep= %.2es  elapsedStepSum= %.5es", elapsedStep, elapsedStepSum);
 
     printf("\n");
   }

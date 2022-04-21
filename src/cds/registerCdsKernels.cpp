@@ -150,15 +150,10 @@ void registerCdsKernels(occa::properties kernelInfoBC) {
       bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
       const int verbosity = verbose ? 2 : 1;
 
-      auto subCycleKernel = benchmarkAdvsub(1, NelemBenchmark,
-        Nq,
-        cubNq,
-        nEXT,
-        true,
-        true,
-        verbosity,
-        0.5,
-        false);
+      bool dealias = platform->options.compareArgs("ADVECTION TYPE", "CUBATURE");
+
+      auto subCycleKernel =
+          benchmarkAdvsub(1, NelemBenchmark, Nq, cubNq, nEXT, dealias, true, verbosity, 0.5, false);
 
       subCycleStrongCubatureProps = subCycleKernel.properties();
 

@@ -90,6 +90,10 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
     ABORT(1);
   }
 
+  if (!dealias) {
+    cubNq = Nq;
+  }
+
   static constexpr int NVFields = 3;
   const int N = Nq-1;
   const int cubN = cubNq - 1;
@@ -152,9 +156,9 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
   
   // currently lacking a native implementation of the non-dealiased kernel
   if(!dealias) {
-    fileName = installDir + "/okl/nrs/subCycleHex3D.okl";
+    fileName = installDir + "/okl/nrs/" + kernelName + ".okl";
     if(isScalar){
-      fileName = installDir + "/okl/cds/subCycleHex3D.okl";
+      fileName = installDir + "/okl/cds/" + kernelName + ".okl";
     }
   }
 

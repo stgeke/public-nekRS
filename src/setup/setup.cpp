@@ -184,6 +184,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     ABORT(EXIT_FAILURE);
     ;
   }
+  if (nrs->cht && options.compareArgs("MOVING MESH", "TRUE")) {
+    if (platform->comm.mpiRank == 0){
+      std::cout << "Conjugate heat transfer + moving mesh is not supported\n";
+    }
+    ABORT(EXIT_FAILURE);
+  }
 
   nrs->_mesh = createMesh(comm, N, cubN, nrs->cht, kernelInfo);
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;

@@ -51,7 +51,6 @@ TODO
 
 ### AMD MI250X/1
 ```
-  udfExecuteStep        8.33280e-04s  0.00  201
   elapsedStepSum        2.35982e+01s  0.11
   solve                 2.35922e+01s  0.11
     min                 5.87667e-02s

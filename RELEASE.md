@@ -5,7 +5,7 @@
 * Multi-session (uncoupled) support
 * Support unaligned symmetry boundary condition
 * Support (unaligned) traction boundary condition
-* Better performance on AMD GPUs
+* Better performance on AMD MI-GPUs
 * FLOP counters
 * Various bug fixes 
 
@@ -20,10 +20,11 @@
         e.g., `coarseSolver = SEMFEM+AmgX` is replaced by
         `coarseSolver = AmgX` and `coarseGridDiscretization = SEMFEM`
 * [par] Remove `preconditioner=semg` and `preconditioner=semg_amg`
+* [udf] Rename plug-in name `avg`  => `tavg`
 
 ## Known Bugs / Restrictions
 
-* Mesh solver does not support unaligned sym or shl
+* Mesh solver does not support CHT and unaligned sym/shl BCs
 * [729](https://github.com/Nek5000/Nek5000/issues/729)
 * [300](https://github.com/Nek5000/nekRS/issues/300)
 * [258](https://github.com/Nek5000/nekRS/issues/258)

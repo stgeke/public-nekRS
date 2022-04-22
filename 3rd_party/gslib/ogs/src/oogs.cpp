@@ -416,7 +416,7 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
           // skip invalid combinations
           if(gs->modeExchange != OOGS_EX_PW && gs->earlyPrepostRecv)
             continue; 
-	      if(gs->mode == OOGS_DEFAULT || gs->mode == OOGS_LOCAL) {
+	  if(gs->mode == OOGS_DEFAULT || gs->mode == OOGS_LOCAL) {
             if(gs->modeExchange != OOGS_EX_PW) continue; 
             if(gs->earlyPrepostRecv) continue;  
           }
@@ -516,14 +516,13 @@ oogs_t* oogs::setup(ogs_t *ogs, int nVec, dlong stride, const char *type, std::f
     const std::string gsModeExchangeStr = (gs->modeExchange == OOGS_EX_NBC) ? "nbc": "pw";
     const std::string gsEarlyPrepostRecvStr = (gs->earlyPrepostRecv) ? "+early": "";
     if(gs->rank == 0) {
-      std::string gsModeStr; 
-      switch(gs->mode) {
-        case OOGS_DEFAULT  : gsModeStr = "+host";
-        case OOGS_HOSTMPI  : gsModeStr = "+hybrid";
-        case OOGS_DEVICEMPI: gsModeStr = "+device";
-      }
-
       if(ogs->NhaloGather > 0) {
+        std::string gsModeStr; 
+        switch(gs->mode) {
+          case OOGS_DEFAULT  : gsModeStr = "+host"; break;
+          case OOGS_HOSTMPI  : gsModeStr = "+hybrid"; break;
+          case OOGS_DEVICEMPI: gsModeStr = "+device"; break;
+        }
         printf("\nused config: %s%s%s ", gsModeExchangeStr.c_str(), gsEarlyPrepostRecvStr.c_str(), gsModeStr.c_str());
         printf("(MPI: %.2es / bi-bw: %.1fGB/s/rank)\n", elapsedMinMPI, nBytesExchange/elapsedMinMPI/1e9);
       } else {

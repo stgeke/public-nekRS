@@ -575,9 +575,10 @@
 
                 const dlong id = element * p_Np + c * p_Nq * p_Nq + b * p_Nq + a;
 
-#if p_movingMesh
+#if p_MovingMesh
                 // only modify output if mesh is moving
                 dfloat bdivw = 0.0;
+                dfloat invLMM = 0.0;
 #pragma unroll p_nEXT
                 for (int s = 0; s < p_nEXT; s++) {
                   invLMM += s_c[s] * invLumpedMassMatrix[id + s * offset];

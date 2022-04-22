@@ -90,7 +90,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
     ABORT(1);
   }
 
-  if (!dealias) {
+  if (!dealias || cubNq < Nq) {
     cubNq = Nq;
   }
 
@@ -179,14 +179,14 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
 
   if(kernelVariants.size() == 1 && !requiresBenchmark){
     auto newProps = props;
-    if(!platform->serial) newProps["defines/p_knl"] = kernelVariants.back();
+    if(!platform->serial && dealias) newProps["defines/p_knl"] = kernelVariants.back();
     return platform->device.buildKernel(fileName, newProps, true);
   }
 
   occa::kernel referenceKernel;
   {
     auto newProps = props;
-    if(!platform->serial) newProps["defines/p_knl"] = kernelVariants.front();
+    if(!platform->serial && dealias) newProps["defines/p_knl"] = kernelVariants.front();
     referenceKernel = platform->device.buildKernel(fileName, newProps, true);
   }
 
@@ -232,7 +232,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
 
   auto advSubKernelBuilder = [&](int kernelVariant){
     auto newProps = props;
-    if(!platform->serial) newProps["defines/p_knl"] = kernelVariant;
+    if(!platform->serial && dealias) newProps["defines/p_knl"] = kernelVariant;
     auto kernel = platform->device.buildKernel(fileName, newProps, true);
 
     // perform correctness check

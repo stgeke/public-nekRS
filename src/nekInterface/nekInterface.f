@@ -484,7 +484,15 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
       subroutine nekf_end()
 
-      call nek_end()
+      include 'SIZE'
+      include 'DPROCMAP'
+
+#ifdef DPROCMAP
+#ifdef MPI
+      call MPI_Win_free(dProcmapH, ierr)
+#endif
+#endif 
+      !call nek_end()
 
       return
       end

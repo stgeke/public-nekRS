@@ -429,8 +429,6 @@ int main(int argc, char** argv)
   int tStep = 0;
   double time = nekrs::startTime();
 
-  nekrs::udfExecuteStep(time, tStep, /* outputStep */ 0);
-
   double elapsedTime = 0;
   {
     MPI_Barrier(comm);
@@ -441,6 +439,8 @@ int main(int argc, char** argv)
     if (rank == 0)
       std::cout << "initialization took " << elapsedTime << " s" << std::endl;
   }
+
+  nekrs::udfExecuteStep(time, tStep, /* outputStep */ 0);
 
   int lastStep = nekrs::lastStep(time, tStep, elapsedTime);
   double elapsedStepSum = 0;

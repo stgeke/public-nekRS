@@ -351,6 +351,7 @@ void* nrsPtr(void)
 void finalize(void)
 {
   AMGXfree();
+  nek::end();
 }
 
 int runTimeStatFreq()

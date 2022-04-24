@@ -301,8 +301,8 @@ target_include_directories(nekrs-lib
 
 if(ENABLE_AMGX AND ENABLE_CUDA)
   target_compile_definitions(nekrs-lib PUBLIC -DENABLE_AMGX)
-  target_link_libraries(nekrs-lib PUBLIC amgxsh)
-  target_include_directories(nekrs-lib PUBLIC 3rd_party/AMGX/base/include)
+  target_link_libraries(nekrs-lib PUBLIC amgxsh amgx)
+  target_include_directories(nekrs-lib PUBLIC 3rd_party/AMGX/base/include 3rd_party/AMGX/core/include)
 endif()
 
 add_executable(nekrs-bin src/main.cpp)

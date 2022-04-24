@@ -48,7 +48,7 @@ void timer_t::set(const std::string tag, double time, long long int count)
   m_[tag].startTime = time;	
   auto it = m_.find(tag);
   if(it == m_.end()) {
-    printf("Error in set: Invalid tag name. %s:%u\n",__FILE__,__LINE__);
+    printf("Error in set: Invalid tag name %s\n",tag.c_str());
     MPI_Abort(comm_,1);
   }
 
@@ -92,7 +92,7 @@ void timer_t::deviceToc(const std::string tag)
 
   std::map<std::string,tagData>::iterator it = m_.find(tag);
   if(it == m_.end()) {
-    printf("Error in deviceToc: Invalid tag name. %s:%u\n",__FILE__,__LINE__);
+    printf("Error in deviceToc: Invalid tag name %s\n",tag.c_str()); 
     MPI_Abort(comm_,1);
   }
 
@@ -118,7 +118,7 @@ void timer_t::hostToc(const std::string tag)
 
   auto it = m_.find(tag);
   if(it == m_.end()) {
-    printf("Error in deviceToc: Invalid tag name. %s:%u\n",__FILE__,__LINE__);
+    printf("Error in deviceToc: Invalid tag name %s\n",tag.c_str());
     MPI_Abort(comm_,1);
   }
 
@@ -147,7 +147,7 @@ void timer_t::toc(const std::string tag)
 
   auto it = m_.find(tag);
   if(it == m_.end()) {
-    printf("Error in deviceToc: Invalid tag name. %s:%u\n",__FILE__,__LINE__);
+    printf("Error in deviceToc: Invalid tag name %s\n",tag.c_str()); 
     MPI_Abort(comm_,1);
   }
 

@@ -512,6 +512,11 @@ void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::In
     checkValidity(rank, validValues, s);
   }
 
+  // exit early if not using multigrid as preconditioner
+  if (!options.compareArgs(parSectionName + "PRECONDITIONER", "MULTIGRID")) {
+    return;
+  }
+
   // coarse grid discretization
   if (p_coarseGridDiscretization.find("semfem") != std::string::npos) {
     options.setArgs(parSectionName + "MULTIGRID COARSE SEMFEM", "TRUE");
@@ -543,6 +548,16 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
       {"gpu"},
   };
 
+  std::vector<std::string> entries = serializeString(p_coarseSolver, '+');
+  for (std::string entry : entries) {
+    checkValidity(rank, validValues, entry);
+  }
+
+  // exit early if not using multigrid as preconditioner
+  if (!options.compareArgs(parSectionName + "PRECONDITIONER", "MULTIGRID")) {
+    return;
+  }
+
   // solution methods
   if(p_coarseSolver.find("boomeramg") != std::string::npos){
     options.setArgs("AMG SOLVER", "BOOMERAMG");
@@ -560,10 +575,7 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   }
 
   // parse fp type + location
-  std::vector<std::string> entries = serializeString(p_coarseSolver, '+');
-  for(std::string entry : entries)
-  {
-    checkValidity(rank, validValues, entry);
+  for (std::string entry : entries) {
     if(entry.find("fp32") != std::string::npos)
     {
       options.setArgs("AMG SOLVER PRECISION", "FP32");
@@ -1776,9 +1788,11 @@ setupAide parRead(void *ppar, std::string setupFile, MPI_Comm comm) {
 
     parsePreconditioner(rank, options, par, "pressure");
 
-    std::string p_mglevels;
-    if (par->extract("pressure", "pmultigridcoarsening", p_mglevels))
-      options.setArgs("PRESSURE MULTIGRID COARSENING", p_mglevels);
+    if (options.compareArgs("PRESSURE PRECONDITIONER", "MULTIGRID")) {
+      std::string p_mglevels;
+      if (par->extract("pressure", "pmultigridcoarsening", p_mglevels))
+        options.setArgs("PRESSURE MULTIGRID COARSENING", p_mglevels);
+    }
 
     std::string p_solver;
     if (par->extract("pressure", "solver", p_solver)) {

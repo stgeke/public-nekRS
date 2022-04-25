@@ -18,8 +18,9 @@ c-----------------------------------------------------------------------
 
       real h_tilde, vx_tilde, vy_tilde ! in rotated coordinate frame
 
-      h_tilde = ym1(ix,iy,iz,ieg) * cos(P_ROT)
-      h_tilde = h_tilde - xm1(ix,iy,iz,ieg) * sin(P_ROT)
+      ie = gllel(ieg)
+      h_tilde = ym1(ix,iy,iz,ie) * cos(P_ROT)
+      h_tilde = h_tilde - xm1(ix,iy,iz,ie) * sin(P_ROT)
 
       uxex = 1.5 * (1.0 - h_tilde ** 2.0)
       uyex = 0.0

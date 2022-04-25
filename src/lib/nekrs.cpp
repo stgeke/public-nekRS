@@ -350,8 +350,10 @@ void* nrsPtr(void)
 
 void finalize(void)
 {
-  AMGXfree();
-  nek::end();
+  if(options.compareArgs("BUILD ONLY", "FALSE")) {
+    AMGXfree();
+    nek::end();
+  }
 }
 
 int runTimeStatFreq()

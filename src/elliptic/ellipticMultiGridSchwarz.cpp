@@ -820,7 +820,8 @@ void MGLevel::build(
   const bool serial = (platform->device.mode() == "Serial" || platform->device.mode() == "OpenMP");
 
   overlap = false;
-  if(Nq >= 5 && !serial) overlap = true;
+  if (Nq >= (elliptic_t::minNFDMOverlap + 1) && !serial)
+    overlap = true;
 
   hlong* maskedGlobalIdsExt;
   maskedGlobalIdsExt = (hlong*) calloc(Nelements*(Nq+2)*(Nq+2)*(Nq+2),sizeof(hlong));

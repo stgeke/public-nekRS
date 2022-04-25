@@ -212,7 +212,7 @@ void registerSchwarzKernels(const std::string &section, int N) {
 
   bool overlap = false;
   const bool serial = platform->serial;
-  if (Nq >= 5 && !serial)
+  if (Nq >= (elliptic_t::minNFDMOverlap + 1) && !serial)
     overlap = true;
 
   std::string installDir;

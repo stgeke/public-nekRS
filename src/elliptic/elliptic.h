@@ -74,6 +74,7 @@ struct GmresData{
 struct elliptic_t
 {
   static constexpr int NScratchFields {4};
+  static constexpr int minNFDMOverlap{4};
   int dim;
   int elementType; // number of edges (3=tri, 4=quad, 6=tet, 12=hex)
   int coeffField;        // flag for variable coefficient (solver)

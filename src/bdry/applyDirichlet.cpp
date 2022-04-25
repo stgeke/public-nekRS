@@ -119,6 +119,10 @@ void applyDirichlet(nrs_t *nrs, double time)
   if (nrs->flow) {
     mesh_t *mesh = nrs->meshV;
 
+    if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
+      applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
+    }
+
     platform->linAlg->fill((1 + nrs->NVfields) * nrs->fieldOffset,
                            -1.0 * std::numeric_limits<dfloat>::max(),
                            platform->o_mempool.slice6);
@@ -182,9 +186,6 @@ void applyDirichlet(nrs_t *nrs, double time)
                             nrs->uvwSolver->o_maskIds,
                             platform->o_mempool.slice7,
                             nrs->o_U);
-      if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
-        applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
-      }
     }
     else {
       if (nrs->uSolver->Nmasked)
@@ -210,6 +211,9 @@ void applyDirichlet(nrs_t *nrs, double time)
 
   if (platform->options.compareArgs("MESH SOLVER", "ELASTICITY")) {
     mesh_t *mesh = nrs->meshV;
+    if (bcMap::unalignedBoundary(mesh->cht, "mesh")) {
+      applyZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_U);
+    }
     platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset,
                            -1.0 * std::numeric_limits<dfloat>::max(),
                            platform->o_mempool.slice3);
@@ -252,8 +256,5 @@ void applyDirichlet(nrs_t *nrs, double time)
                           nrs->meshSolver->o_maskIds,
                           platform->o_mempool.slice3,
                           mesh->o_U);
-    if (bcMap::unalignedBoundary(mesh->cht, "mesh")) {
-      applyZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_U);
-    }
   }
 }

@@ -29,7 +29,7 @@ preconditioner = multigrid+coarse
 #preconditioner = multigrid+additive+overlapCrsSolve+coarse
 
 smootherType = RAS+Chebyshev+degree=2 #+minEigenvalueBoundFactor=0.1+maxEigenvalueBoundFactor=1.1
-pMultigridCoarsening = 7,3
+#pMultigridCoarsening = 7,5,3,1
 
 # SEMFEM
 #preconditioner = semfem+AMGX+FP32 

@@ -82,7 +82,7 @@ initialGuess                previous [D]
                             +nVector=<int>                             dimension of projection space
 
 preconditioner              Jacobi [D]
-                            <multigrid | semg | pMG> [D for PRESSURE]  polynomial multigrid
+                            <multigrid | pMG> [D for PRESSURE]         polynomial multigrid
                               +coarse [D for PRESSURE]                 coarse grid correction for polynomial multigrid
 
 pMultigridCoarsening        <int>, <int>, ...                          custom polynomial order for each pMG level
@@ -112,6 +112,8 @@ boundaryTypeMap             <...>, <...>, ...                          boundary 
                             zeroXValue/zeroGradient                    symmetry x-normal plane
                             zeroYValue/zeroGradient                    symmetry y-normal plane
                             zeroZValue/zeroGradient                    symmetry z-normal plane
+                            zeroNValue/zeroGradient                    unaligned symmetry
+                            zeroNValue/fixedGradient                   unaligned traction
 
 regularization                                                         
                             hpfrt                                      HPF stabilization

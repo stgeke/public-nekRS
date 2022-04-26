@@ -103,8 +103,11 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 
   if (tstep <= 5) {
     exactUVWPKernel(mesh->Nlocal, time, mesh->o_x, mesh->o_y, mesh->o_z, nrs->fieldOffset, nrs->o_P, nrs->o_U);
-    ellipticZeroMean(nrs->pSolver, nrs->o_P);
-    cds->o_S.copyFrom(nrs->o_U, mesh->Nlocal*sizeof(dfloat), 0*cds->fieldOffset[0]*sizeof(dfloat));
+    if (nrs->pSolver) 
+      ellipticZeroMean(nrs->pSolver, nrs->o_P);
+    if (nrs->Nscalar > 0) 
+      cds->o_S.copyFrom(nrs->o_U, mesh->Nlocal*sizeof(dfloat), 0*cds->fieldOffset[0]*sizeof(dfloat));
+    if (nrs->Nscalar > 1) 
     cds->o_S.copyFrom(nrs->o_U, mesh->Nlocal*sizeof(dfloat), 1*cds->fieldOffset[0]*sizeof(dfloat));
   }
 

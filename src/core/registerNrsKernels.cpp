@@ -242,13 +242,8 @@ void registerNrsKernels(occa::properties kernelInfoBC)
       auto subCycleKernel =
           benchmarkAdvsub(3, NelemBenchmark, Nq, cubNq, nEXT, true, false, verbosity, 0.5, false);
 
-      subCycleStrongCubatureProps = subCycleKernel.properties();
-
       kernelName = "subCycleStrongCubatureVolume" + suffix;
-      fileName = oklpath + "nrs/" + kernelName + extension;
-      platform->kernels.add(section + kernelName,
-          fileName,
-          subCycleStrongCubatureProps);
+      platform->kernels.add(section + kernelName, subCycleKernel);
 
       kernelName = "subCycleStrongVolume" + suffix;
       fileName = oklpath + "nrs/" + kernelName + ".okl";

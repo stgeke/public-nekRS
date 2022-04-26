@@ -63,8 +63,6 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
                                     false,
                                     kernelSuffix);
 
-        auto axProps = axKernel.properties();
-
         const std::string suffix = coeffField ? "CoeffHex3D" : "Hex3D";
 
         if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR"))
@@ -75,9 +73,7 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
         fileName = oklpath + kernelName + fileNameExtension;
 
         platform->kernels.add(poissonPrefix + kernelName + kernelSuffix,
-            fileName,
-            axProps,
-            kernelSuffix);
+          axKernel);
       }
     }
   }
@@ -255,9 +251,7 @@ void registerSchwarzKernels(const std::string &section, int N) {
                                   0.2,
                                   false,
                                   suffix);
-    auto fdmProps = fdmKernel.properties();
-    fileName = oklpath + "fusedFDM" + extension;
-    platform->kernels.add("fusedFDM" + suffix, fileName, fdmProps, suffix);
+    platform->kernels.add("fusedFDM" + suffix, fdmKernel);
 
     fileName = oklpath + "postFDM" + extension;
     platform->kernels.add(

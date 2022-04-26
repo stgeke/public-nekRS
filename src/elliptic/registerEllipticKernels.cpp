@@ -175,10 +175,8 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
                                 false,
                                 "");
 
-    auto axProps = axKernel.properties();
-
     platform->kernels.add(
-      prefix + _kernelName, fileName, axProps);
+      prefix + _kernelName, axKernel);
   }
 
   kernelName = "ellipticBlockBuildDiagonal" + suffix;

@@ -135,6 +135,7 @@ int main(int argc, char** argv)
                 computeGeom,
                 wordSize,
                 Ndim,
+                false, // no stress formulation
                 verbosity,
                 Ntests,
                 true,
@@ -150,6 +151,7 @@ int main(int argc, char** argv)
                 computeGeom,
                 wordSize,
                 Ndim,
+                false, // no stress formulation
                 verbosity,
                 targetTime,
                 true,

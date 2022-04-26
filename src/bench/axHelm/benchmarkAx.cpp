@@ -20,6 +20,7 @@ struct CallParameters{
   bool computeGeom;
   int wordSize;
   int Ndim;
+  bool stressForm;
   std::string suffix;
 };
 }
@@ -39,6 +40,7 @@ namespace std
                         v.computeGeom,
                         v.wordSize,
                         v.Ndim,
+                        v.stressForm,
                         v.suffix);
       };
       return tier(lhs) < tier(rhs);
@@ -59,12 +61,13 @@ occa::kernel benchmarkAx(int Nelements,
                          bool computeGeom,
                          int wordSize,
                          int Ndim,
+                         bool stressForm,
                          int verbosity,
                          T NtestsOrTargetTime,
                          bool requiresBenchmark,
                          std::string suffix)
 {
-  CallParameters params{Nelements, Nq, Ng, constCoeff, poisson, computeGeom, wordSize, Ndim, suffix};
+  CallParameters params{Nelements, Nq, Ng, constCoeff, poisson, computeGeom, wordSize, Ndim, stressForm, suffix};
 
   if(cachedResults.count(params) > 0){
     return cachedResults.at(params);
@@ -87,8 +90,9 @@ occa::kernel benchmarkAx(int Nelements,
     props["defines/p_poisson"] = 1;
 
   std::string kernelName = "elliptic";
-  if (Ndim > 1)
-    kernelName += "Block";
+  if (Ndim > 1){
+    kernelName += stressForm ? "Stress" : "Block";
+  }
   kernelName += "PartialAx";
   if (!constCoeff)
     kernelName += "Coeff";
@@ -109,7 +113,7 @@ occa::kernel benchmarkAx(int Nelements,
     }
   }
   kernelName += "Hex3D";
-  if (Ndim > 1)
+  if (Ndim > 1 && !stressForm)
     kernelName += "_N" + std::to_string(Ndim);
 
   auto benchmarkAxWithPrecision = [&](auto sampleWord) {
@@ -338,6 +342,7 @@ template occa::kernel benchmarkAx<int>(int Nelements,
                                        bool computeGeom,
                                        int wordSize,
                                        int Ndim,
+                                       bool stressForm,
                                        int verbosity,
                                        int Ntests,
                                        bool requiresBenchmark,
@@ -351,6 +356,7 @@ template occa::kernel benchmarkAx<double>(int Nelements,
                                           bool computeGeom,
                                           int wordSize,
                                           int Ndim,
+                                          bool stressForm,
                                           int verbosity,
                                           double targetTime,
                                           bool requiresBenchmark,

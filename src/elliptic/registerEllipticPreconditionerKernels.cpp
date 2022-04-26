@@ -58,6 +58,7 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
                                     false,
                                     wordSize,
                                     Nfields,
+                                    false, // no stress formulation in preconditioner
                                     verbosity,
                                     0.2,
                                     false,

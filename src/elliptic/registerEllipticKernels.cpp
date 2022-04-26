@@ -170,6 +170,7 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
                                 false,
                                 sizeof(dfloat),
                                 Nfields,
+                                stressForm,
                                 verbosity,
                                 0.2,
                                 false,

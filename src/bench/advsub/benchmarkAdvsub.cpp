@@ -234,6 +234,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
     auto newProps = props;
     if(!platform->serial && dealias) newProps["defines/p_knl"] = kernelVariant;
     auto kernel = platform->device.buildKernel(fileName, newProps, true);
+    if(platform->options.compareArgs("BUILD ONLY", "TRUE")) return kernel;
 
     // perform correctness check
     std::vector<dfloat> referenceResults(3*fieldOffset);
@@ -322,7 +323,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
   auto kernelAndTime =
       benchmarkKernel(advSubKernelBuilder, kernelRunner, printCallBack, kernelVariants, NtestsOrTargetTime);
   
-  if(kernelAndTime.first.properties().has("defines/p_knl")){
+  if(kernelAndTime.first.properties().has("defines/p_knl") && platform->options.compareArgs("BUILD ONLY","FALSE")){
     int bestKernelVariant = static_cast<int>(kernelAndTime.first.properties()["defines/p_knl"]);
 
     // print only the fastest kernel

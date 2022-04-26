@@ -212,6 +212,8 @@ occa::kernel benchmarkAx(int Nelements,
 
       auto kernel = platform->device.buildKernel(fileName, newProps, true);
 
+      if(platform->options.compareArgs("BUILD ONLY", "TRUE")) return kernel;
+
       std::vector<FPType> refResults((Ndim * Np) * Nelements);
       std::vector<FPType> results((Ndim * Np) * Nelements);
 
@@ -288,7 +290,7 @@ occa::kernel benchmarkAx(int Nelements,
     auto kernelAndTime =
         benchmarkKernel(axKernelBuilder, kernelRunner, printCallBack, kernelVariants, NtestsOrTargetTime);
 
-    if (kernelAndTime.first.properties().has("defines/p_knl")) {
+    if (kernelAndTime.first.properties().has("defines/p_knl") && platform->options.compareArgs("BUILD ONLY","FALSE")) {
       int bestKernelVariant = static_cast<int>(kernelAndTime.first.properties()["defines/p_knl"]);
 
       // print only the fastest kernel

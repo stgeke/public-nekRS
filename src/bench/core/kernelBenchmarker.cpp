@@ -32,17 +32,21 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
 
     auto candidateKernel = kernelBuilder(kernelVariant);
 
-    // warmup
-    double elapsed = run(10, kernelRunner, candidateKernel);
+    if(platform->options.compareArgs("BUILD ONLY", "FALSE")){
+      // warmup
+      double elapsed = run(10, kernelRunner, candidateKernel);
 
-    const double candidateKernelTiming = run(Ntests, kernelRunner, candidateKernel);
+      const double candidateKernelTiming = run(Ntests, kernelRunner, candidateKernel);
 
-    if (candidateKernelTiming < fastestTime) {
-      fastestTime = candidateKernelTiming;
+      if (candidateKernelTiming < fastestTime) {
+        fastestTime = candidateKernelTiming;
+        fastestKernel = candidateKernel;
+      }
+
+      printCallback(kernelVariant, candidateKernelTiming, Ntests);
+    } else {
       fastestKernel = candidateKernel;
     }
-
-    printCallback(kernelVariant, candidateKernelTiming, Ntests);
   }
 
   return std::make_pair(fastestKernel, fastestTime);
@@ -60,20 +64,24 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
   for (auto &&kernelVariant : kernelVariants) {
 
     auto candidateKernel = kernelBuilder(kernelVariant);
+    if(platform->options.compareArgs("BUILD ONLY", "FALSE")){
 
-    // warmup
-    double elapsed = run(10, kernelRunner, candidateKernel);
+      // warmup
+      double elapsed = run(10, kernelRunner, candidateKernel);
 
-    // evaluation
-    const int Ntests = static_cast<int>(targetTime / elapsed);
-    const double candidateKernelTiming = run(Ntests, kernelRunner, candidateKernel);
+      // evaluation
+      const int Ntests = static_cast<int>(targetTime / elapsed);
+      const double candidateKernelTiming = run(Ntests, kernelRunner, candidateKernel);
 
-    if (candidateKernelTiming < fastestTime) {
-      fastestTime = candidateKernelTiming;
+      if (candidateKernelTiming < fastestTime) {
+        fastestTime = candidateKernelTiming;
+        fastestKernel = candidateKernel;
+      }
+
+      printCallback(kernelVariant, candidateKernelTiming, Ntests);
+    } else {
       fastestKernel = candidateKernel;
     }
-
-    printCallback(kernelVariant, candidateKernelTiming, Ntests);
   }
 
   return std::make_pair(fastestKernel, fastestTime);

@@ -373,7 +373,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
-    nrs->timeStepConverged = (udf.converged) ? udf.converged(nrs, iter) : true; 
+    nrs->timeStepConverged = (udf.timeStepConverged) ? udf.timeStepConverged(nrs, iter) : true; 
 
     platform->device.finish();
     MPI_Barrier(platform->comm.mpiComm);

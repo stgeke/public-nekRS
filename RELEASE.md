@@ -21,7 +21,7 @@
         `coarseSolver = AmgX` and `coarseGridDiscretization = SEMFEM`
 * [par] Remove `preconditioner=semg` and `preconditioner=semg_amg`
 * [udf] Rename plug-in name `avg`  => `tavg`
-* [udf] Rename `nrs->converged` => `nrs->timeStepConverged`
+* [udf] Rename `udf.converged` => `udf.timeStepConverged`
 
 ## Known Bugs / Restrictions
 

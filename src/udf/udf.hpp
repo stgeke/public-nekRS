@@ -39,7 +39,7 @@ struct UDF
   udfsEqnSource sEqnSource;
   udfproperties properties;
   udfdiv div;
-  udfconv converged;
+  udfconv timeStepConverged;
 };
 
 extern UDF udf;

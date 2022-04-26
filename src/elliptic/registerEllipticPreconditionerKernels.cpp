@@ -436,11 +436,15 @@ void registerEllipticPreconditionerKernels(std::string section, int poissonEquat
 {
   int N;
   platform->options.getArgs("POLYNOMIAL DEGREE", N);
+  const std::string optionsPrefix = createOptionsPrefix(section);
 
-  // TODO: relax this restriction
-  if(poissonEquation == 1){
+  if(platform->options.compareArgs(optionsPrefix + "PRECONDITIONER", "MULTIGRID")){
     registerMultiGridKernels(section, poissonEquation);
+  }
+  if(platform->options.compareArgs(optionsPrefix + "PRECONDITIONER", "SEMFEM")){
     registerSEMFEMKernels(section, N, poissonEquation);
   }
-  registerJacobiKernels(section, poissonEquation);
+  if(platform->options.compareArgs(optionsPrefix + "PRECONDITIONER", "JACOBI")){
+    registerJacobiKernels(section, poissonEquation);
+  }
 }

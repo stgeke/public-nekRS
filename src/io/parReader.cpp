@@ -14,6 +14,8 @@
 #include "nrs.hpp"
 #include <algorithm>
 
+#include "amgx.h"
+
 namespace{
 static std::ostringstream errorLogger;
 static std::ostringstream valueErrorLogger;
@@ -567,6 +569,11 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
     options.setArgs("AMG SOLVER LOCATION", "CPU");
   }
   else if(p_coarseSolver.find("amgx") != std::string::npos){
+
+    if(!AMGXenabled()){
+        append_error("AMGX was requested but is not compiled!\n");
+    }
+
     options.setArgs("AMG SOLVER", "AMGX");
     options.setArgs(parSectionName + "SEMFEM SOLVER", options.getArgs("AMG SOLVER"));
     options.setArgs("AMG SOLVER PRECISION", "FP32");
@@ -833,6 +840,9 @@ void parsePreconditioner(const int rank, setupAide &options,
     for (std::string s : list) {
       if (s.find("semfem") != std::string::npos) {
       } else if (s.find("amgx") != std::string::npos) {
+        if(!AMGXenabled()){
+            append_error("AMGX was requested but is not compiled!\n");
+        }
         options.setArgs(parSection + " SEMFEM SOLVER", "AMGX");
         options.setArgs(parSection + " SEMFEM SOLVER PRECISION", "FP32");
       } else if (s.find("fp32") != std::string::npos) {
@@ -1883,6 +1893,9 @@ setupAide parRead(void *ppar, std::string setupFile, MPI_Comm comm) {
     }
 
     if (par->sections.count("amgx")) {
+      if(!AMGXenabled()){
+          append_error("AMGX was requested but is not compiled!\n");
+      }
       std::string configFile;
       if (par->extract("amgx", "configfile", configFile))
         options.setArgs("AMGX CONFIG FILE", configFile);

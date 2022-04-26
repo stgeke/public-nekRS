@@ -239,11 +239,16 @@ void registerNrsKernels(occa::properties kernelInfoBC)
       bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
       const int verbosity = verbose ? 2 : 1;
 
-      auto subCycleKernel =
-          benchmarkAdvsub(3, NelemBenchmark, Nq, cubNq, nEXT, true, false, verbosity, 0.5, false);
+      int Nsubsteps;
+      platform->options.getArgs("SUBCYCLING STEPS", Nsubsteps);
 
-      kernelName = "subCycleStrongCubatureVolume" + suffix;
-      platform->kernels.add(section + kernelName, subCycleKernel);
+      if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE") && Nsubsteps) {
+        auto subCycleKernel =
+            benchmarkAdvsub(3, NelemBenchmark, Nq, cubNq, nEXT, true, false, verbosity, 0.5, false);
+
+        kernelName = "subCycleStrongCubatureVolume" + suffix;
+        platform->kernels.add(section + kernelName, subCycleKernel);
+      }
 
       kernelName = "subCycleStrongVolume" + suffix;
       fileName = oklpath + "nrs/" + kernelName + ".okl";

@@ -228,8 +228,10 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
     cds->nStagesSum3Kernel = platform->kernels.get(section + kernelName);
 
     if (cds->Nsubsteps) {
-      kernelName = "subCycleStrongCubatureVolume" + suffix;
-      cds->subCycleStrongCubatureVolumeKernel = platform->kernels.get(section + kernelName);
+      if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE")) {
+        kernelName = "subCycleStrongCubatureVolume" + suffix;
+        cds->subCycleStrongCubatureVolumeKernel = platform->kernels.get(section + kernelName);
+      }
       kernelName = "subCycleStrongVolume" + suffix;
       cds->subCycleStrongVolumeKernel = platform->kernels.get(section + kernelName);
 

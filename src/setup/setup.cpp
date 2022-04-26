@@ -504,8 +504,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->UrstKernel = platform->kernels.get(section + kernelName);
 
     if (nrs->Nsubsteps) {
-      kernelName = "subCycleStrongCubatureVolume" + suffix;
-      nrs->subCycleStrongCubatureVolumeKernel = platform->kernels.get(section + kernelName);
+      if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE")) {
+        kernelName = "subCycleStrongCubatureVolume" + suffix;
+        nrs->subCycleStrongCubatureVolumeKernel = platform->kernels.get(section + kernelName);
+      }
       kernelName = "subCycleStrongVolume" + suffix;
       nrs->subCycleStrongVolumeKernel = platform->kernels.get(section + kernelName);
 

@@ -341,7 +341,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
   tSolve += tPreStep;
 
   const int isOutputStep = nrs->isOutputStep;
-  nrs->converged = false;
+  nrs->timeStepConverged = false;
 
   int iter = 0;
   do {
@@ -372,7 +372,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
-    nrs->converged = (udf.converged) ? udf.converged(nrs, iter) : true; 
+    nrs->timeStepConverged = (udf.converged) ? udf.converged(nrs, iter) : true; 
 
     platform->device.finish();
     MPI_Barrier(platform->comm.mpiComm);
@@ -389,7 +389,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     platform->timer.tic("udfExecuteStep", 1);
     nek::ifoutfld(0);
     nrs->isOutputStep = 0;
-    if (isOutputStep && nrs->converged) {
+    if (isOutputStep && nrs->timeStepConverged) {
       nek::ifoutfld(1);
       nrs->isOutputStep = 1;
     }
@@ -397,9 +397,9 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       udf.executeStep(nrs, timeNew, tstep);
     platform->timer.toc("udfExecuteStep");
 
-    if (!nrs->converged)
+    if (!nrs->timeStepConverged)
       printInfo(nrs, timeNew, tstep);
-  } while (!nrs->converged);
+  } while (!nrs->timeStepConverged);
 
   platform->timer.set("solve", tSolve);
 
@@ -939,7 +939,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep)
     for(int is = 0; is < nrs->Nscalar; is++)
       if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
 
-    if (nrs->converged)
+    if (nrs->timeStepConverged)
       printf("  elapsedStep= %.2es  elapsedStepSum= %.5es", elapsedStep, elapsedStepSum);
 
     printf("\n");

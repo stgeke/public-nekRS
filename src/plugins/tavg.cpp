@@ -99,7 +99,7 @@ void tavg::EXY(dlong N,
 
 void tavg::run(dfloat time)
 {
-  if(!nrs->converged) return;
+  if(!nrs->timeStepConverged) return;
 
   if(!setupCalled || !buildKernelCalled) {
     std::cout << "tavg::run() was called prior to tavg::setup()!\n";
@@ -188,7 +188,7 @@ void tavg::setup(nrs_t* nrs_)
 
 void tavg::outfld(int _outXYZ, int FP64)
 {
-  if(!nrs->converged) return;
+  if(!nrs->timeStepConverged) return;
 
   cds_t* cds = nrs->cds;
   mesh_t* mesh = nrs->meshV;

@@ -46,7 +46,7 @@ struct nrs_t {
   dlong cubatureOffset;
   setupAide vOptions, pOptions, mOptions;
 
-  int converged;
+  int timeStepConverged;
 
   dfloat dt[3], idt;
   dfloat g0, ig0;

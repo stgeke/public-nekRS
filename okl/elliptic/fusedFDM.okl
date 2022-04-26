@@ -1,5 +1,5 @@
 #if p_knl == 0
-// old, nekRS baseline FDM kernel
+// Baseline FDM kernel
 @kernel void fusedFDM_v0(const dlong Nelements,
 #if p_overlap
                       @restrict const dlong *elementList,
@@ -237,8 +237,7 @@
 #endif
 
 #if p_knl == 1
-// Tim's blocked version, formerly known as "v5"
-// tends to do well on low orders on NVIDIA
+// Blocked version, tends to do well on low orders on NVIDIA
 @kernel void fusedFDM_v1(const dlong Nelements,
 #if p_overlap
                       @restrict const dlong *elementList,
@@ -322,7 +321,6 @@
       }
     }
 
-    // TW: we merge the boundary mods into a single write
     @barrier("local");
     for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
@@ -542,8 +540,7 @@
 #endif
 
 #if p_knl == 2
-// blocked kernel, formerly known as "v9"
-// tends to be good for low orders on AMD
+// Blocked kernel, tends to be good for low orders on AMD
 @kernel void fusedFDM_v2(const dlong Nelements,
 #if p_overlap
                       @restrict const dlong *elementList,
@@ -633,7 +630,6 @@
       }
     }
 
-    // TW: we merge the boundary mods into a single write
     @barrier("local");
     for (int es = 0; es < p_Nblk; ++es; @inner) {
       for (int j = 0; j < p_Nq_e; ++j; @inner) {
@@ -866,7 +862,7 @@
 #endif
 
 #if p_knl == 3
-// formerly "v10", tends to do well for high orders on AMD
+// Tends to do well for high orders on AMD
 @kernel void fusedFDM_v3(const dlong Nelements,
 #if p_overlap
                       @restrict const dlong *elementList,
@@ -953,7 +949,6 @@
       }
     }
 
-    // TW: we merge the boundary mods into a single write
     @barrier("local");
 
     for (int es = 0; es < p_Nblk; ++es; @inner) {
@@ -1202,7 +1197,7 @@
 #endif
 
 #if p_knl == 4
-// formerly known as "v11", tends to do well for high orders on NVIDIA
+// Tends to do well for high orders on NVIDIA
 @kernel void fusedFDM_v4(const dlong Nelements,
 #if p_overlap
                       @restrict const dlong *elementList,
@@ -1255,7 +1250,6 @@
       }
     }
 
-    // TW: we merge the boundary mods into a single write
     @barrier("local");
 
     for (int j = 0; j < p_Nq_e; ++j; @inner) {

@@ -345,13 +345,11 @@
                   coeff = c1;
                 if (s == 2)
                   coeff = c2;
-                // r_c[s] = coeff;
                 s_c[s] = coeff;
               }
             }
 
             if (id < p_Nq * p_cubNq) {
-              //	  s_cubInterpT[j][i] = cubInterpT[id];
               s_cubInterp[i][j] = cubInterpT[id];
             }
             s_cubD[j][i] = cubD[id];
@@ -419,7 +417,6 @@
             // interpolate in b
 #pragma unroll p_Nq
             for (int b = 0; b < p_Nq; ++b) {
-              // const dfloat Ijb = s_cubInterpT[b][j];
               const dfloat Ijb = s_cubInterp[j][b];
               Ud2 += Ijb * s_Ud1[es][b][i];
             }
@@ -454,7 +451,7 @@
             dfloat Udk = 0, Vdk = 0, Wdk = 0;
 #pragma unroll p_cubNq
             for (int c = 0; c < p_Nq; ++c) {
-              const dfloat Ikc = c_I[k][c]; // s_cubInterpT[c][k]; // use constant
+              const dfloat Ikc = c_I[k][c];
 
               Udk += Ikc * r_Ud[c];
             }
@@ -474,7 +471,7 @@
 
 #pragma unroll p_cubNq
               for (int n = 0; n < p_Nq; ++n) {
-                dfloat Dkn = c_DI[k][n]; // fix this to DI later on
+                dfloat Dkn = c_DI[k][n];
 
                 Udt += Dkn * r_Ud[n];
               }
@@ -545,7 +542,6 @@
 
 #pragma unroll p_cubNq
               for (int j = 0; j < p_cubNq; ++j) {
-                //	      dfloat Ijb = s_cubInterpT[b][j];
                 dfloat Ijb = s_cubInterp[j][b];
                 rhsU += Ijb * s_U[es][j][i];
               }
@@ -568,7 +564,6 @@
 
 #pragma unroll p_cubNq
                 for (int i = 0; i < p_cubNq; ++i) {
-                  //	      dfloat Iia = s_cubInterpT[a][i];
                   dfloat Iia = s_cubInterp[i][a];
                   rhsU += Iia * s_Ud[es][b][i];
                 }

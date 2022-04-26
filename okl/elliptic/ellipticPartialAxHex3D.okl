@@ -150,8 +150,6 @@
 
 #endif
 
-// base version from hipBone
-
 // padding for bank conflicts
 #if p_Nq == 16
 #define p_pad 1
@@ -321,8 +319,6 @@
 #endif
 
 #if defined(FP32)
-// from FDM kernel...
-// need to use this for FP32...
 #if p_Nq == 2
 #define p_NelementsPerBlk 63
 #elif p_Nq == 3
@@ -591,7 +587,6 @@
 #if p_Nq < 11
 
 #if defined(FP32)
-// from FDM kernel
 #if p_Nq == 2
 #define p_NelementsPerBlk 27
 #elif p_Nq == 3
@@ -833,15 +828,12 @@
 #elif p_Nq == 10
 #define p_NelementsPerBlk 3
 #elif p_Nq == 11
-// tuned
 #define p_NelementsPerBlk 2
 #define p_pad 1
 #elif p_Nq == 12
-// was 3 no pad
 #define p_NelementsPerBlk 3
 #elif p_Nq == 13
 #define p_NelementsPerBlk 3
-// why on earth
 #define p_pad 1
 #elif p_Nq == 14
 #define p_NelementsPerBlk 3
@@ -1254,15 +1246,12 @@
 #define p_NelementsPerBlk 3
 #define p_pad 0
 #elif p_Nq == 11
-// tuned
 #define p_NelementsPerBlk 2
 #define p_pad 1
 #elif p_Nq == 12
-// was 3 no pad
 #define p_NelementsPerBlk 3
 #elif p_Nq == 13
 #define p_NelementsPerBlk 3
-// why on earth
 #define p_pad 1
 #elif p_Nq == 14
 #define p_NelementsPerBlk 3

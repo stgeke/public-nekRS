@@ -11,4 +11,5 @@ occa::kernel benchmarkAx(int Nelements,
                          int Ndim,
                          int verbosity,
                          T NtestsOrTargetTime,
-                         bool requiresBenchmark);
+                         bool requiresBenchmark,
+                         std::string suffix);

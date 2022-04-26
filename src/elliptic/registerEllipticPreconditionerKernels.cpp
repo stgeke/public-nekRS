@@ -49,6 +49,7 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
 
         bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
         const int verbosity = verbose ? 2 : 1;
+        const std::string kernelSuffix = gen_suffix(floatString.c_str());
         auto axKernel = benchmarkAx(NelemBenchmark,
                                     Nq,
                                     Nq - 1,
@@ -59,7 +60,8 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
                                     Nfields,
                                     verbosity,
                                     0.2,
-                                    false);
+                                    false,
+                                    kernelSuffix);
 
         auto axProps = axKernel.properties();
 
@@ -72,7 +74,6 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
 
         fileName = oklpath + kernelName + fileNameExtension;
 
-        const std::string kernelSuffix = gen_suffix(floatString.c_str());
         platform->kernels.add(poissonPrefix + kernelName + kernelSuffix,
             fileName,
             axProps,
@@ -252,7 +253,8 @@ void registerSchwarzKernels(const std::string &section, int N) {
                                   static_cast<int>(overlap),
                                   verbosity,
                                   0.2,
-                                  false);
+                                  false,
+                                  suffix);
     auto fdmProps = fdmKernel.properties();
     fileName = oklpath + "fusedFDM" + extension;
     platform->kernels.add("fusedFDM" + suffix, fileName, fdmProps, suffix);

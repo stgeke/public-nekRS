@@ -20,6 +20,7 @@ struct CallParameters{
   bool computeGeom;
   int wordSize;
   int Ndim;
+  std::string suffix;
 };
 }
 
@@ -29,9 +30,16 @@ namespace std
   {
     bool operator() (const CallParameters& lhs, const CallParameters& rhs) const
     {
-      auto tier = [](const CallParameters& v)
-      {
-        return std::tie(v.Nelements, v.Nq, v.Ng, v.constCoeff, v.poisson, v.computeGeom, v.wordSize, v.Ndim);
+      auto tier = [](const CallParameters &v) {
+        return std::tie(v.Nelements,
+                        v.Nq,
+                        v.Ng,
+                        v.constCoeff,
+                        v.poisson,
+                        v.computeGeom,
+                        v.wordSize,
+                        v.Ndim,
+                        v.suffix);
       };
       return tier(lhs) < tier(rhs);
     }
@@ -53,18 +61,10 @@ occa::kernel benchmarkAx(int Nelements,
                          int Ndim,
                          int verbosity,
                          T NtestsOrTargetTime,
-                         bool requiresBenchmark)
+                         bool requiresBenchmark,
+                         std::string suffix)
 {
-  CallParameters params{
-    Nelements,
-    Nq,
-    Ng,
-    constCoeff,
-    poisson,
-    computeGeom,
-    wordSize,
-    Ndim,
-  };
+  CallParameters params{Nelements, Nq, Ng, constCoeff, poisson, computeGeom, wordSize, Ndim, suffix};
 
   if(cachedResults.count(params) > 0){
     return cachedResults.at(params);
@@ -153,7 +153,7 @@ occa::kernel benchmarkAx(int Nelements,
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;
 
-      return std::make_pair(platform->device.buildKernel(fileName, newProps, true), -1.0);
+      return std::make_pair(platform->device.buildKernel(fileName, newProps, suffix, true), -1.0);
     }
 
     auto DrV = randomVector<FPType>(Nq * Nq);
@@ -188,7 +188,7 @@ occa::kernel benchmarkAx(int Nelements,
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;
 
-      referenceKernel = platform->device.buildKernel(fileName, newProps, true);
+      referenceKernel = platform->device.buildKernel(fileName, newProps, suffix, true);
     }
 
     auto kernelRunner = [&](occa::kernel &kernel) {
@@ -210,7 +210,7 @@ occa::kernel benchmarkAx(int Nelements,
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;
 
-      auto kernel = platform->device.buildKernel(fileName, newProps, true);
+      auto kernel = platform->device.buildKernel(fileName, newProps, suffix, true);
 
       if(platform->options.compareArgs("BUILD ONLY", "TRUE")) return kernel;
 
@@ -340,7 +340,8 @@ template occa::kernel benchmarkAx<int>(int Nelements,
                                        int Ndim,
                                        int verbosity,
                                        int Ntests,
-                                       bool requiresBenchmark = false);
+                                       bool requiresBenchmark,
+                                       std::string suffix);
 
 template occa::kernel benchmarkAx<double>(int Nelements,
                                           int Nq,
@@ -352,4 +353,5 @@ template occa::kernel benchmarkAx<double>(int Nelements,
                                           int Ndim,
                                           int verbosity,
                                           double targetTime,
-                                          bool requiresBenchmark = false);
+                                          bool requiresBenchmark,
+                                          std::string suffix);

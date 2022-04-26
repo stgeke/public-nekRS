@@ -17,6 +17,7 @@ struct CallParameters{
   int wordSize;
   bool useRAS;
   bool overlap;
+  std::string suffix;
 };
 }
 
@@ -26,9 +27,8 @@ namespace std
   {
     bool operator() (const CallParameters& lhs, const CallParameters& rhs) const
     {
-      auto tier = [](const CallParameters& v)
-      {
-        return std::tie(v.Nelements, v.Nq_e, v.wordSize, v.useRAS, v.overlap);
+      auto tier = [](const CallParameters &v) {
+        return std::tie(v.Nelements, v.Nq_e, v.wordSize, v.useRAS, v.overlap, v.suffix);
       };
       return tier(lhs) < tier(rhs);
     }
@@ -47,15 +47,10 @@ occa::kernel benchmarkFDM(int Nelements,
                           bool overlap,
                           int verbosity,
                           T NtestsOrTargetTime,
-                          bool requiresBenchmark)
+                          bool requiresBenchmark,
+                          std::string suffix)
 {
-  CallParameters params{
-    Nelements,
-    Nq_e,
-    wordSize,
-    useRAS,
-    overlap,
-  };
+  CallParameters params{Nelements, Nq_e, wordSize, useRAS, overlap, suffix};
 
   if(cachedResults.count(params) > 0){
     return cachedResults.at(params);
@@ -109,7 +104,7 @@ occa::kernel benchmarkFDM(int Nelements,
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;
 
-      return std::make_pair(platform->device.buildKernel(fileName, newProps, true), -1.0);
+      return std::make_pair(platform->device.buildKernel(fileName, newProps, suffix, true), -1.0);
     }
 
     auto Sx = randomVector<FPType>(Nelements * Nq_e * Nq_e);
@@ -143,7 +138,7 @@ occa::kernel benchmarkFDM(int Nelements,
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;
 
-      referenceKernel = platform->device.buildKernel(fileName, newProps, true);
+      referenceKernel = platform->device.buildKernel(fileName, newProps, suffix, true);
     }
 
     auto kernelRunner = [&](occa::kernel &kernel) {
@@ -174,7 +169,7 @@ occa::kernel benchmarkFDM(int Nelements,
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/okl/elliptic/" + kernelName + ext;
 
-      auto kernel = platform->device.buildKernel(fileName, newProps, true);
+      auto kernel = platform->device.buildKernel(fileName, newProps, suffix, true);
       if(platform->options.compareArgs("BUILD ONLY", "TRUE")) return kernel;
 
       auto dumpResult = [&]() {
@@ -305,7 +300,8 @@ template occa::kernel benchmarkFDM<int>(int Nelements,
                                         bool overlap,
                                         int verbosity,
                                         int Ntests,
-                                        bool requiresBenchmark);
+                                        bool requiresBenchmark,
+                                        std::string suffix);
 
 template occa::kernel benchmarkFDM<double>(int Nelements,
                                            int Nq_e,
@@ -314,4 +310,5 @@ template occa::kernel benchmarkFDM<double>(int Nelements,
                                            bool overlap,
                                            int verbosity,
                                            double targetTime,
-                                           bool requiresBenchmark);
+                                           bool requiresBenchmark,
+                                           std::string suffix);

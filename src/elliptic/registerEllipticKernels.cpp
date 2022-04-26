@@ -160,10 +160,10 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
 
     const std::string _kernelName = kernelNamePrefix + "Partial" + kernelName;
     const std::string prefix = (poissonEquation) ? "poisson-" : "";
-    fileName = oklpath + _kernelName + fileNameExtension; 
+    fileName = oklpath + _kernelName + fileNameExtension;
 
     auto axKernel = benchmarkAx(NelemBenchmark,
-                                N+1,
+                                N + 1,
                                 N,
                                 !coeffField,
                                 poissonEquation,
@@ -172,7 +172,8 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
                                 Nfields,
                                 verbosity,
                                 0.2,
-                                false);
+                                false,
+                                "");
 
     auto axProps = axKernel.properties();
 

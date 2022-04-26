@@ -8,4 +8,5 @@ occa::kernel benchmarkFDM(int Nelements,
                           bool overlap,
                           int verbosity,
                           T NtestsOrTargetTime,
-                          bool requiresBenchmark);
+                          bool requiresBenchmark,
+                          std::string suffix);

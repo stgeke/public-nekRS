@@ -52,12 +52,6 @@ device_t::buildKernel(const std::string &fullPath,
     }
   }
 
-  // if p_knl is defined, add _v(p_knl) to the kernel name
-  if(props.has("defines/p_knl")){
-    const int kernelVariant = static_cast<int>(props["defines/p_knl"]);
-    kernelName += "_v" + std::to_string(kernelVariant);
-  };
-
   return this->buildKernel(fileName, kernelName, props, suffix);
 }
 
@@ -85,7 +79,14 @@ device_t::buildKernel(const std::string &fileName,
       propsWithSuffix["defines/FP32"] = 1;
     }
 
-    return _device.buildKernel(fileName, kernelName, propsWithSuffix);
+    // if p_knl is defined, add _v(p_knl) to the kernel name
+    std::string newKernelName = kernelName;
+    if (props.has("defines/p_knl")) {
+      const int kernelVariant = static_cast<int>(props["defines/p_knl"]);
+      newKernelName += "_v" + std::to_string(kernelVariant);
+    };
+
+    return _device.buildKernel(fileName, newKernelName, propsWithSuffix);
   }
   else{
     occa::properties propsWithSuffix = props;
@@ -109,17 +110,10 @@ device_t::buildKernel(const std::string &fileName,
   const int rank = buildNodeLocal ? _comm.localRank : _comm.mpiRank;
   MPI_Comm localCommunicator = buildNodeLocal ? _comm.mpiCommLocal : _comm.mpiComm;
 
-  std::string kernelNameVariant = kernelName;
-  // if p_knl is defined, add _v(p_knl) to the kernel name
-  if(props.has("defines/p_knl")){
-    const int kernelVariant = static_cast<int>(props["defines/p_knl"]);
-    kernelNameVariant += "_v" + std::to_string(kernelVariant);
-  };
-
   occa::kernel constructedKernel;
   for(int pass = 0; pass < 2; ++pass){
     if((pass == 0 && rank == 0) || (pass == 1 && rank != 0)){
-      constructedKernel = this->buildKernel(fileName, kernelNameVariant, props, suffix);
+      constructedKernel = this->buildKernel(fileName, kernelName, props, suffix);
     }
     MPI_Barrier(localCommunicator);
   }

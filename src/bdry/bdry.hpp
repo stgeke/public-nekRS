@@ -1,5 +1,5 @@
 #if !defined(BDRY_HPP)
-#define BDARY_HPP
+#define BDRY_HPP 
 
 class nrs_t;
 void applyDirichlet(nrs_t *nrs, double time);

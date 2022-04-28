@@ -455,8 +455,11 @@ static void setOccaVars()
   std::string cache_dir;
   cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
 
-  if (!getenv("OCCA_CACHE_DIR"))
-    occa::env::OCCA_CACHE_DIR = cache_dir + "/occa/";
+  if (!getenv("OCCA_CACHE_DIR")) {
+    const std::string path= cache_dir + "/occa/";
+    occa::env::OCCA_CACHE_DIR = path;
+    setenv("OCCA_CACHE_DIR", path.c_str(), 1);
+  }
 
   std::string installDir;
   installDir.assign(getenv("NEKRS_HOME"));

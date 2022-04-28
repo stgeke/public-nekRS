@@ -20,6 +20,9 @@
 #include "fldFile.hpp"
 
 struct nrs_t {
+
+  bool multiSession;
+
   int dim, elementType;
 
   mesh_t *_mesh;

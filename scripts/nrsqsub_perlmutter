@@ -77,7 +77,7 @@ echo "#SBATCH -J nekRS_$case" >>$SFILE
 echo "#SBATCH -o %x-%j.out" >>$SFILE
 echo "#SBATCH -t $time" >>$SFILE
 echo "#SBATCH -N $nodes" >>$SFILE
-echo "#SBATCH -p $QUEUE" >>$SFILE
+echo "#SBATCH -q $QUEUE" >>$SFILE
 echo "#SBATCH -C gpu" >>$SFILE
 echo "#SBATCH --exclusive" >>$SFILE
 echo "#SBATCH --ntasks-per-node=$gpu_per_node" >>$SFILE

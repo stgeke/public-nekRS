@@ -121,6 +121,14 @@ jobs:
       working-directory: ${{ env.NEKRS_EXAMPLES }}/ethier
       run: ${{ env.NEKRS_HOME }}/bin/nrsmpi ethier 2 --cimode 11
 
+    - name: 'ethier skip solving temperature'
+      working-directory: ${{ env.NEKRS_EXAMPLES }}/ethier
+      run: ${{ env.NEKRS_HOME }}/bin/nrsmpi ethier 2 --cimode 12
+
+    - name: 'ethier solve single scalar only'
+      working-directory: ${{ env.NEKRS_EXAMPLES }}/ethier
+      run: ${{ env.NEKRS_HOME }}/bin/nrsmpi ethierScalar 2 --cimode 13
+
   lowMach:
     needs: install
     runs-on: ubuntu-18.04

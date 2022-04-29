@@ -380,6 +380,8 @@ void mkSIZE(int lx1, int lxd, int lelt, hlong lelg, int ldim, int lpmin, int ldi
   int lx1m = (options.compareArgs("MOVING MESH", "TRUE")) ? lx1 : 1;
   lx1m = (options.compareArgs("STRESSFORMULATION", "TRUE")) ? lx1 : lx1m;
 
+  constexpr int nMaxObj = 20;
+
   int count = 0;
   while(fgets(line, BUFSIZ, fp) != NULL) {
     if(strstr(line, "parameter (lx1=") != NULL)
@@ -408,6 +410,8 @@ void mkSIZE(int lx1, int lxd, int lelt, hlong lelg, int ldim, int lpmin, int ldi
       sprintf(line, "      parameter (lelr=%d)\n", 128 * lelt);
     else if(strstr(line, "parameter (lx1m=") != NULL)
       sprintf(line, "      parameter (lx1m=%d)\n", lx1m);
+    else if(strstr(line, "parameter (maxobj=") != NULL)
+      sprintf(line, "      parameter (maxobj=%d)\n", nMaxObj);
 
     strcpy(sizeFile + count, line);
     count += strlen(line);

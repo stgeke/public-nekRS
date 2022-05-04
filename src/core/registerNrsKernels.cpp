@@ -236,6 +236,7 @@ void registerNrsKernels(occa::properties kernelInfoBC)
       const std::string meshFile = platform->options.getArgs("MESH FILE");
       re2::nelg(meshFile, nelgt, nelgv, platform->comm.mpiComm);
       const int NelemBenchmark = nelgv/platform->comm.mpiCommSize;
+
       bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
       const int verbosity = verbose ? 2 : 1;
 

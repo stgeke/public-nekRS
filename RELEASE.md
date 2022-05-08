@@ -32,7 +32,7 @@
 
 ## Thanks to our Contributors
 
-@tcew, @aprilnovak
+@tcew, @kris-rowe, @aprilnovak
 
 We are grateful to all who added new features, filed issues or helped resolve them, 
 asked and answered questions, and were part of inspiring discussions.

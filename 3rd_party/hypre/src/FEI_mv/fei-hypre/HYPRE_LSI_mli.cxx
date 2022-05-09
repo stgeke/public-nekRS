@@ -48,6 +48,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include <math.h>
 
 #if 0 /* RDF: Not sure this is really needed */

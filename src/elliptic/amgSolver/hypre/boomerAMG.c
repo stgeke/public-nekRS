@@ -103,7 +103,7 @@ int boomerAMGSetup(int nrows,
     boomerAMGParam[0]  = 10;   /* coarsening */
     boomerAMGParam[1]  = 6;    /* interpolation */
     boomerAMGParam[2]  = 1;    /* number of cycles */
-    boomerAMGParam[3]  = 18;   /* smoother for crs level */
+    boomerAMGParam[3]  = 16;   /* smoother for crs level */
     boomerAMGParam[4]  = 3;    /* sweeps */
     boomerAMGParam[5]  = -1;   /* smoother */
     boomerAMGParam[6]  = 1;    /* sweeps   */

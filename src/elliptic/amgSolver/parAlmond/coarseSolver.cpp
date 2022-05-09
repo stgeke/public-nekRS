@@ -108,7 +108,7 @@ void coarseSolver::setup(
     settings[1]  = 8;    /* coarsening                   */
     settings[2]  = 6;    /* interpolation                */
     settings[3]  = 1;    /* number of cycles             */
-    settings[4]  = 18;   /* smoother for crs level       */
+    settings[4]  = 16;   /* smoother for crs level       */
     settings[5]  = 3;    /* number of coarse sweeps      */
     settings[6]  = 16;   /* smoother                     */
     settings[7]  = 1;    /* number of sweeps             */

@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 #include "HYPRE.h"
 #include "_hypre_utilities.h"
 #include "_hypre_parcsr_mv.h"

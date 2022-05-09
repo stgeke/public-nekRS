@@ -8,7 +8,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#include "../../utilities/general.h"
+#include "../../utilities/hypre_general.h"
 #include "../../utilities/fortran.h"
 
 /*

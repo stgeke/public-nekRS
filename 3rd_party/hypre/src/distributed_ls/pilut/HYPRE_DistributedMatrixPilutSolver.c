@@ -43,8 +43,6 @@ HYPRE_Int  HYPRE_NewDistributedMatrixPilutSolver(
    jw = NULL;
    w  = NULL;
 
-   globals->logging = 0;
-
    /* Set some variables in the "global variables" section */
    pilut_comm = comm;
 
@@ -314,22 +312,6 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetMaxIts(
   return hypre_error_flag;
 }
 
-HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetLogging( 
-                  HYPRE_DistributedMatrixPilutSolver in_ptr,
-                  HYPRE_Int logging )
-{
-  hypre_DistributedMatrixPilutSolver *solver = 
-      (hypre_DistributedMatrixPilutSolver *) in_ptr;
-   hypre_PilutSolverGlobals *globals = hypre_DistributedMatrixPilutSolverGlobals(solver);
-
-   if (globals)
-   {
-      globals->logging = logging;
-   }
-
-  return hypre_error_flag;
-}
-
 /*--------------------------------------------------------------------------
  * HYPRE_DistributedMatrixPilutSolverSetup
  *--------------------------------------------------------------------------*/
@@ -340,8 +322,6 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetup( HYPRE_DistributedMatrixPilutS
    hypre_DistributedMatrixPilutSolver *solver = 
       (hypre_DistributedMatrixPilutSolver *) in_ptr;
    hypre_PilutSolverGlobals *globals = hypre_DistributedMatrixPilutSolverGlobals(solver);
-
-   HYPRE_Int logging = globals ? globals->logging : 0;
 
 
    if(hypre_DistributedMatrixPilutSolverMatrix(solver) == NULL )
@@ -376,7 +356,7 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetup( HYPRE_DistributedMatrixPilutS
    rowdist[ nprocs ] = n;
 
 #ifdef HYPRE_TIMING
-   {
+{
    HYPRE_Int ilut_timer;
 
    ilut_timer = hypre_InitializeTiming( "hypre_ILUT factorization" );
@@ -396,7 +376,7 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetup( HYPRE_DistributedMatrixPilutS
 #ifdef HYPRE_TIMING
    hypre_EndTiming( ilut_timer );
    /* hypre_FinalizeTiming( ilut_timer ); */
-   }
+}
 #endif
 
    if (ierr) 
@@ -406,7 +386,7 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetup( HYPRE_DistributedMatrixPilutS
    }
 
 #ifdef HYPRE_TIMING
-   {
+{
    HYPRE_Int Setup_timer;
 
    Setup_timer = hypre_InitializeTiming( "hypre_SetUpLUFactor: setup for triangular solvers");
@@ -422,7 +402,7 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetup( HYPRE_DistributedMatrixPilutS
 #ifdef HYPRE_TIMING
    hypre_EndTiming( Setup_timer );
    /* hypre_FinalizeTiming( Setup_timer ); */
-   }
+}
 #endif
 
    if (ierr) 
@@ -432,12 +412,9 @@ HYPRE_Int HYPRE_DistributedMatrixPilutSolverSetup( HYPRE_DistributedMatrixPilutS
    }
 
 #ifdef HYPRE_DEBUG
-   if (logging)
-   {
-      fflush(stdout);
-      hypre_printf("Nlevels: %d\n",
-            hypre_DistributedMatrixPilutSolverFactorMat (solver)->nlevels);
-   }
+   fflush(stdout);
+   hypre_printf("Nlevels: %d\n",
+          hypre_DistributedMatrixPilutSolverFactorMat (solver)->nlevels);
 #endif
 
    return hypre_error_flag;

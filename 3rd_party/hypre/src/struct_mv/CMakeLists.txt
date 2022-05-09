@@ -38,26 +38,11 @@ set(SRCS
   struct_stencil.c
   struct_vector.c
 )
-
-target_sources(${PROJECT_NAME}
-  PRIVATE ${SRCS}
-          ${HDRS}
-)
-
-if (HYPRE_USING_CUDA OR HYPRE_USING_SYCL)
-  set(GPU_SRCS
-    struct_axpy.c
-    struct_communication.c
-    struct_copy.c
-    struct_innerprod.c
-    struct_matrix.c
-    struct_matvec.c
-    struct_scale.c
-    struct_vector.c
-  )
-  convert_filenames_to_full_paths(GPU_SRCS)
-  set(HYPRE_GPU_SOURCES ${HYPRE_GPU_SOURCES} ${GPU_SRCS} PARENT_SCOPE)
-endif ()
-
+  
 convert_filenames_to_full_paths(HDRS)
+convert_filenames_to_full_paths(SRCS)
+
 set(HYPRE_HEADERS ${HYPRE_HEADERS} ${HDRS} PARENT_SCOPE)
+set(HYPRE_SOURCES ${HYPRE_SOURCES} ${SRCS} PARENT_SCOPE)
+
+

@@ -26,7 +26,6 @@ C_COMPILE_FLAGS = \
  -I$(srcdir)/../../utilities\
  -I$(srcdir)/../../multivector\
  -I$(srcdir)/../../krylov\
- -I$(srcdir)/../../parcsr_block_mv\
  -I$(srcdir)/../../parcsr_mv\
  -I$(srcdir)/../../parcsr_ls\
  -I$(srcdir)/../../seq_mv\
@@ -47,7 +46,6 @@ CXX_COMPILE_FLAGS = \
  -I$(srcdir)/../../utilities\
  -I$(srcdir)/../../multivector\
  -I$(srcdir)/../../krylov\
- -I$(srcdir)/../../parcsr_block_mv\
  -I$(srcdir)/../../parcsr_mv\
  -I$(srcdir)/../../parcsr_ls\
  -I$(srcdir)/../../seq_mv\

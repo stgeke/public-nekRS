@@ -25,7 +25,7 @@ Requirements:
 * POSIX compilant OS
 * C++14/C99 compatible compilers + GNU Fortran
 * MPI-3.1 or later
-* CMake version 3.11 (for AMGx support 3.18) or later 
+* CMake version 3.13 (for AMGx support 3.18) or later 
 
 Download the latest release tarball (recommended)
 

@@ -260,7 +260,7 @@ set_property(
 add_library(nekrs-lib SHARED ${SRC})
 
 add_dependencies(nekrs-lib HYPRE_BUILD)
-#target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB})
+set_target_properties(nekrs-lib PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
 target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB})
 
 target_compile_definitions(nekrs-lib PUBLIC

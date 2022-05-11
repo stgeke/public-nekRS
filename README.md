@@ -51,6 +51,7 @@ cmake --build ./build --target install -j8
 ```
 Build settings can be customized by environment variables. 
 After installation you may want to adjust `$NEKRS_HOME/nekrs.conf` to your environment.
+Please delete instead of overwriting an existing build and/or installation!
 
 ## Setting the Enviroment
 

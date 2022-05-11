@@ -22,6 +22,7 @@
 * [par] Remove `preconditioner=semg` and `preconditioner=semg_amg`
 * [udf] Rename plug-in name `avg`  => `tavg`
 * [udf] Rename `udf.converged` => `udf.timeStepConverged`
+* [nrsconfig] Rename env-var `AMGX_ENABLE` => `ENABLE_AMGX`
 
 ## Known Bugs / Restrictions
 

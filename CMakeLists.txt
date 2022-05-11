@@ -65,6 +65,9 @@ endmacro()
 
 check_fcompiler_id("${CMAKE_Fortran_COMPILER_ID}")
 
+
+find_package(Threads)
+
 ## Sanity checks for MPI
 set(MPI_C_COMPILER ${CMAKE_C_COMPILER})
 set(MPI_CXX_COMPILER ${CMAKE_CXX_COMPILER})
@@ -140,12 +143,12 @@ endif()
 set(BSYMBOLIC_FLAG " -Wl,-Bsymbolic -Wl,-Bsymbolic-functions")
 list(APPEND CMAKE_REQUIRED_LIBRARIES ${BSYMBOLIC_FLAG})
 check_c_compiler_flag("" Allowed_LD_Flag_BSYMBOLIC)
+list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${BSYMBOLIC_FLAG})
 if(NOT Allowed_LD_Flag_BSYMBOLIC OR APPLE)
   set(BSYMBOLIC_FLAG "")
 else()
 #  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${BSYMBOLIC_FLAG}")
 endif()
-list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES ${BSYMBOLIC_FLAG})
 
 ###############################################################################
 # Build OCCA                                                                  #

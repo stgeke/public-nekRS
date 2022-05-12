@@ -9,7 +9,6 @@ include(CheckCCompilerFlag)
 include(FortranCInterface)
 include(ExternalProject)
 include(FetchContent)
-
 include(config/utils.cmake)
 
 #set_property(GLOBAL PROPERTY RULE_MESSAGES OFF)
@@ -30,7 +29,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 set(NEK5000_PPLIST "PARRSB DPROCMAP" CACHE STRING 
   "Preprocessor macros for Nek5000")
-
 set(NEKINTERFACEDIR "${CMAKE_CURRENT_SOURCE_DIR}/src/nekInterface/" CACHE PATH 
   "Directory for Nek5000 inteface source files")
 
@@ -41,32 +39,13 @@ set(OCCA_CUDA_COMPILER_FLAGS "-O3 --fmad=true" CACHE STRING "CUDA flags for OCCA
 set(OCCA_HIP_COMPILER_FLAGS "-O3 -ffp-contract=fast" CACHE STRING "HIP flags for OCCA JIT compile")
 set(OCCA_OPENCL_COMPILER_FLAGS "-cl-std=CL2.0 -cl-mad-enable -cl-no-signed-zeros" CACHE STRING "OPENCL flags for OCCA JIT compile")
 
-# From OCCA's CMakeLists. All default to ON, but are verified in config tests
-#   - ENABLE_OPENMP
-#   - ENABLE_CUDA
-#   - ENABLE_OPENCL
-#   - ENABLE_HIP
-#   - ENABLE_METAL
-#   - ENABLE_MPI
-
 set(ENABLE_METAL OFF CACHE BOOL "Enable OCCA Metal support")
 set(ENABLE_AMGX OFF CACHE BOOL "Enable NVIDIA AMGX support")
-set(GPU_MPI "0" CACHE STRING "GPU aware MPI")
+set(GPU_MPI "1" CACHE STRING "GPU aware MPI")
 
 ###############################################################################
 # Check compiler/MPI vendor, version and Fortran/C compatibility              #
 ###############################################################################
-
-macro(check_fcompiler_id compiler)
-  if(NOT "${compiler}" STREQUAL "GNU")
-  message(FATAL_ERROR "NekRS only supports gfortran")
-  endif()
-endmacro()
-
-check_fcompiler_id("${CMAKE_Fortran_COMPILER_ID}")
-
-
-find_package(Threads)
 
 ## Sanity checks for MPI
 set(MPI_C_COMPILER ${CMAKE_C_COMPILER})
@@ -176,22 +155,24 @@ include(config/hypre.cmake)
 # Build Nek5000 dependencies                                                  #
 ###############################################################################
 
+macro(check_fcompiler_id compiler)
+  if(NOT "${compiler}" STREQUAL "GNU")
+  message(FATAL_ERROR "NekRS only supports gfortran")
+  endif()
+endmacro()
+
+check_fcompiler_id("${CMAKE_Fortran_COMPILER_ID}")
 include(config/nek5000.cmake)
 
 ###############################################################################
-# Definitions for libP, gslib, and blaslapack
+# Build NekRS
 ###############################################################################
-
 
 include(config/bench.cmake)
 include(config/mesh.cmake)
 include(config/elliptic.cmake)
 include(config/gslib.cmake)
 include(config/blaslapack.cmake)
-
-###############################################################################
-# Build NekRS
-###############################################################################
 
 set(SRC 
     src/lib/nekrs.cpp

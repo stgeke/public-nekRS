@@ -131,8 +131,6 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     mkdir(udf_cache_dir.c_str(), S_IRWXU);
   }
 
-  oudfInit(options);
-
   // jit compile udf
   std::string udfFile;
   options.getArgs("UDF FILE", udfFile);
@@ -140,6 +138,8 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     udfBuild(udfFile.c_str(), options);
     udfLoad();
   }
+
+  //oudfInit(options);
 
   options.setArgs("CI-MODE", std::to_string(ciMode));
   if(rank == 0 && ciMode)

@@ -6,6 +6,18 @@
 #include <fcntl.h>
 #include <libgen.h>
 
+void fileSync(const char *file)
+{
+  const std::string dir(dirname((char*) file));
+  int fd = open(file, O_RDONLY);
+  fsync(fd);
+  close(fd);
+
+  fd = open(dir.c_str(), O_RDONLY);
+  fsync(fd);
+  close(fd);
+}
+
 bool isFileNewer(const char *file1, const char* file2)
 {
   struct stat s1, s2;
@@ -24,6 +36,7 @@ void copyFile(const char *srcFile, const char* dstFile)
   dst<<src.rdbuf();
   src.close();
   dst.close();
+  fileSync(dstFile);
 }
 
 bool fileExists(const char *file)
@@ -37,16 +50,4 @@ bool isFileEmpty(const char *file)
   const bool isEmpty = f.peek() == std::ifstream::traits_type::eof();
   f.close();
   return isEmpty;
-}
-
-void fileSync(const char *file)
-{
-  const std::string dir(dirname((char*) file));
-  int fd = open(file, O_RDONLY);
-  fsync(fd);
-  close(fd);
-
-  fd = open(dir.c_str(), O_RDONLY);
-  fsync(fd);
-  close(fd);
 }

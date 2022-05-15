@@ -1,3 +1,30 @@
+# Release v22.1
+
+## What is new? 
+
+* single udf source 
+
+## Good to know
+
+* ... 
+
+## Breaking Changes
+
+* ... 
+
+## Known Bugs / Restrictions
+
+* Mesh solver does not support CHT and unaligned sym/shl BCs
+* [729](https://github.com/Nek5000/Nek5000/issues/759)
+* [300](https://github.com/Nek5000/nekRS/issues/300)
+* [258](https://github.com/Nek5000/nekRS/issues/258)
+
+## Thanks to our Contributors
+
+We are grateful to all who added new features, filed issues or helped resolve them, 
+asked and answered questions, and were part of inspiring discussions.
+
+
 # Release v22.0
 
 ## What is new? 

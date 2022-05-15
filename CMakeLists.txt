@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(NekRS LANGUAGES C CXX Fortran VERSION 22.0.0)
+project(NekRS LANGUAGES C CXX Fortran VERSION 22.1.0)
 
 if(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   MESSAGE(FATAL_ERROR "Error:  In-place builds are not supported. Please create a separate build directory")

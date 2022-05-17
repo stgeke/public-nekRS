@@ -22,6 +22,7 @@ void finalize();
 void nekUserchk(void);
 int runTimeStatFreq();
 int printInfoFreq();
+int updateFileCheckFreq();
 void printRuntimeStatistics(int step);
 double writeInterval(void);
 double dt(int tStep);

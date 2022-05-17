@@ -374,7 +374,17 @@ int printInfoFreq()
   return freq;
 }
 
-void printRuntimeStatistics(int step) { platform->timer.printRunStat(step); }
+int updateFileCheckFreq()
+{
+  int freq = 20;
+  platform->options.getArgs("UPDATE FILE CHECK FREQUENCY", freq);
+  return freq;
+}
+
+void printRuntimeStatistics(int step) 
+{ 
+  platform->timer.printRunStat(step); 
+}
 
 void processUpdFile()
 {

@@ -424,8 +424,6 @@ int main(int argc, char** argv)
     return EXIT_SUCCESS;
   }
 
-  const int updCheckFreq = 20;
-
   int tStep = 0;
   double time = nekrs::startTime();
 
@@ -480,7 +478,10 @@ int main(int argc, char** argv)
 
     if (outputStep) nekrs::outfld(time);
 
-    if(tStep % updCheckFreq) nekrs::processUpdFile();
+    if(nekrs::updateFileCheckFreq()) {
+      if(tStep % nekrs::updateFileCheckFreq()) 
+        nekrs::processUpdFile();
+    }
 
     MPI_Barrier(comm);
     const double elapsedStep = MPI_Wtime() - timeStartStep;

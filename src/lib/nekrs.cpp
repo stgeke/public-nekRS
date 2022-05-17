@@ -116,6 +116,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   platform = _platform;
   platform->par = par;
 
+
   if(debug) platform->options.setArgs("VERBOSE","TRUE");
 
   int buildRank = rank;
@@ -127,8 +128,6 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     std::string cache_dir;
     cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
     mkdir(cache_dir.c_str(), S_IRWXU);
-    std::string udf_cache_dir = cache_dir + "/udf";
-    mkdir(udf_cache_dir.c_str(), S_IRWXU);
   }
 
   // jit compile udf
@@ -138,8 +137,6 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     udfBuild(udfFile.c_str(), options);
     udfLoad();
   }
-
-  //oudfInit(options);
 
   options.setArgs("CI-MODE", std::to_string(ciMode));
   if(rank == 0 && ciMode)
@@ -367,6 +364,13 @@ int runTimeStatFreq()
 {
   int freq = 500;
   platform->options.getArgs("RUNTIME STATISTICS FREQUENCY", freq);
+  return freq;
+}
+
+int printInfoFreq()
+{
+  int freq = 1;
+  platform->options.getArgs("PRINT INFO FREQUENCY", freq);
   return freq;
 }
 

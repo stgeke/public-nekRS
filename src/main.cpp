@@ -490,12 +490,17 @@ int main(int argc, char** argv)
     nekrs::updateTimer("elapsedStepSum", elapsedStepSum);
     nekrs::updateTimer("elapsed", elapsedTime);
 
-    nekrs::printInfo(time, tStep);
+    if(nekrs::printInfoFreq()) {
+      if (tStep % nekrs::printInfoFreq() == 0)
+        nekrs::printInfo(time, tStep);
+    }
 
-    if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep)
-      nekrs::printRuntimeStatistics(tStep);
+    if(nekrs::runTimeStatFreq()) {
+      if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep)
+        nekrs::printRuntimeStatistics(tStep);
+    }
 
-    if (tStep % 10 == 0) fflush(stdout);
+    if (tStep % 100 == 0) fflush(stdout);
   }
   MPI_Pcontrol(0);
 

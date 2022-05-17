@@ -65,85 +65,78 @@ void oudfFindNeumann(std::string &field)
   }
 }
 
-void mkOudf(const std::string& oudfPath, const std::string& oudfPathBuild)
+void mkUdfCache(const std::string& udfFile, const std::string& udfFileCache,
+                const std::string& oudfFile, const std::string& oudfFileCache)
 {
-  if(fileExists(oudfPath.c_str())) { 
-    copyFile(oudfPath.c_str(), oudfPathBuild.c_str());
-  } else {
-    std::regex rgx(R"(\s*@oklBegin\s*\{([\s\S]*)\}\s*@oklEnd)");
-    const std::string cache_dir(getenv("NEKRS_CACHE_DIR"));
-    const std::string udfFileCache = cache_dir + "/udf/udf.cpp";
-
-    std::stringstream buffer;
-    {
-      std::ifstream udff(udfFileCache);
-      buffer << udff.rdbuf();
-      udff.close();
-    }
-    std::ofstream udff(udfFileCache, std::ios::trunc);
-    udff << std::regex_replace(buffer.str(), rgx, "");
-    udff.close();
-
-    std::ofstream df(oudfPathBuild, std::ios::trunc);
-    std::smatch match;
-    std::string search = buffer.str();
-    std::regex_search(search, match, rgx);
-    df << match.str(1);
-    df.close();
+  {
+    char fullPath[BUFSIZ];
+    realpath(udfFile.c_str(), fullPath);
+    copyFile(fullPath, udfFileCache.c_str());
   }
-  fileSync(oudfPathBuild.c_str());
+  if(fileExists(oudfFile.c_str())) return;
+
+  std::regex rgx(R"(\s*@oklBegin\s*\{([\s\S]*)\}\s*@oklEnd)");
+
+  std::stringstream buffer;
+  {
+    std::ifstream udff(udfFileCache);
+    buffer << udff.rdbuf();
+    udff.close();
+  }
+  std::ofstream udff(udfFileCache, std::ios::trunc);
+  udff << std::regex_replace(buffer.str(), rgx, "");
+  udff.close();
+
+  std::ofstream df(oudfFileCache, std::ios::trunc);
+  std::smatch match;
+  std::string search = buffer.str();
+  std::regex_search(search, match, rgx);
+  df << match.str(1);
+  df.close();
+  fileSync(oudfFileCache.c_str());
 }
 
-void adjustOudf(const std::string& filePath, int buildRank, MPI_Comm comm)
+void adjustOudf(const std::string& filePath)
 {
-  if (buildRank) {
-    std::fstream df;
-    df.open(filePath);
-    std::stringstream buffer;
-    buffer << df.rdbuf();
+  std::fstream df;
+  df.open(filePath);
+  std::stringstream buffer;
+  buffer << df.rdbuf();
 
-    bool found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+velocityDirichletConditions)"));
-    velocityDirichletConditions = found;
-    if(!found)
-      df << "void velocityDirichletConditions(bcData *bc){}\n";
+  bool found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+velocityDirichletConditions)"));
+  velocityDirichletConditions = found;
+  if(!found)
+    df << "void velocityDirichletConditions(bcData *bc){}\n";
 
-    found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+meshVelocityDirichletConditions)"));
-    meshVelocityDirichletConditions = found;
-    if(!found)
-      df << "void meshVelocityDirichletConditions(bcData *bc){\n"
-      "  velocityDirichletConditions(bc);\n"
-      "}\n";
+  found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+meshVelocityDirichletConditions)"));
+  meshVelocityDirichletConditions = found;
+  if(!found)
+    df << "void meshVelocityDirichletConditions(bcData *bc){\n"
+    "  velocityDirichletConditions(bc);\n"
+    "}\n";
 
-    found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+velocityNeumannConditions)"));
-    velocityNeumannConditions = found;
-    if(!found)
-      df << "void velocityNeumannConditions(bcData *bc){}\n";
+  found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+velocityNeumannConditions)"));
+  velocityNeumannConditions = found;
+  if(!found)
+    df << "void velocityNeumannConditions(bcData *bc){}\n";
 
-    found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+pressureDirichletConditions)"));
-    pressureDirichletConditions = found;
-    if(!found)
-      df << "void pressureDirichletConditions(bcData *bc){}\n";
+  found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+pressureDirichletConditions)"));
+  pressureDirichletConditions = found;
+  if(!found)
+    df << "void pressureDirichletConditions(bcData *bc){}\n";
 
-    found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+scalarNeumannConditions)"));
-    scalarNeumannConditions = found;
-    if(!found)
-      df << "void scalarNeumannConditions(bcData *bc){}\n";
+  found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+scalarNeumannConditions)"));
+  scalarNeumannConditions = found;
+  if(!found)
+    df << "void scalarNeumannConditions(bcData *bc){}\n";
 
-    found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+scalarDirichletConditions)"));
-    scalarDirichletConditions = found;
-    if(!found)
-      df << "void scalarDirichletConditions(bcData *bc){}\n";
+  found = std::regex_search(buffer.str(), std::regex(R"(\s*void\s+scalarDirichletConditions)"));
+  scalarDirichletConditions = found;
+  if(!found)
+    df << "void scalarDirichletConditions(bcData *bc){}\n";
 
-    df.close();
-    fileSync(filePath.c_str());
-  }
-
-  MPI_Bcast(&velocityDirichletConditions, 1, MPI_INT, buildRank, comm);
-  MPI_Bcast(&meshVelocityDirichletConditions, 1, MPI_INT, buildRank, comm);
-  MPI_Bcast(&velocityNeumannConditions, 1, MPI_INT, buildRank, comm);
-  MPI_Bcast(&pressureDirichletConditions, 1, MPI_INT, buildRank, comm);
-  MPI_Bcast(&scalarNeumannConditions, 1, MPI_INT, buildRank, comm);
-  MPI_Bcast(&scalarDirichletConditions, 1, MPI_INT, buildRank, comm);
+  df.close();
+  fileSync(filePath.c_str());
 }
 
 
@@ -153,12 +146,12 @@ void udfBuild(const char* udfFile, setupAide& options)
   int buildRank;
   MPI_Comm_rank(comm, &buildRank);    
 
+  const std::string cache_dir(getenv("NEKRS_CACHE_DIR"));
+
   std::string oudfFile;
   options.getArgs("UDF OKL FILE",oudfFile);
-
-  const std::string cache_dir(getenv("NEKRS_CACHE_DIR"));
-  const std::string oudfFileBuild = cache_dir + "/udf/udf.okl";
-  options.setArgs("DATA FILE", oudfFileBuild);
+  const std::string oudfFileCache = cache_dir + "/udf/udf.okl";
+  options.setArgs("DATA FILE", oudfFileCache);
 
   int err = 0;
 
@@ -173,6 +166,7 @@ void udfBuild(const char* udfFile, setupAide& options)
       std::string cache_dir;
       cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
 
+      mkdir(std::string(cache_dir + "/udf").c_str(), S_IRWXU);
       std::string udfFileCache = cache_dir + "/udf/udf.cpp";
       std::string udfLib = cache_dir + "/udf/libUDF.so";
 
@@ -197,12 +191,11 @@ void udfBuild(const char* udfFile, setupAide& options)
       std::string("") :
       std::string("> /dev/null 2>&1");
       if(isFileNewer(udfFile, udfFileCache.c_str()) || !fileExists(udfLib.c_str())) {
-        char udfFileResolved[BUFSIZ];
-        realpath(udfFile, udfFileResolved);
-        copyFile(udfFileResolved, std::string(cache_dir + std::string("/udf/udf.cpp")).c_str());
+        mkUdfCache(std::string(udfFile), udfFileCache,
+                   oudfFile, oudfFileCache);
+
         copyFile(std::string(udf_dir + std::string("/CMakeLists.txt")).c_str(),
                  std::string(cache_dir + std::string("/udf/CMakeLists.txt")).c_str());
-                
         std::string cmakeFlags("-Wno-dev");
         if(verbose) cmakeFlags += " --trace-expand";
         std::string cmakeBuildDir = cache_dir + "/udf"; 
@@ -221,8 +214,6 @@ void udfBuild(const char* udfFile, setupAide& options)
         if(retVal) return EXIT_FAILURE; 
       }
 
-      mkOudf(oudfFile, oudfFileBuild);
-
       {
         sprintf(cmd, "cd %s/udf && make %s", cache_dir.c_str(), pipeToNull.c_str());
         const int retVal = system(cmd);
@@ -233,6 +224,12 @@ void udfBuild(const char* udfFile, setupAide& options)
         fileSync(udfLib.c_str());
       }
 
+      if(fileExists(oudfFile.c_str()))
+        // just copy, occa will only recompile if hash has changed
+        copyFile(oudfFile.c_str(), oudfFileCache.c_str());
+
+      adjustOudf(oudfFileCache);
+
       if(platform->comm.mpiRank == 0) printf("done (%gs)\n", MPI_Wtime() - tStart);
       fflush(stdout);
     }
@@ -240,7 +237,12 @@ void udfBuild(const char* udfFile, setupAide& options)
     return 0;
   }();
 
-  adjustOudf(oudfFile, buildRank, comm);
+  MPI_Bcast(&velocityDirichletConditions, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&meshVelocityDirichletConditions, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&velocityNeumannConditions, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&pressureDirichletConditions, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&scalarNeumannConditions, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&scalarDirichletConditions, 1, MPI_INT, 0, comm);
 
   MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, platform->comm.mpiComm);
   if(err) ABORT(EXIT_FAILURE);

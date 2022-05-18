@@ -1,9 +1,6 @@
-
-
-
-
 @kernel void SijOijHex3D(const dlong Nelements,
                          const dlong offset,
+                         const dlong ifOij,
                          @restrict const dfloat* vgeo,
                          @restrict const dfloat* D,
                          @restrict const dfloat* U,
@@ -108,9 +105,11 @@
           SO[id + 4 * offset] = JW * (dvdz + dwdy);
           SO[id + 5 * offset] = JW * (dudz + dwdx);
 
-          SO[id + 6 * offset] = JW * (dwdy - dvdz);
-          SO[id + 7 * offset] = JW * (dudz - dwdx);
-          SO[id + 8 * offset] = JW * (dvdx - dudy);
+          if(ifOij) {
+            SO[id + 6 * offset] = JW * (dwdy - dvdz);
+            SO[id + 7 * offset] = JW * (dudz - dwdx);
+            SO[id + 8 * offset] = JW * (dvdx - dudy);
+          }
         }
       }
     }

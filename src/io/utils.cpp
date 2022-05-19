@@ -6,15 +6,22 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <string>
+#include <cstring>
 #include <iostream>
 
-void fileSync(const char * _file)
+void fileSync(const char * file)
 {
-  // copy input because dirname may modify its input
-  const std::string file(_file);
-  
-  const std::string dir(dirname((char*) file.c_str()));
-  int fd = open(file.c_str(), O_RDONLY);
+  std::string dir;
+  {
+    // POSIX allows dirname to overwrite input
+    const int len  = std::char_traits<char>::length(file);
+    char *tmp = (char*) malloc((len+1) * sizeof(char));
+    strncpy(tmp, file, len);
+    dir.assign(dirname(tmp));
+  }
+
+  int fd; 
+  fd = open(file, O_RDONLY);
   fsync(fd);
   close(fd);
 

@@ -274,6 +274,7 @@ errOpen:
 
 err:
   ABORT(EXIT_FAILURE);
+  return NULL;
 }
 
 void udfLoad(void)

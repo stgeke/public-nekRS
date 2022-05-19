@@ -99,7 +99,8 @@ void mkUdfCache(const std::string& udfFile, const std::string& udfFileCache,
 void adjustOudf(const std::string& filePath)
 {
   std::fstream df;
-  df.open(filePath);
+  df.open(filePath, std::fstream::out | std::fstream::in);
+
   std::stringstream buffer;
   buffer << df.rdbuf();
 
@@ -150,6 +151,7 @@ void udfBuild(const char* udfFile, setupAide& options)
 
   std::string oudfFile;
   options.getArgs("UDF OKL FILE",oudfFile);
+
   const std::string oudfFileCache = cache_dir + "/udf/udf.okl";
   options.setArgs("DATA FILE", oudfFileCache);
 

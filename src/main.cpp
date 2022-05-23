@@ -439,9 +439,13 @@ int main(int argc, char** argv)
   }
 
   nekrs::udfExecuteStep(time, tStep, /* outputStep */ 0);
+  nekrs::resetTimer("udfExecuteStep");
 
   int lastStep = nekrs::lastStep(time, tStep, elapsedTime);
   double elapsedStepSum = 0;
+
+  double tSolveStepMin = std::numeric_limits<double>::max();
+  double tSolveStepMax = std::numeric_limits<double>::min();
 
   if (rank == 0 && !lastStep) {
     if (nekrs::endTime() > nekrs::startTime())
@@ -485,6 +489,11 @@ int main(int argc, char** argv)
 
     MPI_Barrier(comm);
     const double elapsedStep = MPI_Wtime() - timeStartStep;
+    tSolveStepMin = std::min(elapsedStep, tSolveStepMin);
+    tSolveStepMax = std::max(elapsedStep, tSolveStepMax);
+    nekrs::updateTimer("minSolveStep", tSolveStepMin);
+    nekrs::updateTimer("maxSolveStep", tSolveStepMax);
+
     elapsedStepSum += elapsedStep;
     elapsedTime += elapsedStep;
     nekrs::updateTimer("elapsedStep", elapsedStep);

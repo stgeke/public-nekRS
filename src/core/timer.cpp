@@ -232,7 +232,7 @@ std::string printPercentage(double num, double dom)
 {
   char buf[4096];
   double frac = num/dom;
-  snprintf(buf, sizeof(buf), "%4.2f", frac);
+  snprintf(buf, sizeof(buf), "%4.1f", 100*frac);
   return std::string(buf);
 }
 
@@ -289,7 +289,7 @@ void timer_t::printRunStat(int step)
   const double tElapsedTime = query("elapsed", "DEVICE:MAX");
 
   if (rank == 0)
-    std::cout << "\n>>> runtime statistics (step= " << step << "  elapsed= " << tElapsedTime << "s"
+    std::cout << "\n>>> runtime statistics (step= " << step << "  totalElapsed= " << tElapsedTime << "s"
               << "):\n";
 
   std::cout.setf(std::ios::scientific);
@@ -301,48 +301,43 @@ void timer_t::printRunStat(int step)
   const double tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
   const double tSetup = query("setup", "DEVICE:MAX");
 
-  printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
-  printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);
-
-  printStatEntry("  checkpointing         ", "checkpointing", "DEVICE:MAX", tElapsedTime);
-
-  printStatEntry("  udfExecuteStep        ", "udfExecuteStep", "DEVICE:MAX", tElapsedTime);
-
   const double tSolve        = query("solve", "DEVICE:MAX");
-  const double tMinSolveStep = query("minSolveStep", "HOST:MAX");
-  const double tMaxSolveStep = query("maxSolveStep", "HOST:MAX");
+  const double tMinSolveStep = query("minSolveStep", "DEVICE:MAX");
+  const double tMaxSolveStep = query("maxSolveStep", "DEVICE:MAX");
   const double flops = platform->flopCounter->get(platform->comm.mpiComm);
   bool printFlops = !platform->options.compareArgs("PRESSURE PRECONDITIONER", "SEMFEM");
 
-  if(tSolve > 0 && rank == 0) {
+  printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);
 
-  printStatEntry("  elapsedStepSum        ", tElapsedTimeSolve, tElapsedTime);
-  printStatEntry("  solve                 ", tSolve, tElapsedTime);
+  printStatEntry("  solve                 ", tElapsedTimeSolve, tElapsedTime);
+  if(tSolve > 0 && rank == 0) {
   std::cout <<   "    min                 " << tMinSolveStep << "s\n";
   std::cout <<   "    max                 " << tMaxSolveStep << "s\n";
-  if (flops > 0 && printFlops)
-  std::cout <<   "    flop/s              " << flops/tSolve << "\n\n";
   }
+  
+  printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    udfExecuteStep      ", "udfExecuteStep", "DEVICE:MAX", tElapsedTime);
 
-  printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tSolve);
+  printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tElapsedTime);
 
   const double tMakef = query("makef", "DEVICE:MAX");
-  printStatEntry("    makef               ", "makef", "DEVICE:MAX", tSolve);
+  printStatEntry("    makef               ", "makef", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      udfUEqnSource     ", "udfUEqnSource", "DEVICE:MAX", tMakef);
 
   const double tMakeq = query("makeq", "DEVICE:MAX");
-  printStatEntry("    makeq               ", "makeq", "DEVICE:MAX", tSolve);
+  printStatEntry("    makeq               ", "makeq", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      udfSEqnSource     ", "udfSEqnSource", "DEVICE:MAX", tMakeq);
 
-  printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tSolve);
+  printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tElapsedTime);
  
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");
-  printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tSolve);
+  printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      rhs               ", "velocity rhs", "DEVICE:MAX", tVelocity);
   printStatEntry("      initial guess     ", "velocity proj", "DEVICE:MAX", tVelocity);
 
   const double tPressure = query("pressureSolve", "DEVICE:MAX");
-  printStatEntry("    pressureSolve       ", "pressureSolve", "DEVICE:MAX", tSolve);
+  printStatEntry("    pressureSolve       ", "pressureSolve", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      rhs               ", "pressure rhs", "DEVICE:MAX", tPressure);
 
   const double tPressurePreco = query("pressure preconditioner", "DEVICE:MAX");
@@ -352,17 +347,17 @@ void timer_t::printRunStat(int step)
   printStatEntry("      initial guess     ", "pressure proj", "DEVICE:MAX", tPressure);
 
   const double tScalar = query("scalarSolve", "DEVICE:MAX");
-  printStatEntry("    scalarSolve         ", "scalarSolve", "DEVICE:MAX", tSolve);
+  printStatEntry("    scalarSolve         ", "scalarSolve", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      rhs               ", "scalar rhs", "DEVICE:MAX", tScalar);
   printStatEntry("      initial guess     ", "scalar proj", "DEVICE:MAX", tScalar);
 
   const double tMesh = query("meshSolve", "DEVICE:MAX");
-  printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tSolve);
+  printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
   printStatEntry("    gsMPI               ", gsTime, tSolve);
 
-  printStatEntry("    dotp                ", "dotp", "DEVICE:MAX", tSolve);
+  printStatEntry("    dotp                ", "dotp", "DEVICE:MAX", tElapsedTime);
 
   if(rank == 0) std::cout << std::endl;
 

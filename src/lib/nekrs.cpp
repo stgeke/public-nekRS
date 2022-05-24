@@ -462,6 +462,9 @@ void verboseInfo(bool enabled)
 
 void updateTimer(const std::string &key, double time) { platform->timer.set(key, time); }
 
+void resetTimer(const std::string &key) { platform->timer.reset(key); }
+
+
 } // namespace
 
 static void setOccaVars()

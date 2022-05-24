@@ -35,7 +35,7 @@ void processUpdFile();
 void printInfo(double time, int tstep);
 void verboseInfo(bool enabled);
 void updateTimer(const std::string &key, double time);
-
+void resetTimer(const std::string &key); 
 void* nrsPtr(void);
 void* nekPtr(const char* id);
 }

@@ -59,6 +59,7 @@ cmake -Wno-dev \
       -DENABLE_OPENCL="${OCCA_ENABLE_OPENCL}" \
       -DGPU_MPI="${NEKRS_GPU_MPI}" \
       -DENABLE_AMGX="${ENABLE_AMGX}" \
+      $@ \
       .. 
 
 if [ $? -eq 0 ]; then

@@ -155,13 +155,6 @@ include(config/hypre.cmake)
 # Build Nek5000 dependencies                                                  #
 ###############################################################################
 
-macro(check_fcompiler_id compiler)
-  if(NOT "${compiler}" STREQUAL "GNU")
-  message(FATAL_ERROR "NekRS only supports gfortran")
-  endif()
-endmacro()
-
-check_fcompiler_id("${CMAKE_Fortran_COMPILER_ID}")
 include(config/nek5000.cmake)
 
 ###############################################################################

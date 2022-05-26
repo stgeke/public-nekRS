@@ -116,11 +116,7 @@ void ellipticOperator(elliptic_t* elliptic,
   mesh_t* mesh = elliptic->mesh;
   setupAide &options = elliptic->options;
   oogs_t* oogsAx = elliptic->oogsAx;
-  const char* ogsDataTypeString = (!strstr(precision, dfloatString)) ?
-                                  options.compareArgs("ENABLE FLOATCOMMHALF GS SUPPORT",
-                                                      "TRUE") ? ogsFloatCommHalf : ogsPfloat
-    :
-                                  ogsDfloat;
+  const char* ogsDataTypeString = (!strstr(precision, dfloatString)) ? ogsPfloat : ogsDfloat;
   ellipticAx(elliptic, mesh->NglobalGatherElements, mesh->o_globalGatherElementList, o_q, o_Aq, precision);
   if (masked) {
     ellipticApplyMask(elliptic,

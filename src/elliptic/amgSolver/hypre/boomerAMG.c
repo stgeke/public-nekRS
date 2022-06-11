@@ -7,7 +7,6 @@
 
 #include "boomerAMG.h"
 
-static int _Nthreads = 1;
 static double boomerAMGParam[BOOMERAMG_NPARAM];
 
 #ifdef HYPRE
@@ -172,11 +171,7 @@ int boomerAMGSetup(int nrows,
   HYPRE_ParCSRMatrix par_A;
   __HYPRE_IJMatrixGetObject(data->A,(void**) &par_A);
 
-  #pragma omp parallel
-  {
-    int tid = omp_get_thread_num();
-    if(tid==0) _Nthreads = omp_get_num_threads();
-  }
+  const int _Nthreads = omp_get_max_threads();
   omp_set_num_threads(data->Nthreads);
   __HYPRE_BoomerAMGSetup(solver,par_A,par_b,par_x);
   omp_set_num_threads(_Nthreads);
@@ -210,6 +205,7 @@ int boomerAMGSolve(void *x, void *b)
 
   __HYPRE_IJMatrixGetObject(data->A,(void**) &par_A);
 
+  const int _Nthreads = omp_get_max_threads();
   omp_set_num_threads(data->Nthreads);
   err = __HYPRE_BoomerAMGSolve(data->solver,par_A,par_b,par_x);
   if(err > 0) { 

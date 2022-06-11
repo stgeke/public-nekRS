@@ -12,6 +12,7 @@ ExternalProject_Add(
     SOURCE_SUBDIR "src"
     BUILD_ALWAYS ON
     CMAKE_ARGS  -DHYPRE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
+                -DHYPRE_BUILD_TYPE="RelWithDebInfo"
                 -DHYPRE_ENABLE_SHARED=ON
                 -DHYPRE_ENABLE_MIXEDINT=ON
                 -DHYPRE_ENABLE_BIGINT=ON
@@ -19,10 +20,9 @@ ExternalProject_Add(
                 -DCMAKE_CXX_VISIBILITY_PRESET=hidden
                 -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_PREFIX}/lib
                 -DCMAKE_C_VISIBILITY_PRESET=hidden
-                -DCMAKE_BUILD_TYPE=RelWithDebInfo
                 -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
                 -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                 -DCMAKE_SHARED_LINKER_FLAGS=${HYPRE_SHARED_LINKER_FLAGS}
-                -DCMAKE_CXX_FLAGS_RELWITHDEBINFO=${HYPRE_CXX_FLAGS}
-                -DCMAKE_C_FLAGS_RELWITHDEBINFO=${HYPRE_C_FLAGS}
+                -DCMAKE_CXX_FLAGS=${HYPRE_CXX_FLAGS}
+                -DCMAKE_C_FLAGS=${HYPRE_C_FLAGS}
 )

@@ -302,9 +302,11 @@ namespace occa {
               << " -x cu -c " << sourceFilename
               << " -o "       << ptxBinaryFilename;
 
+#if 0
       if (!verbose) {
         command << " > /dev/null 2>&1";
       }
+#endif
       const std::string &ptxCommand = command.str();
       if (verbose) {
         io::stdout << "Compiling [" << kernelName << "]\n" << ptxCommand << "\n";
@@ -333,9 +335,11 @@ namespace occa {
               << " -x cu " << sourceFilename
               << " -o "    << binaryFilename;
 
+#if 0
       if (!verbose) {
         command << " > /dev/null 2>&1";
       }
+#endif
       const std::string &sCommand = command.str();
       if (verbose) {
         io::stdout << sCommand << '\n';

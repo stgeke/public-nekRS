@@ -391,6 +391,13 @@ int main(int argc, char** argv)
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
+  {
+     time_t now = time(0);
+     tm *gmtm = gmtime(&now);
+     char *dt = asctime(gmtm);
+     std::cout << dt << std::endl;
+  }
+
   if (cmdOpt->debug) {
     for(int currRank = 0; currRank < size; ++currRank)
       if(rank == currRank) printf("rank %d: pid<%d>\n", rank, ::getpid());

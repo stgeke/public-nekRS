@@ -261,7 +261,7 @@ double writeInterval(void)
 
 int writeControlRunTime(void)
 {
-  return platform->options.compareArgs("SOLUTION OUTPUT CONTROL", "RUNTIME");
+  return platform->options.compareArgs("SOLUTION OUTPUT CONTROL", "SIMULATIONTIME");
 }
 
 int outputStep(double time, int tStep)

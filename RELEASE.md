@@ -14,6 +14,9 @@
 
 ## Known Bugs / Restrictions
 
+* [par] Rename writeControl value `runTime` => `simulationTime`
+
+
 * Mesh solver does not support CHT and unaligned sym/shl BCs
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
 * [300](https://github.com/Nek5000/nekRS/issues/300)

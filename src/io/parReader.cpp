@@ -1636,12 +1636,12 @@ setupAide parRead(void *ppar, std::string setupFile, MPI_Comm comm) {
   std::string writeControl;
   if (par->extract("general", "writecontrol", writeControl)) {
 
-    checkValidity(rank, {"steps", "runtime"}, writeControl);
+    checkValidity(rank, {"steps", "simulationtime"}, writeControl);
 
     if (writeControl == "steps")
       options.setArgs("SOLUTION OUTPUT CONTROL", "STEPS");
-    else if (writeControl == "runtime")
-      options.setArgs("SOLUTION OUTPUT CONTROL", "RUNTIME");
+    else if (writeControl == "simulationtime")
+      options.setArgs("SOLUTION OUTPUT CONTROL", "SIMULATIONTIME");
     else{
       std::ostringstream error;
       error << "Could not parse general::writeControl = " << writeControl;

@@ -395,7 +395,7 @@ int main(int argc, char** argv)
      time_t now = time(0);
      tm *gmtm = gmtime(&now);
      char *dt = asctime(gmtm);
-     std::cout << dt << std::endl;
+     std::cout << dt << " (UTC)" << std::endl;
   }
 
   if (cmdOpt->debug) {

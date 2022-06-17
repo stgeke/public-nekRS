@@ -10,7 +10,7 @@ endTime = 2600
 dt = targetCFL=2 + max=2e-2
 timeStepper = tombo2
 
-writeControl = runTime
+writeControl = simulationTime 
 writeInterval = 100 
 
 regularization = hpfrt + nModes=3 + scalingCoeff=10

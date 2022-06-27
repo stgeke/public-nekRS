@@ -209,7 +209,8 @@ occa::kernel benchmarkFDM(int Nelements,
         err = std::max(err, std::abs(result[i] - referenceResult[i]));
       }
 
-      if (platform->comm.mpiRank == 0 && verbosity > 1) {
+      const auto tol = 100. * std::numeric_limits<dfloat>::epsilon();
+      if (platform->comm.mpiRank == 0 && verbosity > 1 && err > tol) {
         std::cout << "Error in kernel compared to reference implementation " << kernelVariant << ": " << err
                   << std::endl;
       }

@@ -256,7 +256,8 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
       err = std::max(err, std::abs(results[i] - referenceResults[i]));
     }
 
-    if(platform->comm.mpiRank == 0 && verbosity > 1){
+    const auto tol = 100. * std::numeric_limits<dfloat>::epsilon();
+    if(platform->comm.mpiRank == 0 && verbosity > 1 && err > tol){
       std::cout << "Error in kernel " << kernelVariant << " is " << err << " compared to reference implementation.\n";
     }
 

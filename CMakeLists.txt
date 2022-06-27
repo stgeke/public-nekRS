@@ -186,6 +186,7 @@ set(SRC
     src/setup/setup.cpp
     src/core/alignment.cpp
     src/core/registerNrsKernels.cpp
+    src/core/registerPostProcessingKernels.cpp
     src/bdry/createEToBV.cpp
     src/bdry/applyDirichlet.cpp
     src/timeStepper/timeStepper.cpp
@@ -199,6 +200,7 @@ set(SRC
     src/core/configReader.cpp
     src/core/timer.cpp
     src/core/platform.cpp
+    src/core/comm.cpp
     src/core/flopCounter.cpp
     src/core/kernelRequestManager.cpp
     src/core/device.cpp

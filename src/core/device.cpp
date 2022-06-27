@@ -2,6 +2,63 @@
 #include "platform.hpp"
 #include <unistd.h>
 #include <regex>
+#include <limits>
+
+namespace {
+
+int compileDummyAtomicKernel(device_t &device)
+{
+  const bool buildNodeLocal = useNodeLocalCache();
+  const std::string dummyKernelName = "simpleAtomicAdd";
+  const std::string dummyKernelStr = std::string("@kernel void simpleAtomicAdd(int N, double * result) {"
+                                                 "  for (int i = 0; i < N; ++i; @tile(64, @outer, @inner)) {"
+                                                 "    @atomic result[0] += 1;"
+                                                 "  }"
+                                                 "}");
+
+  occa::properties noKernelInfo;
+
+  auto simpleAtomicAddKernel = device.occaDevice().buildKernelFromString(dummyKernelStr, dummyKernelName, noKernelInfo);
+
+  auto o_result = device.occaDevice().malloc(sizeof(double));
+  double initialValue = 0.0;
+  o_result.copyFrom(&initialValue, sizeof(double));
+
+  constexpr int N = 1000;
+  auto expectedValue = static_cast<double>(N);
+  double actualValue = 0.0;
+
+  auto eps = 10 * std::numeric_limits<double>::epsilon();
+
+  simpleAtomicAddKernel(N, o_result);
+
+  o_result.copyTo(&actualValue, sizeof(double));
+
+  return std::abs(actualValue - expectedValue) < eps;
+
+}
+
+bool atomicsAvailable(device_t &device, MPI_Comm comm)
+{
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+
+  int atomicSupported = 1;
+
+  if (rank == 0) {
+    try {
+      atomicSupported = compileDummyAtomicKernel(device);
+    }
+    catch (std::exception &e) {
+      atomicSupported = 0;
+    }
+  }
+
+  MPI_Bcast(&atomicSupported, 1, MPI_INT, 0, comm);
+
+  return atomicSupported;
+}
+} // namespace
 
 occa::kernel
 device_t::buildNativeKernel(const std::string &fileName,
@@ -271,5 +328,5 @@ device_t::device_t(setupAide& options, comm_t& comm)
 
   _device_id = device_id;
 
-  deviceAtomic = this->mode() == "CUDA";
+  deviceAtomic = atomicsAvailable(*this, _comm.mpiComm);
 }

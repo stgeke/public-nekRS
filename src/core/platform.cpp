@@ -32,20 +32,6 @@ static void compileDummyKernel(const platform_t& plat)
 
 }
 
-comm_t::comm_t(MPI_Comm _commg, MPI_Comm _comm)
-{
-
-  mpiCommParent = _commg;
-  mpiComm = _comm;
-  MPI_Comm_rank(_comm, &mpiRank);
-  MPI_Comm_size(_comm, &mpiCommSize);
-
-  MPI_Comm_split_type(_comm, MPI_COMM_TYPE_SHARED, mpiRank, MPI_INFO_NULL, &mpiCommLocal);
-  MPI_Comm_rank(mpiCommLocal, &localRank);
-  MPI_Comm_size(mpiCommLocal, &mpiCommLocalSize);
-
-}
-
 deviceVector_t::deviceVector_t(const size_t _offset, const size_t _nVectors, const size_t _wordSize, const std::string _vectorName)
 : 
   nVectors(_nVectors),

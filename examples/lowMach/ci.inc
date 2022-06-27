@@ -46,6 +46,7 @@ dfloat computeLInfError(nrs_t * nrs, occa::memory o_a, occa::memory o_b)
     platform->linAlg->abs(mesh->Nlocal, o_fld_slice);
     LInfError = std::max(LInfError, platform->linAlg->max(mesh->Nlocal, o_fld_slice, platform->comm.mpiComm));
   }
+
   o_tmp.free();
 
   return LInfError;

@@ -31,6 +31,8 @@ void compileKernels() {
 
   registerLinAlgKernels();
 
+  registerPostProcessingKernels();
+
   registerMeshKernels(kernelInfoBC);
 
   registerNrsKernels(kernelInfoBC);

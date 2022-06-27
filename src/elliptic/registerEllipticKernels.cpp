@@ -172,7 +172,7 @@ void registerEllipticKernels(std::string section, int poissonEquation) {
                                 Nfields,
                                 stressForm,
                                 verbosity,
-                                elliptic_t::targetBenchmark,
+                                elliptic_t::targetTimeBenchmark,
                                 false,
                                 "");
 

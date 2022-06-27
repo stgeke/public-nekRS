@@ -60,7 +60,7 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
                                     Nfields,
                                     false, // no stress formulation in preconditioner
                                     verbosity,
-                                    elliptic_t::targetBenchmark,
+                                    elliptic_t::targetTimeBenchmark,
                                     false,
                                     kernelSuffix);
 
@@ -249,7 +249,7 @@ void registerSchwarzKernels(const std::string &section, int N) {
                                   useRAS,
                                   static_cast<int>(overlap),
                                   verbosity,
-                                  elliptic_t::targetBenchmark,
+                                  elliptic_t::targetTimeBenchmark,
                                   false,
                                   suffix);
     platform->kernels.add("fusedFDM" + suffix, fdmKernel);

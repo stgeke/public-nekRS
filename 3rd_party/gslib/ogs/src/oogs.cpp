@@ -140,7 +140,6 @@ static void pairwiseExchange(int unit_size, oogs_t *gs)
   struct gs_data *hgs = (gs_data *)ogs->haloGshSym;
   const void *execdata = hgs->r.data;
   const struct pw_data *pwd = (pw_data *)execdata;
-  const struct comm *comm = &hgs->comm;
 
   if (!gs->earlyPrepostRecv) {
     unsigned char *buf = (unsigned char *)gs->o_bufRecv.ptr();
@@ -152,7 +151,7 @@ static void pairwiseExchange(int unit_size, oogs_t *gs)
     const uint *p, *pe, *size = c->size;
     for (p = c->p, pe = p + c->n; p != pe; ++p) {
       const int len = *(size++) * unit_size;
-      MPI_Irecv((void *)buf, len, MPI_UNSIGNED_CHAR, *p, *p, comm->c, req++);
+      MPI_Irecv((void *)buf, len, MPI_UNSIGNED_CHAR, *p, *p, gs->comm, req++);
       buf += len;
     }
   }
@@ -169,7 +168,7 @@ static void pairwiseExchange(int unit_size, oogs_t *gs)
     const uint *p, *pe, *size = c->size;
     for (p = c->p, pe = p + c->n; p != pe; ++p) {
       const int len = *(size++) * unit_size;
-      MPI_Isend((void *)buf, len, MPI_UNSIGNED_CHAR, *p, comm->id, comm->c, req++);
+      MPI_Isend((void *)buf, len, MPI_UNSIGNED_CHAR, *p, gs->rank, gs->comm, req++);
       buf += len;
     }
     MPI_Waitall(pwd->comm[send].n + pwd->comm[recv].n, pwd->req, MPI_STATUSES_IGNORE);
@@ -440,13 +439,15 @@ oogs_t *oogs::setup(ogs_t *ogs,
         gs->modeExchange = modeExchange;
 
         if (gs->modeExchange == OOGS_EX_NBC && gs->mode == OOGS_DEVICEMPI)
-          continue; // not supported by many MPI implementations
+          continue; // not supported yet by all MPI implementations
 
 #ifdef ENABLE_EARLY_PREPOST
-        int nPass = 2;
+        const int nPass = 2;
 #else
-        int nPass = 1;
+        const int nPass = 1;
 #endif
+
+        MPI_Barrier(gs->comm);
         for (int pass = 0; pass < nPass; pass++) {
           gs->earlyPrepostRecv = pass;
 
@@ -480,6 +481,7 @@ oogs_t *oogs::setup(ogs_t *ogs,
           if (gs->rank == 0)
             printf("%.2es ", elapsedTest);
           fflush(stdout);
+
           if (elapsedTest < elapsedMin) {
             if (gs->mode != OOGS_LOCAL) {
               elapsedMin = elapsedTest;

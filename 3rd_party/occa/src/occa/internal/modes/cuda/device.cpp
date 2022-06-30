@@ -325,7 +325,11 @@ namespace occa {
       command.str("");
       command << allProps["compiler"]
               << ' ' << compilerFlags
-              << " -fatbin -Xptxas -v"
+              << " -fatbin";
+      if(verbose)
+      command << " -Xptxas -v";
+
+      command 
 #if (OCCA_OS == OCCA_WINDOWS_OS)
               << " -D OCCA_OS=OCCA_WINDOWS_OS -D _MSC_VER=1800"
 #endif

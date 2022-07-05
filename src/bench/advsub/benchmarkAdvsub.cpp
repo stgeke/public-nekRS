@@ -171,7 +171,7 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
   if(!platform->serial && dealias && !isScalar){
     // TODO: reduce number of kernel variants
     constexpr int Nkernels = 14;
-    for(int i = 1; i < Nkernels; ++i){
+    for(int i = 1; i <= Nkernels; ++i){
 
       // v12 requires cubNq <=13
       if(i == 11 && cubNq > 13) continue;

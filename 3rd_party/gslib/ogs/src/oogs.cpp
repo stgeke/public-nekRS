@@ -521,8 +521,8 @@ oogs_t *oogs::setup(ogs_t *ogs,
     const size_t unit_size = nVec * Nbytes;
     reallocBuffers(unit_size, gs);
 
-    device.finish();
     for (int test = 0; test < Ntests; ++test) {
+      device.finish();
       MPI_Barrier(gs->comm);
       const double tStart = MPI_Wtime();
       if (gs->modeExchange == OOGS_EX_NBC)
@@ -539,7 +539,11 @@ oogs_t *oogs::setup(ogs_t *ogs,
     MPI_Allreduce(MPI_IN_PLACE, &nBytesExchange, 1, MPI_DOUBLE, MPI_SUM, gs->comm);
     nBytesExchange *= unit_size / size;
 
-    MPI_Allreduce(MPI_IN_PLACE, &elapsedMinMPI, 1, MPI_DOUBLE, MPI_MAX, gs->comm);
+    double tmin, tmax, tavg;
+    MPI_Allreduce(&elapsedMinMPI, &tmin, 1, MPI_DOUBLE, MPI_MIN, gs->comm);
+    MPI_Allreduce(&elapsedMinMPI, &tmax, 1, MPI_DOUBLE, MPI_MAX, gs->comm);
+    MPI_Allreduce(&elapsedMinMPI, &tavg, 1, MPI_DOUBLE, MPI_SUM, gs->comm);
+    tavg /= size;
 
     const std::string gsModeExchangeStr = (gs->modeExchange == OOGS_EX_NBC) ? "nbc" : "pw";
     const std::string gsEarlyPrepostRecvStr = (gs->earlyPrepostRecv) ? "+early" : "";
@@ -561,10 +565,10 @@ oogs_t *oogs::setup(ogs_t *ogs,
                gsModeExchangeStr.c_str(),
                gsEarlyPrepostRecvStr.c_str(),
                gsModeStr.c_str());
-        if (elapsedMinMPI > MPI_Wtick())
-          printf("(MPI: %.2es / bi-bw: %.1fGB/s/rank)\n",
-                 elapsedMinMPI,
-                 nBytesExchange / elapsedMinMPI / 1e9);
+        if (tavg > MPI_Wtick())
+          printf("(MPI min/max/avg: %.2es %.2es %.2es / avg bi-bw: %.1fGB/s/rank)\n",
+                 tmin, tmax, tavg,
+                 nBytesExchange / tavg / 1e9);
         else
           printf("\n");
       }

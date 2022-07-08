@@ -110,7 +110,7 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
       )
       * sqrt(elliptic->resNormFactor); 
     if(std::isnan(elliptic->res00Norm)) {
-      if(platform->comm.mpiRank == 0) printf("Unreasonable res00Norm!\n");
+      if(platform->comm.mpiRank == 0) printf("%s unreasonable res00Norm!\n", name.c_str());
       ABORT(EXIT_FAILURE);
     }
     elliptic->solutionProjection->pre(o_r);
@@ -128,7 +128,7 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
     )
     * sqrt(elliptic->resNormFactor); 
   if(std::isnan(elliptic->res0Norm)) {
-    if(platform->comm.mpiRank == 0) printf("Unreasonable res0Norm!\n");
+    if(platform->comm.mpiRank == 0) printf("%s unreasonable res0Norm!\n", name.c_str());
     ABORT(EXIT_FAILURE);
   }
 
@@ -144,9 +144,13 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
     else if(options.compareArgs("KRYLOV SOLVER", "PGMRES"))
       elliptic->Niter = pgmres (elliptic, o_r, o_x, tol, maxIter, elliptic->resNorm);
     else{
-      if(platform->comm.mpiRank == 0) printf("Linear solver %s is not supported!\n", options.getArgs("KRYLOV SOLVER").c_str());
+      if(platform->comm.mpiRank == 0) 
+        printf("Linear solver %s is not supported!\n", options.getArgs("KRYLOV SOLVER").c_str());
       ABORT(EXIT_FAILURE);
     }
+
+    if(elliptic->Niter == maxIter && platform->comm.mpiRank == 0)
+      printf("%s maximum iterations reached!\n", name.c_str());
   }else{
     if(platform->comm.mpiRank == 0) printf("NONBLOCKING Krylov solvers currently not supported!");
     ABORT(EXIT_FAILURE);

@@ -65,16 +65,9 @@ void oudfFindNeumann(std::string &field)
   }
 }
 
-void mkUdfCache(const std::string& udfFile, const std::string& udfFileCache,
-                const std::string& oudfFile, const std::string& oudfFileCache)
+void convertSingleSourceUdf(const std::string& udfFileCache,
+                            const std::string& oudfFileCache)
 {
-  {
-    char fullPath[BUFSIZ];
-    realpath(udfFile.c_str(), fullPath);
-    copyFile(fullPath, udfFileCache.c_str());
-  }
-  if(fileExists(oudfFile.c_str())) return;
-
   std::regex rgx(R"(\s*@oklBegin\s*\{([\s\S]*)\}\s*@oklEnd)");
 
   std::stringstream buffer;
@@ -193,14 +186,18 @@ void udfBuild(const char* udfFile, setupAide& options)
       std::string("") :
       std::string("> /dev/null 2>&1");
       if(isFileNewer(udfFile, udfFileCache.c_str()) || !fileExists(udfLib.c_str())) {
-        mkUdfCache(std::string(udfFile), udfFileCache,
-                   oudfFile, oudfFileCache);
+        {
+          char fullPath[BUFSIZ];
+          realpath(udfFile, fullPath);
+          copyFile(fullPath, udfFileCache.c_str());
+        }
 
         copyFile(std::string(udf_dir + std::string("/CMakeLists.txt")).c_str(),
                  std::string(cache_dir + std::string("/udf/CMakeLists.txt")).c_str());
         std::string cmakeFlags("-Wno-dev");
         if(verbose) cmakeFlags += " --trace-expand";
         std::string cmakeBuildDir = cache_dir + "/udf"; 
+
         sprintf(cmd, "rm -f %s/udf/*.so && cmake %s -S %s -B %s -DCASE_DIR=\"%s\" -DCMAKE_CXX_COMPILER=\"$NEKRS_CXX\" "
 	            "-DCMAKE_CXX_FLAGS=\"$NEKRS_CXXFLAGS\" %s",
                  udf_dir.c_str(),
@@ -217,6 +214,16 @@ void udfBuild(const char* udfFile, setupAide& options)
       }
 
       {
+        if(!fileExists(oudfFile.c_str())) {
+          sprintf(cmd, "cd %s/udf && make udf.i %s", cache_dir.c_str(), pipeToNull.c_str());
+          const int retVal = system(cmd);
+          if(verbose && platform->comm.mpiRank == 0) {
+            printf("%s (preprocessing retVal: %d)\n", cmd, retVal);
+          }
+          if(retVal) return EXIT_FAILURE;
+          convertSingleSourceUdf(udfFileCache, oudfFileCache);
+        }
+
         sprintf(cmd, "cd %s/udf && make %s", cache_dir.c_str(), pipeToNull.c_str());
         const int retVal = system(cmd);
         if(verbose && platform->comm.mpiRank == 0) {

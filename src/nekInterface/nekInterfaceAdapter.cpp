@@ -118,9 +118,9 @@ void outfld(const char *filename, dfloat t, int coords, int FP64,
     xo = 1;
   }
   if(o_u.ptr()) {
-    occa::memory o_vx = o_u + 0 * nrs->fieldOffset * sizeof(dfloat);
-    occa::memory o_vy = o_u + 1 * nrs->fieldOffset * sizeof(dfloat);
-    occa::memory o_vz = o_u + 2 * nrs->fieldOffset * sizeof(dfloat);
+    occa::memory o_vx = o_u + (0 * sizeof(dfloat)) * nrs->fieldOffset;
+    occa::memory o_vy = o_u + (1 * sizeof(dfloat)) * nrs->fieldOffset;
+    occa::memory o_vz = o_u + (2 * sizeof(dfloat)) * nrs->fieldOffset;
     o_vx.copyTo(nekData.vx, Nlocal * sizeof(dfloat));
     o_vy.copyTo(nekData.vy, Nlocal * sizeof(dfloat));
     o_vz.copyTo(nekData.vz, Nlocal * sizeof(dfloat));
@@ -138,7 +138,7 @@ void outfld(const char *filename, dfloat t, int coords, int FP64,
         (is) ? mesh = nrs->meshV: mesh = nrs->cds->mesh[0];
       const dlong Nlocal = mesh->Nelements * mesh->Np;
       dfloat* Ti = nekData.t + is * nekFieldOffset;
-      occa::memory o_Si = o_s + is * nrs->fieldOffset * sizeof(dfloat);
+      occa::memory o_Si = o_s + (is * sizeof(dfloat)) * nrs->fieldOffset;
       o_Si.copyTo(Ti, Nlocal * sizeof(dfloat));
     }
     so = 1;

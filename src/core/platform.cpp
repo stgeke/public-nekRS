@@ -47,7 +47,7 @@ deviceVector_t::deviceVector_t(const size_t _offset, const size_t _nVectors, con
 
   o_vector = platform->device.malloc(nVectors * offset * wordSize);
   for(int s = 0; s < nVectors; ++s){
-    slices.push_back(o_vector + s * offset * wordSize);
+    slices.push_back(o_vector + (s * wordSize) * offset);
   }
 }
 
@@ -154,21 +154,34 @@ void memPool_t::allocate(const dlong offset, const dlong fields)
 }
 void deviceMemPool_t::allocate(memPool_t& hostMemory, const dlong offset, const dlong fields)
 {
-  bytesAllocated = fields * offset * sizeof(dfloat);
-  o_ptr = platform->device.malloc(offset*fields*sizeof(dfloat), hostMemory.slice0);
-  if(fields > 0) slice0 = o_ptr.slice(0 * offset * sizeof(dfloat));
-  if(fields > 1) slice1 = o_ptr.slice(1 * offset * sizeof(dfloat));
-  if(fields > 2) slice2 = o_ptr.slice(2 * offset * sizeof(dfloat));
-  if(fields > 3) slice3 = o_ptr.slice(3 * offset * sizeof(dfloat));
-  if(fields > 4) slice4 = o_ptr.slice(4 * offset * sizeof(dfloat));
-  if(fields > 5) slice5 = o_ptr.slice(5 * offset * sizeof(dfloat));
-  if(fields > 6) slice6 = o_ptr.slice(6 * offset * sizeof(dfloat));
-  if(fields > 7) slice7 = o_ptr.slice(7 * offset * sizeof(dfloat));
-  if(fields > 9) slice9 = o_ptr.slice(9 * offset * sizeof(dfloat));
-  if(fields > 12) slice12 = o_ptr.slice(12 * offset * sizeof(dfloat));
-  if(fields > 15) slice15 = o_ptr.slice(15 * offset * sizeof(dfloat));
-  if(fields > 18) slice18 = o_ptr.slice(18 * offset * sizeof(dfloat));
-  if(fields > 19) slice19 = o_ptr.slice(19 * offset * sizeof(dfloat));
+  bytesAllocated = (fields * sizeof(dfloat)) * offset;
+  o_ptr = platform->device.malloc(bytesAllocated, hostMemory.slice0);
+  if (fields > 0)
+    slice0 = o_ptr.slice((0 * sizeof(dfloat)) * offset);
+  if (fields > 1)
+    slice1 = o_ptr.slice((1 * sizeof(dfloat)) * offset);
+  if (fields > 2)
+    slice2 = o_ptr.slice((2 * sizeof(dfloat)) * offset);
+  if (fields > 3)
+    slice3 = o_ptr.slice((3 * sizeof(dfloat)) * offset);
+  if (fields > 4)
+    slice4 = o_ptr.slice((4 * sizeof(dfloat)) * offset);
+  if (fields > 5)
+    slice5 = o_ptr.slice((5 * sizeof(dfloat)) * offset);
+  if (fields > 6)
+    slice6 = o_ptr.slice((6 * sizeof(dfloat)) * offset);
+  if (fields > 7)
+    slice7 = o_ptr.slice((7 * sizeof(dfloat)) * offset);
+  if (fields > 9)
+    slice9 = o_ptr.slice((9 * sizeof(dfloat)) * offset);
+  if (fields > 12)
+    slice12 = o_ptr.slice((12 * sizeof(dfloat)) * offset);
+  if (fields > 15)
+    slice15 = o_ptr.slice((15 * sizeof(dfloat)) * offset);
+  if (fields > 18)
+    slice18 = o_ptr.slice((18 * sizeof(dfloat)) * offset);
+  if (fields > 19)
+    slice19 = o_ptr.slice((19 * sizeof(dfloat)) * offset);
 }
 void
 platform_t::create_mempool(const dlong offset, const dlong fields)

@@ -36,8 +36,8 @@ void SolutionProjection::matvec(occa::memory& o_Ax,
                                 occa::memory& o_x,
                                 const dlong x_offset)
 {
-  occa::memory o_xtmp = o_x + Nfields * fieldOffset * x_offset * sizeof(dfloat);
-  occa::memory o_Axtmp = o_Ax + Nfields * fieldOffset * Ax_offset * sizeof(dfloat);
+  occa::memory o_xtmp = o_x + (Nfields * x_offset * sizeof(dfloat)) * fieldOffset;
+  occa::memory o_Axtmp = o_Ax + (Nfields * Ax_offset * sizeof(dfloat)) * fieldOffset;
   matvecOperator(o_xtmp, o_Axtmp);
 }
 
@@ -184,9 +184,9 @@ SolutionProjection::SolutionProjection(elliptic_t &elliptic,
 
   platform_t* platform = platform_t::getInstance();
 
-  o_alpha = platform->device.malloc(maxNumVecsProjection, sizeof(dfloat));
-  o_xbar = platform->device.malloc(Nfields * fieldOffset, sizeof(dfloat));
-  o_xx = platform->device.malloc(Nfields * fieldOffset * maxNumVecsProjection, sizeof(dfloat));
+  o_alpha = platform->device.malloc(maxNumVecsProjection * sizeof(dfloat));
+  o_xbar = platform->device.malloc((Nfields * sizeof(dfloat)) * fieldOffset);
+  o_xx = platform->device.malloc((Nfields * maxNumVecsProjection * sizeof(dfloat)) * fieldOffset);
   o_bb = platform->device.malloc(
     (type == ProjectionType::CLASSIC) ? Nfields * fieldOffset * maxNumVecsProjection :
     Nfields * fieldOffset

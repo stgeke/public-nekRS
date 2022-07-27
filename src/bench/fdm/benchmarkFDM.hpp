@@ -3,7 +3,7 @@
 template <typename T>
 occa::kernel benchmarkFDM(int Nelements,
                           int Nq_e,
-                          int wordSize,
+                          size_t wordSize,
                           bool useRAS,
                           bool overlap,
                           int verbosity,

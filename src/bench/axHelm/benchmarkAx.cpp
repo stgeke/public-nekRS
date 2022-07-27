@@ -18,7 +18,7 @@ struct CallParameters{
   bool constCoeff;
   bool poisson;
   bool computeGeom;
-  int wordSize;
+  size_t wordSize;
   int Ndim;
   bool stressForm;
   std::string suffix;
@@ -59,7 +59,7 @@ occa::kernel benchmarkAx(int Nelements,
                          bool constCoeff,
                          bool poisson,
                          bool computeGeom,
-                         int wordSize,
+                         size_t wordSize,
                          int Ndim,
                          bool stressForm,
                          int verbosity,
@@ -345,7 +345,7 @@ template occa::kernel benchmarkAx<int>(int Nelements,
                                        bool constCoeff,
                                        bool poisson,
                                        bool computeGeom,
-                                       int wordSize,
+                                       size_t wordSize,
                                        int Ndim,
                                        bool stressForm,
                                        int verbosity,
@@ -359,7 +359,7 @@ template occa::kernel benchmarkAx<double>(int Nelements,
                                           bool constCoeff,
                                           bool poisson,
                                           bool computeGeom,
-                                          int wordSize,
+                                          size_t wordSize,
                                           int Ndim,
                                           bool stressForm,
                                           int verbosity,

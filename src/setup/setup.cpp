@@ -298,7 +298,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
   // offset mempool available for elliptic because also used it for ellipticSolve input/output
   auto const o_mempoolElliptic =
-      platform->o_mempool.o_ptr.slice(2 * nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
+      platform->o_mempool.o_ptr.slice((2 * nrs->NVfields * sizeof(dfloat)) * nrs->fieldOffset);
 
   if (options.compareArgs("MOVING MESH", "TRUE")) {
     const int nBDF = std::max(nrs->nBDF, nrs->nEXT);
@@ -313,7 +313,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     const int nAB = std::max(nrs->nEXT, mesh->nAB);
     mesh->U = (dfloat *)calloc(nrs->NVfields * nrs->fieldOffset * nAB, sizeof(dfloat));
-    mesh->o_U = platform->device.malloc(nrs->NVfields * nrs->fieldOffset * nAB * sizeof(dfloat), mesh->U);
+    mesh->o_U = platform->device.malloc((nrs->NVfields * nAB * sizeof(dfloat)) * nrs->fieldOffset, mesh->U);
     if (nrs->Nsubsteps)
       mesh->o_divU = platform->device.malloc(nrs->fieldOffset * nAB, sizeof(dfloat));
   }
@@ -321,9 +321,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   {
     const dlong Nstates = nrs->Nsubsteps ? std::max(nrs->nBDF, nrs->nEXT) : 1;
     if (nrs->Nsubsteps && platform->options.compareArgs("MOVING MESH", "TRUE"))
-      nrs->o_relUrst = platform->device.malloc(Nstates * nrs->NVfields * nrs->cubatureOffset, sizeof(dfloat));
+      nrs->o_relUrst =
+          platform->device.malloc((Nstates * nrs->NVfields * sizeof(dfloat)) * nrs->cubatureOffset);
     else
-      nrs->o_Urst = platform->device.malloc(Nstates * nrs->NVfields * nrs->cubatureOffset, sizeof(dfloat));
+      nrs->o_Urst = platform->device.malloc((Nstates * nrs->NVfields * sizeof(dfloat)) * nrs->cubatureOffset);
   }
 
   nrs->U =
@@ -336,12 +337,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->o_U = platform->device.malloc(nrs->NVfields * std::max(nrs->nBDF, nrs->nEXT) * nrs->fieldOffset *
                                          sizeof(dfloat),
                                      nrs->U);
-  nrs->o_Ue = platform->device.malloc(nrs->NVfields * nrs->fieldOffset * sizeof(dfloat), nrs->Ue);
+  nrs->o_Ue = platform->device.malloc((nrs->NVfields * sizeof(dfloat)) * nrs->fieldOffset, nrs->Ue);
   nrs->o_P = platform->device.malloc(nrs->fieldOffset * sizeof(dfloat), nrs->P);
-  nrs->o_BF = platform->device.malloc(nrs->NVfields * nrs->fieldOffset * sizeof(dfloat), nrs->BF);
-  nrs->o_FU = platform->device.malloc(nrs->NVfields * nrs->nEXT * nrs->fieldOffset * sizeof(dfloat), nrs->FU);
+  nrs->o_BF = platform->device.malloc((nrs->NVfields * sizeof(dfloat)) * nrs->fieldOffset, nrs->BF);
+  nrs->o_FU =
+      platform->device.malloc((nrs->NVfields * nrs->nEXT * sizeof(dfloat)) * nrs->fieldOffset, nrs->FU);
 
-  nrs->o_ellipticCoeff = device.malloc(2 * nrs->fieldOffset * sizeof(dfloat));
+  nrs->o_ellipticCoeff = device.malloc((2 * sizeof(dfloat)) * nrs->fieldOffset);
 
   int nProperties = 2;
   if (options.compareArgs("MESH SOLVER", "ELASTICITY"))
@@ -353,18 +355,18 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->prop[1 * nrs->fieldOffset + e * mesh->Np + n] = rho;
     }
 
-  nrs->o_prop = device.malloc(nProperties * nrs->fieldOffset * sizeof(dfloat), nrs->prop);
-  nrs->o_mue = nrs->o_prop.slice(0 * nrs->fieldOffset * sizeof(dfloat));
-  nrs->o_rho = nrs->o_prop.slice(1 * nrs->fieldOffset * sizeof(dfloat));
+  nrs->o_prop = device.malloc((nProperties * sizeof(dfloat)) * nrs->fieldOffset, nrs->prop);
+  nrs->o_mue = nrs->o_prop.slice((0 * sizeof(dfloat)) * nrs->fieldOffset);
+  nrs->o_rho = nrs->o_prop.slice((1 * sizeof(dfloat)) * nrs->fieldOffset);
   if (options.compareArgs("MESH SOLVER", "ELASTICITY")) {
-    nrs->o_meshMue = nrs->o_prop.slice(2 * nrs->fieldOffset * sizeof(dfloat));
-    nrs->o_meshRho = nrs->o_prop.slice(3 * nrs->fieldOffset * sizeof(dfloat));
+    nrs->o_meshMue = nrs->o_prop.slice((2 * sizeof(dfloat)) * nrs->fieldOffset);
+    nrs->o_meshRho = nrs->o_prop.slice((3 * sizeof(dfloat)) * nrs->fieldOffset);
   }
 
   if (platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")) {
-    nrs->o_Uc = platform->device.malloc(nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
+    nrs->o_Uc = platform->device.malloc((nrs->NVfields * sizeof(dfloat)) * nrs->fieldOffset);
     nrs->o_Pc = platform->device.malloc(nrs->fieldOffset * sizeof(dfloat));
-    nrs->o_prevProp = device.malloc(2 * nrs->fieldOffset * sizeof(dfloat), nrs->prop);
+    nrs->o_prevProp = device.malloc((2 * sizeof(dfloat)) * nrs->fieldOffset, nrs->prop);
   }
 
   nrs->div = (dfloat *)calloc(nrs->fieldOffset, sizeof(dfloat));
@@ -755,7 +757,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
       ellipticSolveSetup(nrs->uvwSolver);
       if (unalignedBoundary) {
-        nrs->o_zeroNormalMaskVelocity = platform->device.malloc(3 * nrs->fieldOffset * sizeof(dfloat));
+        nrs->o_zeroNormalMaskVelocity = platform->device.malloc((3 * sizeof(dfloat)) * nrs->fieldOffset);
         nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(dlong));
         createEToBV(nrs->meshV, nrs->uvwSolver->EToB, nrs->o_EToBVVelocity);
         createZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
@@ -1003,7 +1005,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
       ellipticSolveSetup(nrs->meshSolver);
       if (unalignedBoundary) {
-        nrs->o_zeroNormalMaskMeshVelocity = platform->device.malloc(3 * nrs->fieldOffset * sizeof(dfloat));
+        nrs->o_zeroNormalMaskMeshVelocity = platform->device.malloc((3 * sizeof(dfloat)) * nrs->fieldOffset);
         nrs->o_EToBVMeshVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(dlong));
         createEToBV(nrs->meshV, nrs->meshSolver->EToB, nrs->o_EToBVMeshVelocity);
         createZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);

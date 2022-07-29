@@ -166,9 +166,7 @@ void average(nrs_t *nrs, occa::memory o_avg)
     platform->flopCounter->add("user gradY", flops);
   }
   
-  platform->timer.tic("planarAvg", 1);
   postProcessing::planarAvg(nrs, "xz", NUMBER_ELEMENTS_X, NUMBER_ELEMENTS_Y, NUMBER_ELEMENTS_Z, 6, o_avg);
-  platform->timer.toc("planarAvg");
 }
 
 
@@ -372,32 +370,9 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
              tauWall[3], tauWall[4], rLength);
     }
 
-    //writeFld("avg", time, 1, 1, &o_NULL, &o_NULL, &o_avg, 6);
+    //writeFld("avg", time, tstep, 1, 1, &o_NULL, &o_NULL, &o_avg, 6);
     nek::ocopyToNek(time, tstep);
     nek::userchk();
     nek::ocopyFromNek(time);
   }
-
-  if(nrs->lastStep){
-    const auto tPlanarAvg = platform->timer.query("planarAvg", "DEVICE:MAX");
-    if(platform->comm.mpiRank == 0){
-      std::cout << "planar avg time: " << tPlanarAvg << "\n";
-    }
-    fflush(stdout);
-    MPI_Barrier(platform->comm.mpiComm);
-
-    std::cout.setf(std::ios::scientific);
-    int outPrecisionSave = std::cout.precision();
-    std::cout.precision(5);
-
-    const double flops = platform->flopCounter->get(platform->comm.mpiComm);
-    const double tElapsedTimeSolve = platform->timer.query("elapsedStepSum", "DEVICE:MAX");
-    if(platform->comm.mpiRank == 0){
-      std::cout << "Achieved flop throughoutput: " << flops / tElapsedTimeSolve << "\n";
-    }
-
-    std::cout.unsetf(std::ios::scientific);
-    std::cout.precision(outPrecisionSave);
-  }
-
 }

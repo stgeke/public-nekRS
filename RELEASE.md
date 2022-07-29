@@ -10,7 +10,7 @@
 
 ## Breaking Changes
 
-* ... 
+* nekRS::outfld(..., int step, ...) 
 
 ## Known Bugs / Restrictions
 

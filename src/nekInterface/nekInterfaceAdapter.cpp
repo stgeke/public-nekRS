@@ -80,7 +80,7 @@ void* scPtr(int id)
   return ptr;
 }
 
-void outfld(const char *filename, dfloat t, int coords, int FP64,
+void outfld(const char *filename, dfloat t, int step, int coords, int FP64,
             void *o_uu, void *o_pp, void *o_ss,
             int NSfields)
 {
@@ -106,6 +106,9 @@ void outfld(const char *filename, dfloat t, int coords, int FP64,
   int so = 0;
 
   (*nek_storesol_ptr)();
+
+  const int stepSave = *(nekData.istep);
+  *(nekData.istep) = step;
 
   platform->timer.tic("checkpointing", 1);
 
@@ -151,6 +154,8 @@ void outfld(const char *filename, dfloat t, int coords, int FP64,
   platform->timer.toc("checkpointing");
 
   (*nek_restoresol_ptr)();
+
+  *(nekData.istep) = stepSave;
 }
 
 void uic(int ifield)

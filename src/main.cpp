@@ -487,7 +487,7 @@ int main(int argc, char** argv)
     nekrs::runStep(time, dt, tStep);
     time += dt;
 
-    if (outputStep) nekrs::outfld(time);
+    if (outputStep) nekrs::outfld(time, tStep);
 
     if(nekrs::updateFileCheckFreq()) {
       if(tStep % nekrs::updateFileCheckFreq()) 

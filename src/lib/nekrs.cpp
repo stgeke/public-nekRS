@@ -288,7 +288,7 @@ void outputStep(int val)
   nrs->isOutputStep = val;
 }
 
-void outfld(double time, std::string suffix)
+void outfld(double time, int step, std::string suffix)
 {
   std::string oldValue;
   platform->options.getArgs("CHECKPOINT OUTPUT MESH", oldValue);
@@ -299,16 +299,16 @@ void outfld(double time, std::string suffix)
   if(platform->options.compareArgs("MOVING MESH", "TRUE"))
     platform->options.setArgs("CHECKPOINT OUTPUT MESH", "TRUE");
 
-  writeFld(nrs, time, suffix);
+  writeFld(nrs, time, step, suffix);
   lastOutputTime = time;
   firstOutfld = 0;
 
   platform->options.setArgs("CHECKPOINT OUTPUT MESH", oldValue);
 }
 
-void outfld(double time)
+void outfld(double time, int step)
 {
-  outfld(time, "");
+  outfld(time, step, "");
 }
 
 double endTime(void)

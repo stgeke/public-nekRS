@@ -7,7 +7,6 @@
 #include "platform.hpp"
 #include "ogs.hpp"
 
-
 namespace timer
 {
 namespace
@@ -28,19 +27,31 @@ const int NEKRS_TIMER_INVALID_METRIC = -2;
 int ifSync_;
 inline int ifSync(){ return ifSync_; }
 
+int enable_sync_;
+
 occa::device device_;
 MPI_Comm comm_;
+
+inline void sync()
+{
+  if(enable_sync_) MPI_Barrier(comm_);
 }
 
-timer_t::timer_t(MPI_Comm comm,occa::device device,int ifSync)
-{
-  init(comm, device, ifSync);
+double tElapsedTime = 0;
 }
-void timer_t::init(MPI_Comm comm,occa::device device,int ifSync)
+
+timer_t::timer_t(MPI_Comm comm,occa::device device,int ifSyncDefault, int enableSync)
+{
+ init(comm, device, ifSyncDefault, enableSync);
+
+}
+
+void timer_t::init(MPI_Comm comm,occa::device device,int ifSyncDefault, int enableSync)
 {
   device_ = device;
-  ifSync_ = ifSync;
+  ifSync_ = ifSyncDefault;
   comm_ = comm;
+  enable_sync_ = enableSync;
 }
 
 void timer_t::set(const std::string tag, double time, long long int count)
@@ -63,6 +74,16 @@ void timer_t::reset()
   ogsResetTime();
 }
 
+void timer_t::enableSync()
+{
+  enable_sync_ = 1;
+}
+
+void timer_t::disableSync()
+{
+  enable_sync_ = 0;
+}
+
 void timer_t::reset(const std::string tag)
 {
   std::map<std::string,tagData>::iterator it = m_.find(tag);
@@ -76,13 +97,13 @@ void timer_t::finalize()
 
 void timer_t::deviceTic(const std::string tag,int ifSync)
 {
-  if(ifSync) MPI_Barrier(comm_);
+  if(ifSync) sync();
   m_[tag].startTag = device_.tagStream();
 }
 
 void timer_t::deviceTic(const std::string tag)
 {
-  if(ifSync()) MPI_Barrier(comm_);
+  if(ifSync()) sync();
   m_[tag].startTag = device_.tagStream();
 }
 
@@ -102,13 +123,13 @@ void timer_t::deviceToc(const std::string tag)
 
 void timer_t::hostTic(const std::string tag,int ifSync)
 {
-  if(ifSync) MPI_Barrier(comm_);
+  if(ifSync) sync();
   m_[tag].startTime = MPI_Wtime();
 }
 
 void timer_t::hostTic(const std::string tag)
 {
-  if(ifSync()) MPI_Barrier(comm_);
+  if(ifSync()) sync();
   m_[tag].startTime = MPI_Wtime();
 }
 
@@ -128,14 +149,14 @@ void timer_t::hostToc(const std::string tag)
 
 void timer_t::tic(const std::string tag,int ifSync)
 {
-  if(ifSync) MPI_Barrier(comm_);
+  if(ifSync) sync();
   m_[tag].startTime = MPI_Wtime();
   m_[tag].startTag = device_.tagStream();
 }
 
 void timer_t::tic(const std::string tag)
 {
-  if(ifSync()) MPI_Barrier(comm_);
+  if(ifSync()) sync();
   m_[tag].startTime = MPI_Wtime();
   m_[tag].startTag = device_.tagStream();
 }
@@ -242,12 +263,17 @@ void timer_t::printStatEntry(std::string name, std::string tag, std::string type
   MPI_Comm_rank(comm_, &rank);
   const long long int nCalls = count(tag);
   const double tTag = query(tag, type);
+  const bool child = (tNorm != tElapsedTime);
   if(tTag > 0) {
     if(rank == 0){
       std::cout << name 
                 << tTag << "s"  
-                << "  " << printPercentage(tTag, tNorm)
-                << "  " << nCalls << "\n";
+                << "  " << printPercentage(tTag, tElapsedTime);
+      if(child) 
+      std::cout << "  " << printPercentage(tTag, tNorm);
+      else
+      std::cout << "      ";
+      std::cout << "  " << nCalls << "\n";
     }
   } 
 }
@@ -256,11 +282,17 @@ void timer_t::printStatEntry(std::string name, double time, double tNorm)
 {
   int rank;
   MPI_Comm_rank(comm_, &rank);
+  const bool child = (tNorm != tElapsedTime);
   if(time > 0) {
     if(rank == 0){
       std::cout << name 
-                << time << "s"  
-                << "  " << printPercentage(time, tNorm) << "\n";
+                << time << "s" 
+                << "  " << printPercentage(time, tElapsedTime);
+      if(child) 
+      std::cout << "  " << printPercentage(time, tNorm);
+      else
+      std::cout << "      ";
+      std::cout << "\n";
     } 
   } 
 }
@@ -286,7 +318,7 @@ void timer_t::printRunStat(int step)
   double gsTime = ogsTime(/* reportHostTime */ true);
   MPI_Allreduce(MPI_IN_PLACE, &gsTime, 1, MPI_DOUBLE, MPI_MAX, comm_);
 
-  const double tElapsedTime = query("elapsed", "DEVICE:MAX");
+  tElapsedTime = query("elapsed", "DEVICE:MAX");
 
   if (rank == 0)
     std::cout << "\n>>> runtime statistics (step= " << step << "  totalElapsed= " << tElapsedTime << "s"
@@ -296,7 +328,7 @@ void timer_t::printRunStat(int step)
   int outPrecisionSave = std::cout.precision();
   std::cout.precision(5);
 
-  if(rank == 0) std::cout <<   "name                    " << "time          " << "   %  " << "calls\n";
+  if(rank == 0) std::cout <<   "name                    " << "time          " << "abs%  " << "rel%  " << "calls\n";
 
   const double tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
   const double tSetup = query("setup", "DEVICE:MAX");
@@ -360,6 +392,8 @@ void timer_t::printRunStat(int step)
   printStatEntry("    gsMPI               ", gsTime, tSolve);
 
   printStatEntry("    dotp                ", "dotp", "DEVICE:MAX", tElapsedTime);
+
+  printStatEntry("    dotp multi          ", "dotpMulti", "DEVICE:MAX", tElapsedTime);
 
   if(rank == 0) std::cout << std::endl;
 

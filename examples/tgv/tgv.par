@@ -20,7 +20,7 @@ regularization = hpfrt + nModes=1 + scalingCoeff=10
 [PRESSURE]
 solver = pfcg
 residualTol = 1e-04
-preconditioner = multigrid+additive+coarse
+preconditioner = multigrid+additive
 smootherType = ASM 
 
 [VELOCITY]

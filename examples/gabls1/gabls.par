@@ -21,7 +21,7 @@ stressFormulation = true
 [PRESSURE]
 solver = pfcg
 residualTol = 1e-04
-preconditioner = multigrid+coarse
+preconditioner = multigrid
 smootherType = JAC+Chebyshev+degree=2
 pMultigridCoarsening = 8,4,1
 

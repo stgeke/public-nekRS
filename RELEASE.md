@@ -2,20 +2,24 @@
 
 ## What is new? 
 
-* single udf source 
+* Single source udf+oudf (see ethier example) 
+* Support BoomerAMG on device
 
 ## Good to know
 
 * ... 
 
 ## Breaking Changes
-
-* nekRS::outfld(..., int step, ...) 
+* [nrsconfig] Optional build settings have to be passed as a command line arg e.g. `-DENABLE_AMGX=ON`
+* time step was added to `nekRS::outfld(..., int step, ...)`
 
 ## Known Bugs / Restrictions
 
 * [par] Rename writeControl value `runTime` => `simulationTime`
+* [par] Remove multigrid qualifier `coarse`
+* [par] Remove SEMFEM solver specification from key `preconditioner`, use `semfemSolver` instead
 
+## Known Bugs / Restrictions
 
 * Mesh solver does not support CHT and unaligned sym/shl BCs
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
@@ -23,6 +27,8 @@
 * [258](https://github.com/Nek5000/nekRS/issues/258)
 
 ## Thanks to our Contributors
+
+@pwang234
 
 We are grateful to all who added new features, filed issues or helped resolve them, 
 asked and answered questions, and were part of inspiring discussions.

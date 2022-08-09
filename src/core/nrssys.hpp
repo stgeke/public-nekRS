@@ -62,7 +62,9 @@ using dlong = long long int;
 #define OMPI_SKIP_MPICXX 1
 
 #include <mpi.h>
+#include "omp.h"
 #include <limits>
+#include <string>
 #include "occa.hpp"
 #include "ogs.hpp"
 #include "setupAide.hpp"

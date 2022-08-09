@@ -56,7 +56,7 @@ std::vector<int> determineMGLevels(std::string section)
         // if the coarse level has p > 1 and requires solving the coarsest level,
         // rather than just smoothing, SEMFEM must be used for the discretization
         const auto usesSEMFEM =
-            platform->options.compareArgs(optionsPrefix + "MULTIGRID COARSE SEMFEM", "TRUE");
+            platform->options.compareArgs(optionsPrefix + "MULTIGRID SEMFEM", "TRUE");
 
         if (!usesSEMFEM) {
           if (platform->comm.mpiRank == 0) {
@@ -870,12 +870,16 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pOptions.setArgs("DISCRETIZATION", options.getArgs("PRESSURE DISCRETIZATION"));
     nrs->pOptions.setArgs("BASIS", options.getArgs("PRESSURE BASIS"));
     nrs->pOptions.setArgs("PRECONDITIONER", options.getArgs("PRESSURE PRECONDITIONER"));
-    nrs->pOptions.setArgs("SEMFEM SOLVER", options.getArgs("PRESSURE SEMFEM SOLVER"));
-    nrs->pOptions.setArgs("SEMFEM SOLVER PRECISION", options.getArgs("PRESSURE SEMFEM SOLVER PRECISION"));
+    nrs->pOptions.setArgs("COARSE SOLVER", options.getArgs("PRESSURE COARSE SOLVER"));
+    nrs->pOptions.setArgs("COARSE SOLVER PRECISION", options.getArgs("PRESSURE COARSE SOLVER PRECISION"));
+    if (platform->device.mode() == "Serial")
+     options.setArgs("PRESSURE COARSE SOLVER LOCATION","CPU"); 
+    nrs->pOptions.setArgs("COARSE SOLVER LOCATION", options.getArgs("PRESSURE COARSE SOLVER LOCATION"));
+    nrs->pOptions.setArgs("GALERKIN COARSE OPERATOR", options.getArgs("PRESSURE GALERKIN COARSE OPERATOR"));
     nrs->pOptions.setArgs("MULTIGRID COARSENING", options.getArgs("PRESSURE MULTIGRID COARSENING"));
     nrs->pOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
     nrs->pOptions.setArgs("MULTIGRID COARSE SOLVE", options.getArgs("PRESSURE MULTIGRID COARSE SOLVE"));
-    nrs->pOptions.setArgs("MULTIGRID COARSE SEMFEM", options.getArgs("PRESSURE MULTIGRID COARSE SEMFEM"));
+    nrs->pOptions.setArgs("MULTIGRID SEMFEM", options.getArgs("PRESSURE MULTIGRID SEMFEM"));
     nrs->pOptions.setArgs("MULTIGRID DOWNWARD SMOOTHER",
                           options.getArgs("PRESSURE MULTIGRID DOWNWARD SMOOTHER"));
     nrs->pOptions.setArgs("MULTIGRID UPWARD SMOOTHER", options.getArgs("PRESSURE MULTIGRID UPWARD SMOOTHER"));
@@ -911,7 +915,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     int pCoeffField = 0;
     if (platform->options.compareArgs("LOWMACH", "TRUE"))
-      pCoeffField = 1;
+      pCoeffField = 1; // rho varies in space
 
     nrs->pSolver->coeffField = pCoeffField;
     nrs->pSolver->coeffFieldPreco = pCoeffField;

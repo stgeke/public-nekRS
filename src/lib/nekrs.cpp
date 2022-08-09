@@ -60,16 +60,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     std::cout << "MPI tasks: " << size << std::endl << std::endl;
   }
 
-  srand48((long int) rank);
-
   configRead(comm);
-
-  oogs::gpu_mpi(std::stoi(getenv("NEKRS_GPU_MPI")));
-
-  if (rank == 0) std::cout << "reading par file ...\n"; 
-  auto par = new inipp::Ini();	  
-  std::string setupFile = _setupFile + ".par";
-  options = parRead((void*) par, setupFile, comm);
 
   {
     char buf[FILENAME_MAX];
@@ -106,12 +97,17 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     fflush(stdout);	
   }
 
+  if (rank == 0) std::cout << "reading par file ...\n"; 
+  auto par = new inipp::Ini();	  
+  parRead((void*) par, _setupFile + ".par", comm, options);
+
+  // precedence: cmd arg, par, env-var
   if(options.getArgs("THREAD MODEL").length() == 0) 
     options.setArgs("THREAD MODEL", getenv("NEKRS_OCCA_MODE_DEFAULT"));
   if(!_backend.empty()) options.setArgs("THREAD MODEL", _backend);
   if(!_deviceID.empty()) options.setArgs("DEVICE NUMBER", _deviceID);
 
-  // setup device
+  // setup device (requires THREAD MODEL)
   platform_t* _platform = platform_t::getInstance(options, commg, comm);
   platform = _platform;
   platform->par = par;

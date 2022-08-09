@@ -31,14 +31,6 @@ density = 1.0
 viscosity = 1/19000
 residualTol = 1e-06
 
-#[BOOMERAMG]
-#coarsenType = 10
-#interpolationType = 6
-#smootherType = -1
-#iterations = 1
-#strongThreshold = 0.25
-#nonGalerkinTol = 0.1
-#
 [CASEDATA]
 #/* diameters  */
 ZLENGTH = 20.0

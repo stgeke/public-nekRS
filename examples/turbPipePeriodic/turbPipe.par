@@ -1,5 +1,5 @@
 [GENERAL]
-verbose = true
+#verbose = true
 polynomialOrder = 7
 #startFrom = "restart.fld"
 stopAt = endTime

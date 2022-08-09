@@ -16,7 +16,6 @@ struct CallParameters{
   int Nq_e;
   size_t wordSize;
   bool useRAS;
-  bool overlap;
   std::string suffix;
 };
 }
@@ -28,7 +27,7 @@ namespace std
     bool operator() (const CallParameters& lhs, const CallParameters& rhs) const
     {
       auto tier = [](const CallParameters &v) {
-        return std::tie(v.Nelements, v.Nq_e, v.wordSize, v.useRAS, v.overlap, v.suffix);
+        return std::tie(v.Nelements, v.Nq_e, v.wordSize, v.useRAS, v.suffix);
       };
       return tier(lhs) < tier(rhs);
     }
@@ -44,7 +43,6 @@ occa::kernel benchmarkFDM(int Nelements,
                           int Nq_e,
                           size_t wordSize,
                           bool useRAS,
-                          bool overlap,
                           int verbosity,
                           T NtestsOrTargetTime,
                           bool requiresBenchmark,
@@ -54,7 +52,7 @@ occa::kernel benchmarkFDM(int Nelements,
     Nelements = 1;
   }
 
-  CallParameters params{Nelements, Nq_e, wordSize, useRAS, overlap, suffix};
+  CallParameters params{Nelements, Nq_e, wordSize, useRAS, suffix};
 
   if(cachedResults.count(params) > 0){
     return cachedResults.at(params);
@@ -73,7 +71,6 @@ occa::kernel benchmarkFDM(int Nelements,
 
   props["defines/p_Nq_e"] = Nq_e;
   props["defines/p_Np_e"] = Np_e;
-  props["defines/p_overlap"] = overlap;
 
   if (useRAS) {
     props["defines/p_restrict"] = 1;
@@ -146,22 +143,10 @@ occa::kernel benchmarkFDM(int Nelements,
     }
 
     auto kernelRunner = [&](occa::kernel &kernel) {
-      if (useRAS) {
-        if (!overlap) {
-          kernel(Nelements, o_Su, o_Sx, o_Sy, o_Sz, o_invL, o_invDegree, o_u);
-        }
-        else {
-          kernel(Nelements, o_elementList, o_Su, o_Sx, o_Sy, o_Sz, o_invL, o_invDegree, o_u);
-        }
-      }
-      else {
-        if (!overlap) {
-          kernel(Nelements, o_Su, o_Sx, o_Sy, o_Sz, o_invL, o_u);
-        }
-        else {
-          kernel(Nelements, o_elementList, o_Su, o_Sx, o_Sy, o_Sz, o_invL, o_u);
-        }
-      }
+      if (useRAS)
+        kernel(Nelements, o_elementList, o_Su, o_Sx, o_Sy, o_Sz, o_invL, o_invDegree, o_u);
+      else
+        kernel(Nelements, o_elementList, o_Su, o_Sx, o_Sy, o_Sz, o_invL, o_u);
     };
 
     auto fdmKernelBuilder = [&](int kernelVariant) {
@@ -302,7 +287,6 @@ template occa::kernel benchmarkFDM<int>(int Nelements,
                                         int Nq_e,
                                         size_t wordSize,
                                         bool useRAS,
-                                        bool overlap,
                                         int verbosity,
                                         int Ntests,
                                         bool requiresBenchmark,
@@ -312,7 +296,6 @@ template occa::kernel benchmarkFDM<double>(int Nelements,
                                            int Nq_e,
                                            size_t wordSize,
                                            bool useRAS,
-                                           bool overlap,
                                            int verbosity,
                                            double targetTime,
                                            bool requiresBenchmark,

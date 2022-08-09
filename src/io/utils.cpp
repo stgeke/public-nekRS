@@ -14,10 +14,12 @@ void fileSync(const char * file)
   std::string dir;
   {
     // POSIX allows dirname to overwrite input
-    const int len  = std::char_traits<char>::length(file);
+    const int len = std::char_traits<char>::length(file);
     char *tmp = (char*) malloc((len+1) * sizeof(char));
     strncpy(tmp, file, len);
+    tmp[len] = '\0'; 
     dir.assign(dirname(tmp));
+    free(tmp);
   }
 
   int fd; 

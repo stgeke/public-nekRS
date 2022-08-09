@@ -75,9 +75,15 @@ platform_t::platform_t(setupAide& _options, MPI_Comm _commg, MPI_Comm _comm)
   warpSize(32),
   comm(_commg, _comm),
   device(options, comm),
-  timer(_comm, device.occaDevice(), 0),
+  timer(_comm, device.occaDevice(), 0, 0),
   kernels(*this)
 {
+  srand48((long int) comm.mpiRank);
+  oogs::gpu_mpi(std::stoi(getenv("NEKRS_GPU_MPI")));
+
+  timer.enableSync();
+  if(options.compareArgs("ENABLE TIMER SYNC", "FALSE"))
+    timer.disableSync();  
 
   flopCounter = std::make_unique<flopCounter_t>();
 
@@ -95,6 +101,7 @@ platform_t::platform_t(setupAide& _options, MPI_Comm _commg, MPI_Comm _comm)
     kernelInfo["compiler_flags"] += "--prec-sqrt=false ";
     kernelInfo["compiler_flags"] += "--use_fast_math ";
     kernelInfo["compiler_flags"] += "--fmad=true ";
+    kernelInfo["compiler_flags"] += " -lineinfo ";
     //kernelInfo["compiler_flags"] += "-Xptxas -dlcm=ca";
   }
 
@@ -106,12 +113,12 @@ platform_t::platform_t(setupAide& _options, MPI_Comm _commg, MPI_Comm _comm)
       kernelInfo["compiler_flags"] += " -cl-unsafe-math-optimizations ";
       kernelInfo["compiler_flags"] += " -cl-fast-relaxed-math ";
     }
-    kernelInfo["defines/" "hlong"]="long";
+    kernelInfo["defines/" "hlong"] = "long";
   }
 
   if(device.mode() == "HIP" && !getenv("OCCA_HIP_COMPILER_FLAGS")) {
     warpSize = 64; // can be arch specific
-    kernelInfo["compiler_flags"] += " -O3 ";
+    kernelInfo["compiler_flags"] += " -O3 -g ";
     kernelInfo["compiler_flags"] += " -ffp-contract=fast ";
     kernelInfo["compiler_flags"] += " -funsafe-math-optimizations ";
     kernelInfo["compiler_flags"] += " -ffast-math ";
@@ -119,6 +126,10 @@ platform_t::platform_t(setupAide& _options, MPI_Comm _commg, MPI_Comm _comm)
 
   serial = device.mode() == "Serial" ||
            device.mode() == "OpenMP";
+
+  if(serial && !getenv("OCCA_CXXFLAGS")) {
+    kernelInfo["compiler_flags"] += " -O3 -g -march=native -mtune=native ";
+  }
   
   const std::string extension = serial ? ".c" : ".okl";
   

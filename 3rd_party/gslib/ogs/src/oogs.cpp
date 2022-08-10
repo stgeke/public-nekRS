@@ -535,15 +535,13 @@ oogs_t *oogs::setup(ogs_t *ogs,
 
     int size;
     MPI_Comm_size(gs->comm, &size);
-    double nBytesExchange = (pwd->comm[send].total + pwd->comm[recv].total);
+    double nBytesExchange = unit_size * (pwd->comm[send].total + pwd->comm[recv].total);
     MPI_Allreduce(MPI_IN_PLACE, &nBytesExchange, 1, MPI_DOUBLE, MPI_SUM, gs->comm);
-    nBytesExchange *= unit_size / size;
 
     double tmin, tmax, tavg;
     MPI_Allreduce(&elapsedMinMPI, &tmin, 1, MPI_DOUBLE, MPI_MIN, gs->comm);
     MPI_Allreduce(&elapsedMinMPI, &tmax, 1, MPI_DOUBLE, MPI_MAX, gs->comm);
     MPI_Allreduce(&elapsedMinMPI, &tavg, 1, MPI_DOUBLE, MPI_SUM, gs->comm);
-    tavg /= size;
 
     const std::string gsModeExchangeStr = (gs->modeExchange == OOGS_EX_NBC) ? "nbc" : "pw";
     const std::string gsEarlyPrepostRecvStr = (gs->earlyPrepostRecv) ? "+early" : "";
@@ -565,9 +563,9 @@ oogs_t *oogs::setup(ogs_t *ogs,
                gsModeExchangeStr.c_str(),
                gsEarlyPrepostRecvStr.c_str(),
                gsModeStr.c_str());
-        if (tavg > MPI_Wtick())
+        if (tavg/size > MPI_Wtick())
           printf("(MPI min/max/avg: %.2es %.2es %.2es / avg bi-bw: %.1fGB/s/rank)\n",
-                 tmin, tmax, tavg,
+                 tmin, tmax, tavg/size,
                  nBytesExchange / tavg / 1e9);
         else
           printf("\n");

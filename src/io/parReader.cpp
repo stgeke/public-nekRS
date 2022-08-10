@@ -2128,7 +2128,4 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
     if(length > 0) ABORT(EXIT_FAILURE);
   }
-
-  if(verbose)
-    std::cout << options << std::endl;
 }

@@ -78,8 +78,9 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
       MPI_Allreduce(&candidateKernelTiming, &tMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
       MPI_Allreduce(&candidateKernelTiming, &tMin, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
 
-      if (platform->comm.mpiRank == 0 && tMax/tMin > 1.1)
-        std::cout << "kernel timings differ by >10% across the ranks!\n";
+      const double tRatio = tMax/tMin;
+      if (platform->comm.mpiRank == 0 && tRatio > 1.1)
+        printf("WARNING: kernel timings differ by up to %.2 across ranks!\n", tRatio);
 
       candidateKernelTiming = tMax;
 

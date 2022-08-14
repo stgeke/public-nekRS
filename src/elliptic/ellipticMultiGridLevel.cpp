@@ -62,7 +62,8 @@ void MGLevel::coarsen(occa::memory o_x, occa::memory o_Rx)
     // ellipticApplyMask(elliptic, o_Rx, dfloatString);
   }
 
-  platform->flopCounter->add("MGLevel::coarsen, N=" + std::to_string(mesh->N), flopCounter);
+  const double factor = std::is_same<pfloat, float>::value ? 0.5 : 1.0;
+  platform->flopCounter->add("MGLevel::coarsen, N=" + std::to_string(mesh->N), factor * flopCounter);
 
 }
 
@@ -74,7 +75,9 @@ void MGLevel::prolongate(occa::memory o_x, occa::memory o_Px)
   double flopCounter = 2 * (NqF * NqF * NqF * NqC + NqF * NqF * NqC * NqC + NqF * NqC * NqC * NqC);
   flopCounter += NqF * NqF * NqF;
   flopCounter *= static_cast<double>(mesh->Nelements);
-  platform->flopCounter->add("MGLevel::prolongate, N=" + std::to_string(mesh->N), flopCounter);
+
+  const double factor = std::is_same<pfloat, float>::value ? 0.5 : 1.0;
+  platform->flopCounter->add("MGLevel::prolongate, N=" + std::to_string(mesh->N), factor * flopCounter);
 }
 
 void MGLevel::smooth(occa::memory o_rhs, occa::memory o_x, bool x_is_zero)

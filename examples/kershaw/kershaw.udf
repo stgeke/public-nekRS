@@ -52,7 +52,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
       Nrep = 25;
       nrs->pSolver->options.setArgs("PRECONDITIONER", "NONE");
       nrs->pSolver->options.setArgs("KRYLOV SOLVER", "PCG");
-      nrs->pSolver->options.setArgs("MAXIMUM ITERATIONS", "1000");
+      nrs->pSolver->options.setArgs("MAXIMUM ITERATIONS", "500");
       nrs->pSolver->options.setArgs("SOLVER TOLERANCE", to_string_f(1e-15));
       ellipticPreconditionerSetup(nrs->pSolver, nrs->pSolver->ogs);
     }
@@ -105,7 +105,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
     const double solveTime = eTime.at(minEntry);
     const double solveTimeMax = *std::max_element(eTime.begin(), eTime.end()); 
     const double solveTimeAvg = std::accumulate(eTime.begin(), eTime.end(), 0.0) / Nrep; 
-    const double throughput = (double)Ntotal/solveTime;
+    const double throughput = (double)Ntotal/solveTime/platform->comm.mpiCommSize;
     const double flopsPerSecond = (platform->flopCounter->get(platform->comm.mpiComm)/Nrep)/solveTime;
 
     if(platform->comm.mpiRank == 0) {
@@ -115,12 +115,12 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
       if(smootherTime.at(minEntry) > 0) printf("    smoother %gs\n", smootherTime.at(minEntry));
       if(crsTime.at(minEntry) > 0) printf("    coarse grid %gs\n", crsTime.at(minEntry));
       printf("iterations: %d\n", nrs->pSolver->Niter);
-      printf("throughput: %g (DOF x iter)/s\n", (double) nrs->pSolver->Niter * throughput);
+      printf("throughput: %g (DOF x iter)/s/rank\n", (double) nrs->pSolver->Niter * throughput);
       if(benchmark == "BPS5") {
-        printf("throughput: %g DOF/s\n", throughput);
+        printf("throughput: %g DOF/s/rank\n", throughput);
       }
       if(!nrs->pSolver->options.compareArgs("PRECONDITIONER", "SEMFEM")){
-        printf("FLOPS/s: %g \n", flopsPerSecond);
+        printf("flops/rank: %g \n", flopsPerSecond/platform->comm.mpiCommSize);
       }
     }
   }

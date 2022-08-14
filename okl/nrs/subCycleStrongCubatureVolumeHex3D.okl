@@ -5452,8 +5452,12 @@
               invLMM += s_c[s] * invLumpedMassMatrix[id + s * offset];
               bdivw += s_c[s] * BdivW[id + s * offset];
             }
-            const dfloat Uxd = Ud[id + d * offset];
-            NU[id + d * offset + NUoffset] = (s_tmpU[d][c][b][a] - bdivw * Uxd) * invLMM;
+            const dfloat Uxd = Ud[id + 0 * offset];
+            const dfloat Uyd = Ud[id + 1 * offset];
+            const dfloat Uzd = Ud[id + 2 * offset];
+            NU[id + 0 * offset + NUoffset] = (s_tmpU[0][c][b][a] - bdivw * Uxd) * invLMM;
+            NU[id + 1 * offset + NUoffset] = (s_tmpU[1][c][b][a] - bdivw * Uyd) * invLMM;
+            NU[id + 2 * offset + NUoffset] = (s_tmpU[2][c][b][a] - bdivw * Uzd) * invLMM;
 #else
             dfloat invLMM = invLumpedMassMatrix[id];
             NU[id + 0 * offset + NUoffset] = (s_tmpU[0][c][b][a]) * invLMM;

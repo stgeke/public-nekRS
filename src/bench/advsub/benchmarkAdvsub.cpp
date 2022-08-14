@@ -176,6 +176,9 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
       // v12 requires cubNq <=13
       if(i == 11 && cubNq > 13) continue;
 
+      // v14 requires cubNq <=13
+      if(i == 14 && cubNq > 13) continue;
+
       kernelVariants.push_back(i);
     }
   } else if(!platform->serial && dealias && isScalar){

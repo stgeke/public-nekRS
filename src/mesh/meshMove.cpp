@@ -36,7 +36,7 @@ void mesh_t::update()
   double flopsGeometricFactors = 18 * Np * Nq + 91 * Np;
   flopsGeometricFactors *= static_cast<double>(Nelements);
 
-  cubatureGeometricFactorsKernel(Nelements, o_D, o_x, o_y, o_z, o_cubInterpT, o_cubw, o_cubvgeo);
+  cubatureGeometricFactorsKernel(Nelements, o_cubD, o_x, o_y, o_z, o_cubInterpT, o_cubw, o_cubvgeo);
 
   double flopsCubatureGeometricFactors = 0.0;
   flopsCubatureGeometricFactors += 18 * Np * Nq;                                             // deriv

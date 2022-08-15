@@ -71,10 +71,6 @@ void evaluateProperties(nrs_t *nrs, const double timeNew) {
 
 namespace timeStepper {
 
-double tSolve = 0;
-double tSolveStepMin = std::numeric_limits<double>::max();
-double tSolveStepMax = std::numeric_limits<double>::min();
-
 void adjustDt(nrs_t* nrs, int tstep)
 {
   const double TOLToZero = 1e-12;
@@ -335,20 +331,11 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     }
   }
 
-  platform->device.finish();
-  MPI_Barrier(platform->comm.mpiComm);
-  const double tPreStep = MPI_Wtime() - tStart;
-  tSolve += tPreStep;
-
   const int isOutputStep = nrs->isOutputStep;
   nrs->timeStepConverged = false;
 
   int iter = 0;
   do {
-    platform->device.finish();
-    MPI_Barrier(platform->comm.mpiComm);
-    const double tSolveStepStart = MPI_Wtime();
-
     iter++;
     const dfloat timeNew = time + nrs->dt[0];
 
@@ -375,18 +362,6 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
     nrs->timeStepConverged = (udf.timeStepConverged) ? udf.timeStepConverged(nrs, iter) : true; 
 
-    platform->device.finish();
-    MPI_Barrier(platform->comm.mpiComm);
-    double tSolveStep = MPI_Wtime() - tSolveStepStart;
-    tSolve += tSolveStep;
-
-    if(tstep > 9) {
-      tSolveStepMin = std::fmin(tSolveStep, tSolveStepMin); 
-      tSolveStepMax = std::fmax(tSolveStep, tSolveStepMax); 
-      platform->timer.set("minSolveStep", tSolveStepMin);
-      platform->timer.set("maxSolveStep", tSolveStepMax);
-    }
-
     platform->timer.tic("udfExecuteStep", 1);
     nek::ifoutfld(0);
     nrs->isOutputStep = 0;
@@ -400,9 +375,9 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
     if (!nrs->timeStepConverged)
       printInfo(nrs, timeNew, tstep);
-  } while (!nrs->timeStepConverged);
 
-  platform->timer.set("solve", tSolve);
+    platform->device.finish();
+  } while (!nrs->timeStepConverged);
 
   nrs->dt[2] = nrs->dt[1];
   nrs->dt[1] = nrs->dt[0];

@@ -70,7 +70,7 @@ void ellipticPreconditioner(elliptic_t* elliptic, occa::memory &o_r, occa::memor
 
   }else if (options.compareArgs("PRECONDITIONER", "NONE")) {
 
-    o_z.copyFrom(o_r, elliptic->Ntotal*elliptic->Nfields*sizeof(dfloat));
+   // o_z.copyFrom(o_r, elliptic->Ntotal*elliptic->Nfields*sizeof(dfloat));
 
   }else {
 

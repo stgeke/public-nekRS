@@ -24,6 +24,7 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
 
 void UDF_Setup(nrs_t *nrs)
 {
+  //platform->timer.disable();
 }
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
@@ -77,9 +78,12 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
       platform->linAlg->fillKernel(mesh->Nlocal, 0.0, nrs->o_P);
       platform->o_mempool.slice0.copyFrom(platform->mempool.slice0, mesh->Nlocal * sizeof(dfloat));
 
-      platform->timer.tic("pressureSolve", 1);
+      platform->device.finish();
+      MPI_Barrier(platform->comm.mpiComm);
+      const auto tStart = MPI_Wtime();
       ellipticSolve(nrs->pSolver, platform->o_mempool.slice0, nrs->o_P);
-      platform->timer.toc("pressureSolve");
+      platform->device.finish();
+      platform->timer.set("pressureSolve", MPI_Wtime() - tStart);
 
       eTime.push_back(platform->timer.query("pressureSolve", "DEVICE:MAX"));
       precoTime.push_back(platform->timer.query("pressure preconditioner", "DEVICE:MAX"));

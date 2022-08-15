@@ -15,6 +15,8 @@ void reset(const std::string tag);
 void finalize();
 void enableSync();
 void disableSync();
+void enable();
+void disable();
 
 void tic(const std::string tag);
 void tic(const std::string tag,int ifSync);

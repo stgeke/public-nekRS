@@ -29,6 +29,8 @@ inline int ifSync(){ return ifSync_; }
 
 int enable_sync_;
 
+int enabled;
+
 occa::device device_;
 MPI_Comm comm_;
 
@@ -52,6 +54,7 @@ void timer_t::init(MPI_Comm comm,occa::device device,int ifSyncDefault, int enab
   ifSync_ = ifSyncDefault;
   comm_ = comm;
   enable_sync_ = enableSync;
+  enabled = 1;
 }
 
 void timer_t::set(const std::string tag, double time, long long int count)
@@ -66,6 +69,16 @@ void timer_t::set(const std::string tag, double time, long long int count)
   it->second.hostElapsed = time; 
   it->second.deviceElapsed = it->second.hostElapsed;
   it->second.count = count;
+}
+
+void timer_t::enable()
+{
+  enabled = 1;
+}
+
+void timer_t::disable()
+{
+  enabled = 0;
 }
 
 void timer_t::reset()
@@ -97,18 +110,21 @@ void timer_t::finalize()
 
 void timer_t::deviceTic(const std::string tag,int ifSync)
 {
+  if(!enabled) return;
   if(ifSync) sync();
   m_[tag].startTag = device_.tagStream();
 }
 
 void timer_t::deviceTic(const std::string tag)
 {
+  if(!enabled) return;
   if(ifSync()) sync();
   m_[tag].startTag = device_.tagStream();
 }
 
 void timer_t::deviceToc(const std::string tag)
 {
+  if(!enabled) return;
   occa::streamTag stopTag = device_.tagStream();
 
   std::map<std::string,tagData>::iterator it = m_.find(tag);
@@ -123,18 +139,21 @@ void timer_t::deviceToc(const std::string tag)
 
 void timer_t::hostTic(const std::string tag,int ifSync)
 {
+  if(!enabled) return;
   if(ifSync) sync();
   m_[tag].startTime = MPI_Wtime();
 }
 
 void timer_t::hostTic(const std::string tag)
 {
+  if(!enabled) return;
   if(ifSync()) sync();
   m_[tag].startTime = MPI_Wtime();
 }
 
 void timer_t::hostToc(const std::string tag)
 {
+  if(!enabled) return;
   double stopTime = MPI_Wtime();
 
   auto it = m_.find(tag);
@@ -149,6 +168,7 @@ void timer_t::hostToc(const std::string tag)
 
 void timer_t::tic(const std::string tag,int ifSync)
 {
+  if(!enabled) return;
   if(ifSync) sync();
   m_[tag].startTime = MPI_Wtime();
   m_[tag].startTag = device_.tagStream();
@@ -156,6 +176,7 @@ void timer_t::tic(const std::string tag,int ifSync)
 
 void timer_t::tic(const std::string tag)
 {
+  if(!enabled) return;
   if(ifSync()) sync();
   m_[tag].startTime = MPI_Wtime();
   m_[tag].startTag = device_.tagStream();
@@ -163,6 +184,7 @@ void timer_t::tic(const std::string tag)
 
 void timer_t::toc(const std::string tag)
 {
+  if(!enabled) return;
   auto stopTime = MPI_Wtime();
   auto stopTag = device_.tagStream();
 
@@ -333,7 +355,6 @@ void timer_t::printRunStat(int step)
   const double tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
   const double tSetup = query("setup", "DEVICE:MAX");
 
-  const double tSolve        = query("solve", "DEVICE:MAX");
   const double tMinSolveStep = query("minSolveStep", "DEVICE:MAX");
   const double tMaxSolveStep = query("maxSolveStep", "DEVICE:MAX");
   const double flops = platform->flopCounter->get(platform->comm.mpiComm);
@@ -343,7 +364,7 @@ void timer_t::printRunStat(int step)
   printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);
 
   printStatEntry("  solve                 ", tElapsedTimeSolve, tElapsedTime);
-  if(tSolve > 0 && rank == 0) {
+  if(tElapsedTimeSolve > 0 && rank == 0) {
   std::cout <<   "    min                 " << tMinSolveStep << "s\n";
   std::cout <<   "    max                 " << tMaxSolveStep << "s\n";
   if(printFlops)
@@ -389,7 +410,7 @@ void timer_t::printRunStat(int step)
   printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
-  printStatEntry("    gsMPI               ", gsTime, tSolve);
+  printStatEntry("    gsMPI               ", gsTime, tElapsedTime);
 
   printStatEntry("    dotp                ", "dotp", "DEVICE:MAX", tElapsedTime);
 

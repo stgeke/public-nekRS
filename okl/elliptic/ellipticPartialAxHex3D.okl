@@ -31,7 +31,10 @@
 
     @exclusive dlong element;
 
-    @exclusive dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22, r_GwJ;
+    @exclusive dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22;
+#ifndef p_poisson
+    @exclusive dfloat r_GwJ;
+#endif
 
     for (int j = 0; j < p_Nq; ++j; @inner(1))
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -69,9 +72,7 @@
           r_G12 = ggeo[gbase + p_G12ID * p_Np];
           r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-          r_GwJ = 0;
-#else
+#ifndef p_poisson
           r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
         }
@@ -244,9 +245,7 @@
           const dfloat r_G12 = ggeo[gbase + p_G12ID * p_Np];
           const dfloat r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-          const dfloat r_GwJ = 0;
-#else
+#ifndef p_poisson
           const dfloat r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
 
@@ -485,7 +484,10 @@
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
           for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 
-            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22, r_GwJ;
+            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22;
+#ifndef p_poisson
+            dfloat r_GwJ;
+#endif
 
             if (r_e < Nelements) {
               // prefetch geometric factors
@@ -499,9 +501,7 @@
               r_G12 = ggeo[gbase + p_G12ID * p_Np];
               r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-              r_GwJ = 0;
-#else
+#ifndef p_poisson
               r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
             }
@@ -660,7 +660,9 @@
     @shared dfloat s_Gqt[p_NelementsPerBlk][p_Nq][p_Nq][p_Nq + p_pad];
 
     @exclusive dlong element;
+#ifndef p_poisson
     @exclusive dfloat r_wJ;
+#endif
 
     @exclusive int k, es;
 
@@ -712,9 +714,7 @@
             const dfloat G12 = ggeo[gbase + p_G12ID * p_Np];
             const dfloat G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-            r_wJ = 0;
-#else
+#ifndef p_poisson
             r_wJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
 
@@ -931,7 +931,10 @@
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
           for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 
-            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22, r_GwJ;
+            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22;
+#ifndef p_poisson
+            dfloat r_GwJ;
+#endif
 
             if (r_e < Nelements) {
               // prefetch geometric factors
@@ -945,9 +948,7 @@
               r_G12 = ggeo[gbase + p_G12ID * p_Np];
               r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-              r_GwJ = 0;
-#else
+#ifndef p_poisson
               r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
             }
@@ -1117,7 +1118,10 @@
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
           for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 
-            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22, r_GwJ;
+            dfloat r_G00, r_G01, r_G02, r_G11, r_G12, r_G22;
+#ifndef p_poisson
+            dfloat r_GwJ;
+#endif
 
             if (r_e < Nelements) {
               // prefetch geometric factors
@@ -1132,9 +1136,7 @@
               r_G12 = ggeo[gbase + p_G12ID * p_Np];
               r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-              r_GwJ = 0;
-#else
+#ifndef p_poisson
               r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
             }
@@ -1351,9 +1353,7 @@
           const dfloat r_G12 = ggeo[gbase + p_G12ID * p_Np];
           const dfloat r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-#ifdef p_poisson
-          const dfloat r_GwJ = 0;
-#else
+#ifndef p_poisson
           const dfloat r_GwJ = ggeo[gbase + p_GWJID * p_Np];
 #endif
 

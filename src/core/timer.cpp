@@ -83,7 +83,12 @@ void timer_t::disable()
 
 void timer_t::reset()
 {
-  m_.clear();
+  for (auto& it : m_) {
+    it.second.startTime = 0; 
+    it.second.hostElapsed = 0;
+    it.second.deviceElapsed = 0;
+    it.second.count = 0;
+  }
   ogsResetTime();
 }
 
@@ -100,7 +105,10 @@ void timer_t::disableSync()
 void timer_t::reset(const std::string tag)
 {
   std::map<std::string,tagData>::iterator it = m_.find(tag);
-  if(it != m_.end()) m_.erase(it);
+  it->second.startTime = 0; 
+  it->second.hostElapsed = 0;
+  it->second.deviceElapsed = 0;
+  it->second.count = 0;
 }
 
 void timer_t::finalize()
@@ -397,7 +405,13 @@ void timer_t::printRunStat(int step)
 
   const double tPressurePreco = query("pressure preconditioner", "DEVICE:MAX");
   printStatEntry("      preconditioner    ", "pressure preconditioner", "DEVICE:MAX", tPressure);
-  printStatEntry("        pMG smoother    ", "pressure preconditioner smoother", "DEVICE:MAX", tPressurePreco);
+
+  for(int i=15; i>1; i--) {
+    const std::string tag = "pressure preconditioner smoother N=" + std::to_string(i);
+    if(m_.find(tag) == m_.end()) continue;
+    printStatEntry("        pMG smoother    ", tag, "DEVICE:MAX", tPressurePreco);
+  }
+
   printStatEntry("        coarse grid     ", "coarseSolve", "DEVICE:MAX", tPressurePreco);
   printStatEntry("      initial guess     ", "pressure proj", "DEVICE:MAX", tPressure);
 

@@ -82,7 +82,7 @@ void MGLevel::prolongate(occa::memory o_x, occa::memory o_Px)
 
 void MGLevel::smooth(occa::memory o_rhs, occa::memory o_x, bool x_is_zero)
 {
-  platform->timer.tic(elliptic->name + " preconditioner smoother", 1);
+  platform->timer.tic(elliptic->name + " preconditioner smoother N=" + std::to_string(mesh->N), 1);
 
   if(!x_is_zero && stype == SmootherType::SCHWARZ) return;
 
@@ -93,7 +93,7 @@ void MGLevel::smooth(occa::memory o_rhs, occa::memory o_x, bool x_is_zero)
   else if (stype == SmootherType::JACOBI)
     this->smoothJacobi(o_rhs, o_x, x_is_zero);
 
-  platform->timer.toc(elliptic->name + " preconditioner smoother");
+  platform->timer.toc(elliptic->name + " preconditioner smoother N=" + std::to_string(mesh->N));
 }
 
 void MGLevel::smoother(occa::memory o_x, occa::memory o_Sx, bool x_is_zero)

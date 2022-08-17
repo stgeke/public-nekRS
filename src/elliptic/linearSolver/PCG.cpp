@@ -127,6 +127,7 @@ int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
     alpha = rdotz1 / (pAp + 1e-300);
 
 #ifdef DEBUG
+    printf("alpha: %.15e\n", alpha);
     printf("norm pAp: %.15e\n", pAp);
 #endif
 
@@ -134,6 +135,9 @@ int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
     //  r <= r - alpha*A*p
     //  dot(r,r)
     rdotr = sqrt(ellipticUpdatePCG(elliptic, o_p, o_Ap, alpha, o_x, o_r) * elliptic->resNormFactor);
+#ifdef DEBUG
+    printf("rdotr: %.15e\n", rdotr);
+#endif
     if(std::isnan(rdotr)) {
       if(platform->comm.mpiRank == 0) printf("Detected invalid resiual norm while running linear solver!\n");
       ABORT(1);

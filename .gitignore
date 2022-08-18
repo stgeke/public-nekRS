@@ -7,4 +7,3 @@ CMakeFiles
 plugin_config.cu
 *.swp
 .cache/
-3rd_party/plugins

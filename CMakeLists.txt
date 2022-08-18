@@ -296,6 +296,19 @@ if(ENABLE_AMGX AND ENABLE_CUDA)
   target_include_directories(nekrs-lib PUBLIC 3rd_party/AMGX/base/include 3rd_party/AMGX/core/include)
 endif()
 
+###############################################################################
+# Optional nekRS plugins
+###############################################################################
+
+file(GLOB plugins LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/plugins/*)
+foreach(DIR ${plugins})
+  IF(IS_DIRECTORY ${DIR})
+      message(NOTICE "-- Found plugin: ${DIR}")
+      add_subdirectory(${DIR})
+  ELSE()
+      CONTINUE()
+  ENDIF()
+endforeach()
 
 target_link_libraries(nekrs-lib PRIVATE nekrs-hypre)
 target_link_libraries(nekrs-lib PRIVATE nekrs-hypre-device)

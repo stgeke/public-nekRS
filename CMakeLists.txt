@@ -338,6 +338,7 @@ elseif(ENABLE_HIP)
   set(BACKEND_DEFAULT "HIP" CACHE STRING "Default occa mode")
 else()
   set(BACKEND_DEFAULT "SERIAL" CACHE STRING "Default occa mode")
+  set(NEKRS_GPU_MPI OFF CACHE BOOL "Enable GPU aware MPI" FORCE)
 endif() 
 
 #################################################################################

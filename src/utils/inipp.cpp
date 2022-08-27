@@ -79,12 +79,13 @@ bool Ini::extract(const std::string & key,
              const std::string & value,
              std::string & dst)
 {
-  if (sections[key].count(value)) {
-    dst = sections[key][value];
+  auto lowerCaseKey = toLowerCase(key);
+  auto lowerCaseValue = toLowerCase(value);
+  if (sections[lowerCaseKey].count(lowerCaseValue)) {
+    dst = sections[lowerCaseKey][lowerCaseValue];
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 void Ini::generate(std::ostringstream & os) const

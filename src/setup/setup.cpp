@@ -12,6 +12,8 @@
 #include "avm.hpp"
 
 #include "cdsSetup.cpp"
+#include "parseMultigridSchedule.hpp"
+#include <algorithm>
 
 std::vector<int> determineMGLevels(std::string section)
 {
@@ -30,27 +32,22 @@ std::vector<int> determineMGLevels(std::string section)
   int N;
   platform->options.getArgs("POLYNOMIAL DEGREE", N);
 
-  std::string p_mglevels;
-  if (platform->options.getArgs(optionsPrefix + "MULTIGRID COARSENING", p_mglevels)) {
-    const std::vector<std::string> mgLevelList = serializeString(p_mglevels, ',');
-    for (auto &&s : mgLevelList) {
-      levels.push_back(std::stoi(s));
+  std::string p_mgschedule = platform->options.getArgs(optionsPrefix + "MULTIGRID SCHEDULE");
+  if(!p_mgschedule.empty()){
+
+    // note: default order is not required here.
+    // We just need the levels, not the degree.
+    auto scheduleMapAndErrorString = parseMultigridSchedule(p_mgschedule, platform->options, 3);
+    for(auto && entry : scheduleMapAndErrorString.first){
+      const bool isDownLeg = entry.first.second;
+      const auto order = entry.first.first;
+      if(isDownLeg){
+        levels.push_back(order);
+      }
     }
 
-    bool invalid = false;
-    invalid |= (levels[0] != N); // top level order must match
-    for (unsigned i = 0U; i < levels.size(); ++i) {
-      invalid |= (levels[i] < 0); // each level must be positive
-      if (i > 0)
-        invalid |= (levels[i] >= levels[i - 1]); // each successive level must be smaller
-    }
+    std::sort(levels.rbegin(), levels.rend());
 
-    if (invalid) {
-      if (platform->comm.mpiRank == 0)
-        printf("ERROR: Invalid multigrid coarsening!\n");
-      ABORT(EXIT_FAILURE);
-      ;
-    }
     if (levels.back() > 1) {
       if (platform->options.compareArgs(optionsPrefix + "MULTIGRID COARSE SOLVE", "TRUE")) {
         // if the coarse level has p > 1 and requires solving the coarsest level,
@@ -69,7 +66,8 @@ std::vector<int> determineMGLevels(std::string section)
 
     return levels;
   }
-  else if (platform->options.compareArgs(optionsPrefix + "MULTIGRID DOWNWARD SMOOTHER", "ASM") ||
+
+  if (platform->options.compareArgs(optionsPrefix + "MULTIGRID DOWNWARD SMOOTHER", "ASM") ||
            platform->options.compareArgs(optionsPrefix + "MULTIGRID DOWNWARD SMOOTHER", "RAS")) {
     std::map<int, std::vector<int>> mg_level_lookup = {
         {1, {1}},
@@ -91,27 +89,26 @@ std::vector<int> determineMGLevels(std::string section)
 
     return mg_level_lookup.at(N);
   }
-  else {
-    std::map<int, std::vector<int>> mg_level_lookup = {
-        {1, {1}},
-        {2, {2, 1}},
-        {3, {3, 1}},
-        {4, {4, 2, 1}},
-        {5, {5, 3, 1}},
-        {6, {6, 4, 2, 1}},
-        {7, {7, 5, 3, 1}},
-        {8, {8, 6, 4, 1}},
-        {9, {9, 7, 5, 1}},
-        {10, {10, 8, 5, 1}},
-        {11, {11, 9, 5, 1}},
-        {12, {12, 10, 5, 1}},
-        {13, {13, 11, 5, 1}},
-        {14, {14, 12, 5, 1}},
-        {15, {15, 13, 5, 1}},
-    };
 
-    return mg_level_lookup.at(N);
-  }
+  std::map<int, std::vector<int>> mg_level_lookup = {
+      {1, {1}},
+      {2, {2, 1}},
+      {3, {3, 1}},
+      {4, {4, 2, 1}},
+      {5, {5, 3, 1}},
+      {6, {6, 4, 2, 1}},
+      {7, {7, 5, 3, 1}},
+      {8, {8, 6, 4, 1}},
+      {9, {9, 7, 5, 1}},
+      {10, {10, 8, 5, 1}},
+      {11, {11, 9, 5, 1}},
+      {12, {12, 10, 5, 1}},
+      {13, {13, 11, 5, 1}},
+      {14, {14, 12, 5, 1}},
+      {15, {15, 13, 5, 1}},
+  };
+
+  return mg_level_lookup.at(N);
 }
 
 void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
@@ -678,6 +675,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
                           options.getArgs("VELOCITY RESIDUAL PROJECTION VECTORS"));
     nrs->vOptions.setArgs("RESIDUAL PROJECTION START", options.getArgs("VELOCITY RESIDUAL PROJECTION START"));
     nrs->vOptions.setArgs("MULTIGRID COARSENING", options.getArgs("VELOCITY MULTIGRID COARSENING"));
+    nrs->vOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("VELOCITY MULTIGRID SCHEDULE"));
     nrs->vOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("VELOCITY MULTIGRID SMOOTHER"));
     nrs->vOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE",
                           options.getArgs("VELOCITY MULTIGRID CHEBYSHEV DEGREE"));
@@ -704,6 +702,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->mOptions.setArgs("RESIDUAL PROJECTION VECTORS", options.getArgs("MESH RESIDUAL PROJECTION VECTORS"));
     nrs->mOptions.setArgs("RESIDUAL PROJECTION START", options.getArgs("MESH RESIDUAL PROJECTION START"));
     nrs->mOptions.setArgs("MULTIGRID COARSENING", options.getArgs("MESH MULTIGRID COARSENING"));
+    nrs->mOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("MESH MULTIGRID SCHEDULE"));
     nrs->mOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("MESH MULTIGRID SMOOTHER"));
     nrs->mOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE", options.getArgs("MESH MULTIGRID CHEBYSHEV DEGREE"));
     nrs->mOptions.setArgs("PARALMOND CYCLE", options.getArgs("MESH PARALMOND CYCLE"));
@@ -877,12 +876,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pOptions.setArgs("COARSE SOLVER LOCATION", options.getArgs("PRESSURE COARSE SOLVER LOCATION"));
     nrs->pOptions.setArgs("GALERKIN COARSE OPERATOR", options.getArgs("PRESSURE GALERKIN COARSE OPERATOR"));
     nrs->pOptions.setArgs("MULTIGRID COARSENING", options.getArgs("PRESSURE MULTIGRID COARSENING"));
+    nrs->pOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("PRESSURE MULTIGRID SCHEDULE"));
     nrs->pOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
     nrs->pOptions.setArgs("MULTIGRID COARSE SOLVE", options.getArgs("PRESSURE MULTIGRID COARSE SOLVE"));
     nrs->pOptions.setArgs("MULTIGRID SEMFEM", options.getArgs("PRESSURE MULTIGRID SEMFEM"));
-    nrs->pOptions.setArgs("MULTIGRID DOWNWARD SMOOTHER",
-                          options.getArgs("PRESSURE MULTIGRID DOWNWARD SMOOTHER"));
-    nrs->pOptions.setArgs("MULTIGRID UPWARD SMOOTHER", options.getArgs("PRESSURE MULTIGRID UPWARD SMOOTHER"));
     nrs->pOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE",
                           options.getArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE"));
     nrs->pOptions.setArgs("PARALMOND CYCLE", options.getArgs("PRESSURE PARALMOND CYCLE"));

@@ -39,7 +39,7 @@ public:
   setupAide options;
 
   CycleType ctype;
-  SmoothType stype;
+  SmoothType smootherType;
 
   int numLevels;
   int AMGstartLev, baseLevel;

@@ -18,6 +18,7 @@
 * [par] Rename writeControl value `runTime` => `simulationTime`
 * [par] Remove multigrid qualifier `coarse`
 * [par] Remove SEMFEM solver specification from key `preconditioner`, use `semfemSolver` instead
+* [par] Remove qualifier `pMultigridCoarsening`, use `pMGSchedule` instead
 
 ## Known Bugs / Restrictions
 

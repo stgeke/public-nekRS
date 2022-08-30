@@ -208,6 +208,7 @@ set(SRC
     src/cds/cdsSolve.cpp
     src/cds/registerCdsKernels.cpp
     src/io/parReader.cpp
+    src/io/parseMultigridSchedule.cpp
     src/io/re2Reader.cpp
     src/io/configReader.cpp
     src/core/timer.cpp

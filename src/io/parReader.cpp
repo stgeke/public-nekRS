@@ -13,6 +13,8 @@
 #include "bcMap.hpp"
 #include "nrs.hpp"
 #include <algorithm>
+#include "parseMultigridSchedule.hpp"
+#include "hypreWrapper.hpp"
 
 #include "amgx.h"
 
@@ -93,6 +95,20 @@ void append_value_error(Printable message)
 namespace
 {
 
+static std::string parseValueForKey(std::string token, std::string key){
+  if (token.find(key) != std::string::npos) {
+    std::vector<std::string> params = serializeString(token, '=');
+    if (params.size() != 2) {
+      std::ostringstream error;
+      error << "Error: could not parse " << key << " " << token << "!\n";
+      append_error(error.str());
+    }
+    return params[1];
+  }
+
+  return "";
+}
+
 static bool enforceLowerCase = false;
 
 static std::vector<std::string> nothing = {};
@@ -132,7 +148,7 @@ static std::vector<std::string> commonKeys = {
     {"residualTol"},
     {"initialGuess"},
     {"preconditioner"},
-    {"pMultigridCoarsening"},
+    {"pMGSchedule"},
     {"smootherType"},
     {"coarseSolver"},
     {"semfemSolver"},
@@ -395,25 +411,17 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
     for(std::string s : list)
     {
       checkValidity(rank, validValues, s);
-      if(s.find("meanvelocity") == 0){
-        if(flowRateSet) issueError = true;
-        flowRateSet = true;
+
+      const auto meanVelocityStr = parseValueForKey(s, "meanvelocity");
+      if(!meanVelocityStr.empty()){
+        options.setArgs("FLOW RATE", meanVelocityStr);
         options.setArgs("CONSTANT FLOW RATE TYPE", "BULK");
-        std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        const dfloat value = std::stod(items[1]);
-        options.setArgs("FLOW RATE", to_string_f(value));
       }
 
-      if(s.find("meanvolumetricflow") == 0)
-      {
-        if(flowRateSet) issueError = true;
-        flowRateSet = true;
+      const auto meanVolumetricFlowStr = parseValueForKey(s, "meanvolumetricflow");
+      if(!meanVolumetricFlowStr.empty()){
+        options.setArgs("FLOW RATE", meanVolumetricFlowStr);
         options.setArgs("CONSTANT FLOW RATE TYPE", "VOLUMETRIC");
-        std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        const dfloat value = std::stod(items[1]);
-        options.setArgs("FLOW RATE", to_string_f(value));
       }
 
       if(s.find("bid") == 0)
@@ -431,6 +439,7 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
 
         append_error("Specifying a constant flow direction with a pair of BIDs is currently not supported.\n");
       }
+
       if(s.find("direction") == 0)
       {
         if(flowDirectionSet) issueError = true;
@@ -565,6 +574,7 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
       {"amgx"},
       {"cpu"},
       {"device"},
+      {"overlap"},
   };
 
   std::vector<std::string> entries = serializeString(p_coarseSolver, '+');
@@ -601,11 +611,29 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
     {
       options.setArgs(parSectionName +  "COARSE SOLVER LOCATION", "DEVICE");
     }
+    else if(entry.find("overlap") != std::string::npos)
+    {
+      std::string currentParAlmondSettings = options.getArgs(parSectionName + "PARALMOND CYCLE");
+      options.setArgs(parSectionName + "PARALMOND CYCLE", currentParAlmondSettings + "+OVERLAPCRS");
+    }
   }
 
   if(amgx && options.compareArgs(parSectionName + "COARSE SOLVER LOCATION", "CPU"))
   {
     append_error("AMGX on CPU is not supported!\n");
+  }
+
+  if(boomer && options.compareArgs(parSectionName + "COARSE SOLVER LOCATION", "GPU"))
+  {
+    if(hypreWrapperDevice::enabled()){
+      append_error("HYPRE is not configured to run on the GPU!\n");
+    }
+  }
+
+  const bool runSolverOnDevice = options.compareArgs(parSectionName + "COARSE SOLVER LOCATION", "DEVICE");
+  const bool overlapCrsSolve = options.compareArgs(parSectionName + "PARALMOND CYCLE", "OVERLAPCRS");
+  if(overlapCrsSolve && runSolverOnDevice){
+    append_error("ERROR: Cannot overlap coarse grid solve when running coarse solver on the GPU!\n");
   }
 }
 
@@ -636,13 +664,15 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
   par->extract(parScope, "preconditioner", p_preconditioner);
 
   const std::vector<std::string> validValues = {
-    {"asm"},
-    {"ras"},
-    {"cheby"},
-    {"jac"},
-    {"degree"},
-    {"mineigenvalueboundfactor"},
-    {"maxeigenvalueboundfactor"},
+      {"asm"},
+      {"ras"},
+      {"cheby"},
+      {"fourthcheby"},
+      {"fourthoptcheby"},
+      {"jac"},
+      {"degree"},
+      {"mineigenvalueboundfactor"},
+      {"maxeigenvalueboundfactor"},
   };
 
   {
@@ -659,43 +689,36 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
 
     if (p_smoother.find("cheb") != std::string::npos) {
       bool surrogateSmootherSet = false;
+      std::string chebyshevType = "CHEBYSHEV";
+      if(p_smoother.find("fourthopt") != std::string::npos){
+        chebyshevType = "FOURTHOPTCHEBYSHEV";
+      } else if (p_smoother.find("fourth") != std::string::npos){
+        chebyshevType = "FOURTHCHEBYSHEV";
+      }
       for (std::string s : list) {
-        if(s.find("degree") != std::string::npos){
-          std::vector<std::string> params = serializeString(s, '=');
-          if (params.size() != 2) {
-            std::ostringstream error;
-            error << "Error: could not parse degree " << s<< "!\n";
-            append_error(error.str());
+
+        const auto degreeStr = parseValueForKey(s, "degree");
+        if(!degreeStr.empty())
+          options.setArgs(parSection + " MULTIGRID CHEBYSHEV DEGREE", degreeStr);
+
+        const auto minEigBoundStr = parseValueForKey(s, "mineigenvalueboundfactor");
+        if(!minEigBoundStr.empty()){
+          if(chebyshevType.find("FOURTH") != std::string::npos){
+            append_error("ERROR: minEigenvalueBoundFactor not supported for 4th kind or Opt. 4th kind Chebyshev smoother!\n");
           }
-          const int value = std::stoi(params[1]);
-          options.setArgs(parSection + " MULTIGRID CHEBYSHEV DEGREE",
-                          std::to_string(value));
-        } else if (s.find("mineigenvalueboundfactor") != std::string::npos) {
-          std::vector<std::string> params = serializeString(s, '=');
-          if (params.size() != 2) {
-            std::ostringstream error;
-            error << "Error: could not parse minEigenvalueBoundFactor " << s<< "!\n";
-            append_error(error.str());
-          }
-          const double value = std::stod(params[1]);
           options.setArgs(parSection + " MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR",
-                          to_string_f(value));
-        } else if (s.find("maxeigenvalueboundfactor") != std::string::npos) {
-          std::vector<std::string> params = serializeString(s, '=');
-          if (params.size() != 2) {
-            std::ostringstream error;
-            error << "Error: could not parse maxEigenvalueBoundFactor " << s<< "!\n";
-            append_error(error.str());
-          }
-          const double value = std::stod(params[1]);
+                          minEigBoundStr);
+        }
+
+        const auto maxEigBoundStr = parseValueForKey(s, "maxeigenvalueboundfactor");
+        if(!maxEigBoundStr.empty())
           options.setArgs(parSection + " MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR",
-                          to_string_f(value));
-        } else if (s.find("jac") != std::string::npos) {
+                          maxEigBoundStr);
+
+        if (s.find("jac") != std::string::npos) {
           surrogateSmootherSet = true;
           options.setArgs(parSection + " MULTIGRID SMOOTHER",
-                          "DAMPEDJACOBI,CHEBYSHEV");
-          options.setArgs(parSection + " MULTIGRID DOWNWARD SMOOTHER", "JACOBI");
-          options.setArgs(parSection + " MULTIGRID UPWARD SMOOTHER", "JACOBI");
+                          "DAMPEDJACOBI," + chebyshevType);
           options.setArgs("BOOMERAMG ITERATIONS", "2");
           if (p_preconditioner.find("additive") != std::string::npos) {
             append_error("Additive vcycle is not supported for Chebyshev smoother");
@@ -709,9 +732,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
         } else if (s.find("asm") != std::string::npos)
         {
           surrogateSmootherSet = true;
-          options.setArgs(parSection + " MULTIGRID SMOOTHER", "CHEBYSHEV+ASM");
-          options.setArgs(parSection + " MULTIGRID DOWNWARD SMOOTHER", "ASM");
-          options.setArgs(parSection + " MULTIGRID UPWARD SMOOTHER", "ASM");
+          options.setArgs(parSection + " MULTIGRID SMOOTHER", chebyshevType + "+ASM");
           if (p_preconditioner.find("additive") != std::string::npos) {
             append_error("Additive vcycle is not supported for hybrid Schwarz/Chebyshev smoother");
           } else {
@@ -724,9 +745,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
         } else if (s.find("ras") != std::string::npos)
         {
           surrogateSmootherSet = true;
-          options.setArgs(parSection + " MULTIGRID SMOOTHER", "CHEBYSHEV+RAS");
-          options.setArgs(parSection + " MULTIGRID DOWNWARD SMOOTHER", "RAS");
-          options.setArgs(parSection + " MULTIGRID UPWARD SMOOTHER", "RAS");
+          options.setArgs(parSection + " MULTIGRID SMOOTHER", chebyshevType + "+RAS");
           if (p_preconditioner.find("additive") != std::string::npos) {
             append_error("Additive vcycle is not supported for hybrid Schwarz/Chebyshev smoother");
           } else {
@@ -738,6 +757,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
           }
         }
       }
+
       if(!surrogateSmootherSet){
         append_error("Inner Chebyshev smoother not set");
       }
@@ -767,8 +787,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
     } else if (p_smoother.find("jac") == 0) {
       options.setArgs(parSection + " MULTIGRID SMOOTHER",
                       "DAMPEDJACOBI");
-      options.setArgs(parSection + " MULTIGRID DOWNWARD SMOOTHER", "JACOBI");
-      options.setArgs(parSection + " MULTIGRID UPWARD SMOOTHER", "JACOBI");
       options.setArgs("BOOMERAMG ITERATIONS", "2");
       if (p_preconditioner.find("additive") != std::string::npos) {
         append_error("Additive vcycle is not supported for Jacobi smoother");
@@ -796,7 +814,6 @@ void parsePreconditioner(const int rank, setupAide &options,
       {"multigrid"},
       {"additive"},
       {"multiplicative"},
-      {"overlap"},
   };
 
   std::string parSection =
@@ -907,18 +924,15 @@ void parseInitialGuess(const int rank, setupAide &options,
 
     for (std::string s : list) {
       checkValidity(rank, validValues, s);
-      if (s.find("nvector") != std::string::npos) {
-        const std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        const int value = std::stoi(items[1]);
-        options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", std::to_string(value));
-      }
-      if (s.find("start") != std::string::npos) {
-        const std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        const int value = std::stoi(items[1]);
-        options.setArgs(parSectionName + "RESIDUAL PROJECTION START", std::to_string(value));
-      }
+
+      const auto nVectorStr = parseValueForKey(s, "nvector");
+      if(!nVectorStr.empty())
+        options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", nVectorStr);
+
+      const auto startStr = parseValueForKey(s, "start");
+      if(!startStr.empty())
+        options.setArgs(parSectionName + "RESIDUAL PROJECTION START", startStr);
+
     }
     return;
   }
@@ -1028,54 +1042,51 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
 
     // common parameters
     for (std::string s : list) {
-      if (s.find("nmodes") != std::string::npos) {
-        std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        double value = std::stod(items[1]);
+
+      const auto nmodeStr = parseValueForKey(s, "nmodes");
+      if(!nmodeStr.empty()){
+        double value = std::stod(nmodeStr);
         value = round(value);
         options.setArgs(parPrefix + "HPFRT MODES", to_string_f(value));
       }
-      if (s.find("cutoffratio") != std::string::npos) {
-        std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        double filterCutoffRatio = std::stod(items[1]);
+
+      const auto cutoffRatioStr = parseValueForKey(s, "cutoffratio");
+      if(!cutoffRatioStr.empty()){
+        double filterCutoffRatio = std::stod(cutoffRatioStr);
         double NFilterModes = round((N + 1) * (1 - filterCutoffRatio));
         options.setArgs(parPrefix + "HPFRT MODES", to_string_f(NFilterModes));
       }
+
     }
 
     if (usesAVM) {
       for (std::string s : list) {
-        if (s.find("vismaxcoeff") != std::string::npos) {
-          std::vector<std::string> items = serializeString(s, '=');
-          assert(items.size() == 2);
-          const dfloat value = std::stod(items[1]);
-          options.setArgs(parPrefix + "REGULARIZATION VISMAX COEFF", to_string_f(value));
+        const auto vismaxcoeffStr = parseValueForKey(s, "vismaxcoeff");
+        if (!vismaxcoeffStr.empty()) {
+          options.setArgs(parPrefix + "REGULARIZATION VISMAX COEFF", vismaxcoeffStr);
         }
-        if(s.find("scalingcoeff") != std::string::npos)
-        {
-          std::vector<std::string> items = serializeString(s, '=');
-          assert(items.size() == 2);
-          const dfloat value = std::stod(items[1]);
+
+        const auto scalingcoeffStr = parseValueForKey(s, "scalingcoeff");
+        if(!scalingcoeffStr.empty()){
           if(regularization.find("highestmodaldecay") != std::string::npos)
           {
             // in this context, the scaling coefficient can only be vismax
-            options.setArgs(parPrefix + "REGULARIZATION VISMAX COEFF", to_string_f(value));
+            options.setArgs(parPrefix + "REGULARIZATION VISMAX COEFF", scalingcoeffStr);
           } else {
-            options.setArgs(parPrefix + "REGULARIZATION SCALING COEFF", to_string_f(value));
+            options.setArgs(parPrefix + "REGULARIZATION SCALING COEFF", scalingcoeffStr);
           }
         }
+
         if(s.find("c0") != std::string::npos)
         {
           options.setArgs(parPrefix + "REGULARIZATION AVM C0", "TRUE");
         }
-        if(s.find("rampconstant") != std::string::npos)
+
+        const auto rampConstantStr = parseValueForKey(s, "rampconstant");
+        if(!rampConstantStr.empty())
         {
-          std::vector<std::string> items = serializeString(s, '=');
-          assert(items.size() == 2);
-          const dfloat rampConstant = std::stod(items[1]);
           options.setArgs(parPrefix + "REGULARIZATION RAMP CONSTANT",
-                          to_string_f(rampConstant));
+                          rampConstantStr);
         }
       }
     }
@@ -1083,12 +1094,12 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
     if (usesHPFRT) {
       bool setsStrength = false;
       for (std::string s : list) {
-        if (s.find("scalingcoeff") != std::string::npos) {
+
+        const auto scalingCoeffStr = parseValueForKey(s, "scalingcoeff");
+        if (!scalingCoeffStr.empty()) {
           setsStrength = true;
-          std::vector<std::string> items = serializeString(s, '=');
-          assert(items.size() == 2);
           int err = 0;
-          double weight = te_interp(items[1].c_str(), &err);
+          double weight = te_interp(scalingCoeffStr.c_str(), &err);
           if (err)
             append_error("Invalid expression for scalingCoeff");
           options.setArgs(parPrefix + "HPFRT STRENGTH", to_string_f(weight));
@@ -1218,11 +1229,8 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PRESSURE PARALMOND CYCLE", "VCYCLE");
   options.setArgs("PRESSURE MULTIGRID COARSE SOLVE", "TRUE");
   options.setArgs("PRESSURE MULTIGRID SEMFEM", "FALSE");
-  options.setArgs("PRESSURE MULTIGRID SMOOTHER", "CHEBYSHEV+ASM");
-  options.setArgs("PRESSURE MULTIGRID DOWNWARD SMOOTHER", "ASM");
-  options.setArgs("PRESSURE MULTIGRID UPWARD SMOOTHER", "ASM");
-  options.setArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE", "2");
-  options.setArgs("PRESSURE MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR", "0.1");
+  options.setArgs("PRESSURE MULTIGRID SMOOTHER", "FOURTHOPTCHEBYSHEV+ASM");
+  options.setArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE", "3");
   options.setArgs("PRESSURE MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR", "1.1");
 
   options.setArgs("PRESSURE INITIAL GUESS", "PROJECTION-ACONJ");
@@ -1465,34 +1473,26 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       for(std::string entry : entries)
       {
         checkValidity(rank, validValues, entry);
-        if(entry.find("max") != std::string::npos)
-        {
-          std::vector<std::string> maxAndValue = serializeString(entry, '=');
-          assert(maxAndValue.size() == 2);
-          const double maxDT = std::stod(maxAndValue[1]);
-          options.setArgs("MAX DT", to_string_f(maxDT));
-        }
-        if(entry.find("initial") != std::string::npos)
-        {
-          std::vector<std::string> initialDtAndValue = serializeString(entry, '=');
-          assert(initialDtAndValue.size() == 2);
-          const double initialDt = std::stod(initialDtAndValue[1]);
-          options.setArgs("DT", to_string_f(initialDt));
-          userSuppliesInitialDt = true;
-        }
-        if(entry.find("targetcfl") != std::string::npos)
-        {
-          std::vector<std::string> cflAndValue = serializeString(entry, '=');
-          assert(cflAndValue.size() == 2);
-          const double targetCFL = std::stod(cflAndValue[1]);
-          options.setArgs("TARGET CFL", to_string_f(targetCFL));
 
+        const auto maxStr = parseValueForKey(entry, "max");
+        if(!maxStr.empty())
+          options.setArgs("MAX DT", maxStr);
+
+        const auto initialStr = parseValueForKey(entry, "initial");
+        if(!initialStr.empty())
+          options.setArgs("DT", initialStr);
+
+        const auto cflStr = parseValueForKey(entry, "targetcfl");
+        if(!cflStr.empty()){
+          options.setArgs("TARGET CFL", cflStr);
+          const double targetCFL = std::stod(cflStr);
           int nSteps = std::ceil(targetCFL / 2.0);
           if (targetCFL <= 0.51) nSteps = 0;
           options.setArgs("SUBCYCLING STEPS", std::to_string(nSteps));
 
           userSuppliesTargetCFL = true;
         }
+
       }
 
       // if targetCFL is not set, try to infer from subcyclingSteps
@@ -1760,12 +1760,62 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     if (options.compareArgs("PRESSURE PRECONDITIONER", "MULTIGRID") || 
         options.compareArgs("PRESSURE PRECONDITIONER", "SEMFEM")) {
       parseCoarseSolver(rank, options, par, "pressure");
+
     }
 
     if (options.compareArgs("PRESSURE PRECONDITIONER", "MULTIGRID")) {
-      std::string p_mglevels;
-      if (par->extract("pressure", "pmultigridcoarsening", p_mglevels))
-        options.setArgs("PRESSURE MULTIGRID COARSENING", p_mglevels);
+      std::string p_mgschedule;
+      if (par->extract("pressure", "pmgschedule", p_mgschedule)) {
+        options.setArgs("PRESSURE MULTIGRID SCHEDULE", p_mgschedule);
+
+        // validate multigrid schedule
+        // note: default order here is not actually required
+        auto scheduleMapAndErrors = parseMultigridSchedule(p_mgschedule, options, 3);
+        auto scheduleMap = scheduleMapAndErrors.first;
+        if (!scheduleMapAndErrors.second.empty()) {
+          append_error(scheduleMapAndErrors.second);
+        }
+
+        int minDegree = std::numeric_limits<int>::max();
+        for(auto&& entry : scheduleMapAndErrors.first){
+          minDegree = std::min(minDegree, entry.first.first);
+        }
+
+        const auto INVALID = -std::numeric_limits<int>::max();
+
+        // bail if degree is set _and_ it conflicts
+        std::string p_smoother;
+        if (par->extract("pressure", "smoothertype", p_smoother)){
+          for(auto&& s : serializeString(p_smoother, '+')){
+            if(s.find("degree") != std::string::npos){
+              const auto degreeStr = parseValueForKey(s, "degree");
+              if(!degreeStr.empty()){
+                const auto specifiedDegree = std::stoi(degreeStr);
+                for(auto&& entry : scheduleMap){
+                  const bool degreeConflicts = entry.second != specifiedDegree;
+                  const bool isMinOrder = entry.first.first == minDegree;
+                  const bool minOrderInvalid = entry.second == INVALID;
+
+                  if(isMinOrder && minOrderInvalid) continue;
+
+                  if(degreeConflicts){
+                    append_error("ERROR: order specified in pMGSchedule conflicts with that specified in smootherType!\n");
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // bail if coarse degree is set, but we're not smoothing on the coarsest level
+        if(scheduleMap[std::make_pair(minDegree, true)] != INVALID){
+          const bool smoothCrs = options.compareArgs("PRESSURE COARSE SOLVER", "SMOOTHER");
+          if(!smoothCrs){
+            append_error("ERROR: specified coarse degree, but coarseSolver=smoother is not set.\n");
+          }
+        }
+
+      }
     }
 
     std::string p_solver;
@@ -1790,18 +1840,9 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         std::string n = "15";
         for(std::string s : list)
         {
-          if(s.find("nvector") != std::string::npos)
-          {
-            std::vector<std::string> nVecList = serializeString(s,'=');
-            if(nVecList.size() == 2)
-            {
-              int nVec = std::stoi(nVecList[1]);
-              n = std::to_string(nVec);
-            } else {
-              std::ostringstream error;
-              error << "Could not parse string \"" << s << "\" while parsing PRESSURE:solver.\n";
-              append_error(error.str());
-            }
+          const auto nvectorStr = parseValueForKey(s, "nvector");
+          if(!nvectorStr.empty()){
+            n = nvectorStr;
           }
         }
         options.setArgs("PRESSURE PGMRES RESTART", n);

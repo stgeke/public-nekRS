@@ -105,6 +105,8 @@ int BoomerAMGSetup(int nrows, int nz,
 
 int BoomerAMGSolve(const occa::memory& o_b, const occa::memory& o_x);
 
+int enabled();
+
 void Free();
 
 } // namespace

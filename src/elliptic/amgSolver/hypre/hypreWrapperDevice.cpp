@@ -295,6 +295,12 @@ Free()
   free(data);
 }
 
+int __attribute__((visibility("default"))) 
+enabled()
+{
+  return 1;
+}
+
 } // namespace
 
 #else
@@ -329,6 +335,12 @@ Free()
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);  
   if(rank == 0) printf("ERROR: Recompile with HYPRE GPU support!\n");
+}
+
+int __attribute__((visibility("default"))) 
+enabled()
+{
+  return 0;
 }
 
 } // namespace

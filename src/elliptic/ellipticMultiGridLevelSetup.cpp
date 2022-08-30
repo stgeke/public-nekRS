@@ -27,6 +27,28 @@
 #include "elliptic.h"
 #include "platform.hpp"
 #include "linAlg.hpp"
+#include "parseMultigridSchedule.hpp"
+
+namespace{
+ChebyshevSmootherType
+convertSmootherType(SmootherType s){
+  switch(s){
+    case SmootherType::ASM:
+      return ChebyshevSmootherType::ASM;
+    case SmootherType::RAS:
+      return ChebyshevSmootherType::RAS;
+    case SmootherType::JACOBI:
+      return ChebyshevSmootherType::JACOBI;
+    default:
+    {
+      if(platform->comm.mpiRank == 0){
+        std::cout << "Invalid configuration hit in convertSmootherType!\n";
+      }
+      ABORT(1);
+    }
+  }
+}
+}
 
 size_t MGLevel::smootherResidualBytes;
 pfloat* MGLevel::smootherResidual;
@@ -94,104 +116,109 @@ void MGLevel::setupSmoother(elliptic_t* ellipticBase)
   dfloat maxMultiplier;
   options.getArgs("MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR", maxMultiplier);
 
-  if (options.compareArgs("MULTIGRID SMOOTHER","ASM") ||
-      options.compareArgs("MULTIGRID SMOOTHER","RAS")) {
-    stype = SmootherType::SCHWARZ;
-    smtypeUp = SecondarySmootherType::JACOBI;
-    smtypeDown = SecondarySmootherType::JACOBI;
+  const bool useASM = options.compareArgs("MULTIGRID SMOOTHER","ASM");
+  const bool useRAS = options.compareArgs("MULTIGRID SMOOTHER","RAS");
+  const bool useJacobi = options.compareArgs("MULTIGRID SMOOTHER","DAMPEDJACOBI");
+  if (useASM || useRAS){
+    smootherType = useASM ? SmootherType::ASM : SmootherType::RAS;
     build(ellipticBase);
-
-    if(options.compareArgs("MULTIGRID SMOOTHER","CHEBYSHEV")) {
-      smtypeUp = SecondarySmootherType::SCHWARZ;
-      smtypeDown = SecondarySmootherType::SCHWARZ;
-      stype = SmootherType::CHEBYSHEV;
-
-      if(isCoarse) {
-        ChebyshevIterations = 8;
-        options.getArgs("COARSE MULTIGRID CHEBYSHEV DEGREE", ChebyshevIterations);
-      } else {
-        ChebyshevIterations = 2;
-        options.getArgs("MULTIGRID CHEBYSHEV DEGREE", ChebyshevIterations);
+  } else {
+    if(!useJacobi){
+      if(platform->comm.mpiRank == 0){
+        std::cout << "Invalid setup occurred in MGLevel::setupSmoother\n";
       }
-
-      //estimate the max eigenvalue of S*A
-      dfloat rho = this->maxEigSmoothAx();
-      lambda1 = maxMultiplier * rho;
-      lambda0 = minMultiplier * rho;
+      ABORT(1);
     }
-    if(options.compareArgs("MULTIGRID DOWNWARD SMOOTHER","JACOBI") ||
-       options.compareArgs("MULTIGRID UPWARD SMOOTHER","JACOBI")) {
-      o_invDiagA = platform->device.malloc(mesh->Np * mesh->Nelements * sizeof(pfloat));
-      ellipticUpdateJacobi(elliptic,o_invDiagA);
-      if(options.compareArgs("MULTIGRID UPWARD SMOOTHER","JACOBI"))
-        smtypeUp = SecondarySmootherType::JACOBI;
-      if(options.compareArgs("MULTIGRID DOWNWARD SMOOTHER","JACOBI"))
-        smtypeDown = SecondarySmootherType::JACOBI;
-    }
-  } else if (options.compareArgs("MULTIGRID SMOOTHER","DAMPEDJACOBI")) { //default to damped jacobi
-    stype = SmootherType::JACOBI;
-    smtypeUp = SecondarySmootherType::JACOBI;
-    smtypeDown = SecondarySmootherType::JACOBI;
-
-    o_invDiagA = platform->device.malloc(mesh->Np * mesh->Nelements * sizeof(pfloat));
+    smootherType = SmootherType::JACOBI;
+    o_invDiagA = platform->device.malloc(mesh->Nlocal * sizeof(pfloat));
     ellipticUpdateJacobi(elliptic,o_invDiagA);
+  }
 
-    if (options.compareArgs("MULTIGRID SMOOTHER","CHEBYSHEV")) {
-      stype = SmootherType::CHEBYSHEV;
+  if (options.compareArgs("MULTIGRID SMOOTHER","CHEBYSHEV")) {
+    chebySmootherType = convertSmootherType(smootherType);
+    smootherType = SmootherType::CHEBYSHEV;
 
-      if (!options.getArgs("MULTIGRID CHEBYSHEV DEGREE", ChebyshevIterations))
-        ChebyshevIterations = 2; //default to degree 2
+    //estimate the max eigenvalue of S*A
+    dfloat rho = this->maxEigSmoothAx();
 
-      //estimate the max eigenvalue of S*A
-      dfloat rho = this->maxEigSmoothAx();
+    lambda1 = maxMultiplier * rho;
+    lambda0 = minMultiplier * rho;
+    this->maxEig = rho;
 
-      lambda1 = maxMultiplier * rho;
-      lambda0 = minMultiplier * rho;
+    if(isCoarse) {
+      UpLegChebyshevDegree = 8;
+      DownLegChebyshevDegree = 8;
+      options.getArgs("COARSE MULTIGRID CHEBYSHEV DEGREE", UpLegChebyshevDegree);
+      options.getArgs("COARSE MULTIGRID CHEBYSHEV DEGREE", DownLegChebyshevDegree);
+    } else {
+      UpLegChebyshevDegree = 3;
+      DownLegChebyshevDegree = 3;
+      options.getArgs("MULTIGRID CHEBYSHEV DEGREE", UpLegChebyshevDegree);
+      options.getArgs("MULTIGRID CHEBYSHEV DEGREE", DownLegChebyshevDegree);
     }
+
+  }
+
+  std::string schedule = options.getArgs("MULTIGRID SCHEDULE");
+  if (!schedule.empty()) {
+    auto scheduleAndError = parseMultigridSchedule(schedule, options, DownLegChebyshevDegree);
+    UpLegChebyshevDegree = scheduleAndError.first[{degree, true}];
+    DownLegChebyshevDegree = scheduleAndError.first[{degree, false}];
+  }
+
+  if(options.compareArgs("MULTIGRID SMOOTHER", "FOURTHOPT")){
+    UpLegBetas = optimalCoeffs(UpLegChebyshevDegree);
+    DownLegBetas = optimalCoeffs(DownLegChebyshevDegree);
+    smootherType = SmootherType::OPT_FOURTH_CHEBYSHEV;
+  }
+  else if(options.compareArgs("MULTIGRID SMOOTHER", "FOURTH")){
+    // same as above, but beta_i = 1 for all i
+    UpLegBetas = std::vector<pfloat>(UpLegChebyshevDegree, 1.0);
+    DownLegBetas = std::vector<pfloat>(DownLegChebyshevDegree, 1.0);
+    smootherType = SmootherType::FOURTH_CHEBYSHEV;
   }
 }
 
 void MGLevel::Report()
 {
-  platform_t * platform = platform_t::getInstance();
-  hlong hNrows = (hlong) Nrows;
 
-  dlong minNrows = 0, maxNrows = 0;
-  hlong totalNrows = 0;
-  dfloat avgNrows;
-
-  MPI_Allreduce(&Nrows, &maxNrows, 1, MPI_DLONG, MPI_MAX, platform->comm.mpiComm);
-  MPI_Allreduce(&hNrows, &totalNrows, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
-  avgNrows = (dfloat) totalNrows / platform->comm.mpiCommSize;
-
-  if (Nrows == 0) Nrows = maxNrows; //set this so it's ignored for the global min
-  MPI_Allreduce(&Nrows, &minNrows, 1, MPI_DLONG, MPI_MIN, platform->comm.mpiComm);
-
-  char smootherString[BUFSIZ];
+  std::string smootherString;
   if (!isCoarse || options.compareArgs("MULTIGRID COARSE SOLVE", "FALSE")) {
-    if (stype == SmootherType::CHEBYSHEV && smtypeDown == SecondarySmootherType::JACOBI)
-      strcpy(smootherString, "Chebyshev+Jacobi ");
-    else if (stype == SmootherType::SCHWARZ)
-      strcpy(smootherString, "Schwarz          ");
-    else if (stype == SmootherType::JACOBI)
-      strcpy(smootherString, "Jacobi           ");
-    else if (stype == SmootherType::CHEBYSHEV && smtypeDown == SecondarySmootherType::SCHWARZ)
-      strcpy(smootherString, "Chebyshev+Schwarz");
-    else
-      strcpy(smootherString, "???");
+    if(smootherType == SmootherType::CHEBYSHEV){
+      smootherString += "1st Kind Chebyshev+";
+    }
+    if(smootherType == SmootherType::FOURTH_CHEBYSHEV){
+      smootherString += "4th Kind Chebyshev+";
+    }
+    if(smootherType == SmootherType::OPT_FOURTH_CHEBYSHEV){
+      smootherString += "Opt. 4th Kind Chebyshev+";
+    }
+    if (smootherType == SmootherType::ASM || chebySmootherType == ChebyshevSmootherType::ASM){
+      smootherString += "ASM";
+    }
+    if (smootherType == SmootherType::RAS || chebySmootherType == ChebyshevSmootherType::RAS){
+      smootherString += "RAS";
+    }
+    if (smootherType == SmootherType::JACOBI || chebySmootherType == ChebyshevSmootherType::JACOBI){
+      smootherString += "Jacobi";
+    }
+    smootherString += "(" + std::to_string(UpLegChebyshevDegree) + "," + std::to_string(DownLegChebyshevDegree) + ")";
   }
 
   if (platform->comm.mpiRank == 0) {
     if(isCoarse && options.compareArgs("MULTIGRID COARSE SOLVE","TRUE")) {
       std::string solver;
-      if(options.getArgs("COARSE SOLVER", solver)) strcpy(smootherString, solver.c_str());
-      printf(     "|    AMG     |   Matrix        | %s\n", smootherString);
+      if(options.getArgs("COARSE SOLVER", solver)) {
+        smootherString = solver;
+      }
+      printf(     "|    AMG     |   Matrix        | %s\n", smootherString.c_str());
       printf("     |            |     Degree %2d   |\n", degree);
     } else {
-      printf(     "|    pMG     |   Matrix-free   | %s\n", smootherString);
+      printf(     "|    pMG     |   Matrix-free   | %s\n", smootherString.c_str());
       printf("     |            |     Degree %2d   |\n", degree);
     }
   }
+
 }
 
 void MGLevel::buildCoarsenerQuadHex(mesh_t** meshLevels, int Nf, int Nc)
@@ -266,14 +293,7 @@ dfloat MGLevel::maxEigSmoothAx()
   MPI_Allreduce(&Nlocal, &Ntotal, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
 
   occa::memory o_invDegree = platform->device.malloc(Nlocal*sizeof(dfloat), elliptic->ogs->invDegree);
-
-  int k;
-  if(Ntotal > 10) 
-    k = 10;
-  else
-    k = (int) Ntotal;
-
-  // do an arnoldi
+  int k = std::min(MGLevel::Narnoldi, Ntotal);
 
   // allocate memory for Hessenberg matrix
   double* H = (double*) calloc(k * k,sizeof(double));

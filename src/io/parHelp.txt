@@ -95,14 +95,16 @@ coarseSolver/semfemSolver   smoother
                             +device [D for SEMFEM] 
                             +cpu [D for multigrid]
 
-pMultigridCoarsening        <int>, <int>, ...                          custom polynomial order for each pMG level
+pMGSchedule                 p=<int>, degree=<int>, ...                 custom polynomial order and Chebyshev order for each pMG level
 
 smootherType                Jacobi
                             ASM [D]                                    overlapping additive Schwarz 
                             RAS                                        overlapping restrictive Schwarz
-                            +Chebyshev                                  Chebyshev acceleration
+                            +Chebyshev                                 1st Chebyshev acceleration
+                            +FourthChebyshev                           4th Kind Chebyshev acceleration
+                            +FourthOptChebyshev                        4th Opt Chebyshev acceleration
                               +degree=<int>
-                              +minEigenvalueBoundFactor=<float> 
+                              +minEigenvalueBoundFactor=<float>          only valid for 1st kind Chebyshev
                               +maxEigenvalueBoundFactor=<float> 
 
 boundaryTypeMap             <...>, <...>, ...                          boundary type for each boundary ID

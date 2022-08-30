@@ -144,14 +144,13 @@ struct elliptic_t
   occa::kernel AxPfloatKernel;
 
   occa::kernel fusedCopyDfloatToPfloatKernel;
-  occa::kernel axmyzManyPfloatKernel; 
- 
-  // special kernels for single Chebyshev iteration
-  occa::kernel updateSmoothedSolutionVecKernel;
-  occa::kernel updateChebyshevSolutionVecKernel;
+  occa::kernel axmyzManyPfloatKernel;
 
-  // special kernel for two Chebyshev iterations
-  occa::kernel updateIntermediateSolutionVecKernel;
+  // update for 1st Kind Chebyshev iteration
+  occa::kernel updateChebyshevKernel;
+
+  // fourth kind Chebyshev iteration
+  occa::kernel updateFourthKindChebyshevKernel;
 
   occa::kernel updatePGMRESSolutionKernel;
   occa::kernel fusedResidualAndNormKernel;
@@ -178,6 +177,7 @@ struct elliptic_t
   GmresData *gmresData;
 
   std::function<void(dlong Nelements, occa::memory &o_elementList, occa::memory &o_x)> applyZeroNormalMask;
+  std::function<void(occa::memory & o_r, occa::memory & o_z)> userPreconditioner;
 };
 
 #include "ellipticMultiGrid.h"

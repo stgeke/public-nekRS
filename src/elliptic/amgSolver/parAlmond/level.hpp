@@ -36,7 +36,7 @@ public:
 
   occa::memory o_x, o_rhs, o_res;
 
-  SmoothType stype;
+  SmoothType smootherType;
 
   MPI_Comm comm;
 

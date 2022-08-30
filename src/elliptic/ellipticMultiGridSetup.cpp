@@ -239,10 +239,10 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, precon_t* precon)
   free(meshLevels);
 
   if (platform->comm.mpiRank == 0) {
-    printf("---------------------------------------------------------\n");
-    printf("level|    Type    |                 |     Smoother      |\n");
-    printf("     |            |                 |                   |\n");
-    printf("---------------------------------------------------------\n");
+    printf("-----------------------------------------------------------------------\n");
+    printf("level|    Type    |                 |     Smoother                    |\n");
+    printf("     |            |                 |                                 |\n");
+    printf("-----------------------------------------------------------------------\n");
   }
 
   for(int lev = 0; lev < precon->parAlmond->numLevels; lev++) {
@@ -254,7 +254,7 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, precon_t* precon)
   }
 
   if (platform->comm.mpiRank == 0)
-    printf("---------------------------------------------------------\n");
+    printf("-----------------------------------------------------------------------\n");
 }
 
 void MGLevelAllocateStorage(MGLevel* level, int k, parAlmond::CycleType ctype)

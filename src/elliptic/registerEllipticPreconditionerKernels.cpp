@@ -132,25 +132,16 @@ void registerCommonMGPreconditionerKernels(int N, occa::properties kernelInfo, i
         pfloatKernelInfo,
         orderSuffix + "pfloat");
 
-    kernelName = "updateSmoothedSolutionVec";
-    fileName = installDir + "/okl/elliptic/" + kernelName + ".okl";
-    platform->kernels.add(kernelName + orderSuffix,
-        fileName,
-        kernelInfo,
-        orderSuffix);
-    kernelName = "updateChebyshevSolutionVec";
+    kernelName = "updateChebyshev";
     fileName = installDir + "/okl/elliptic/" + kernelName + ".okl";
     platform->kernels.add(kernelName + orderSuffix,
         fileName,
         kernelInfo,
         orderSuffix);
 
-    kernelName = "updateIntermediateSolutionVec";
+    kernelName = "updateFourthKindChebyshev";
     fileName = installDir + "/okl/elliptic/" + kernelName + ".okl";
-    platform->kernels.add(kernelName + orderSuffix,
-        fileName,
-        kernelInfo,
-        orderSuffix);
+    platform->kernels.add(kernelName + orderSuffix, fileName, kernelInfo, orderSuffix);
 
     occa::properties buildDiagInfo = kernelInfo;
     if(poissonEquation) buildDiagInfo["defines/p_poisson"] = 1;

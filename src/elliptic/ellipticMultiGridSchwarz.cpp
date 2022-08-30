@@ -160,27 +160,57 @@ compute_element_lengths(ElementLengths* lengths, elliptic_t* elliptic)
 
   // add check for small values in middle elements
   const double tol = 1e-12;
+
+  int errZero = 0;
+  int errNegative = 0;
+  int errInvalid = 0;
+
   for(dlong e = 0; e < Nelements; ++e) {
     bool failed = false;
     failed |= std::abs(lengths->length_middle_x[e]) < tol;
     failed |= std::abs(lengths->length_middle_y[e]) < tol;
     failed |= std::abs(lengths->length_middle_z[e]) < tol;
     if(failed) {
-      std::cout << "Encountered length of zero in middle for element e = " << e << "!\n";
-      std::cout << "x,y,z = " << lengths->length_middle_x[e] << ", "
-                << lengths->length_middle_y[e] << ", " << lengths->length_middle_z[e] << "\n";
-      ABORT(EXIT_FAILURE);;
+      errZero++;
     }
     bool negative = false;
     negative |= lengths->length_middle_x[e] < -tol;
     negative |= lengths->length_middle_y[e] < -tol;
     negative |= lengths->length_middle_z[e] < -tol;
     if(negative) {
-      std::cout << "Encountered negative length in middle for element e = " << e << "!\n";
-      std::cout << "x,y,z = " << lengths->length_middle_x[e] << ", "
-                << lengths->length_middle_y[e] << ", " << lengths->length_middle_z[e] << "\n";
-      ABORT(EXIT_FAILURE);;
+      errNegative++;
     }
+
+    bool invalid = false;
+    invalid |= std::isnan(lengths->length_middle_x[e]) || std::isinf(lengths->length_middle_x[e]);
+    invalid |= std::isnan(lengths->length_middle_y[e]) || std::isinf(lengths->length_middle_y[e]);
+    invalid |= std::isnan(lengths->length_middle_z[e]) || std::isinf(lengths->length_middle_z[e]);
+    if(invalid){
+      errInvalid++;
+    }
+  }
+
+  std::array<int, 3> errors = {errZero, errNegative, errInvalid};
+  MPI_Allreduce(MPI_IN_PLACE, errors.data(), 3, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  std::ostringstream errorLogger;
+  if(errors[0]){
+    errorLogger << "\tEncountered " << errors[0] << " elements with zero length!" << std::endl;
+  }
+  if(errors[1]){
+    errorLogger << "\tEncountered " << errors[1] << " elements with negative length!" << std::endl;
+  }
+  if(errors[2]){
+    errorLogger << "\tEncountered " << errors[2] << " elements with inf or nan length!" << std::endl;
+  }
+
+  if(!errorLogger.str().empty()){
+    if(platform->comm.mpiRank == 0){
+      std::cout << "Encountered errors in Schwarz setup for N = " << N << ":" << std::endl;
+      std::cout << "{\n";
+      std::cout << errorLogger.str();
+      std::cout << "}\n";
+    }
+    ABORT(1);
   }
 
   dfloat* l = (dfloat*) calloc(mesh->Np * Nelements, sizeof(dfloat));

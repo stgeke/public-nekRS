@@ -67,8 +67,8 @@ std::vector<int> determineMGLevels(std::string section)
     return levels;
   }
 
-  if (platform->options.compareArgs(optionsPrefix + "MULTIGRID DOWNWARD SMOOTHER", "ASM") ||
-           platform->options.compareArgs(optionsPrefix + "MULTIGRID DOWNWARD SMOOTHER", "RAS")) {
+  if (platform->options.compareArgs(optionsPrefix + "MULTIGRID SMOOTHER", "ASM") ||
+           platform->options.compareArgs(optionsPrefix + "MULTIGRID SMOOTHER", "RAS")) {
     std::map<int, std::vector<int>> mg_level_lookup = {
         {1, {1}},
         {2, {2, 1}},

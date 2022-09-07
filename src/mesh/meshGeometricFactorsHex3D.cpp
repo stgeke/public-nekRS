@@ -100,6 +100,7 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
 
   mesh->volume = 0;
 
+  int invalidJ = 0;
   for(dlong e = 0; e < mesh->Nelements; ++e) {
     dlong id = e * mesh->Nverts;
 
@@ -115,10 +116,8 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
       zte[n] = 0;
     }
 
-    int invalidJ = 0;
-
-    for(int k = 0; k < mesh->Nq; ++k)
-      for(int j = 0; j < mesh->Nq; ++j)
+    for (int k = 0; k < mesh->Nq; ++k) {
+      for (int j = 0; j < mesh->Nq; ++j) {
         for(int i = 0; i < mesh->Nq; ++i) {
           int n = i + j * mesh->Nq + k * mesh->Nq * mesh->Nq;
 
@@ -215,13 +214,7 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
                                                                            tz);
           mesh->ggeo[mesh->Nggeo * mesh->Np * e + n + mesh->Np * GWJID] = JW;
         }
-
-    MPI_Allreduce(MPI_IN_PLACE, &invalidJ, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
-    if (invalidJ) {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Error: encountered nan or inf Jacobian!\n";
       }
-      ABORT(1);
     }
 
 #if 1
@@ -238,8 +231,8 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
     interpolateHex3D(mesh->cubInterp, zte, mesh->Nq, cubzte, mesh->cubNq);
 
     //geometric data for quadrature
-    for(int k = 0; k < mesh->cubNq; ++k)
-      for(int j = 0; j < mesh->cubNq; ++j)
+    for (int k = 0; k < mesh->cubNq; ++k) {
+      for (int j = 0; j < mesh->cubNq; ++j) {
         for(int i = 0; i < mesh->cubNq; ++i) {
           int n = k * mesh->cubNq * mesh->cubNq + j * mesh->cubNq + i;
 
@@ -282,7 +275,17 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
           mesh->cubvgeo[base + mesh->cubNp * JWID] = JW;
           mesh->cubvgeo[base + mesh->cubNp * IJWID] = 1. / JW;
         }
+      }
+    }
 #endif
+  }
+
+  MPI_Allreduce(MPI_IN_PLACE, &invalidJ, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
+  if (invalidJ) {
+    if (platform->comm.mpiRank == 0) {
+      std::cout << "Error: encountered nan or inf Jacobian!\n";
+    }
+    ABORT(1);
   }
 
   {

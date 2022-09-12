@@ -430,7 +430,9 @@ oogs_t *oogs::setup(ogs_t *ogs,
     oogs_modeExchange fastestModeExchange = OOGS_EX_PW;
     int fastestPrepostRecv = 0;
 
-    occa::memory o_q = device.malloc(std::max(stride, ogs->N) * nVec * Nbytes);
+    void * q = calloc(std::max(stride, ogs->N) * nVec * Nbytes, 1);
+    occa::memory o_q = device.malloc(std::max(stride, ogs->N) * nVec * Nbytes, q);
+    free(q);
 
     for (auto const &mode : oogs_mode_list) {
       gs->mode = mode;

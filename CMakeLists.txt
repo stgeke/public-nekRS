@@ -297,20 +297,6 @@ if(ENABLE_AMGX AND ENABLE_CUDA)
   target_include_directories(nekrs-lib PUBLIC 3rd_party/AMGX/base/include 3rd_party/AMGX/core/include)
 endif()
 
-###############################################################################
-# Optional nekRS plugins
-###############################################################################
-
-file(GLOB plugins LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/plugins/*)
-foreach(DIR ${plugins})
-  IF(IS_DIRECTORY ${DIR})
-      message(NOTICE "-- Found plugin: ${DIR}")
-      add_subdirectory(${DIR})
-  ELSE()
-      CONTINUE()
-  ENDIF()
-endforeach()
-
 target_link_libraries(nekrs-lib PRIVATE nekrs-hypre)
 target_link_libraries(nekrs-lib PRIVATE nekrs-hypre-device)
 
@@ -318,6 +304,21 @@ add_executable(nekrs-bin src/main.cpp)
 target_include_directories(nekrs-bin PRIVATE src/lib)
 set_target_properties(nekrs-bin PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
 target_link_libraries(nekrs-bin PRIVATE nekrs-lib)
+
+###############################################################################
+# Optional nekRS plugins
+###############################################################################
+file(GLOB plugins LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/plugins/*)
+foreach(DIR ${plugins})
+  get_filename_component(PLUGIN_NAME ${DIR} NAME)
+  IF(IS_DIRECTORY ${DIR})
+      message(NOTICE "-- Found plugin: ${PLUGIN_NAME}")
+      add_subdirectory(${DIR})
+  ELSE()
+      CONTINUE()
+  ENDIF()
+  target_link_libraries(nekrs-bin PRIVATE ${PLUGIN_NAME})
+endforeach()
 
 add_executable(axhelm-bin src/bench/axHelm/main.cpp)
 set_target_properties(axhelm-bin PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs-bench-axhelm)

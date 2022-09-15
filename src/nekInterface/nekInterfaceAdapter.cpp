@@ -352,7 +352,7 @@ void set_usr_handles(const char* session_in,int verbose)
 #undef load_or_noop
 }
 
-void mkSIZE(int lx1, int lxd, int lelt, hlong lelg, int ldim, int lpmin, int ldimt, setupAide& options, char* SIZE)
+void mkSIZE(int lx1, int lxd, int lelt, int lelg, int ldim, int lpmin, int ldimt, setupAide& options, char* SIZE)
 {
   char line[BUFSIZ];
   const char *cache_dir = getenv("NEKRS_CACHE_DIR");
@@ -396,7 +396,7 @@ void mkSIZE(int lx1, int lxd, int lelt, hlong lelg, int ldim, int lpmin, int ldi
     else if(strstr(line, "parameter (lelt=") != NULL)
       sprintf(line, "      parameter (lelt=%d)\n", lelt);
     else if(strstr(line, "parameter (lelg=") != NULL)
-      sprintf(line, "      parameter (lelg=%d)\n", (int)lelg);
+      sprintf(line, "      parameter (lelg=%d)\n", lelg);
     else if(strstr(line, "parameter (ldim=") != NULL)
       sprintf(line, "      parameter (ldim=%d)\n", ldim);
     else if(strstr(line, "parameter (lpmin=") != NULL)
@@ -505,8 +505,8 @@ void buildNekInterface(int ldimt, int N, int np, setupAide& options)
       const int ndim = 3;
       re2::nelg(meshFile, nelgt, nelgv, MPI_COMM_NULL); 
 
-      int lelt = (int)(nelgt/np) + 3;
-      if(lelt > nelgt) lelt = (int)nelgt;
+      int lelt = (nelgt/np) + 3;
+      if(lelt > nelgt) lelt = nelgt;
       sprintf(buf,"%s/SIZE",cache_dir.c_str());
       mkSIZE(N + 1, 1, lelt, nelgt, ndim, np, ldimt, options, buf);
 

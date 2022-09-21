@@ -40,6 +40,7 @@ target_include_directories(UDF PRIVATE $ENV{NEKRS_UDF_INCLUDES} ${INCLUDE_DIRS})
 if(APPLE)
     target_link_libraries(UDF "-Wl,-undefined -Wl,dynamic_lookup")
 endif()
+target_link_libraries(UDF "$ENV{NEKRS_UDF_LIBS}")
 target_link_libraries(UDF "$ENV{NEKRS_UDF_LDFLAGS}")
 
 set_target_properties(UDF PROPERTIES LINKER_LANGUAGE CXX)

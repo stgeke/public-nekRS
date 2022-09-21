@@ -317,7 +317,7 @@ foreach(DIR ${plugins})
   ELSE()
       CONTINUE()
   ENDIF()
-  target_link_libraries(nekrs-bin PRIVATE ${PLUGIN_NAME})
+  set(UDF_LIBS "${UDF_LIBS} ${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${PLUGIN_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endforeach()
 
 add_executable(axhelm-bin src/bench/axHelm/main.cpp)

@@ -309,6 +309,7 @@ target_link_libraries(nekrs-bin PRIVATE nekrs-lib)
 # Optional nekRS plugins
 ###############################################################################
 file(GLOB plugins LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/plugins/*)
+set(PLUGINS_RPATH "")
 foreach(DIR ${plugins})
   get_filename_component(PLUGIN_NAME ${DIR} NAME)
   IF(IS_DIRECTORY ${DIR})
@@ -317,8 +318,12 @@ foreach(DIR ${plugins})
   ELSE()
       CONTINUE()
   ENDIF()
-  set(UDF_LIBS "${UDF_LIBS} ${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${PLUGIN_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  set(UDF_LIBS "${UDF_LIBS} ${CMAKE_INSTALL_PREFIX}/3rdParty/${PLUGIN_NAME}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${PLUGIN_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  set(PLUGINS_RPATH "${PLUGINS_RPATH};${CMAKE_INSTALL_PREFIX}/3rdParty/${PLUGIN_NAME}/lib")
+  set(UDF_INCLUDES "${UDF_INCLUDES};${CMAKE_INSTALL_PREFIX}/3rdParty/${PLUGIN_NAME}/include")
 endforeach()
+
+set_target_properties(nekrs-bin PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${PLUGINS_RPATH}")
 
 add_executable(axhelm-bin src/bench/axHelm/main.cpp)
 set_target_properties(axhelm-bin PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs-bench-axhelm)

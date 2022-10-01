@@ -101,6 +101,16 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   auto par = new inipp::Ini();	  
   parRead((void*) par, _setupFile + ".par", comm, options);
 
+  int nelgt, nelgv;
+  const std::string meshFile = options.getArgs("MESH FILE");
+  re2::nelg(meshFile, nelgt, nelgv, comm);
+  if (size > nelgv) {
+    if (rank == 0) {
+      std::cout << "ERROR: MPI tasks > number of elements!" << std::endl;
+    }
+    EXIT_AND_FINALIZE(EXIT_FAILURE);
+  }
+
   // precedence: cmd arg, par, env-var
   if(options.getArgs("THREAD MODEL").length() == 0) 
     options.setArgs("THREAD MODEL", getenv("NEKRS_OCCA_MODE_DEFAULT"));

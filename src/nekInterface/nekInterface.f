@@ -841,9 +841,9 @@ c      write(6,*) 'vel cbc_bmap: ', (cbc_bmap(i,1), i=1,NBID_TYPES)
             cb = cbc(ifc,iel,ifld) 
             if(cb.eq.'t  ') then
               bcID = 1
-            else if(cb.eq.'I  ') then
+            else if(cb.eq.'I  ' .or. cb.eq.'O  ') then
               bcID = 2
-            else if(cb.eq.'f  ' .or. cb.eq.'O  ') then
+            else if(cb.eq.'f  ') then
               bcID = 3
             else
               if(cb.ne.'E  ' .and. cb.ne.'P  ') ierr = 1

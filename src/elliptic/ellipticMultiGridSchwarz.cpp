@@ -33,6 +33,8 @@
 #include <string>
 #include <sstream>
 #include <exception>
+#include <array>
+
 #include "platform.hpp"
 
 struct ElementLengths

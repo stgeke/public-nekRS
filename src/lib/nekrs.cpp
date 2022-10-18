@@ -7,6 +7,7 @@
 #include "udf.hpp"
 #include "parReader.hpp"
 #include "configReader.hpp"
+#include "re2Reader.hpp"
 #include "timeStepper.hpp"
 #include "platform.hpp"
 #include "nrssys.hpp"

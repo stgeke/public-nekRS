@@ -295,7 +295,6 @@ c-----------------------------------------------------------------------
       call geom_reset(1)    ! recompute Jacobians, etc.
 
       call vrdsmsh          ! verify mesh topology
-      call mesh_metrics     ! print some metrics
 
       call setlog(.false.)  ! Initalize logical flags
 
@@ -307,6 +306,7 @@ c-----------------------------------------------------------------------
       call usrdat3
       if(nio.eq.0) write(6,'(A,/)') ' done :: usrdat3'
 
+c      call mesh_metrics
       call dofcnt
 
       p0thn = p0th
@@ -556,6 +556,8 @@ c-----------------------------------------------------------------------
       if (.not. ifgetu) getu = 0 
       if (.not. ifgetp) getp = 0
       if (.not. ifgett) gett = 0
+
+      call mesh_metrics ! print here because mesh might be different
 
       return
       end

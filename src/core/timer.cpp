@@ -365,7 +365,7 @@ void timer_t::printRunStat(int step)
 
   const double tMinSolveStep = query("minSolveStep", "DEVICE:MAX");
   const double tMaxSolveStep = query("maxSolveStep", "DEVICE:MAX");
-  const double flops = platform->flopCounter->get(platform->comm.mpiComm);
+  const double flops = platform->flopCounter->get(platform->comm.mpiComm)/platform->comm.mpiCommSize;
   bool printFlops = !platform->options.compareArgs("PRESSURE PRECONDITIONER", "SEMFEM");
 
   printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
@@ -376,7 +376,7 @@ void timer_t::printRunStat(int step)
   std::cout <<   "    min                 " << tMinSolveStep << "s\n";
   std::cout <<   "    max                 " << tMaxSolveStep << "s\n";
   if(printFlops)
-  std::cout <<   "    flops               " << flops << "\n";
+  std::cout <<   "    flops/rank             " << flops << "\n";
   }
   
   printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTime);

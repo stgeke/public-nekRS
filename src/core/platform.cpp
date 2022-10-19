@@ -94,41 +94,21 @@ platform_t::platform_t(setupAide& _options, MPI_Comm _commg, MPI_Comm _comm)
   kernelInfo["defines/" "dlong"] = dlongString;
   kernelInfo["defines/" "hlong"] = hlongString;
 
-  if(device.mode() == "CUDA" && !getenv("OCCA_CUDA_COMPILER_FLAGS")) {
-    kernelInfo["compiler_flags"] += " -O3 ";
-    kernelInfo["compiler_flags"] += "--ftz=true ";
-    kernelInfo["compiler_flags"] += "--prec-div=false ";
-    kernelInfo["compiler_flags"] += "--prec-sqrt=false ";
-    kernelInfo["compiler_flags"] += "--use_fast_math ";
-    kernelInfo["compiler_flags"] += "--fmad=true ";
-    kernelInfo["compiler_flags"] += " -lineinfo ";
-    //kernelInfo["compiler_flags"] += "-Xptxas -dlcm=ca";
+  if(device.mode() == "CUDA") {
   }
 
   if(device.mode() == "OpenCL") {
-    if(!getenv("OCCA_OPENCL_COMPILER_FLAGS")) {
-      kernelInfo["compiler_flags"] += " -cl-std=CL2.0 ";
-      kernelInfo["compiler_flags"] += " -cl-mad-enable ";
-      kernelInfo["compiler_flags"] += " -cl-no-signed-zeros ";
-      kernelInfo["compiler_flags"] += " -cl-unsafe-math-optimizations ";
-      kernelInfo["compiler_flags"] += " -cl-fast-relaxed-math ";
-    }
     kernelInfo["defines/" "hlong"] = "long";
   }
 
-  if(device.mode() == "HIP" && !getenv("OCCA_HIP_COMPILER_FLAGS")) {
+  if(device.mode() == "HIP") {
     warpSize = 64; // can be arch specific
-    kernelInfo["compiler_flags"] += " -O3 -g ";
-    kernelInfo["compiler_flags"] += " -ffp-contract=fast ";
-    kernelInfo["compiler_flags"] += " -funsafe-math-optimizations ";
-    kernelInfo["compiler_flags"] += " -ffast-math ";
   }
 
   serial = device.mode() == "Serial" ||
            device.mode() == "OpenMP";
 
-  if(serial && !getenv("OCCA_CXXFLAGS")) {
-    kernelInfo["compiler_flags"] += " -O3 -g -march=native -mtune=native ";
+  if(serial) {
   }
   
   const std::string extension = serial ? ".c" : ".okl";

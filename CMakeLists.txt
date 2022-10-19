@@ -40,16 +40,23 @@ set(NEK5000_PPLIST "PARRSB DPROCMAP" CACHE STRING
 set(NEKINTERFACEDIR "${CMAKE_CURRENT_SOURCE_DIR}/src/nekInterface/" CACHE PATH 
   "Directory for Nek5000 inteface source files")
 
-set(OCCA_CXX "g++" CACHE STRING "C++ compiler for OCCA JIT compile")
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64le")
-  set(OCCA_CXXFLAGS "-O3 -g -mcpu=native -mtune=native" CACHE STRING "C++ flags for OCCA JIT compile")
-else()
-  set(OCCA_CXXFLAGS "-O3 -g -march=native -mtune=native" CACHE STRING "C++ flags for OCCA JIT compile")
-endif()
+set(NEKRS_COMPILER_FLAGS "-O2 -g -march=native -mtune=native -ftree-vectorize" CACHE STRING "compiler flags")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO ${NEKRS_COMPILER_FLAGS})
+set(CMAKE_C_FLAGS_RELWITHDEBINFO ${NEKRS_COMPILER_FLAGS})
+set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO ${NEKRS_COMPILER_FLAGS})
 
-set(OCCA_CUDA_COMPILER_FLAGS "-O3 -lineinfo" CACHE STRING "CUDA flags for OCCA JIT compile")
-set(OCCA_HIP_COMPILER_FLAGS "-O3 -g -ffp-contract=fast" CACHE STRING "HIP flags for OCCA JIT compile")
-set(OCCA_OPENCL_COMPILER_FLAGS "-cl-std=CL2.0 -cl-mad-enable -cl-no-signed-zeros" CACHE STRING "OPENCL flags for OCCA JIT compile")
+set(OCCA_CXX "g++" CACHE STRING "C++ compiler for OCCA JIT compile")
+set(OCCA_CXXFLAGS "-O3 -g -march=native -mtune=native" CACHE STRING "C++ flags for OCCA JIT compile")
+set(OCCA_CUDA_COMPILER_FLAGS "-O3 -lineinfo --use_fast_math" CACHE STRING "CUDA flags for OCCA JIT compile")
+set(OCCA_HIP_COMPILER_FLAGS "-O3 -g -ffp-contract=fast -funsafe-math-optimizations -ffast-math -munsafe-fp-atomics" CACHE STRING "HIP flags for OCCA JIT compile")
+set(OCCA_OPENCL_COMPILER_FLAGS "-cl-std=CL2.0 -cl-unsafe-math-optimizations -cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros" CACHE STRING "OPENCL flags for OCCA JIT compile")
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64le")
+  string(REPLACE "-march" "-mcpu" OCCA_CXXFLAGS ${OCCA_CXXFLAGS})
+  string(REPLACE "-march" "-mcpu" CMAKE_Fortran_FLAGS_RELWITHDEBINFO ${CMAKE_Fortran_FLAGS_RELWITHDEBINFO})
+  string(REPLACE "-march" "-mcpu" CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+  string(REPLACE "-march" "-mcpu" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+endif()
 
 set(ENABLE_CUDA ON CACHE BOOL "Enable OCCA CUDA support")
 set(ENABLE_HIP ON CACHE BOOL "Enable OCCA HIP support")

@@ -6,6 +6,7 @@
 #include "printHeader.hpp"
 #include "udf.hpp"
 #include "parReader.hpp"
+#include "re2Reader.hpp"
 #include "configReader.hpp"
 #include "re2Reader.hpp"
 #include "timeStepper.hpp"

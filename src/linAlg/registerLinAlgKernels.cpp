@@ -44,6 +44,8 @@ void registerLinAlgKernels()
       {"sumMany", false},
       {"min", false},
       {"max", false},
+      {"amax", false},
+      {"amaxMany", false},
       {"norm2", true},
       {"norm2Many", true},
       {"norm1", true},

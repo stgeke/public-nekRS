@@ -201,6 +201,8 @@ void linAlg_t::setup()
     sumManyKernel = kernels.get("sumMany");
     minKernel = kernels.get("min");
     maxKernel = kernels.get("max");
+    amaxKernel = kernels.get("amax");
+    amaxManyKernel = kernels.get("amaxMany");
     norm2Kernel = kernels.get("norm2");
     norm2ManyKernel = kernels.get("norm2Many");
     norm1Kernel = kernels.get("norm1");
@@ -592,6 +594,70 @@ dfloat linAlg_t::max(const dlong N, occa::memory &o_a, MPI_Comm _comm)
   dfloat max = scratch[0];
   for (dlong n = 1; n < Nblock; ++n) {
     max = (scratch[n] > max) ? scratch[n] : max;
+  }
+
+  if (_comm != MPI_COMM_NULL)
+    MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_DFLOAT, MPI_MAX, _comm);
+
+  return max;
+}
+
+// ||o_a||_\infty
+dfloat linAlg_t::amax(const dlong N, occa::memory &o_a, MPI_Comm _comm)
+{
+  int Nblock = (N + blocksize - 1) / blocksize;
+  const size_t Nbytes = Nblock * sizeof(dfloat);
+  if (o_scratch.size() < Nbytes)
+    reallocScratch(Nbytes);
+
+  if (N > 1) {
+    amaxKernel(Nblock, N, o_a, o_scratch);
+
+    o_scratch.copyTo(scratch, Nbytes);
+  }
+  else {
+    o_a.copyTo(scratch, Nbytes);
+  }
+
+  dfloat max = scratch[0];
+  for (dlong n = 1; n < Nblock; ++n) {
+    max = (scratch[n] > max) ? scratch[n] : max;
+  }
+
+  if (_comm != MPI_COMM_NULL)
+    MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_DFLOAT, MPI_MAX, _comm);
+
+  return max;
+}
+
+dfloat linAlg_t::amaxMany(const dlong N,
+                          const dlong Nfields,
+                          const dlong fieldOffset,
+                          occa::memory &o_x,
+                          MPI_Comm _comm)
+{
+  int Nblock = (N + blocksize - 1) / blocksize;
+  const size_t Nbytes = Nblock * sizeof(dfloat);
+  if (o_scratch.size() < Nbytes)
+    reallocScratch(Nbytes);
+
+  dfloat max = 0;
+  if (N > 1 || Nfields > 1) {
+    amaxManyKernel(Nblock, N, Nfields, fieldOffset, o_x, o_scratch);
+    if (serial) {
+      max = *((dfloat *)o_scratch.ptr());
+    }
+    else {
+      o_scratch.copyTo(scratch, Nbytes);
+      for (dlong n = 0; n < Nblock; ++n) {
+        max = std::max(max, scratch[n]);
+      }
+    }
+  }
+  else {
+    dfloat x;
+    o_x.copyTo(&x, Nbytes);
+    max = std::abs(x);
   }
 
   if (_comm != MPI_COMM_NULL)

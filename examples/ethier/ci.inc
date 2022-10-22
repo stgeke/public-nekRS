@@ -207,6 +207,16 @@ dfloat norm1(dfloat const * const array, const int size, MPI_Comm comm)
   MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, comm);
   return norm;
 }
+
+dfloat amax(dfloat const * const array, const int size, MPI_Comm comm)
+{
+  dfloat norm = 0.0;
+  for(int i = 0 ; i < size; ++i)
+    norm = std::max(norm, std::abs(array[i]));
+  MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_MAX, comm);
+  return norm;
+}
+
 void ciTestLinAlg(const int N)
 {
   linAlg_t* linAlg = platform->linAlg;
@@ -254,6 +264,11 @@ void ciTestLinAlg(const int N)
       return linAlg->norm1(N, o_x, comm); 
     },
     norm1, "norm1");
+  evaluate_method(
+    [&](auto N, auto o_x, auto comm) { 
+      return linAlg->amax(N, o_x, comm); 
+    },
+    amax, "amax");
   free(x);
   o_x.free();
 }

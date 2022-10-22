@@ -487,6 +487,11 @@ int main(int argc, char** argv)
     nekrs::runStep(time, dt, tStep);
     time += dt;
 
+    if (nekrs::printInfoFreq()) {
+      if (tStep % nekrs::printInfoFreq() == 0)
+        nekrs::printInfo(time, tStep);
+    }
+
     if (outputStep) nekrs::outfld(time, tStep);
 
     if(nekrs::updateFileCheckFreq()) {
@@ -506,11 +511,6 @@ int main(int argc, char** argv)
     nekrs::updateTimer("elapsedStep", elapsedStep);
     nekrs::updateTimer("elapsedStepSum", elapsedStepSum);
     nekrs::updateTimer("elapsed", elapsedTime);
-
-    if(nekrs::printInfoFreq()) {
-      if (tStep % nekrs::printInfoFreq() == 0)
-        nekrs::printInfo(time, tStep);
-    }
 
     if(nekrs::runTimeStatFreq()) {
       if (tStep % nekrs::runTimeStatFreq() == 0 || lastStep)

@@ -73,7 +73,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[2] = 0.48E-05;
     expectedErr[3] = 0.295E-05;
     expectedErr[4] = 0.2465620E-05;
-    expectedErr[5] = 0.125E-05;
+    expectedErr[5] = 0.315E-05;
     expectedPIter = 6;
   }
   if(ciMode == 2)
@@ -83,7 +83,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[2] = 0.48E-05;
     expectedErr[3] = 0.295E-05;
     expectedErr[4] = 0.2465620E-05;
-    expectedErr[5] = 0.2443839E-05;
+    expectedErr[5] = 0.455E-06;
     expectedPIter = 7;
   }
   if(ciMode == 3)
@@ -93,7 +93,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[2] = 0.48E-05;
     expectedErr[3] = 0.295E-05;
     expectedErr[4] = 0.2465620E-05;
-    expectedErr[5] = 0.2443839E-05;
+    expectedErr[5] = 0.315E-05;
   }
   if(ciMode == 4)
   {
@@ -102,7 +102,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[2] = 0.48E-05;
     expectedErr[3] = 0.295E-05;
     expectedErr[4] = 0.2465620E-05;
-    expectedErr[5] = 0.2443839E-05;
+    expectedErr[5] = 0.315E-05;
   }
   if(ciMode == 5)
   {
@@ -111,7 +111,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[2] = 0.48E-05;
     expectedErr[3] = 0.295E-05;
     expectedErr[4] = 0.2465620E-05;
-    expectedErr[5] = 0.125E-05;
+    expectedErr[5] = 0.315E-05;
     expectedPIter = 6;
   }
   if(ciMode == 6)
@@ -121,7 +121,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[2] = 0.3E-05;
     expectedErr[3] = 0.21E-05;
     expectedErr[4] = 0.2465620E-05;
-    expectedErr[5] = 0.108E-05;
+    expectedErr[5] = 0.315E-05;
     expectedPIter = 6;
   }
 

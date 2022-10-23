@@ -567,6 +567,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->cds->o_prop.copyFrom(nrs->cds->prop);
   }
 
+  nrs->p0the = nrs->p0th[0];
+
   evaluateProperties(nrs, startTime);
   nrs->o_prop.copyTo(nrs->prop);
   if (nrs->Nscalar)

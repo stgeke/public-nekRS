@@ -298,6 +298,14 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     platform->timer.toc("makef");
   }
 
+  // extrapolate p0th
+  if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
+    nrs->p0the = 0.0;
+    for (int ext = 0; ext < nrs->nEXT; ++ext) {
+      nrs->p0the += nrs->coeffEXT[ext] * nrs->p0th[ext];
+    }
+  }
+
   if (movingMesh) {
     mesh_t *mesh = nrs->meshV;
     if (nrs->cht)
@@ -381,6 +389,10 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
   nrs->dt[2] = nrs->dt[1];
   nrs->dt[1] = nrs->dt[0];
+
+  if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
+    nrs->p0the = nrs->p0th[0];
+  }
 }
 
 void coeffs(nrs_t *nrs, double dt, int tstep) {

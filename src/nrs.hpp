@@ -58,6 +58,7 @@ struct nrs_t {
   dfloat CFL, unitTimeCFL;
 
   dfloat p0th[3] = {0.0, 0.0, 0.0};
+  dfloat p0the = 0.0;
   dfloat dp0thdt;
 
   int nEXT;

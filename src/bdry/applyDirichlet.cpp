@@ -74,7 +74,7 @@ void applyDirichlet(nrs_t *nrs, double time)
   if (nrs->Nscalar) {
     cds_t *cds = nrs->cds;
     for (int is = 0; is < cds->NSfields; is++) {
-      if (!cds->compute[is])
+      if (!cds->compute[is] || !cds->solver[is]->Nmasked)
         continue;
       mesh_t *mesh = cds->mesh[0];
       ;

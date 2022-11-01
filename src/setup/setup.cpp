@@ -111,6 +111,56 @@ std::vector<int> determineMGLevels(std::string section)
   return mg_level_lookup.at(N);
 }
 
+void printICMinMax(nrs_t *nrs)
+{
+  if(platform->comm.mpiRank == 0) 
+    printf("================= INITITAL CONDITION ====================\n");
+
+  {
+    auto mesh = nrs->meshV;
+    auto o_ux = nrs->o_U + 0*nrs->fieldOffset*sizeof(dfloat);
+    auto o_uy = nrs->o_U + 1*nrs->fieldOffset*sizeof(dfloat);
+    auto o_uz = nrs->o_U + 2*nrs->fieldOffset*sizeof(dfloat);
+    const auto uxMin = platform->linAlg->min(mesh->Nlocal, o_ux, platform->comm.mpiComm);
+    const auto uyMin = platform->linAlg->min(mesh->Nlocal, o_uy, platform->comm.mpiComm);
+    const auto uzMin = platform->linAlg->min(mesh->Nlocal, o_uz, platform->comm.mpiComm);
+    const auto uxMax = platform->linAlg->max(mesh->Nlocal, o_ux, platform->comm.mpiComm);
+    const auto uyMax = platform->linAlg->max(mesh->Nlocal, o_uy, platform->comm.mpiComm);
+    const auto uzMax = platform->linAlg->max(mesh->Nlocal, o_uz, platform->comm.mpiComm);
+    if(platform->comm.mpiRank == 0) 
+      printf("U min/max: %g %g %g %g %g %g\n", uxMin, uxMax, uyMin, uyMax, uzMin, uzMax);
+  }
+
+  {
+    auto mesh = nrs->meshV;
+    const auto prMin = platform->linAlg->min(mesh->Nlocal, nrs->o_P, platform->comm.mpiComm);
+    const auto prMax = platform->linAlg->max(mesh->Nlocal, nrs->o_P, platform->comm.mpiComm);
+    if(platform->comm.mpiRank == 0) 
+      printf("P min/max: %g %g\n", prMin, prMax);
+  }
+
+  if (nrs->Nscalar) {
+    auto cds = nrs->cds;
+    if(platform->comm.mpiRank == 0) 
+      printf("S min/max:");  
+    for (int is = 0; is < cds->NSfields; is++) {
+      if (!cds->compute[is])
+        continue;
+
+      mesh_t *mesh;
+      (is) ? mesh = cds->meshV : mesh = cds->mesh[0]; // only first scalar can be a CHT mesh
+
+      auto o_si = nrs->cds->o_S + nrs->cds->fieldOffset[is]; 
+      const auto siMin = platform->linAlg->min(mesh->Nlocal, o_si, platform->comm.mpiComm);
+      const auto siMax = platform->linAlg->max(mesh->Nlocal, o_si, platform->comm.mpiComm);
+      if (platform->comm.mpiRank == 0) 
+        printf(" %g %g", siMin, siMax);
+    }
+    if(platform->comm.mpiRank == 0) 
+      printf("\n");  
+  }
+}
+
 void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 {
   {
@@ -575,6 +625,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->cds->o_prop.copyTo(nrs->cds->prop);
 
   nek::ocopyToNek(startTime, 0);
+
+  printICMinMax(nrs);
 
   // setup elliptic solvers
 

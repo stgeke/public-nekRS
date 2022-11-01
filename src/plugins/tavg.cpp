@@ -181,6 +181,8 @@ void tavg::setup(nrs_t* nrs_)
     cds_t* cds = nrs->cds;
     o_Savg = platform->device.malloc(cds->fieldOffsetSum,  sizeof(dfloat));
     o_Srms = platform->device.malloc(cds->fieldOffsetSum,  sizeof(dfloat));
+    platform->linAlg->fill(cds->fieldOffsetSum, 0.0, o_Savg);
+    platform->linAlg->fill(nrs->fieldOffset, 0.0, o_Srms);
   }
 
   setupCalled = 1;

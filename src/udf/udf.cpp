@@ -79,6 +79,7 @@ void convertSingleSourceUdf(const std::string& udfFileCache,
   std::ofstream udff(udfFileCache, std::ios::trunc);
   udff << std::regex_replace(buffer.str(), rgx, "");
   udff.close();
+  fileSync(udfFileCache.c_str());
 
   std::ofstream df(oudfFileCache, std::ios::trunc);
   std::smatch match;
@@ -178,6 +179,18 @@ void udfBuild(const char* udfFile, setupAide& options)
         return EXIT_FAILURE;
       }
 
+      if(fileExists(oudfFile.c_str())) {
+        std::stringstream buffer;
+        std::ifstream udff(udfFile);
+        buffer << udff.rdbuf();
+        udff.close();
+        if(buffer.str().find("@oklBegin") != std::string::npos) {
+          if(platform->comm.mpiRank == 0) 
+            printf("ERROR: udf with an okl section and a separate oudf is not supported!\n");
+          return EXIT_FAILURE;  
+        }
+      } 
+
       char cmd[10*BUFSIZ];
       if(platform->comm.mpiRank == 0) printf("building udf ... \n"); fflush(stdout);
 
@@ -233,10 +246,11 @@ void udfBuild(const char* udfFile, setupAide& options)
         fileSync(udfLib.c_str());
       }
 
-      if(fileExists(oudfFile.c_str()))
+      if(fileExists(oudfFile.c_str())) {
         // just copy, occa will only recompile if hash has changed
         copyFile(oudfFile.c_str(), oudfFileCache.c_str());
-
+      } 
+      
       adjustOudf(oudfFileCache);
 
       if(platform->comm.mpiRank == 0) printf("done (%gs)\n", MPI_Wtime() - tStart);

@@ -14,7 +14,7 @@
 // private members
 namespace
 {
-static ogs_t* ogs;
+static oogs_t* ogs;
 static nrs_t* nrs;
 
 static occa::memory o_wrk;
@@ -73,14 +73,7 @@ void velRecycling::copy()
   setBCVectorValueKernel(mesh->Nelements, zero, bID, nrs->fieldOffset,
                          o_wrk, mesh->o_vmapM, mesh->o_EToB);
 
-  ogsGatherScatterMany(o_wrk, nrs->NVfields, nrs->fieldOffset,
-                       ogsDfloat, ogsAdd, ogs);
-
-/*
-   for(int k=0;k<nrs->dim;++k)
-    ogsGatherScatter(o_wrk+k*nrs->fieldOffset*sizeof(dfloat),
-                     ogsDfloat, ogsAdd, ogs);
- */
+  oogs::startFinish(o_wrk, nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
 
   // rescale
   getBCFluxKernel(mesh->Nelements, bID, nrs->fieldOffset, o_wrk,
@@ -132,7 +125,9 @@ void velRecycling::setup(nrs_t* nrs_, occa::memory o_wrk_, const hlong eOffset, 
     }
   }
 
-  ogs = ogsSetup(Ntotal, ids, platform->comm.mpiComm, 1, platform->device.occaDevice());
+  oogs::setup(Ntotal, ids, nrs->NVfields, nrs->fieldOffset, ogsDfloat, platform->comm.mpiComm, 
+              0, platform->device.occaDevice(), NULL, OOGS_AUTO);
+
   free(ids);
 
   const int NfpTotal = mesh->Nelements * mesh->Nfaces * mesh->Nfp;

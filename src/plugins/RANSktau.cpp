@@ -176,12 +176,12 @@ void RANSktau::updateSourceTerms()
                nrs->o_U,
                o_SijOij);
 
-  ogsGatherScatterMany(o_SijOij,
-                       NSOfields,
-                       nrs->fieldOffset,
-                       ogsDfloat,
-                       ogsAdd,
-                       mesh->ogs);
+  oogs::startFinish(o_SijOij, 
+                    NSOfields,
+                    nrs->fieldOffset,
+                    ogsDfloat,
+                    ogsAdd,
+                    nrs->gsh);
 
   platform->linAlg->axmyMany(
     mesh->Nlocal,

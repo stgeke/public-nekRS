@@ -880,6 +880,7 @@ void parseInitialGuess(const int rank, setupAide &options,
   const std::vector<std::string> validValues = {
     {"projectionaconj"},
     {"projection"},
+    {"extrapolation"},
     {"previous"},
     // booleans
     {"yes"},
@@ -892,6 +893,11 @@ void parseInitialGuess(const int rank, setupAide &options,
   };
 
   if (par->extract(parScope, "initialguess", initialGuess)) {
+    if (initialGuess.find("extrapolation") != std::string::npos) {
+      options.setArgs(parSectionName + "INITIAL GUESS", "EXTRAPOLATION");
+      return;
+    }
+
     const int defaultNumVectors = parScope == "pressure" ? 10 : 5;
     options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", std::to_string(defaultNumVectors));
     options.setArgs(parSectionName + "RESIDUAL PROJECTION START", "5");

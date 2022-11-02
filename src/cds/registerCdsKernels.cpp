@@ -89,6 +89,11 @@ void registerCdsKernels(occa::properties kernelInfoBC) {
     platform->kernels.add(
         section + kernelName, fileName, meshProps);
 
+    kernelName = "maskCopy2";
+    fileName = oklpath + "core/" + kernelName + ".okl";
+    platform->kernels.add(
+        section + kernelName, fileName, meshProps);
+
     {
       occa::properties prop = kernelInfo;
       const int movingMesh =

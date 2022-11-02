@@ -361,6 +361,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     const int nAB = std::max(nrs->nEXT, mesh->nAB);
     mesh->U = (dfloat *)calloc(nrs->NVfields * nrs->fieldOffset * nAB, sizeof(dfloat));
     mesh->o_U = platform->device.malloc((nrs->NVfields * nAB * sizeof(dfloat)) * nrs->fieldOffset, mesh->U);
+    mesh->o_Ue = platform->device.malloc((nrs->NVfields * nAB * sizeof(dfloat)) * nrs->fieldOffset, mesh->U);
     if (nrs->Nsubsteps)
       mesh->o_divU = platform->device.malloc(nrs->fieldOffset * nAB, sizeof(dfloat));
   }
@@ -574,6 +575,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     kernelName = "maskCopy";
     nrs->maskCopyKernel = platform->kernels.get(section + kernelName);
+
+    kernelName = "maskCopy2";
+    nrs->maskCopy2Kernel = platform->kernels.get(section + kernelName);
+
     kernelName = "mask";
     nrs->maskKernel = platform->kernels.get(section + kernelName);
 

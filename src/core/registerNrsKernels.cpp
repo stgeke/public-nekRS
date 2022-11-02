@@ -281,6 +281,11 @@ void registerNrsKernels(occa::properties kernelInfoBC)
     platform->kernels.add(
         section + kernelName, fileName, kernelInfo);
 
+    kernelName = "maskCopy2";
+    fileName = oklpath + "core/" + kernelName + ".okl";
+    platform->kernels.add(
+        section + kernelName, fileName, kernelInfo);
+
     kernelName = "mask";
     fileName = oklpath + "core/" + kernelName + ".okl";
     platform->kernels.add(

@@ -204,6 +204,17 @@ void extrapolate(nrs_t *nrs)
         cds->o_coeffEXT,
         cds->o_S,
         cds->o_Se);
+
+  if (platform->options.compareArgs("MOVING MESH", "TRUE")) {
+    if(nrs->cht) mesh = nrs->cds->mesh[0]; 
+    nrs->extrapolateKernel(mesh->Nelements,
+        nrs->NVfields,
+        nrs->nEXT,
+        nrs->fieldOffset,
+        nrs->o_coeffEXT,
+        mesh->o_U,
+        mesh->o_Ue);
+  }
 }
 
 void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
@@ -930,7 +941,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
     }
 
     if (nrs->timeStepConverged && printStepInfo)
-      printf("  elapsedStep= %.2es  elapsedStepSum= %.5es", elapsedStep, elapsedStepSum);
+      printf("  elapsedStep= %.2es  elapsedStepSum= %.5es\n", elapsedStep, elapsedStepSum);
 
   }
 

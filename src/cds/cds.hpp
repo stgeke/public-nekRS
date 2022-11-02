@@ -114,6 +114,7 @@ struct cds_t
   occa::kernel setEllipticCoeffKernel;
 
   occa::kernel maskCopyKernel;
+  occa::kernel maskCopy2Kernel;
 
   occa::properties* kernelInfo;
 };

@@ -169,6 +169,7 @@ struct nrs_t {
 
   occa::kernel curlKernel;
   occa::kernel maskCopyKernel;
+  occa::kernel maskCopy2Kernel;
   occa::kernel maskKernel;
 
   occa::memory o_zeroNormalMaskVelocity;

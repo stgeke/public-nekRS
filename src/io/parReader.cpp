@@ -414,12 +414,14 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
 
       const auto meanVelocityStr = parseValueForKey(s, "meanvelocity");
       if(!meanVelocityStr.empty()){
+        flowRateSet = true;
         options.setArgs("FLOW RATE", meanVelocityStr);
         options.setArgs("CONSTANT FLOW RATE TYPE", "BULK");
       }
 
       const auto meanVolumetricFlowStr = parseValueForKey(s, "meanvolumetricflow");
       if(!meanVolumetricFlowStr.empty()){
+        flowRateSet = true;
         options.setArgs("FLOW RATE", meanVolumetricFlowStr);
         options.setArgs("CONSTANT FLOW RATE TYPE", "VOLUMETRIC");
       }

@@ -895,6 +895,8 @@ void parseInitialGuess(const int rank, setupAide &options,
   if (par->extract(parScope, "initialguess", initialGuess)) {
     if (initialGuess.find("extrapolation") != std::string::npos) {
       options.setArgs(parSectionName + "INITIAL GUESS", "EXTRAPOLATION");
+      if (parScope == "pressure")
+        append_error("ERROR: initialGuess = extrapolation not supported for pressure!\n");
       return;
     }
 

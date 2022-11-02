@@ -35,6 +35,8 @@
                                          @restrict const dlong*  vmapM,
                                          @restrict const int*  EToBM,
                                          @restrict const int*  EToB,
+                                         @restrict const dfloat*  meshRho,
+                                         @restrict const dfloat*  meshMue,
                                          @restrict const dfloat*  work,
                                          @restrict const dfloat*  U,
                                          @restrict dfloat*  W)
@@ -101,6 +103,9 @@
             bc.u = U[idM + 0 * offset];
             bc.v = U[idM + 1 * offset];
             bc.w = U[idM + 2 * offset];
+
+            bc.trans = meshRho[idM];
+            bc.diff = meshMue[idM];
 
             bc.wrk = work;
             bc.fieldOffset = offset;

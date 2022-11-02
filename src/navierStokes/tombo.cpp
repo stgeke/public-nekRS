@@ -181,6 +181,8 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
                                mesh->o_x,
                                mesh->o_y,
                                mesh->o_z,
+                               nrs->o_rho,
+                               nrs->o_mue,
                                nrs->o_usrwrk,
                                nrs->o_U,
                                platform->o_mempool.slice0);

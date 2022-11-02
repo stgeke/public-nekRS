@@ -24,5 +24,8 @@ struct bcData
 
   dfloat meshu, meshv, meshw;
 
+  // properties
+  dfloat trans, diff;
+
   @globalPtr const dfloat* wrk;
 };

@@ -35,6 +35,8 @@
                                          @restrict const dlong*  vmapM,
                                          @restrict const int*  EToBM,
                                          @restrict const int*  EToB,
+                                         @restrict const dfloat*  rho,
+                                         @restrict const dfloat*  mue,
                                          @restrict const dfloat*  W,
                                          @restrict const dfloat*  U,
                                          @restrict dfloat*  PI)
@@ -65,6 +67,9 @@
           bc.v = U[idM + 1 * offset];
           bc.w = U[idM + 2 * offset];
           bc.wrk = W;
+
+          bc.trans = rho[idM];
+          bc.diff = mue[idM];
 
           bc.p = 0.f;
           pressureDirichletConditions(&bc);

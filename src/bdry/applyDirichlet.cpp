@@ -84,6 +84,9 @@ void applyDirichlet(nrs_t *nrs, double time)
         gsh = cds->gsh;
       }
 
+      auto o_diff_i = cds->o_diff + cds->fieldOffsetScan[is] * sizeof(dfloat);
+      auto o_rho_i = cds->o_rho + cds->fieldOffsetScan[is] * sizeof(dfloat);
+
       platform->linAlg->fill(cds->fieldOffset[is],
                              -1.0 * std::numeric_limits<dfloat>::max(),
                              platform->o_mempool.slice2);
@@ -99,6 +102,9 @@ void applyDirichlet(nrs_t *nrs, double time)
                                mesh->o_vmapM,
                                mesh->o_EToB,
                                cds->o_EToB[is],
+                               cds->o_U,
+                               o_diff_i,
+                               o_rho_i,
                                *(cds->o_usrwrk),
                                platform->o_mempool.slice2);
 
@@ -142,6 +148,8 @@ void applyDirichlet(nrs_t *nrs, double time)
                                      mesh->o_vmapM,
                                      mesh->o_EToB,
                                      nrs->o_EToB,
+                                     nrs->o_rho,
+                                     nrs->o_mue,
                                      nrs->o_usrwrk,
                                      nrs->o_U,
                                      platform->o_mempool.slice6);
@@ -157,6 +165,8 @@ void applyDirichlet(nrs_t *nrs, double time)
                                      mesh->o_vmapM,
                                      mesh->o_EToB,
                                      nrs->o_EToB,
+                                     nrs->o_rho,
+                                     nrs->o_mue,
                                      nrs->o_usrwrk,
                                      nrs->o_U,
                                      platform->o_mempool.slice7);
@@ -236,6 +246,8 @@ void applyDirichlet(nrs_t *nrs, double time)
                                           mesh->o_vmapM,
                                           mesh->o_EToB,
                                           nrs->o_EToBMeshVelocity,
+                                          nrs->o_meshRho,
+                                          nrs->o_meshMue,
                                           nrs->o_usrwrk,
                                           nrs->o_U,
                                           platform->o_mempool.slice3);

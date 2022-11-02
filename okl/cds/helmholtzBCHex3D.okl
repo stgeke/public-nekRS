@@ -39,9 +39,14 @@
     bc.t2x  = sgeo[sk * p_Nsgeo + p_T2XID];                 \
     bc.t2y  = sgeo[sk * p_Nsgeo + p_T2YID];                 \
     bc.t2z  = sgeo[sk * p_Nsgeo + p_T2ZID];                 \
+    bc.u   = U[bc.idM + 0 * offset];                        \
+    bc.v   = U[bc.idM + 1 * offset];                        \
+    bc.w   = U[bc.idM + 2 * offset];                        \
     bc.x   = x[bc.idM];                                     \
     bc.y   = y[bc.idM];                                     \
     bc.z   = z[bc.idM];                                     \
+    bc.trans = rho[bc.idM];                                 \
+    bc.diff = diff[bc.idM];                                 \
     bc.fieldOffset = offset;                                \
     bc.s = S[bc.idM];                                       \
     bc.wrk = W;                                             \
@@ -68,8 +73,11 @@
                                  @restrict const dfloat*  x,
                                  @restrict const dfloat*  y,
                                  @restrict const dfloat*  z,
+                                 @restrict const dfloat*  U,
                                  @restrict const dfloat*  S,
                                  @restrict const int*  EToB,
+                                 @restrict const dfloat*  diff,
+                                 @restrict const dfloat*  rho,
                                  @restrict const dfloat*  W,
                                  @restrict dfloat*  rhsU)
 {

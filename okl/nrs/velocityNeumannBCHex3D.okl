@@ -46,6 +46,8 @@
     bc.u  = U[bc.idM + 0 * offset];                                      \
     bc.v  = U[bc.idM + 1 * offset];                                      \
     bc.w  = U[bc.idM + 2 * offset];                                      \
+    bc.trans = rho[bc.idM];                                              \
+    bc.diff  = mue[bc.idM];                                              \
     bc.wrk = W;                                                          \
     dfloat TRx = 0;                                                      \
     dfloat TRy = 0;                                                      \
@@ -81,6 +83,8 @@
                                        @restrict const dfloat*  x,
                                        @restrict const dfloat*  y,
                                        @restrict const dfloat*  z,
+                                       @restrict const dfloat*  rho,
+                                       @restrict const dfloat*  mue,
                                        @restrict const dfloat*  W,
                                        @restrict const dfloat*  U,
                                        @restrict dfloat*  rhsU)

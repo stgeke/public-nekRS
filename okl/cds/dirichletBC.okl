@@ -37,6 +37,9 @@
                             @restrict const dlong*  vmapM,
                             @restrict const int*  EToBM,
                             @restrict const int*  EToB,
+                            @restrict const dfloat*  U,
+                            @restrict const dfloat*  diff,
+                            @restrict const dfloat*  rho,
                             @restrict const dfloat*  W,
                             @restrict dfloat*  S)
 {
@@ -58,9 +61,15 @@
           bc.y  = y[idM];
           bc.z  = z[idM];
           bc.s  = S[idM];
+          bc.u  = U[idM + 0 * offset];
+          bc.v  = U[idM + 1 * offset];
+          bc.w  = U[idM + 2 * offset];
           bc.wrk = W;
           bc.fieldOffset = offset;
           bc.scalarId = scalarId;
+
+          bc.diff = diff[idM];
+          bc.trans = rho[idM];
 
           bc.nx = sgeo[sk * p_Nsgeo + p_NXID];
           bc.ny = sgeo[sk * p_Nsgeo + p_NYID];

@@ -36,6 +36,8 @@
                                          @restrict const dlong*  vmapM,
                                          @restrict const int*  EToBM,
                                          @restrict const int*  EToB,
+                                         @restrict const dfloat*  rho,
+                                         @restrict const dfloat*  mue,
                                          @restrict const dfloat*  W,
                                          @restrict const dfloat*  U,
                                          @restrict dfloat*  UH)
@@ -96,6 +98,9 @@
           bc.u = U[idM + 0 * offset];
           bc.v = U[idM + 1 * offset];
           bc.w = U[idM + 2 * offset];
+
+          bc.trans = rho[idM];
+          bc.diff = mue[idM];
 
           bc.wrk = W;
           bc.fieldOffset = offset;

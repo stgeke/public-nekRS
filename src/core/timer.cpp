@@ -376,7 +376,7 @@ void timer_t::printRunStat(int step)
   std::cout <<   "    min                 " << tMinSolveStep << "s\n";
   std::cout <<   "    max                 " << tMaxSolveStep << "s\n";
   if(printFlops)
-  std::cout <<   "    flops/rank             " << flops << "\n";
+  std::cout <<   "    flops/rank          " << flops << "\n";
   }
   
   printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTime);

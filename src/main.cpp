@@ -492,6 +492,11 @@ int main(int argc, char** argv)
         nekrs::processUpdFile();
     }
 
+    if (nekrs::printInfoFreq()) {
+      if (tStep % nekrs::printInfoFreq() == 0)
+        nekrs::printInfo(time, tStep, false, true);
+    }
+
     if (outputStep) nekrs::outfld(time, tStep);
 
     MPI_Barrier(comm);
@@ -509,7 +514,7 @@ int main(int argc, char** argv)
 
     if (nekrs::printInfoFreq()) {
       if (tStep % nekrs::printInfoFreq() == 0)
-        nekrs::printInfo(time, tStep);
+        nekrs::printInfo(time, tStep, true, false);
     }
 
     if(nekrs::runTimeStatFreq()) {

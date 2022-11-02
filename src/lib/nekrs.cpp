@@ -460,7 +460,10 @@ void processUpdFile()
   }
 }
 
-void printInfo(double time, int tstep) { timeStepper::printInfo(nrs, time, tstep); }
+void printInfo(double time, int tstep, bool printStepInfo, bool printVerboseInfo) 
+{ 
+  timeStepper::printInfo(nrs, time, tstep, printStepInfo, printVerboseInfo);
+}
 
 void verboseInfo(bool enabled)
 {

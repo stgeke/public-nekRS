@@ -382,7 +382,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     platform->timer.toc("udfExecuteStep");
 
     if (!nrs->timeStepConverged)
-      printInfo(nrs, timeNew, tstep);
+      printInfo(nrs, timeNew, tstep, false, true);
 
     platform->device.finish();
   } while (!nrs->timeStepConverged);
@@ -751,7 +751,7 @@ void fluidSolve(
 
 }
 
-void printInfo(nrs_t *nrs, dfloat time, int tstep)
+void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool printVerboseInfo)
 {
   cds_t *cds = nrs->cds;
 
@@ -765,7 +765,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep)
     computeDivUErr(nrs, divUErrVolAvg, divUErrL2);
   }
   if (platform->comm.mpiRank == 0) {
-    if (verboseInfo){
+    if (verboseInfo && printVerboseInfo){
       if (nrs->flow) {
         elliptic_t *solver = nrs->pSolver;
         if(solver->solutionProjection){
@@ -905,11 +905,11 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep)
     }
 
     if(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")){
-      ConstantFlowRate::printInfo(nrs->meshV, verboseInfo);
+      ConstantFlowRate::printInfo(nrs->meshV, verboseInfo && printVerboseInfo);
     }
 
-
-    printf("step= %d  t= %.8e  dt=%.1e  C= %.2f", tstep, time, nrs->dt[0], cfl);
+    if(printStepInfo)
+      printf("step= %d  t= %.8e  dt=%.1e  C= %.2f", tstep, time, nrs->dt[0], cfl);
 
     if (!verboseInfo) {
       if (nrs->flow) {
@@ -929,10 +929,9 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep)
         if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
     }
 
-    if (nrs->timeStepConverged)
+    if (nrs->timeStepConverged && printStepInfo)
       printf("  elapsedStep= %.2es  elapsedStepSum= %.5es", elapsedStep, elapsedStepSum);
 
-    printf("\n");
   }
 
   bool largeCFLCheck = (cfl > 30) && numberActiveFields(nrs);

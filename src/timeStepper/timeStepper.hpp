@@ -21,7 +21,7 @@ occa::memory scalarStrongSubCycleMovingMesh(cds_t *cds, int nEXT, dfloat time,
 occa::memory scalarStrongSubCycle(cds_t *cds, int nEXT, dfloat time, int is,
                                   occa::memory o_U, occa::memory o_S);
 void scalarSolve(nrs_t *nrs, dfloat time, occa::memory o_S, int stage);
-void printInfo(nrs_t *nrs, dfloat time, int tstep);
+void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool printVerboseInfo);
 void computeDivUErr(nrs_t* nrs, dfloat& divUErrL1, dfloat& divUErrL2);
 
 }

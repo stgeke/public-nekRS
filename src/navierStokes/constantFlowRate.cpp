@@ -667,7 +667,7 @@ void printInfo(mesh_t* mesh, bool verboseInfo)
     err = std::abs(userSpecifiedFlowRate - finalFlowRate);
   }
   if(verboseInfo) 
-    printf("  flowRate : %s0 %.2e  %s %.2e  err %.2e  scale %.2e\n",
+    printf("flowRate : %s0 %.2e  %s %.2e  err %.2e  scale %.2e\n",
       flowRateType.c_str(), currentRate, flowRateType.c_str(), finalFlowRate, err, scale);
 }
 

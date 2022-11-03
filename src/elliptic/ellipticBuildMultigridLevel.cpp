@@ -103,10 +103,6 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
       }
 
       {
-        const std::string kernelSuffix = gen_suffix(elliptic, dfloatString);
-        elliptic->AxKernel = platform->kernels.get(poissonPrefix + kernelName + kernelSuffix);
-      }
-      {
         const std::string kernelSuffix = gen_suffix(elliptic, pfloatString);
         elliptic->AxPfloatKernel =
           platform->kernels.get(poissonPrefix + kernelName + kernelSuffix);

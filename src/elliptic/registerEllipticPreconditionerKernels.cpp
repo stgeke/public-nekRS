@@ -31,52 +31,46 @@ void registerAxKernels(const std::string& section, int N, int poissonEquation)
   const bool serial = platform->serial;
   const std::string fileNameExtension = (serial) ? ".c" : ".okl";
   const std::string poissonPrefix = poissonEquation ? "poisson-" : "";
-  {
-    int nelgt, nelgv;
-    const std::string meshFile = platform->options.getArgs("MESH FILE");
-    re2::nelg(meshFile, nelgt, nelgv, platform->comm.mpiComm);
-    const int NelemBenchmark = nelgv/platform->comm.mpiCommSize;
 
-    occa::properties AxKernelInfo = kernelInfo;
-    const auto Nq = N+1;
-    for(auto&& coeffField : {true,false}){
-      for(auto&& floatString : {std::string(dfloatString), std::string(pfloatString)}){
+  int nelgt, nelgv;
+  const std::string meshFile = platform->options.getArgs("MESH FILE");
+  re2::nelg(meshFile, nelgt, nelgv, platform->comm.mpiComm);
+  const int NelemBenchmark = nelgv/platform->comm.mpiCommSize;
 
-        dlong wordSize = 8;
-        if(floatString.find("float") != std::string::npos){
-          wordSize = 4;
-        }
+  occa::properties AxKernelInfo = kernelInfo;
+  const auto Nq = N+1;
+  for(auto&& coeffField : {true,false}){
+    const auto floatString = std::string(pfloatString);
+    const auto wordSize = sizeof(pfloat);
 
-        bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
-        const int verbosity = verbose ? 2 : 1;
-        const std::string kernelSuffix = gen_suffix(floatString.c_str());
-        auto axKernel = benchmarkAx(NelemBenchmark,
-                                    Nq,
-                                    Nq - 1,
-                                    !coeffField,
-                                    poissonEquation,
-                                    false,
-                                    wordSize,
-                                    Nfields,
-                                    false, // no stress formulation in preconditioner
-                                    verbosity,
-                                    elliptic_t::targetTimeBenchmark,
-                                    false,
-                                    kernelSuffix);
+    bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
+    const int verbosity = verbose ? 2 : 1;
+    const std::string kernelSuffix = gen_suffix(floatString.c_str());
+    auto axKernel = benchmarkAx(NelemBenchmark,
+                                Nq,
+                                Nq - 1,
+                                !coeffField,
+                                poissonEquation,
+                                false,
+                                wordSize,
+                                Nfields,
+                                false, // no stress formulation in preconditioner
+                                verbosity,
+                                elliptic_t::targetTimeBenchmark,
+                                false,
+                                kernelSuffix);
 
-        const std::string suffix = coeffField ? "CoeffHex3D" : "Hex3D";
+    const std::string suffix = coeffField ? "CoeffHex3D" : "Hex3D";
 
-        if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR"))
-          kernelName = "ellipticPartialAxTrilinear" + suffix;
-        else
-          kernelName = "ellipticPartialAx" + suffix;
+    if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR"))
+      kernelName = "ellipticPartialAxTrilinear" + suffix;
+    else
+      kernelName = "ellipticPartialAx" + suffix;
 
-        fileName = oklpath + kernelName + fileNameExtension;
+    fileName = oklpath + kernelName + fileNameExtension;
 
-        platform->kernels.add(poissonPrefix + kernelName + kernelSuffix,
-          axKernel);
-      }
-    }
+    platform->kernels.add(poissonPrefix + kernelName + kernelSuffix,
+      axKernel);
   }
 }
 

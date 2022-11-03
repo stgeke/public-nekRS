@@ -185,7 +185,8 @@ struct nrs_t {
 static std::string to_string_f(double a)
 {
   std::stringstream s;
-  s << std::scientific << a;
+  constexpr auto maxPrecision{std::numeric_limits<double>::digits10 + 1};
+  s << std::setprecision(maxPrecision) << std::scientific << a;
   return s.str();
 }
 

@@ -169,6 +169,8 @@ c-----------------------------------------------------------------------
       call setupcomm(comm_in,newcomm,newcommg,path_in,session_in)
       call iniproc()
 
+      call usrdat0
+
       istep  = 0
       call initdim ! Initialize / set default values.
       call initdat
@@ -241,8 +243,6 @@ c-----------------------------------------------------------------------
       endif
 
       call bcastParam
-
-      call usrdat0
 
       call chkParam
       call mapelpr 

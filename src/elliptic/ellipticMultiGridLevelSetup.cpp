@@ -161,9 +161,9 @@ void MGLevel::setupSmoother(elliptic_t* ellipticBase)
 
   std::string schedule = options.getArgs("MULTIGRID SCHEDULE");
   if (!schedule.empty()) {
-    auto scheduleAndError = parseMultigridSchedule(schedule, options, DownLegChebyshevDegree);
-    UpLegChebyshevDegree = scheduleAndError.first[{degree, true}];
-    DownLegChebyshevDegree = scheduleAndError.first[{degree, false}];
+    auto [scheduleMap, errorString] = parseMultigridSchedule(schedule, options, DownLegChebyshevDegree);
+    UpLegChebyshevDegree = scheduleMap[{degree, true}];
+    DownLegChebyshevDegree = scheduleMap[{degree, false}];
   }
 
   if(options.compareArgs("MULTIGRID SMOOTHER", "FOURTHOPT")){

@@ -1780,15 +1780,15 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
         // validate multigrid schedule
         // note: default order here is not actually required
-        auto scheduleMapAndErrors = parseMultigridSchedule(p_mgschedule, options, 3);
-        auto scheduleMap = scheduleMapAndErrors.first;
-        if (!scheduleMapAndErrors.second.empty()) {
-          append_error(scheduleMapAndErrors.second);
+        auto [scheduleMap, errorString] = parseMultigridSchedule(p_mgschedule, options, 3);
+        if (!errorString.empty()) {
+          append_error(errorString);
         }
 
         int minDegree = std::numeric_limits<int>::max();
-        for(auto&& entry : scheduleMapAndErrors.first){
-          minDegree = std::min(minDegree, entry.first.first);
+        for(auto&& [cyclePosition, smootherOrder] : scheduleMap){
+          auto [polyOrder, isDownLeg] = cyclePosition;
+          minDegree = std::min(minDegree, polyOrder);
         }
 
         const auto INVALID = -std::numeric_limits<int>::max();
@@ -1801,10 +1801,11 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
               const auto degreeStr = parseValueForKey(s, "degree");
               if(!degreeStr.empty()){
                 const auto specifiedDegree = std::stoi(degreeStr);
-                for(auto&& entry : scheduleMap){
-                  const bool degreeConflicts = entry.second != specifiedDegree;
-                  const bool isMinOrder = entry.first.first == minDegree;
-                  const bool minOrderInvalid = entry.second == INVALID;
+                for(auto&& [cyclePosition, smootherOrder] : scheduleMap){
+                  auto [polyOrder, isDownLeg] = cyclePosition;
+                  const bool degreeConflicts = smootherOrder != specifiedDegree;
+                  const bool isMinOrder = polyOrder == minDegree;
+                  const bool minOrderInvalid = smootherOrder == INVALID;
 
                   if(isMinOrder && minOrderInvalid) continue;
 
@@ -1818,7 +1819,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         }
 
         // bail if coarse degree is set, but we're not smoothing on the coarsest level
-        if(scheduleMap[std::make_pair(minDegree, true)] != INVALID){
+        if(scheduleMap[{minDegree, true}] != INVALID){
           const bool smoothCrs = options.compareArgs("PRESSURE COARSE SOLVER", "SMOOTHER");
           if(!smoothCrs){
             append_error("ERROR: specified coarse degree, but coarseSolver=smoother is not set.\n");

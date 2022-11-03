@@ -434,18 +434,20 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
         platform->o_mempool.slice6);
     for (int sweep = 0; sweep < 2; sweep++) {
       nrs->pressureDirichletBCKernel(mesh->Nelements,
-          time,
-          nrs->fieldOffset,
-          mesh->o_sgeo,
-          mesh->o_x,
-          mesh->o_y,
-          mesh->o_z,
-          mesh->o_vmapM,
-          mesh->o_EToB,
-          nrs->o_EToB,
-          nrs->o_usrwrk,
-          nrs->o_U,
-          platform->o_mempool.slice6);
+                                     time,
+                                     nrs->fieldOffset,
+                                     mesh->o_sgeo,
+                                     mesh->o_x,
+                                     mesh->o_y,
+                                     mesh->o_z,
+                                     mesh->o_vmapM,
+                                     mesh->o_EToB,
+                                     nrs->o_EToB,
+                                     nrs->o_rho,
+                                     nrs->o_mue,
+                                     nrs->o_usrwrk,
+                                     nrs->o_U,
+                                     platform->o_mempool.slice6);
 
       // take care of Neumann-Dirichlet shared edges across elements
       if (sweep == 0)

@@ -194,10 +194,16 @@ occa::kernel benchmarkFDM(int Nelements,
         err = std::max(err, std::abs(result[i] - referenceResult[i]));
       }
 
-      const auto tol = 100. * std::numeric_limits<dfloat>::epsilon();
+      const auto tol = 100. * std::numeric_limits<FPType>::epsilon();
       if (platform->comm.mpiRank == 0 && verbosity > 1 && err > tol) {
         std::cout << "Error in kernel compared to reference implementation " << kernelVariant << ": " << err
                   << std::endl;
+      }
+
+      // error is too large -- pass an un-initialized kernel to the benchmarker
+      // to skip this kernel variant
+      if(err > tol){
+        kernel = occa::kernel();
       }
 
       return kernel;

@@ -264,6 +264,12 @@ benchmarkAdvsub(int Nfields, int Nelements, int Nq, int cubNq, int nEXT, bool de
       std::cout << "Error in kernel " << kernelVariant << " is " << err << " compared to reference implementation.\n";
     }
 
+    // error is too large -- pass an un-initialized kernel to the benchmarker
+    // to skip this kernel variant
+    if(err > tol){
+      kernel = occa::kernel();
+    }
+
     return kernel;
   };
 

@@ -85,7 +85,7 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, precon_t* precon)
     precon->parAlmond->numLevels++;
   }
 
-  //build a MGLevel for every degree (except coarsest)
+  //build intermediate MGLevels
   for (int n = 1; n < numMGLevels - 1; n++) {
     int Nc = levelDegree[n];
     int Nf = levelDegree[n - 1];
@@ -120,7 +120,7 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, precon_t* precon)
     precon->parAlmond->numLevels++;
   }
 
-  //set up the coarse level
+  //set up coarse level
   elliptic_t* ellipticCoarse;
   if (Nmax > Nmin) {
     int Nc = levelDegree[numMGLevels - 1];
@@ -144,6 +144,8 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, precon_t* precon)
     ellipticCoarse->oogsAx = ellipticCoarse->oogs;
     if(options.compareArgs("GS OVERLAP", "TRUE") && options.compareArgs("MULTIGRID COARSE SOLVE", "FALSE"))
       ellipticCoarse->oogsAx = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, callback, oogsMode);
+  } else {
+    ellipticCoarse = elliptic;  
   }
 
   if(options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE")){

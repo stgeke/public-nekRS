@@ -103,11 +103,13 @@ void Ini::parse(std::stringstream & is, bool lowerValue)
   std::string section;
   while (!is.eof()) {
     std::getline(is, line);
-    auto it = std::find_if(line.rbegin(), line.rend(),
+    std::cout << line << std::endl;
+    auto it = std::find_if(line.begin(), line.end(),
                            [](int ch) { return ch == char_comment; });
-    if (it != line.rend()) line.erase((++it).base(), line.end());
+    if (it != line.end()) line.erase(it, line.end());
     detail::ltrim(line);
     detail::rtrim(line);
+    std::cout << line << std::endl;
 
     const auto length = line.length();
     if (length > 0) {

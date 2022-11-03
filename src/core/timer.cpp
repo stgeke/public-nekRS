@@ -365,7 +365,8 @@ void timer_t::printRunStat(int step)
 
   const double tMinSolveStep = query("minSolveStep", "DEVICE:MAX");
   const double tMaxSolveStep = query("maxSolveStep", "DEVICE:MAX");
-  const double flops = platform->flopCounter->get(platform->comm.mpiComm)/platform->comm.mpiCommSize;
+  const double flops = platform->flopCounter->get(platform->comm.mpiComm) /
+                       (tElapsedTimeSolve * platform->comm.mpiCommSize);
   bool printFlops = !platform->options.compareArgs("PRESSURE PRECONDITIONER", "SEMFEM");
 
   printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);

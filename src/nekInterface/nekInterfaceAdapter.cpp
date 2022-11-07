@@ -75,6 +75,11 @@ void* ptr(const char* id)
 
 void* scPtr(int id)
 {
+  if(!id) {
+    if(rank == 0) fprintf(stderr, "Error: nek::scPtr index <1!\n");
+    ABORT(EXIT_FAILURE);
+  }
+
   void* ptr;
   (*nek_scptr_ptr)(&id, &ptr);
   return ptr;

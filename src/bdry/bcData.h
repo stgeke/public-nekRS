@@ -27,5 +27,5 @@ struct bcData
   // properties
   dfloat trans, diff;
 
-  @globalPtr const dfloat* wrk;
+  @globalPtr const dfloat* usrwrk;
 };

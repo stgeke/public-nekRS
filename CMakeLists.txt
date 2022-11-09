@@ -189,7 +189,7 @@ include(config/blaslapack.cmake)
 set(SRC 
     src/lib/nekrs.cpp
     src/io/writeFld.cpp
-    src/io/utils.cpp
+    src/io/fileUtils.cpp
     src/utils/inipp.cpp
     src/utils/mysort.cpp
     src/utils/parallelSort.cpp
@@ -197,7 +197,7 @@ set(SRC
     src/utils/setupAide.cpp
     src/core/numberActiveFields.cpp
     src/core/printHeader.cpp
-    src/timeStepper/cfl.cpp
+    src/navierStokes/cfl.cpp
     src/regularization/filter.cpp
     src/regularization/avm.cpp
     src/bdry/bcMap.cpp
@@ -207,17 +207,18 @@ set(SRC
     src/core/registerNrsKernels.cpp
     src/core/registerPostProcessingKernels.cpp
     src/bdry/createEToBV.cpp
-    src/bdry/applyDirichlet.cpp
-    src/timeStepper/timeStepper.cpp
-    src/timeStepper/subCycling.cpp
+    src/navierStokes/applyDirichlet.cpp
+    src/navierStokes/timeStepper.cpp
+    src/navierStokes/subCycling.cpp
     src/navierStokes/tombo.cpp
     src/navierStokes/constantFlowRate.cpp
     src/cds/cdsSolve.cpp
     src/cds/registerCdsKernels.cpp
-    src/io/parReader.cpp
-    src/io/parseMultigridSchedule.cpp
+    src/cds/subCycling.cpp
+    src/setup/parReader.cpp
+    src/setup/parseMultigridSchedule.cpp
     src/io/re2Reader.cpp
-    src/io/configReader.cpp
+    src/setup/configReader.cpp
     src/core/timer.cpp
     src/core/platform.cpp
     src/core/comm.cpp
@@ -278,7 +279,6 @@ target_include_directories(nekrs-lib
   src/udf
   src/regularization
   src/linAlg
-  src/timeStepper
   src/navierStokes
   src/cds
   src/postProcessing

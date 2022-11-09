@@ -3,7 +3,7 @@
 #include "nrs.hpp"
 #include "nekInterfaceAdapter.hpp"
 #include "bcMap.hpp"
-#include "ioUtils.hpp"
+#include "fileUtils.hpp"
 #include "re2Reader.hpp"
 
 nekdata_private nekData;

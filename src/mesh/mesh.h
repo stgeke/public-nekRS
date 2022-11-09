@@ -216,8 +216,7 @@ struct mesh_t
   occa::memory o_ggeo; // second order geometric factors
   occa::memory o_ggeoPfloat; // second order geometric factors
 
-  occa::memory o_gllzw;
-
+  occa::memory o_gllz;
   occa::memory o_gllw;
   occa::memory o_cubw;
   occa::memory o_faceNodes;

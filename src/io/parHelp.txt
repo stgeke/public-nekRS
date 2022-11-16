@@ -77,6 +77,7 @@ maxIterations               <int>                                      maximum n
                             200 [D]
 
 initialGuess                previous [D] 
+                            extrapolation 
                             projectionAconj [D for PRESSURE]                           
                             projection
                             +nVector=<int>                             dimension of projection space

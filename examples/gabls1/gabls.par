@@ -16,7 +16,7 @@ writeInterval = 100
 regularization = hpfrt + nModes=3 + scalingCoeff=10
 
 [PROBLEMTYPE]
-stressFormulation = true
+equation = navierStokes+stress
 
 [PRESSURE]
 solver = pfcg

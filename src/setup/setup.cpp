@@ -703,9 +703,9 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     bool unalignedBoundary = bcMap::unalignedBoundary(mesh->cht, "velocity");
     if (unalignedBoundary) {
-      if (!options.compareArgs("STRESSFORMULATION", "TRUE")) {
+      if (!options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
         if (platform->comm.mpiRank == 0)
-          printf("ERROR: unaligned SHL/SYM boundaries require STRESSFORMULATION = TRUE\n");
+          printf("ERROR: unaligned SHL/SYM boundaries requires solver = pcg+block\n");
         ABORT(EXIT_FAILURE);
       }
     }

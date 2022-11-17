@@ -387,8 +387,7 @@ void mkSIZE(int lx1, int lxd, int lelt, int lelg, int ldim, int lpmin, int ldimt
     }
   }
 
-  int lx1m = (options.compareArgs("MOVING MESH", "TRUE")) ? lx1 : 1;
-  lx1m = (options.compareArgs("STRESSFORMULATION", "TRUE")) ? lx1 : lx1m;
+  int lx1m = lx1;
 
   constexpr int nMaxObj = 20;
 
@@ -693,7 +692,7 @@ int setup(nrs_t* nrs_in)
   dfloat lambda;
   options->getArgs("SCALAR00 DIFFUSIVITY", lambda);
 
-  int stressForm = options->compareArgs("STRESSFORMULATION", "TRUE");
+  int stressForm = 1; // avoid recompilation + bypass unligned SYM/SHL check 
 
   (*nek_setup_ptr)(&flow,
                    &nscal,

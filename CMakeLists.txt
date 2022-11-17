@@ -91,6 +91,8 @@ endif()
 set (CMAKE_C_STANDARD 99)
 set (CMAKE_CXX_STANDARD 17)
 
+__MPI_underlying_compiler("CXX" MPI_UNDERLYING_COMPILER)
+
 ###############################################################################
 # Set compiler flags                                                          #
 ###############################################################################
@@ -356,7 +358,6 @@ endif()
 #################################################################################
 ### Install                                                                     #
 #################################################################################
-__MPI_underlying_compiler("CXX" MPI_UNDERLYING_COMPILER)
 
 if(NEKRS_GPU_MPI)
   set(GPU_MPI "1")

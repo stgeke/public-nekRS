@@ -6,7 +6,6 @@ set -e -a
 : ${NEKRS_CC:="mpicc"}
 : ${NEKRS_CXX:="mpic++"}
 : ${NEKRS_FC:="mpif77"}
-: ${OCCA_CXX:="g++"}
 #########################################################################
 
 mkdir -p ${NEKRS_INSTALL_DIR} > /dev/null 2>&1
@@ -22,7 +21,6 @@ cmake -Wno-dev \
       -DCMAKE_Fortran_COMPILER="${NEKRS_FC}" \
       -DCMAKE_C_COMPILER="${NEKRS_CC}" \
       -DCMAKE_CXX_COMPILER="${NEKRS_CXX}" \
-      -DOCCA_CXX="${OCCA_CXX}" \
       $@ \
       .. 
 

@@ -222,7 +222,7 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
       if (helpCat == "par") {
         std::string installDir;
         installDir.assign(getenv("NEKRS_HOME"));
-        std::ifstream f(installDir + "/include/parHelp.txt");
+        std::ifstream f(installDir + "/doc/parHelp.txt");
         if (f.is_open()) std::cout << f.rdbuf();
         f.close();
       } else {

@@ -1,3 +1,6 @@
+#if !defined(nekrs_tavg_hpp_)
+#define nekrs_tavg_hpp_
+
 #include "nrs.hpp"
 #include "nekInterfaceAdapter.hpp"
 
@@ -19,3 +22,5 @@ void EXY(dlong N,
          occa::memory o_y,
          occa::memory o_EXY);
 }
+
+#endif

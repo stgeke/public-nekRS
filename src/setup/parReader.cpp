@@ -226,6 +226,8 @@ static std::vector<std::string> deprecatedKeys = {
     {"residualProjection"},
     {"residualProjectionVectors"},
     {"residualProjectionStart"},
+
+    {"stressFormulation"},
 };
 
 static std::vector<std::string> validSections = {
@@ -1640,12 +1642,18 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   if (par->extract("problemtype", "equation", eqn)) {
     const std::vector<std::string> validValues = {
         {"stokes"},
+        {"navierstokes"},
+        {"stress"},
     };
     const std::vector<std::string> list = serializeString(eqn, '+');
-    for(std::string s : list)
+    for(std::string entry : list)
     {
-      checkValidity(rank, validValues, s);
+      checkValidity(rank, validValues, entry);
     }
+
+    if (std::strstr(eqn.c_str(), "stress"))
+      options.setArgs("STRESSFORMULATION", "TRUE");
+
     options.setArgs("ADVECTION", "TRUE");
     if (eqn == "stokes"){
       options.setArgs("ADVECTION", "FALSE");

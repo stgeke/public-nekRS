@@ -705,7 +705,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     if (unalignedBoundary) {
       if (!options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
         if (platform->comm.mpiRank == 0)
-          printf("ERROR: unaligned SHL/SYM boundaries requires solver = pcg+block\n");
+          printf("ERROR: SHL or unaligned SYM boundaries require solver = pcg+block\n");
         ABORT(EXIT_FAILURE);
       }
     }

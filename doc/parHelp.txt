@@ -59,10 +59,9 @@ oudf                        "<string>"                                 name of .
 usr                i        "<string>"                                 name of .usr file
 ----------------------------------------------------------------------------------------------------------------------
 [PROBLEMTYPE]
-stressFormulation           true, false [D]                            enable stress formulation 
+equation                    stokes, navierStokes [D]
+                            +stress                                    use stress formulation
                                                                        (required for spatially varying viscosity)
- 
-advection                   true, false [D]                            enable advection
 ----------------------------------------------------------------------------------------------------------------------
 COMMON field settings:
 

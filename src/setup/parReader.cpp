@@ -162,12 +162,6 @@ static std::vector<std::string> commonKeys = {
     {"filterWeight"},
     {"filterModes"},
     {"filterCutoffRatio"},
-
-    // deprecated projection params
-    {"residualProj"},
-    {"residualProjection"},
-    {"residualProjectionVectors"},
-    {"residualProjectionStart"},
 };
 
 static std::vector<std::string> meshKeys = {
@@ -220,12 +214,6 @@ static std::vector<std::string> deprecatedKeys = {
     {"filterWeight"},
     {"filterModes"},
     {"filterCutoffRatio"},
-
-    // deprecated projection params
-    {"residualProj"},
-    {"residualProjection"},
-    {"residualProjectionVectors"},
-    {"residualProjectionStart"},
 
     {"stressFormulation"},
 };
@@ -886,50 +874,44 @@ void parseInitialGuess(const int rank, setupAide &options,
     {"projection"},
     {"extrapolation"},
     {"previous"},
-    // booleans
-    {"yes"},
-    {"true"},
-    {"no"},
-    {"false"},
     // settings
     {"nvector"},
     {"start"},
   };
 
+  options.setArgs(parSectionName + "INITIAL GUESS", "EXTRAPOLATION");
+  if(parScope == "pressure")
+    options.setArgs(parSectionName + "INITIAL GUESS", "PROJECTION-ACONJ");
+
   if (par->extract(parScope, "initialguess", initialGuess)) {
     if (initialGuess.find("extrapolation") != std::string::npos) {
       options.setArgs(parSectionName + "INITIAL GUESS", "EXTRAPOLATION");
+
       if (parScope == "pressure")
         append_error("ERROR: initialGuess = extrapolation not supported for pressure!\n");
       return;
     }
 
-    const int defaultNumVectors = parScope == "pressure" ? 10 : 5;
-    options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", std::to_string(defaultNumVectors));
-    options.setArgs(parSectionName + "RESIDUAL PROJECTION START", "5");
+    const int defaultNumVectors = (parScope == "pressure") ? 10 : 5;
+    int proj = false;
 
     if (initialGuess.find("projectionaconj") != std::string::npos) {
       options.setArgs(parSectionName + "INITIAL GUESS", "PROJECTION-ACONJ");
+      proj = true;
     } else if (initialGuess.find("projection") != std::string::npos) {
       options.setArgs(parSectionName + "INITIAL GUESS", "PROJECTION");
+      proj = true;
     } else if (initialGuess.find("previous") != std::string::npos) {
       options.setArgs(parSectionName + "INITIAL GUESS", "PREVIOUS");
-      // removeArgs any default entries associated with projection initial guess
-      options.removeArgs(parSectionName + "RESIDUAL PROJECTION START");
-      options.removeArgs(parSectionName + "RESIDUAL PROJECTION VECTORS");
-    } else if (checkForTrue(initialGuess)) {
-      const int defaultNumVectors = parScope == "pressure" ? 10 : 5;
-      options.setArgs(parSectionName + "INITIAL GUESS", "PROJECTION-ACONJ");
-      options.setArgs(parSectionName + "RESIDUAL PROJECTION START", "5");
-    } else if (checkForFalse(initialGuess)) {
-      options.setArgs(parSectionName + "INITIAL GUESS", "PREVIOUS");
-      // removeArgs any default entries associated with projection initial guess
-      options.removeArgs(parSectionName + "RESIDUAL PROJECTION START");
-      options.removeArgs(parSectionName + "RESIDUAL PROJECTION VECTORS");
     } else {
       std::ostringstream error;
       error << "Could not parse initialGuess = " << initialGuess << "!\n";
       append_error(error.str());
+    }
+
+    if (proj) {
+      options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", std::to_string(defaultNumVectors));
+      options.setArgs(parSectionName + "RESIDUAL PROJECTION START", "5");
     }
 
     const std::vector<std::string> list = serializeString(initialGuess, '+');
@@ -938,47 +920,15 @@ void parseInitialGuess(const int rank, setupAide &options,
       checkValidity(rank, validValues, s);
 
       const auto nVectorStr = parseValueForKey(s, "nvector");
-      if(!nVectorStr.empty())
+      if(!nVectorStr.empty() && proj)
         options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", nVectorStr);
 
       const auto startStr = parseValueForKey(s, "start");
-      if(!startStr.empty())
+      if(!startStr.empty() && proj)
         options.setArgs(parSectionName + "RESIDUAL PROJECTION START", startStr);
 
     }
     return;
-  }
-
-  // see if user has provided old (deprecated) solution projection syntax
-  {
-    bool solutionProjection;
-    if (par->extract(parScope, "residualproj", solutionProjection) ||
-        par->extract(parScope, "residualprojection", solutionProjection)) {
-      if (solutionProjection) {
-        options.setArgs(parSectionName + "INITIAL GUESS", "PROJECTION-ACONJ");
-
-        const int defaultNumVectors = parScope == "pressure" ? 10 : 5;
-
-        // default parameters
-        options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", std::to_string(defaultNumVectors));
-        options.setArgs(parSectionName + "RESIDUAL PROJECTION START", "5");
-      } else {
-        options.setArgs(parSectionName + "INITIAL GUESS", "PREVIOUS");
-
-        // removeArgs any default entries associated with projection initial guess
-        options.removeArgs(parSectionName + "RESIDUAL PROJECTION START");
-        options.removeArgs(parSectionName + "RESIDUAL PROJECTION VECTORS");
-      }
-    }
-
-    int nVectors;
-    if(par->extract(parScope, "residualprojectionvectors", nVectors)){
-      options.setArgs(parSectionName + "RESIDUAL PROJECTION VECTORS", std::to_string(nVectors));
-    }
-    int nStart;
-    if(par->extract(parScope, "residualprojectionstart", nStart)){
-      options.setArgs(parSectionName + "RESIDUAL PROJECTION START", std::to_string(nStart));
-    }
   }
 }
 void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, std::string parSection)

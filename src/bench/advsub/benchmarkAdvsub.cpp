@@ -173,16 +173,19 @@ occa::kernel benchmarkAdvsub(int Nfields,
 
   std::vector<int> kernelVariants = {0};
   if (!platform->serial && dealias && !isScalar) {
-    // TODO: reduce number of kernel variants
-    constexpr int Nkernels = 14;
-    for (int i = 1; i <= Nkernels; ++i) {
 
+   std::vector<int> kernelSearchSpace = { 6, 7, 8, 9, 16 };
+    for (auto i : kernelSearchSpace) {
       // v12 requires cubNq <=13
       if (i == 11 && cubNq > 13)
         continue;
 
-      // v14 requires cubNq <=13
-      if (i == 14 && cubNq > 13)
+      // v14 requires cubNq <=12
+      if (i == 14 && cubNq > 12)
+        continue;
+
+      // v14 requires cubNq <=12
+      if (i == 16 && cubNq > 14)
         continue;
 
       kernelVariants.push_back(i);

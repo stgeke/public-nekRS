@@ -126,7 +126,7 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
       std::cout << "RANSktau: Nscalar needs to be >= 2!\n";
     ABORT(1);
   }
-  platform->options.setArgs("STRESSFORMULATION", "TRUE");
+  platform->options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
 }
 
 void RANSktau::updateProperties()

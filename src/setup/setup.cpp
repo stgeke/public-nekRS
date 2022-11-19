@@ -202,7 +202,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->flow = 0;
 
   if (nrs->flow) {
-    if (platform->options.compareArgs("STRESSFORMULATION", "TRUE"))
+    if (platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
       platform->options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
   }
 
@@ -672,7 +672,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       cds->solver[is]->dim = cds->dim;
       cds->solver[is]->elementType = cds->elementType;
 
-      const int coeffField = platform->options.compareArgs("SCALAR" + sid + " COEFF FIELD", "TRUE");
+      const int coeffField = platform->options.compareArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
       cds->solver[is]->coeffField = coeffField;
       cds->solver[is]->coeffFieldPreco = coeffField;
       cds->solver[is]->poisson = 0;
@@ -774,12 +774,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     // coeff used by ellipticSetup to detect allNeumann
     platform->linAlg->fill(2 * nrs->fieldOffset, 1.0, nrs->o_ellipticCoeff);
 
-    const int velCoeffField = platform->options.compareArgs("VELOCITY COEFF FIELD", "TRUE");
+    const int velCoeffField = platform->options.compareArgs("VELOCITY ELLIPTIC COEFF FIELD", "TRUE");
 
     if (nrs->uvwSolver) {
       nrs->uvwSolver->blockSolver = 1;
       nrs->uvwSolver->stressForm = 0;
-      if (options.compareArgs("STRESSFORMULATION", "TRUE"))
+      if (options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
         nrs->uvwSolver->stressForm = 1;
       nrs->uvwSolver->Nfields = nrs->NVfields;
       nrs->uvwSolver->Ntotal = nrs->fieldOffset;
@@ -1023,13 +1023,15 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           printf("bID %d -> bcType %s\n", bID, bcTypeText.c_str());
       }
 
-      const int meshCoeffField = platform->options.compareArgs("MESH COEFF FIELD", "TRUE");
+      const int meshCoeffField = platform->options.compareArgs("MESH ELLIPTIC COEFF FIELD", "TRUE");
       platform->linAlg->fill(2 * nrs->fieldOffset, 1.0, nrs->o_ellipticCoeff);
 
       nrs->meshSolver = new elliptic_t();
       nrs->meshSolver->name = "mesh";
       nrs->meshSolver->blockSolver = 1;
-      nrs->meshSolver->stressForm = 1;
+      nrs->meshSolver->stressForm = 0;
+      if (options.compareArgs("MESH STRESSFORMULATION", "TRUE"))
+        nrs->meshSolver->stressForm = 1;
       nrs->meshSolver->Nfields = nrs->NVfields;
       nrs->meshSolver->Ntotal = nrs->fieldOffset;
       nrs->meshSolver->o_wrk = o_mempoolElliptic;

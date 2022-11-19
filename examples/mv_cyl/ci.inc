@@ -33,12 +33,12 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   }
   if(ciMode == 3){
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
-    options.setArgs("MESH INITIAL GUESS", "PREVIOUS");
     options.setArgs("MESH SOLVER", "ELASTICITY");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }
   if(ciMode == 4){
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
+    options.setArgs("MESH INITIAL GUESS", "PROJECTION-ACONJ");
     options.setArgs("MESH SOLVER", "ELASTICITY");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }

@@ -386,8 +386,6 @@ void timer_t::printRunStat(int step)
   printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTime);
   printStatEntry("    udfExecuteStep      ", "udfExecuteStep", "DEVICE:MAX", tElapsedTime);
 
-  printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tElapsedTime);
-
   const double tMakef = query("makef", "DEVICE:MAX");
   printStatEntry("    makef               ", "makef", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      udfUEqnSource     ", "udfUEqnSource", "DEVICE:MAX", tMakef);
@@ -397,6 +395,11 @@ void timer_t::printRunStat(int step)
   printStatEntry("      udfSEqnSource     ", "udfSEqnSource", "DEVICE:MAX", tMakeq);
 
   printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tElapsedTime);
+
+  printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tElapsedTime);
+  const double tMesh = query("meshSolve", "DEVICE:MAX");
+  printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");
   printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tElapsedTime);
@@ -443,9 +446,6 @@ void timer_t::printRunStat(int step)
   printStatEntry("      preconditioner    ", "scalar preconditioner", "DEVICE:MAX", tScalar);
   printStatEntry("      initial guess     ", "scalar proj", "DEVICE:MAX", tScalar);
 
-  const double tMesh = query("meshSolve", "DEVICE:MAX");
-  printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTime);
-  printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
   printStatEntry("    gsMPI               ", gsTime, tElapsedTime);
 

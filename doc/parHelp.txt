@@ -60,7 +60,7 @@ usr                i        "<string>"                                 name of .
 ----------------------------------------------------------------------------------------------------------------------
 [PROBLEMTYPE]
 equation                    stokes, navierStokes [D]
-                            +stress                                    use stress formulation
+                            +variableViscosity                         use stress formulation
                                                                        (required for spatially varying viscosity)
 ----------------------------------------------------------------------------------------------------------------------
 COMMON field settings:

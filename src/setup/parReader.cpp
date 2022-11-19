@@ -1174,11 +1174,10 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("VELOCITY MAXIMUM ITERATIONS", "200");
   options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
   options.setArgs("VELOCITY KRYLOV SOLVER", "PCG");
-  options.setArgs("VELOCITY BASIS", "NODAL");
   options.setArgs("VELOCITY PRECONDITIONER", "JACOBI");
   options.setArgs("VELOCITY DISCRETIZATION", "CONTINUOUS");
 
-  options.setArgs("STRESSFORMULATION", "FALSE");
+  options.setArgs("VELOCITY STRESSFORMULATION", "FALSE");
 
   options.setArgs("ELLIPTIC INTEGRATION", "NODAL");
 
@@ -1186,7 +1185,6 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PRESSURE KRYLOV SOLVER", "PGMRES+FLEXIBLE");
   options.setArgs("PRESSURE PRECONDITIONER", "MULTIGRID");
   options.setArgs("PRESSURE DISCRETIZATION", "CONTINUOUS");
-  options.setArgs("PRESSURE BASIS", "NODAL");
 
   options.setArgs("PRESSURE PARALMOND CYCLE", "VCYCLE");
   options.setArgs("PRESSURE MULTIGRID COARSE SOLVE", "TRUE");
@@ -1195,10 +1193,6 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE", "3");
   options.setArgs("PRESSURE MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR", "1.1");
 
-  options.setArgs("PRESSURE INITIAL GUESS", "PROJECTION-ACONJ");
-  options.setArgs("PRESSURE RESIDUAL PROJECTION VECTORS", "10");
-  options.setArgs("PRESSURE RESIDUAL PROJECTION START", "5");
-
   options.setArgs("ENABLE FLOATCOMMHALF GS SUPPORT", "FALSE");
   options.setArgs("MOVING MESH", "FALSE");
   options.setArgs("GS OVERLAP", "TRUE");
@@ -1206,7 +1200,7 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("VARIABLE DT", "FALSE");
 
   // coeff fields
-  options.setArgs("VELOCITY COEFF FIELD", "TRUE");
+  options.setArgs("VELOCITY ELLIPTIC COEFF FIELD", "TRUE");
 
   const auto dropTol = 5.0 * std::numeric_limits<pfloat>::epsilon();
   options.setArgs("AMG DROP TOLERANCE", to_string_f(dropTol));
@@ -1584,7 +1578,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   bool stressFormulation;
   if (par->extract("problemtype", "stressformulation", stressFormulation)){
     if (stressFormulation){
-      options.setArgs("STRESSFORMULATION", "TRUE");
+      options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
     }
   }
 
@@ -1594,6 +1588,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         {"stokes"},
         {"navierstokes"},
         {"stress"},
+        {"variableviscosity"},
     };
     const std::vector<std::string> list = serializeString(eqn, '+');
     for(std::string entry : list)
@@ -1601,8 +1596,8 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       checkValidity(rank, validValues, entry);
     }
 
-    if (std::strstr(eqn.c_str(), "stress"))
-      options.setArgs("STRESSFORMULATION", "TRUE");
+    if (std::strstr(eqn.c_str(), "stress") || std::strstr(eqn.c_str(), "variableviscosity"))
+      options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
 
     options.setArgs("ADVECTION", "TRUE");
     if (eqn == "stokes"){
@@ -1622,17 +1617,19 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     std::string meshSolver;
     if (par->extract("mesh", "solver", meshSolver)) {
       options.setArgs("MESH KRYLOV SOLVER", "PCG");
-      options.setArgs("MESH BASIS", "NODAL");
       options.setArgs("MESH PRECONDITIONER", "JACOBI");
       options.setArgs("MESH DISCRETIZATION", "CONTINUOUS");
       options.setArgs("MOVING MESH", "TRUE");
       if(meshSolver == "user") options.setArgs("MESH SOLVER", "USER");
       else if(meshSolver == "elasticity") {
-        options.setArgs("MESH COEFF FIELD", "TRUE");
+        options.setArgs("MESH ELLIPTIC COEFF FIELD", "TRUE");
+        options.setArgs("MESH STRESSFORMULATION", "TRUE");
         options.setArgs("MESH SOLVER", "ELASTICITY");
+#if 0
         options.setArgs("MESH INITIAL GUESS", "PROJECTION-ACONJ");
         options.setArgs("MESH RESIDUAL PROJECTION VECTORS", "5");
         options.setArgs("MESH RESIDUAL PROJECTION START", "5");
+#endif
       }
       else if(meshSolver == "none") options.setArgs("MOVING MESH", "FALSE"); 
       else {
@@ -1973,7 +1970,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
       options.setArgs("SCALAR" + sid + " KRYLOV SOLVER", "PCG");
       options.setArgs("SCALAR" + sid + " PRECONDITIONER", "JACOBI");
-      options.setArgs("SCALAR" + sid + " COEFF FIELD", "TRUE");
+      options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
       parseInitialGuess(rank, options, par, "temperature");
 
@@ -2043,7 +2040,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         options.setArgs("SCALAR" + sid + " MAXIMUM ITERATIONS", keyValue);
     }
 
-    options.setArgs("SCALAR" + sid + " COEFF FIELD", "TRUE");
+    options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
     {
       parseRegularization(rank, options, par, parScope);
@@ -2098,7 +2095,6 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     }
   }
   if (nscal) {
-    options.setArgs("SCALAR BASIS", "NODAL");
     options.setArgs("SCALAR DISCRETIZATION", "CONTINUOUS");
   }
 

@@ -51,7 +51,7 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
     platform->o_mempool.slice0);
   flopCount += static_cast<double>(mesh->Nelements) * (6 * mesh->Np * mesh->Nq + 18 * mesh->Np);
 
-  if (platform->options.compareArgs("STRESSFORMULATION", "TRUE")) {
+  if (platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE")) {
     nrs->pressureStressKernel(
          mesh->Nelements,
          mesh->o_vgeo,
@@ -135,7 +135,7 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
   mesh_t* mesh = nrs->meshV;
   
   dfloat scale = -1./3;
-  if(platform->options.compareArgs("STRESSFORMULATION", "TRUE")) scale = 2./3;
+  if(platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE")) scale = 2./3;
 
   platform->linAlg->axmyz(
        mesh->Nlocal,

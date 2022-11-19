@@ -199,8 +199,6 @@ void udfBuild(const char* udfFile, setupAide& options)
       std::string("") :
       std::string("> /dev/null 2>&1");
 
-      // trigger udf build only if file has changed 
-      // if config (compiler, env-var etc.) has changed user needs to delete .cache/udf
       if(isFileNewer(udfFile, udfFileCache.c_str()) || !fileExists(udfLib.c_str())) {
         {
           char fullPath[BUFSIZ];
@@ -238,17 +236,18 @@ void udfBuild(const char* udfFile, setupAide& options)
           convertSingleSourceUdf(udfFileCache, oudfFileCache);
         }
 
-        { // build udf
-          sprintf(cmd, "cd %s/udf && make %s", cache_dir.c_str(), pipeToNull.c_str());
-          const int retVal = system(cmd);
-          if(verbose && platform->comm.mpiRank == 0) {
-            printf("%s (make retVal: %d)\n", cmd, retVal);
-          }
-          if(retVal) return EXIT_FAILURE; 
-          fileSync(udfLib.c_str());
-        }
       }
 
+      // always run make to trigger rebuild if env-vars of header files have changed! 
+      { 
+        sprintf(cmd, "cd %s/udf && make %s", cache_dir.c_str(), pipeToNull.c_str());
+        const int retVal = system(cmd);
+        if(verbose && platform->comm.mpiRank == 0) {
+          printf("%s (make retVal: %d)\n", cmd, retVal);
+        }
+        if(retVal) return EXIT_FAILURE; 
+        fileSync(udfLib.c_str());
+      }
 
       if(fileExists(oudfFile.c_str())) {
         // just copy, occa will only recompile if hash has changed

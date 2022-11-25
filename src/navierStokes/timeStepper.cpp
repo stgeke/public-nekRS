@@ -178,7 +178,10 @@ void adjustDt(nrs_t* nrs, int tstep)
           nrs->dt[0] = std::max(dtHigh, dtLow);
         }
       }
-      if(nrs->dt[1] / nrs->dt[0] < 0.2) nrs->dt[0] = 5.0 * nrs->dt[1];
+
+      // limit dt change 
+      if(tstep > 1) nrs->dt[0] = std::max(nrs->dt[0], 0.5*nrs->dt[1]);
+      if(tstep > 1) nrs->dt[0] = std::min(nrs->dt[0], 1.5*nrs->dt[1]);
     }
 }
 

@@ -245,8 +245,6 @@ double dt(int tstep)
     const double dtOld = nrs->dt[0];
     timeStepper::adjustDt(nrs, tstep);
 
-    // limit dt to control introduced error
-    if(tstep > 1) nrs->dt[0] = std::min(nrs->dt[0], 1.25*dtOld);
     double maxDt = 0;
     platform->options.getArgs("MAX DT", maxDt);
     if(maxDt > 0) nrs->dt[0] = std::min(nrs->dt[0], maxDt);

@@ -41,7 +41,7 @@
       }
 
       // compute reduction
-      @barrier("local");
+      @barrier();
 
 #if p_blockSize > 512
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
@@ -51,7 +51,7 @@
           avg_z[t] += avg_z[t + 512];
         }
       }
-      @barrier("local");
+      @barrier();
 #endif
 
 #if p_blockSize > 256
@@ -62,7 +62,7 @@
           avg_z[t] += avg_z[t + 256];
         }
       }
-      @barrier("local");
+      @barrier();
 #endif
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
@@ -72,7 +72,7 @@
           avg_z[t] += avg_z[t + 128];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 64) {
@@ -81,7 +81,7 @@
           avg_z[t] += avg_z[t + 64];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 32) {
@@ -90,7 +90,7 @@
           avg_z[t] += avg_z[t + 32];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 16) {
@@ -99,7 +99,7 @@
           avg_z[t] += avg_z[t + 16];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 8) {
@@ -108,7 +108,7 @@
           avg_z[t] += avg_z[t + 8];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 4) {
@@ -117,7 +117,7 @@
           avg_z[t] += avg_z[t + 4];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 2) {
@@ -126,7 +126,7 @@
           avg_z[t] += avg_z[t + 2];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 1) {
@@ -139,7 +139,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
     }
   }
 }

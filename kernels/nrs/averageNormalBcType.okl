@@ -30,7 +30,7 @@
           normal[idM + 3 * offset] += 1;
         }
       }
-      @barrier("global");
+      @barrier();
     }
   }
 }

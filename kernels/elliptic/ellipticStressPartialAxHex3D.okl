@@ -45,7 +45,7 @@
     @exclusive dlong e;
 
     for (int k = 0; k < p_Nq; ++k) {
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1))
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           if (k == 0) {
@@ -65,7 +65,7 @@
             }
           }
         }
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1))
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           const dlong gid = i + j * p_Nq + k * p_Nq * p_Nq + e * p_Np * p_Nvgeo;
@@ -137,7 +137,7 @@
           r_Av[k] = lambda[id + 1 * offset + 1 * loffset] * JW * s_V[j][i];
           r_Aw[k] = lambda[id + 1 * offset + 2 * loffset] * JW * s_W[j][i];
         }
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1))
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           s_SUr[j][i] = rx * s11 + ry * s12 + rz * s13;
@@ -152,7 +152,7 @@
           s_SWs[j][i] = sx * s31 + sy * s32 + sz * s33;
           s_SWt[k] = tx * s31 + ty * s32 + tz * s33;
         }
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 #pragma unroll p_Nq
@@ -174,7 +174,7 @@
     }
 
     for (int k = 0; k < p_Nq; ++k) {
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 #pragma unroll p_Nq

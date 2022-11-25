@@ -44,7 +44,7 @@
       }
 
       // compute reduction
-      @barrier("local");
+      @barrier();
 
 #if p_blockSize > 512
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
@@ -52,7 +52,7 @@
           s_area[t] += s_area[t + 512];
         }
       }
-      @barrier("local");
+      @barrier();
 #endif
 
 #if p_blockSize > 256
@@ -61,7 +61,7 @@
           s_area[t] += s_area[t + 256];
         }
       }
-      @barrier("local");
+      @barrier();
 #endif
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
@@ -69,49 +69,49 @@
           s_area[t] += s_area[t + 128];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 64) {
           s_area[t] += s_area[t + 64];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 32) {
           s_area[t] += s_area[t + 32];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 16) {
           s_area[t] += s_area[t + 16];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 8) {
           s_area[t] += s_area[t + 8];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 4) {
           s_area[t] += s_area[t + 4];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 2) {
           s_area[t] += s_area[t + 2];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
         if (t < 1) {
@@ -119,7 +119,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
     }
 
     // second reduction: compute sum for each field
@@ -153,7 +153,7 @@
         }
 
         // compute reduction
-        @barrier("local");
+        @barrier();
 
 #if p_blockSize > 512
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
@@ -164,7 +164,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 #endif
 
 #if p_blockSize > 256
@@ -176,7 +176,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 #endif
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
@@ -187,7 +187,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 64) {
@@ -197,7 +197,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 32) {
@@ -207,7 +207,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 16) {
@@ -217,7 +217,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 8) {
@@ -227,7 +227,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 4) {
@@ -237,7 +237,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 2) {
@@ -247,7 +247,7 @@
             }
           }
         }
-        @barrier("local");
+        @barrier();
 
         for (int t = 0; t < p_blockSize; ++t; @inner(0)) {
           if (t < 1) {
@@ -261,7 +261,7 @@
           }
         }
 
-        @barrier("local");
+        @barrier();
       }
     }
   }

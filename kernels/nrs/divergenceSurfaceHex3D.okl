@@ -84,7 +84,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     // face 0 & 5
     for (int j = 0; j < p_Nq; ++j; @inner(1))
@@ -96,7 +96,7 @@
         r_div[p_Nq - 1] += s_fluxDiv[1][j][i];
       }
 
-    @barrier("local");
+    @barrier();
 
     // face 1 & 3
     for (int k = 0; k < p_Nq; ++k; @inner(1))
@@ -108,7 +108,7 @@
         surfaceTerms(sk3, 3, 1, i, k);
       }
 
-    @barrier("local");
+    @barrier();
 
     // face 1 & 3
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -126,7 +126,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     // face 2 & 4
     for (int k = 0; k < p_Nq; ++k; @inner(1))
@@ -138,7 +138,7 @@
         surfaceTerms(sk4, 4, 1, j, k);
       }
 
-    @barrier("local");
+    @barrier();
 
     // face 2 & 4
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -156,7 +156,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {

@@ -42,7 +42,7 @@
         element = elementList[e];
       }
 
-    @barrier("local");
+    @barrier();
 
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -55,11 +55,11 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
 #pragma unroll p_Nq
     for (int k = 0; k < p_Nq; k++) {
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1))
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           const dlong gbase = element * p_Nggeo * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
@@ -77,7 +77,7 @@
 #endif
         }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -91,7 +91,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -117,7 +117,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -133,7 +133,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -222,7 +222,7 @@
 #pragma unroll p_Nq
 #endif
     for (int k = 0; k < p_Nq; k++) {
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -230,7 +230,7 @@
           s_q[j][i] = r_u[k];
         }
       }
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -277,7 +277,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -298,7 +298,7 @@
       }
     } // end Layer by layer
 
-    @barrier("local");
+    @barrier();
 
     // write out
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -467,7 +467,7 @@
 #pragma nounroll
 #endif
     for (int k = 0; k < p_Nq; k++) {
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -478,7 +478,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -537,7 +537,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -560,7 +560,7 @@
       }
     } // end Layer by layer
 
-    @barrier("local");
+    @barrier();
 
     // write out
     for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
@@ -693,7 +693,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     for (int ke = 0; ke < p_Nq * p_NelementsPerBlk; ++ke; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -757,7 +757,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     for (int ke = 0; ke < p_Nq * p_NelementsPerBlk; ++ke; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -914,7 +914,7 @@
 #endif
     for (int k = 0; k < p_Nq; k++) {
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -925,7 +925,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -989,7 +989,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -1007,7 +1007,7 @@
       }
     } // end Layer by layer
 
-    @barrier("local");
+    @barrier();
 
     // write out
     for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
@@ -1101,7 +1101,7 @@
 #endif
     for (int k = 0; k < p_Nq; k++) {
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -1112,7 +1112,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -1177,7 +1177,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
         for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -1195,7 +1195,7 @@
       }
     } // end Layer by layer
 
-    @barrier("local");
+    @barrier();
 
     // write out
     for (int es = 0; es < p_NelementsPerBlk; ++es; @inner(2)) {
@@ -1329,7 +1329,7 @@
 #endif
     for (int k = 0; k < p_Nq; k++) {
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -1338,7 +1338,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -1385,7 +1385,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -1406,7 +1406,7 @@
       }
     } // end Layer by layer
 
-    @barrier("local");
+    @barrier();
 
     // write out
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {

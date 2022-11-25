@@ -103,7 +103,7 @@
     }
 
     for (int c = 0; c < p_Nq; ++c) {
-      @barrier("local");
+      @barrier();
 
       for (int b = 0; b < p_cubNq; ++b; @inner(1))
         for (int a = 0; a < p_cubNq; ++a; @inner(0))
@@ -113,7 +113,7 @@
             s_Ud[b][a] = S[id];
           }
 
-      @barrier("local");
+      @barrier();
 
       // interpolate in 'r'
       for (int b = 0; b < p_cubNq; ++b; @inner(1))
@@ -129,7 +129,7 @@
             s_Ud1[b][i] = Ud1;
           }
 
-      @barrier("local");
+      @barrier();
 
       // interpolate in 's'
       for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
@@ -155,14 +155,14 @@
 
 #pragma unroll p_cubNq
     for (int k = 0; k < p_cubNq; ++k) {
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_cubNq; ++j; @inner(1))
         for (int i = 0; i < p_cubNq; ++i; @inner(0)) {
           s_Ud[j][i] = r_Ud[k];
         }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_cubNq; ++j; @inner(1))
         for (int i = 0; i < p_cubNq; ++i; @inner(0)) {
@@ -196,7 +196,7 @@
 
     // now project back in t
     for (int c = 0; c < p_Nq; ++c) {
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
         for (int i = 0; i < p_cubNq; ++i; @inner(0)) {
@@ -212,7 +212,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int b = 0; b < p_cubNq; ++b; @inner(1))
         for (int i = 0; i < p_cubNq; ++i; @inner(0))
@@ -227,7 +227,7 @@
             s_Ud[b][i] = rhsU;
           }
 
-      @barrier("local");
+      @barrier();
 
       for (int b = 0; b < p_cubNq; ++b; @inner(1))
         for (int a = 0; a < p_cubNq; ++a; @inner(0))
@@ -370,7 +370,7 @@
 #endif
     for (int c = 0; c < p_Nq; ++c) {
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
         for (int b = 0; b < p_cubNq; ++b; @inner(1)) {
@@ -383,7 +383,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       // interpolate in 'r'
 
@@ -406,7 +406,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       // interpolate in 's'
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
@@ -442,7 +442,7 @@
 #pragma nounroll
 #endif
     for (int k = 0; k < p_cubNq; ++k) {
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
         for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
@@ -460,7 +460,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
         for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
@@ -522,7 +522,7 @@
 #endif
     for (int c = 0; c < p_Nq; ++c) {
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
         for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
@@ -532,7 +532,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
         for (int b = 0; b < p_cubNq; ++b; @inner(1)) {
@@ -552,7 +552,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int es = 0; es < p_Nblk; ++es; @inner(2)) {
         for (int b = 0; b < p_cubNq; ++b; @inner(1)) {

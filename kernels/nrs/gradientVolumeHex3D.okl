@@ -59,7 +59,7 @@
       }
 
       // Make sure all node data is loaded into @shared
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           const dlong gid = e * p_Np * p_Nvgeo + k * p_Nq * p_Nq + j * p_Nq + i;
@@ -94,7 +94,7 @@
           gradP[id + 2 * offset] = JW * (drdz * dpdr + dsdz * dpds + dtdz * dpdt);
         }
       }
-      @barrier("local");
+      @barrier();
     } // k-loop
   }
 }

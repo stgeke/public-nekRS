@@ -48,10 +48,10 @@
       }
 
     // Make sure all node data is loaded into @shared
-    @barrier("local");
+    @barrier();
 
     for (int k = 0; k < p_Nq; ++k) {
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           const dlong id = e * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
@@ -87,7 +87,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
 // reduce p_Nq * p_Nq to single value
 #if p_blockSize > 512
@@ -99,7 +99,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
 #endif
 #if p_blockSize > 256
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -110,7 +110,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
 #endif
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -120,7 +120,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -129,7 +129,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -138,7 +138,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -147,7 +147,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -156,7 +156,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -165,7 +165,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -174,7 +174,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;

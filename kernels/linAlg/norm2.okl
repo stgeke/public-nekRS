@@ -38,56 +38,56 @@ SOFTWARE.
         s_norm[t] += x[id] * x[id];
       }
     }
-    @barrier("local");
+    @barrier();
 
 #if p_blockSize > 512
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 512)
         s_norm[t] += s_norm[t + 512];
-    @barrier("local");
+    @barrier();
 #endif
 
 #if p_blockSize > 256
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 256)
         s_norm[t] += s_norm[t + 256];
-    @barrier("local");
+    @barrier();
 #endif
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 128)
         s_norm[t] += s_norm[t + 128];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 64)
         s_norm[t] += s_norm[t + 64];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 32)
         s_norm[t] += s_norm[t + 32];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 16)
         s_norm[t] += s_norm[t + 16];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 8)
         s_norm[t] += s_norm[t + 8];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 4)
         s_norm[t] += s_norm[t + 4];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 2)
         s_norm[t] += s_norm[t + 2];
-    @barrier("local");
+    @barrier();
 
     for (int t = 0; t < p_blockSize; ++t; @inner(0))
       if (t < 1)

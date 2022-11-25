@@ -46,7 +46,7 @@
 
     for (int c = 0; c < p_Nq; ++c) {
 
-      @barrier("local");
+      @barrier();
 
       for (int b = 0; b < p_cubNq; ++b; @inner(1)) {
         for (int a = 0; a < p_cubNq; ++a; @inner(0)) {
@@ -59,7 +59,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       // interpolate in 'r'
       for (int b = 0; b < p_cubNq; ++b; @inner(1))
@@ -79,7 +79,7 @@
             s_z1[b][i] = W1;
           }
 
-      @barrier("local");
+      @barrier();
 
       // interpolate in 's'
       for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
@@ -107,7 +107,7 @@
 
     // apply derivative matrices
     for (int k = 0; k < p_cubNq; ++k) {
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
         for (int i = 0; i < p_cubNq; ++i; @inner(0)) {
@@ -117,7 +117,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_cubNq; ++j; @inner(1)) {
         for (int i = 0; i < p_cubNq; ++i; @inner(0)) {

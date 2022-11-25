@@ -54,7 +54,7 @@ SOFTWARE.
     // tree reduction
     for (int alive = p_maxNconn / 2; alive > 0; alive /= 2) {
 
-      @barrier("local");
+      @barrier();
 
       for (int m = 0; m < p_maxNconn; ++m; @inner(0)) {
         // reduce to "alive" values

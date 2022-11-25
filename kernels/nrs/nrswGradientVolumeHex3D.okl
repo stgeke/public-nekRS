@@ -64,7 +64,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
 #pragma unroll p_Nq
     for (int k = 0; k < p_Nq; ++k) {
@@ -100,7 +100,7 @@
           s_DtW[j][i] = JW * dtdz * Pn;
         }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -125,7 +125,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
     } // k loop
 
     // write out

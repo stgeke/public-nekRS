@@ -63,7 +63,7 @@ inline dfloat interp(const dfloat rn, const dfloat sn, const dfloat tn, const df
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner) {
       for (int i = 0; i < p_Nq; ++i; @inner) {
         for (int k = 0; k < p_Nq; ++k) {

@@ -55,7 +55,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     // read and multiply in k
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -83,7 +83,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
 // loop around slices
 #pragma unroll p_Nq
@@ -96,7 +96,7 @@
           s_W[j][i] = r_Wn[k];
         }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -113,7 +113,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
       // load multiplied data to shared
       for (int j = 0; j < p_Nq; ++j; @inner(1))
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -122,7 +122,7 @@
           s_W[j][i] = r_Wn[k];
         }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -140,7 +140,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
     }
 
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {

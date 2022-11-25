@@ -160,7 +160,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
       }
     }
 
-    @barrier("local");
+    @barrier();
     for (int k = 0; k < p_Nq; ++k) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -182,11 +182,11 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
           s_maxdFdS[tid] = (s_maxdFdS[tid] > visc_max) ? s_maxdFdS[tid] : visc_max;
         }
       }
-      @barrier("local");
+      @barrier();
     }
 
     // max reduction
-    @barrier("local");
+    @barrier();
 
 // reduce p_Nq * p_Nq to single value
 #if p_blockSize > 512
@@ -198,7 +198,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
 #endif
 #if p_blockSize > 256
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -209,7 +209,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
 #endif
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -219,7 +219,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -228,7 +228,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -237,7 +237,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -246,7 +246,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -255,7 +255,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -264,7 +264,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -273,7 +273,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;

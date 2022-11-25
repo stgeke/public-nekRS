@@ -51,7 +51,7 @@
           U[idM + 2 * offset] = Rnor * nz + Rtn1 * t1z + Rtn2 * t2z;
         }
       }
-      @barrier("global");
+      @barrier();
     }
   }
 }

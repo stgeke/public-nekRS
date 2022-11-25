@@ -12,7 +12,7 @@
 {
   for (dlong e = 0; e < Nelements; e++; @outer(0))
     for (int f = 0; f < p_Nfaces; f++) {
-      @barrier("global");
+      @barrier();
       for (int m = 0; m < p_Nfp; ++m; @inner(0)) {
         const int n = m + f * p_Nfp;
         const int id = EToB[f + p_Nfaces * e];

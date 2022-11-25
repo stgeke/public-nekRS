@@ -44,7 +44,7 @@
           s_R[0][t] = R[t];
       }
 
-    @barrier("local");
+    @barrier();
 
     for (int j = 0; j < p_NqFine; ++j; @inner(1))
       for (int i = 0; i < p_NqFine; ++i; @inner(0)) {
@@ -61,14 +61,14 @@
       }
 
     for (int k = 0; k < p_NqCoarse; ++k) {
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_NqFine; ++j; @inner(1))
         for (int i = 0; i < p_NqFine; ++i; @inner(0))
 
           s_q[j][i] = r_q[k];
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_NqFine; ++j; @inner(1))
         for (int i = 0; i < p_NqFine; ++i; @inner(0))
@@ -82,7 +82,7 @@
             s_Pq[j][i] = res;
           }
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_NqFine; ++j; @inner(1))
         for (int i = 0; i < p_NqFine; ++i; @inner(0)) {

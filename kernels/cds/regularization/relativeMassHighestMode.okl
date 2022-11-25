@@ -32,7 +32,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
     // read and multiply in k
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -54,7 +54,7 @@
       }
     }
 
-    @barrier("local");
+    @barrier();
 
 #ifdef smXX
 #pragma unroll p_Nq
@@ -65,7 +65,7 @@
         for (int i = 0; i < p_Nq; ++i; @inner(0))
           s_U[j][i] = r_Un[k];
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -78,13 +78,13 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
       // load multiplied data to shared
       for (int j = 0; j < p_Nq; ++j; @inner(1))
         for (int i = 0; i < p_Nq; ++i; @inner(0))
           s_U[j][i] = r_Un[k];
 
-      @barrier("local");
+      @barrier();
 
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -98,7 +98,7 @@
         }
       }
 
-      @barrier("local");
+      @barrier();
     }
 
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -118,7 +118,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
 // reduce p_Nq * p_Nq to single value
 #if p_blockSize > 512
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -130,7 +130,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
 #endif
 #if p_blockSize > 256
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -142,7 +142,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
 #endif
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -153,7 +153,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -163,7 +163,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -173,7 +173,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -183,7 +183,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -193,7 +193,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -203,7 +203,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;
@@ -213,7 +213,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         const int t = j * p_Nq + i;

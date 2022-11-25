@@ -49,7 +49,7 @@ SOFTWARE.
 
 #pragma unroll p_Nq
     for (int k = 0; k < p_Nq; ++k) {
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           s_D[j][i] = D[j * p_Nq + i];
@@ -71,7 +71,7 @@ SOFTWARE.
           }
         }
       }
-      @barrier("local");
+      @barrier();
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           dfloat xr = 0, yr = 0, zr = 0;

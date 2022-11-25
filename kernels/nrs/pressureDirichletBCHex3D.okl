@@ -43,7 +43,7 @@
 {
   for (dlong e = 0; e < Nelements; e++; @outer(0))
     for (int f = 0; f < p_Nfaces; ++f) {
-      @barrier("global");
+      @barrier();
       for (int m = 0; m < p_Nfp; ++m; @inner(0)) {
         const int n = f * p_Nfp + m;
         struct bcData bc;

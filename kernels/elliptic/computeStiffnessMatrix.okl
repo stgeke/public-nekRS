@@ -242,7 +242,7 @@ void J_xr_map(double J_xr[3][3], double q_r[4][3], double x_t[3][4])
     }
     /* Cycle through collocated quads/hexes */
     for (int s_z = 0; s_z < p_Nq - 1; s_z++) {
-      @barrier("local");
+      @barrier();
       for (int s_y = 0; s_y < p_Nq - 1; s_y++; @inner) {
         for (int s_x = 0; s_x < p_Nq - 1; s_x++; @inner) {
           double A_loc[4][4];

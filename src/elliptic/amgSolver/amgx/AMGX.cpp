@@ -189,7 +189,7 @@ int AMGX_t::solve(void *x, void *rhs)
   return 1;
 }
 
-void AMGX_t::finalize()
+void AMGXfinalize()
 {
 }
 

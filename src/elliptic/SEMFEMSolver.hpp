@@ -24,21 +24,56 @@ SOFTWARE.
 
 */
 
-#include "parAlmond.hpp"
+#ifndef SEMFEMSOLVER_HPP
+#define SEMFEMSOLVER_HPP
 
-namespace parAlmond {
+#include "nrssys.hpp"
+#include "elliptic.h"
 
-multigridLevel::multigridLevel(dlong N, dlong M, MPI_Comm comm_):
-  Nrows(N), Ncols(M) 
-{
-  comm = comm_;
-}
+#include "hypreWrapper.hpp"
+#include "hypreWrapperDevice.hpp"
+#include "AMGX.hpp"
 
-multigridLevel::~multigridLevel() {
+class SEMFEMSolver_t {
 
-  if (o_x.size()) o_x.free();
-  if (o_rhs.size()) o_rhs.free();
-  if (o_res.size()) o_res.free();
-}
+public:
+  SEMFEMSolver_t(elliptic_t*);
+  ~SEMFEMSolver_t();
 
-}
+  void run(occa::memory&, occa::memory&);
+
+private:
+  dlong numRowsSEMFEM;
+  occa::memory o_dofMap;
+  occa::memory o_SEMFEMBuffer1;
+  occa::memory o_SEMFEMBuffer2;
+  void *SEMFEMBuffer1_h_d;
+  void *SEMFEMBuffer2_h_d;
+  void *boomerAMG = nullptr;
+  AMGX_t *AMGX = nullptr;
+
+  elliptic_t *elliptic;
+
+  struct matrix_t {
+    long long *Ai;
+    long long *Aj;
+    double *Av;
+    int nnz;
+    long long rowStart;
+    long long rowEnd;
+    long long *dofMap;
+  };
+  
+  matrix_t *build(const int N_,
+                const int n_elem_,
+                occa::memory _o_x,
+                occa::memory _o_y,
+                occa::memory _o_z,
+                double *pmask_,
+                hypreWrapper::IJ_t &hypreIJ,
+                MPI_Comm comm,
+                long long int *gatherGlobalNodes);
+
+};
+
+#endif

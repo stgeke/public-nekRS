@@ -24,38 +24,12 @@ SOFTWARE.
 
 */
 
-#ifndef PARALMOND_LEVEL_HPP
-#define PARALMOND_LEVEL_HPP
+#ifndef MGSOLVER_DEFINES_HPP
+#define MGSOLVER_DEFINES_HPP
 
-namespace parAlmond {
+#define MAX_LEVELS 10
 
-class multigridLevel {
-
-public:
-  dlong Nrows, Ncols;
-
-  occa::memory o_x, o_rhs, o_res;
-
-  SmoothType smootherType;
-
-  MPI_Comm comm;
-
-  multigridLevel(dlong N, dlong M, MPI_Comm comm);
-  ~multigridLevel();
-
-  virtual void Ax(occa::memory o_x, occa::memory o_Ax)=0;
-
-  virtual void smooth(occa::memory o_rhs, occa::memory o_x, bool x_is_zero)=0;
-
-  virtual void residual(occa::memory o_rhs, occa::memory o_x, occa::memory o_res)=0;
-
-  virtual void coarsen(occa::memory o_x, occa::memory o_Cx)=0;
-
-  virtual void prolongate(occa::memory o_x, occa::memory o_Px)=0;
-
-  virtual void Report()=0;
-};
-
-}
+typedef enum {VCYCLE=0} CycleType;
+typedef enum {JACOBI=0,DAMPED_JACOBI=1,CHEBYSHEV=2} SmoothType;
 
 #endif

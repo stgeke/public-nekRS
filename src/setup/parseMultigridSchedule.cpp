@@ -115,6 +115,7 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
       + " does not match polynomial degree " + std::to_string(N) + "!\n";
   }
 
+#if 0
   // each successive level must be smaller
   for (unsigned i = 0U; i < levels.size(); ++i) {
     if (i > 0){
@@ -124,6 +125,7 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
       }
     }
   }
+#endif
 
   return {scheduleMap, errorString};
 }

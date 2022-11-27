@@ -14,9 +14,9 @@
 #include "nrs.hpp"
 #include <algorithm>
 #include "parseMultigridSchedule.hpp"
-#include "hypreWrapper.hpp"
+#include "hypreWrapperDevice.hpp"
 
-#include "amgx.h"
+#include "AMGX.hpp"
 
 namespace{
 static std::ostringstream errorLogger;
@@ -577,7 +577,7 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   const int smoother = p_coarseSolver.find("smoother") != std::string::npos;
   const int amgx = p_coarseSolver.find("amgx") != std::string::npos;
   const int boomer = p_coarseSolver.find("boomeramg") != std::string::npos;
-  if(smoother + amgx + boomer > 1)
+  if(amgx + boomer > 1)
     append_error("Conflicting solver types in coarseSolver!\n");
 
   if(amgx)
@@ -590,10 +590,14 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   for (std::string entry : entries) {
     if(entry.find("smoother") != std::string::npos) 
     {
-      options.setArgs(parSectionName + "COARSE SOLVER", "SMOOTHER");
-      options.removeArgs(parSectionName + "COARSE SOLVER PRECISION");
-      options.removeArgs(parSectionName + "COARSE SOLVER LOCATION");
-      options.setArgs(parSectionName + "MULTIGRID COARSE SOLVE", "FALSE");
+      if(boomer || amgx) { 
+        options.setArgs(parSectionName + "MULTIGRID COARSE SOLVE AND SMOOTH", "TRUE");
+      } else {
+        options.setArgs(parSectionName + "COARSE SOLVER", "SMOOTHER");
+        options.removeArgs(parSectionName + "COARSE SOLVER PRECISION");
+        options.removeArgs(parSectionName + "COARSE SOLVER LOCATION");
+        options.setArgs(parSectionName + "MULTIGRID COARSE SOLVE", "FALSE");
+      }
     } 
     else if(entry.find("cpu") != std::string::npos)
     {
@@ -605,8 +609,8 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
     }
     else if(entry.find("overlap") != std::string::npos)
     {
-      std::string currentParAlmondSettings = options.getArgs(parSectionName + "PARALMOND CYCLE");
-      options.setArgs(parSectionName + "PARALMOND CYCLE", currentParAlmondSettings + "+OVERLAPCRS");
+      std::string currentSettings = options.getArgs(parSectionName + "MGSOLVER CYCLE");
+      options.setArgs(parSectionName + "MGSOLVER CYCLE", currentSettings + "+OVERLAPCRS");
     }
   }
 
@@ -623,7 +627,7 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   }
 
   const bool runSolverOnDevice = options.compareArgs(parSectionName + "COARSE SOLVER LOCATION", "DEVICE");
-  const bool overlapCrsSolve = options.compareArgs(parSectionName + "PARALMOND CYCLE", "OVERLAPCRS");
+  const bool overlapCrsSolve = options.compareArgs(parSectionName + "MGSOLVER CYCLE", "OVERLAPCRS");
   if(overlapCrsSolve && runSolverOnDevice){
     append_error("ERROR: Cannot overlap coarse grid solve when running coarse solver on the GPU!\n");
   }
@@ -715,10 +719,10 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
           if (p_preconditioner.find("additive") != std::string::npos) {
             append_error("Additive vcycle is not supported for Chebyshev smoother");
           } else {
-            std::string entry = options.getArgs(parSection + " PARALMOND CYCLE");
+            std::string entry = options.getArgs(parSection + " MGSOLVER CYCLE");
             if (entry.find("MULTIPLICATIVE") == std::string::npos) {
               entry += "+MULTIPLICATIVE";
-              options.setArgs(parSection + " PARALMOND CYCLE", entry);
+              options.setArgs(parSection + " MGSOLVER CYCLE", entry);
             }
           }
         } else if (s.find("asm") != std::string::npos)
@@ -728,10 +732,10 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
           if (p_preconditioner.find("additive") != std::string::npos) {
             append_error("Additive vcycle is not supported for hybrid Schwarz/Chebyshev smoother");
           } else {
-            std::string entry = options.getArgs(parSection + " PARALMOND CYCLE");
+            std::string entry = options.getArgs(parSection + " MGSOLVER CYCLE");
             if (entry.find("MULTIPLICATIVE") == std::string::npos) {
               entry += "+MULTIPLICATIVE";
-              options.setArgs(parSection + " PARALMOND CYCLE", entry);
+              options.setArgs(parSection + " MGSOLVER CYCLE", entry);
             }
           }
         } else if (s.find("ras") != std::string::npos)
@@ -741,10 +745,10 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
           if (p_preconditioner.find("additive") != std::string::npos) {
             append_error("Additive vcycle is not supported for hybrid Schwarz/Chebyshev smoother");
           } else {
-            std::string entry = options.getArgs(parSection + " PARALMOND CYCLE");
+            std::string entry = options.getArgs(parSection + " MGSOLVER CYCLE");
             if (entry.find("MULTIPLICATIVE") == std::string::npos) {
               entry += "+MULTIPLICATIVE";
-              options.setArgs(parSection + " PARALMOND CYCLE", entry);
+              options.setArgs(parSection + " MGSOLVER CYCLE", entry);
             }
           }
         }
@@ -764,7 +768,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
         if (p_preconditioner.find("additive") == std::string::npos)
           append_error("ASM smoother only supported for additive V-cycle");
       } else {
-        options.setArgs(parSection + " PARALMOND CYCLE",
+        options.setArgs(parSection + " MGSOLVER CYCLE",
                         "VCYCLE+ADDITIVE+OVERLAPCRS");
       }
     } else if (p_smoother.find("ras") == 0) {
@@ -773,7 +777,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
         if (p_preconditioner.find("additive") == std::string::npos)
           append_error("RAS smoother only supported for additive V-cycle");
       } else {
-        options.setArgs(parSection + " PARALMOND CYCLE",
+        options.setArgs(parSection + " MGSOLVER CYCLE",
                         "VCYCLE+ADDITIVE+OVERLAPCRS");
       }
     } else if (p_smoother.find("jac") == 0) {
@@ -783,10 +787,10 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
       if (p_preconditioner.find("additive") != std::string::npos) {
         append_error("Additive vcycle is not supported for Jacobi smoother");
       } else {
-        std::string entry = options.getArgs(parSection + " PARALMOND CYCLE");
+        std::string entry = options.getArgs(parSection + " MGSOLVER CYCLE");
         if (entry.find("MULTIPLICATIVE") == std::string::npos) {
           entry += "+MULTIPLICATIVE";
-          options.setArgs(parSection + " PARALMOND CYCLE", entry);
+          options.setArgs(parSection + " MGSOLVER CYCLE", entry);
         }
       }
     } else {
@@ -838,7 +842,7 @@ void parsePreconditioner(const int rank, setupAide &options,
       key += "+MULTIPLICATIVE";
     if (p_preconditioner.find("overlap") != std::string::npos)
       key += "+OVERLAPCRS";
-    options.setArgs(parSection + " PARALMOND CYCLE", key);
+    options.setArgs(parSection + " MGSOLVER CYCLE", key);
     options.setArgs(parSection + " PRECONDITIONER", "MULTIGRID");
     options.setArgs(parSection + " MULTIGRID COARSE SOLVE", "TRUE");
   } else if(p_preconditioner.find("semfem") != std::string::npos || 
@@ -1186,7 +1190,7 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PRESSURE PRECONDITIONER", "MULTIGRID");
   options.setArgs("PRESSURE DISCRETIZATION", "CONTINUOUS");
 
-  options.setArgs("PRESSURE PARALMOND CYCLE", "VCYCLE");
+  options.setArgs("PRESSURE MGSOLVER CYCLE", "VCYCLE");
   options.setArgs("PRESSURE MULTIGRID COARSE SOLVE", "TRUE");
   options.setArgs("PRESSURE MULTIGRID SEMFEM", "FALSE");
   options.setArgs("PRESSURE MULTIGRID SMOOTHER", "FOURTHOPTCHEBYSHEV+ASM");
@@ -1773,6 +1777,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
           }
         }
 
+#if 0
         // bail if coarse degree is set, but we're not smoothing on the coarsest level
         if(scheduleMap[{minDegree, true}] != INVALID){
           const bool smoothCrs = options.compareArgs("PRESSURE COARSE SOLVER", "SMOOTHER");
@@ -1780,6 +1785,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
             append_error("ERROR: specified coarse degree, but coarseSolver=smoother is not set.\n");
           }
         }
+#endif
 
       }
     }
@@ -1841,6 +1847,10 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       int smootherType;
       if (par->extract("boomeramg", "smoothertype", smootherType))
         options.setArgs("BOOMERAMG SMOOTHER TYPE",
+                        std::to_string(smootherType));
+      int coarseSmootherType;
+      if (par->extract("boomeramg", "coarsesmoothertype", coarseSmootherType))
+        options.setArgs("BOOMERAMG COARSE SMOOTHER TYPE",
                         std::to_string(smootherType));
       int numCycles;
       if (par->extract("boomeramg", "iterations", numCycles))

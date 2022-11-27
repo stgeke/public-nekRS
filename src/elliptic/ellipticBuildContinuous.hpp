@@ -24,22 +24,20 @@
 
  */
 
+#ifndef ELLIPTIC_BUILDCONT_HPP
+#define ELLIPTIC_BUILDCONT_HPP
+
 #include "elliptic.h"
-#include "platform.hpp"
-#include "linAlg.hpp"
+#include "MGSolver/MGSolver.hpp"
+#include <vector>
 
-void ellipticZeroMean(elliptic_t* elliptic, occa::memory &o_q)
-{
-  mesh_t* mesh = elliptic->mesh;
-  const hlong Nglobal = elliptic->NelementsGlobal * mesh->Np; 
+void ellipticBuildContinuous(elliptic_t* elliptic, nonZero_t** A,
+                             dlong* nnz, hlong* globalStarts);
 
-  if(elliptic->blockSolver) {
-    if(platform->comm.mpiRank == 0)
-      printf("ERROR: NULL space handling for Block solver current not supported!\n");
-    ABORT(EXIT_FAILURE);
-  } else {
-    dfloat qmeanGlobal = platform->linAlg->sum(mesh->Nlocal, o_q, platform->comm.mpiComm);
-    qmeanGlobal /= (dfloat) Nglobal;
-    platform->linAlg->add(mesh->Nlocal, -qmeanGlobal, o_q);
-  }
-}
+void ellipticBuildContinuousGalerkinHex3D(elliptic_t* elliptic,
+                                          elliptic_t* ellipticFine,
+                                          nonZero_t** A,
+                                          dlong* nnz,
+                                          hlong* globalStarts);
+
+#endif

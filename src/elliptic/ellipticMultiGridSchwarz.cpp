@@ -26,6 +26,7 @@
 
 #include <type_traits>
 #include "elliptic.h"
+#include "ellipticMultiGrid.h"
 #include <vector>
 #include <algorithm>
 #include <math.h>
@@ -681,7 +682,6 @@ mesh_t* create_extended_mesh(elliptic_t* elliptic, hlong* maskedGlobalIds)
   mesh->ogs = ogsSetup(mesh->Nelements * mesh->Np, mesh->globalIds, platform->comm.mpiComm, 1, platform->device.occaDevice());
 
   const int bigNum = 1E9;
-  dlong Ntotal = mesh->Np * mesh->Nelements;
 
   //make a node-wise bc flag using the gsop (prioritize Dirichlet boundaries over Neumann)
   int* mapB = (int*) calloc(mesh->Nelements * mesh->Np,sizeof(int));
@@ -795,7 +795,7 @@ void extrude(pfloat* arr1,
 #undef arr2
 }
 
-void MGLevel::generate_weights()
+void pMGLevel::generate_weights()
 {
   //platform_t* platform = platform_t::getInstance();
   const pfloat one = 1.0;
@@ -831,11 +831,11 @@ void MGLevel::generate_weights()
   free(wts);
 }
 
-void MGLevel::build(
-  elliptic_t* pSolver)
+void pMGLevel::build(elliptic_t* pSolver)
 {
   if(elliptic->elementType != HEXAHEDRA) {
-    printf("ERROR: Unsupported element type!");
+    if(platform->comm.mpiRank == 0) 
+      printf("ERROR: Unsupported element type!");
     ABORT(EXIT_FAILURE);
   }
 
@@ -843,9 +843,19 @@ void MGLevel::build(
   const int Nq = elliptic->mesh->Nq;
   const int Np = elliptic->mesh->Np;
 
+#if 0
+#if 0
   if(Nq == 2 && elliptic->options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE")){
     return;
   }
+#else
+  if(Nq == 2) { 
+    if(platform->comm.mpiRank == 0) 
+      printf("ERROR: Schwarz smoother requires N>1!\n");
+    ABORT(EXIT_FAILURE);
+  }
+#endif
+#endif
 
   hlong* maskedGlobalIdsExt;
   maskedGlobalIdsExt = (hlong*) calloc(Nelements*(Nq+2)*(Nq+2)*(Nq+2),sizeof(hlong));
@@ -954,7 +964,7 @@ void MGLevel::build(
   
 }
 
-void MGLevel::smoothSchwarz(occa::memory& o_u, occa::memory& o_Su, bool xIsZero)
+void pMGLevel::smoothSchwarz(occa::memory& o_u, occa::memory& o_Su, bool xIsZero)
 {
   const char* ogsDataTypeString =  ogsPfloat;
   const dlong Nelements = elliptic->mesh->Nelements;

@@ -213,7 +213,7 @@ void udfBuild(const char* udfFile, setupAide& options)
         std::string cmakeBuildDir = cache_dir + "/udf"; 
 
         sprintf(cmd, "rm -f %s/udf/*.so && cmake %s -S %s -B %s -DCASE_DIR=\"%s\" -DCMAKE_CXX_COMPILER=\"$NEKRS_CXX\" "
-	            "-DCMAKE_CXX_FLAGS=\"$NEKRS_CXXFLAGS\" %s",
+	            "-DCMAKE_CXX_FLAGS=\"$NEKRS_CXXFLAGS\" %s >cmake.log 2>&1",
                  udf_dir.c_str(),
                  cmakeFlags.c_str(),
                  cmakeBuildDir.c_str(),
@@ -224,10 +224,11 @@ void udfBuild(const char* udfFile, setupAide& options)
         if(verbose && platform->comm.mpiRank == 0) {
           printf("%s (cmake retVal: %d)\n", cmd, retVal);
         }
-        if(retVal) return EXIT_FAILURE; 
+        if(retVal)
+         return EXIT_FAILURE;
 
         if(!fileExists(oudfFile.c_str())) {
-          sprintf(cmd, "cd %s/udf && make udf.i %s", cache_dir.c_str(), pipeToNull.c_str());
+          sprintf(cmd, "cd %s/udf && make -j1 udf.i %s", cache_dir.c_str(), pipeToNull.c_str());
           const int retVal = system(cmd);
           if(verbose && platform->comm.mpiRank == 0) {
             printf("%s (preprocessing retVal: %d)\n", cmd, retVal);
@@ -240,7 +241,7 @@ void udfBuild(const char* udfFile, setupAide& options)
 
       // always run make to trigger rebuild if env-vars of header files have changed! 
       { 
-        sprintf(cmd, "cd %s/udf && make %s", cache_dir.c_str(), pipeToNull.c_str());
+        sprintf(cmd, "cd %s/udf && make -j1 %s", cache_dir.c_str(), pipeToNull.c_str());
         const int retVal = system(cmd);
         if(verbose && platform->comm.mpiRank == 0) {
           printf("%s (make retVal: %d)\n", cmd, retVal);

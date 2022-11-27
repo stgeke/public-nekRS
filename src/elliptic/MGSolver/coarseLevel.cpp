@@ -28,28 +28,25 @@ SOFTWARE.
 #include "omp.h"
 #include "limits.h"
 #include "stdio.h"
-#include "parAlmond.hpp"
-
 #include "timer.hpp"
 
-#include "hypreWrapper.hpp"
-#include "amgx.h"
+#include "AMGX.hpp"
 
 #include "platform.hpp"
 #include "linAlg.hpp"
+#include "MGSolver.hpp"
 
 static occa::kernel vectorDotStarKernel;
 
-namespace parAlmond {
-
-coarseSolver::coarseSolver(setupAide options_, MPI_Comm comm_) {
-  options = options_;
-  comm = comm_;
+MGSolver_t::coarseLevel_t::coarseLevel_t(setupAide options, MPI_Comm comm)
+{
+  this->options = options;
+  this->comm = comm;
+  this->solvePtr = &MGSolver_t::coarseLevel_t::solve;
 }
 
-void coarseSolver::setup(
-               dlong Nrows, 
-      	       hlong* globalRowStarts,       //global partition
+void MGSolver_t::coarseLevel_t::setupSolver(
+               hlong* globalRowStarts,
                dlong nnz,                    //--
                hlong* Ai,                    //-- Local A matrix data (globally indexed, COO storage, row sorted)
                hlong* Aj,                    //--
@@ -60,22 +57,27 @@ void coarseSolver::setup(
   MPI_Comm_rank(comm,&rank);
   MPI_Comm_size(comm,&size);
 
+  MPI_Barrier(comm);
+  double startTime = MPI_Wtime();
+  if(rank==0) printf("setup FEM solver ...");fflush(stdout);
+
+  N = (dlong) (globalRowStarts[rank+1] - globalRowStarts[rank]);
+
   const int verbose = (options.compareArgs("VERBOSE","TRUE")) ? 1: 0;
   const bool useDevice = options.compareArgs("COARSE SOLVER LOCATION", "DEVICE");
   const int useFP32 = options.compareArgs("COARSE SOLVER PRECISION", "FP32");
 
   const std::string kernelName = "vectorDotStar";
-  vectorDotStarKernel = platform->kernels.get(kernelName);
+  if (!vectorDotStarKernel.isInitialized()) 
+    vectorDotStarKernel = platform->kernels.get(kernelName);
 
-  N = (int) Nrows;
-
-  o_xBuffer = platform->device.malloc(Nrows * sizeof(pfloat));
-  h_xBuffer = platform->device.mallocHost(Nrows * sizeof(pfloat));
+  o_xBuffer = platform->device.malloc(N * sizeof(pfloat));
+  h_xBuffer = platform->device.mallocHost(N * sizeof(pfloat));
   xBuffer = (pfloat*) h_xBuffer.ptr(); 
 
   if (options.compareArgs("COARSE SOLVER", "BOOMERAMG")){
  
-    double settings[BOOMERAMG_NPARAM+1];
+    double settings[hypreWrapperDevice::NPARAM+1];
     settings[0]  = 1;    /* custom settings              */
     settings[1]  = 8;    /* coarsening                   */
     settings[2]  = 6;    /* interpolation                */
@@ -99,8 +101,8 @@ void coarseSolver::setup(
     options.getArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS" , settings[10]);
 
     if(useDevice) {
-      hypreWrapperDevice::BoomerAMGSetup(
-        Nrows,
+      boomerAMG = new hypreWrapperDevice::boomerAMG_t(
+        N,
         nnz,
         Ai,
         Aj,
@@ -113,8 +115,8 @@ void coarseSolver::setup(
         verbose);
     } else {
       const int Nthreads = 1;
-      hypreWrapper::BoomerAMGSetup(
-        Nrows,
+      boomerAMG = new hypreWrapper::boomerAMG_t(
+        N,
         nnz,
         Ai,
         Aj,
@@ -132,8 +134,8 @@ void coarseSolver::setup(
     options.getArgs("AMGX CONFIG FILE", configFile);
     char *cfg = NULL;
     if(configFile.size()) cfg = (char*) configFile.c_str();
-    AMGXsetup(
-      Nrows,
+    AMGX = new AMGX_t(
+      N,
       nnz,
       Ai,
       Aj,
@@ -144,7 +146,6 @@ void coarseSolver::setup(
       useFP32,
       std::stoi(getenv("NEKRS_GPU_MPI")),
       cfg);
-    N = (int) Nrows;
   } else {
     if(platform->comm.mpiRank == 0){
       std::string amgSolver;
@@ -153,37 +154,57 @@ void coarseSolver::setup(
     }
     ABORT(EXIT_FAILURE);
   }
+
+  MPI_Barrier(comm);
+  if(rank==0) printf("done (%gs)\n", MPI_Wtime()-startTime);
 }
 
-void coarseSolver::solve(occa::memory o_rhs, occa::memory o_x) 
+MGSolver_t::coarseLevel_t::~coarseLevel_t()
+{
+  const auto useDevice = options.compareArgs("COARSE SOLVER LOCATION", "DEVICE");
+  if(boomerAMG) {
+    if(useDevice) 
+      delete (hypreWrapperDevice::boomerAMG_t*) this->boomerAMG;
+    else
+      delete (hypreWrapper::boomerAMG_t*) this->boomerAMG;
+  }
+  if(AMGX) delete AMGX;
+
+  h_xBuffer.free();
+  o_xBuffer.free();
+  h_Sx.free();
+  h_Gx.free();
+  o_Sx.free();
+  o_Gx.free();
+}
+
+void MGSolver_t::coarseLevel_t::solve(occa::memory& o_rhs, occa::memory& o_x) 
 {
   platform->timer.tic("coarseSolve", 1);
 
-  if(options.compareArgs("MULTIGRID SEMFEM", "TRUE")){
-
-    semfemSolver(o_rhs, o_x);
-
-  } else {
-
+  {
     const bool useDevice = options.compareArgs("COARSE SOLVER LOCATION", "DEVICE");
 
     const pfloat zero = 0.0;
     platform->linAlg->pfill(N, zero, o_xBuffer);
     if(!useDevice) o_xBuffer.copyTo(xBuffer, N*sizeof(pfloat));
 
-    // T->L
+    // E->T
     const pfloat one = 1.0;
     vectorDotStarKernel(ogs->N, one, zero, o_weight, o_rhs, o_Sx); 
     ogsGather(o_Gx, o_Sx, ogsPfloat, ogsAdd, ogs);
     if(!useDevice) o_Gx.copyTo(Gx, N*sizeof(pfloat));
 
     if (options.compareArgs("COARSE SOLVER", "BOOMERAMG")){
-      if(useDevice)
-        hypreWrapperDevice::BoomerAMGSolve(o_Gx, o_xBuffer);
-      else
-        hypreWrapper::BoomerAMGSolve(Gx, xBuffer); 
+      if(useDevice) {
+        auto boomerAMG = (hypreWrapperDevice::boomerAMG_t*) this->boomerAMG;
+        boomerAMG->solve(o_Gx, o_xBuffer);
+      } else {
+        auto boomerAMG = (hypreWrapper::boomerAMG_t*) this->boomerAMG;
+        boomerAMG->solve(Gx, xBuffer); 
+      }
     } else if (options.compareArgs("COARSE SOLVER", "AMGX")){
-        AMGXsolve(o_Gx.ptr(), o_xBuffer.ptr());
+        AMGX->solve(o_Gx.ptr(), o_xBuffer.ptr());
     }
 
     // T->E
@@ -198,5 +219,3 @@ void coarseSolver::solve(occa::memory o_rhs, occa::memory o_x)
 
   platform->timer.toc("coarseSolve");
 }
-
-} //namespace parAlmond

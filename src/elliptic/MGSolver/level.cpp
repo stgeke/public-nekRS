@@ -24,16 +24,17 @@ SOFTWARE.
 
 */
 
-#ifndef PARALMOND_DEFINES_HPP
-#define PARALMOND_DEFINES_HPP
+#include "MGSolver.hpp"
 
-#define MAX_LEVELS 10
+MGSolver_t::multigridLevel::multigridLevel(dlong N, dlong M, MPI_Comm comm_):
+  Nrows(N), Ncols(M) 
+{
+  comm = comm_;
+}
 
-namespace parAlmond {
+MGSolver_t::multigridLevel::~multigridLevel() {
 
-typedef enum {VCYCLE=0} CycleType;
-typedef enum {JACOBI=0,DAMPED_JACOBI=1,CHEBYSHEV=2} SmoothType;
-
-} //namespace parAlmond
-
-#endif
+  if (o_x.size()) o_x.free();
+  if (o_rhs.size()) o_rhs.free();
+  if (o_res.size()) o_res.free();
+}

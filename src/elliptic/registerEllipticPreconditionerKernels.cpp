@@ -275,9 +275,11 @@ void registerMultigridLevelKernels(const std::string &section, int Nf, int N, in
   }
 
   const std::string optionsPrefix = createOptionsPrefix(section);
+#if 0
   if (N == 1 && platform->options.compareArgs(optionsPrefix + "MULTIGRID COARSE SOLVE", "TRUE")) {
     return;
   }
+#endif
 
   registerAxKernels(section, N, poissonEquation);
   registerSchwarzKernels(section, N);
@@ -311,7 +313,7 @@ void registerMultiGridKernels(const std::string &section, int poissonEquation)
         installDir.assign(getenv("NEKRS_INSTALL_DIR"));
         const std::string oklpath = installDir + "/kernels/";
 
-        std::string fileName = oklpath + "parAlmond/vectorDotStar.okl";
+        std::string fileName = oklpath + "elliptic/vectorDotStar.okl";
         std::string kernelName = "vectorDotStar";
         platform->kernels.add(kernelName, fileName, platform->kernelInfo);
       }

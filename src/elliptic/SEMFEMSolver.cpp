@@ -2,33 +2,26 @@
 #include "platform.hpp"
 #include "gslib.h"
 #include "elliptic.h"
-#include "ellipticBuildSEMFEM.hpp"
-#include "hypreWrapper.hpp"
-#include "amgx.h"
+#include "SEMFEMSolver.hpp"
 
-namespace{
-occa::kernel gatherKernel;
-occa::kernel scatterKernel;
-occa::memory o_dofMap;
-occa::memory o_SEMFEMBuffer1;
-occa::memory o_SEMFEMBuffer2;
-void* SEMFEMBuffer1_h_d;
-void* SEMFEMBuffer2_h_d;
-dlong numRowsSEMFEM;
-}
+static occa::kernel gatherKernel;
+static occa::kernel scatterKernel;
 
-void ellipticSEMFEMSetup(elliptic_t* elliptic)
+SEMFEMSolver_t::SEMFEMSolver_t(elliptic_t* elliptic_)
 {
+  MPI_Barrier(platform->comm.mpiComm);
+  double tStart = MPI_Wtime();
+  if(platform->comm.mpiRank == 0)
+    printf("setup SEMFEM solver ... \n"); fflush(stdout);
+
+  elliptic = elliptic_;
+
   const int verbose = (platform->options.compareArgs("VERBOSE","TRUE")) ? 1: 0;
   const int useFP32 = elliptic->options.compareArgs("COARSE SOLVER PRECISION", "FP32");
   const bool useDevice = elliptic->options.compareArgs("COARSE SOLVER LOCATION", "DEVICE");
 
-  gatherKernel = platform->kernels.get("gather");
-  scatterKernel = platform->kernels.get("scatter");
-
-  MPI_Barrier(platform->comm.mpiComm);
-  double tStart = MPI_Wtime();
-  if(platform->comm.mpiRank == 0)  printf("setup SEMFEM preconditioner ... \n"); fflush(stdout);
+  if(!gatherKernel.isInitialized()) gatherKernel = platform->kernels.get("gather");
+  if(!scatterKernel.isInitialized()) scatterKernel = platform->kernels.get("scatter");
 
   mesh_t* mesh = elliptic->mesh;
   double* mask = (double*) malloc(mesh->Np*mesh->Nelements*sizeof(double));
@@ -39,22 +32,26 @@ void ellipticSEMFEMSetup(elliptic_t* elliptic)
     for (dlong i = 0; i < elliptic->Nmasked; i++) mask[maskIds[i]] = 0.;
     free(maskIds);
   }
- 
-  SEMFEMData* data = ellipticBuildSEMFEM(
+
+  auto hypreIJ = new hypreWrapper::IJ_t();
+  matrix_t* matrix = build(
     mesh->Nq,
     mesh->Nelements,
     mesh->o_x,
     mesh->o_y,
     mesh->o_z,
     mask,
+    *hypreIJ,
     platform->comm.mpiComm,
     mesh->globalIds
   );
+  free(mask);
 
-  const dlong numRows = data->rowEnd - data->rowStart + 1;
+
+  const dlong numRows = matrix->rowEnd - matrix->rowStart + 1;
   numRowsSEMFEM = numRows;
 
-  o_dofMap = platform->device.malloc(numRows * sizeof(long long), data->dofMap);
+  o_dofMap = platform->device.malloc(numRows * sizeof(long long), matrix->dofMap);
 
   o_SEMFEMBuffer1 = platform->device.malloc(numRows * sizeof(pfloat));
   o_SEMFEMBuffer2 = platform->device.malloc(numRows * sizeof(pfloat));
@@ -63,9 +60,8 @@ void ellipticSEMFEMSetup(elliptic_t* elliptic)
     SEMFEMBuffer2_h_d = (pfloat*) calloc(numRows, sizeof(pfloat));
   }
 
-  int setupRetVal = 0;
   if(elliptic->options.compareArgs("COARSE SOLVER", "BOOMERAMG")){
-      double settings[BOOMERAMG_NPARAM+1];
+      double settings[hypreWrapper::NPARAM+1];
       settings[0]  = 1;    /* custom settings              */
       settings[1]  = 8;    /* coarsening                   */
       settings[2]  = 6;    /* interpolation                */
@@ -94,12 +90,12 @@ void ellipticSEMFEMSetup(elliptic_t* elliptic)
       platform->options.getArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS" , settings[10]);
 
       if(platform->device.mode() != "Serial" && useDevice) {
-        setupRetVal = hypreWrapperDevice::BoomerAMGSetup(
+        boomerAMG = new hypreWrapperDevice::boomerAMG_t(
                         numRows,
-                        data->nnz,
-                        data->Ai,
-                        data->Aj,
-                        data->Av,
+                        matrix->nnz,
+                        matrix->Ai,
+                        matrix->Aj,
+                        matrix->Av,
                         (int) elliptic->allNeumann,
                         platform->comm.mpiComm,
                         platform->device.occaDevice(),
@@ -107,12 +103,12 @@ void ellipticSEMFEMSetup(elliptic_t* elliptic)
                         settings,
                         verbose);
       } else {
-        setupRetVal = hypreWrapper::BoomerAMGSetup(
+        boomerAMG = new hypreWrapper::boomerAMG_t(
           numRows,
-          data->nnz,
-          data->Ai,
-          data->Aj,
-          data->Av,
+          matrix->nnz,
+          matrix->Ai,
+          matrix->Aj,
+          matrix->Av,
           (int) elliptic->allNeumann,
           platform->comm.mpiComm,
           1, /* Nthreads */
@@ -132,12 +128,12 @@ void ellipticSEMFEMSetup(elliptic_t* elliptic)
     elliptic->options.getArgs("AMGX CONFIG FILE", configFile);
     char *cfg = NULL;
     if(configFile.size()) cfg = (char*) configFile.c_str();
-    setupRetVal = AMGXsetup(
+    AMGX = new AMGX_t(
       numRows,
-      data->nnz,
-      data->Ai,
-      data->Aj,
-      data->Av,
+      matrix->nnz,
+      matrix->Ai,
+      matrix->Aj,
+      matrix->Av,
       (int) elliptic->allNeumann,
       platform->comm.mpiComm,
       platform->device.id(),
@@ -154,17 +150,27 @@ void ellipticSEMFEMSetup(elliptic_t* elliptic)
     ABORT(EXIT_FAILURE);
   }
 
-  if(setupRetVal) {
-   if(platform->comm.mpiRank == 0)
-     printf("AMG solver setup failed!\n");
-   ABORT(1);
-  }
-
-  free(data);
+  free(matrix);
   if(platform->comm.mpiRank == 0)  printf("done (%gs)\n", MPI_Wtime() - tStart); fflush(stdout);
 }
 
-void ellipticSEMFEMSolve(elliptic_t* elliptic, occa::memory& o_r, occa::memory& o_z)
+SEMFEMSolver_t::~SEMFEMSolver_t()
+{
+  const auto useDevice = elliptic->options.compareArgs("COARSE SOLVER LOCATION", "DEVICE");
+  if(boomerAMG) {
+    if(useDevice)
+      delete (hypreWrapperDevice::boomerAMG_t*) this->boomerAMG;
+    else
+      delete (hypreWrapper::boomerAMG_t*) this->boomerAMG;
+  }
+  if(AMGX) delete AMGX;
+
+  o_dofMap.free();
+  o_SEMFEMBuffer1.free();
+  o_SEMFEMBuffer2.free();
+}
+
+void SEMFEMSolver_t::run(occa::memory& o_r, occa::memory& o_z)
 {
   mesh_t* mesh = elliptic->mesh;
 
@@ -181,21 +187,25 @@ void ellipticSEMFEMSolve(elliptic_t* elliptic, occa::memory& o_r, occa::memory& 
     o_bufr
   );
 
+  platform->linAlg->pfill(elliptic->Nfields * elliptic->fieldOffset, 0.0, o_z);
+
   if(elliptic->options.compareArgs("COARSE SOLVER", "BOOMERAMG")){
 
     if(!useDevice)
     {
       o_bufr.copyTo(SEMFEMBuffer1_h_d, numRowsSEMFEM * sizeof(pfloat));
-      hypreWrapper::BoomerAMGSolve(SEMFEMBuffer1_h_d, SEMFEMBuffer2_h_d);
+      auto boomerAMG = (hypreWrapper::boomerAMG_t*) this->boomerAMG;
+      boomerAMG->solve(SEMFEMBuffer1_h_d, SEMFEMBuffer2_h_d);
       o_bufz.copyFrom(SEMFEMBuffer2_h_d, numRowsSEMFEM * sizeof(pfloat));
 
     } else {
-      hypreWrapperDevice::BoomerAMGSolve(o_bufr, o_bufz);
+      auto boomerAMG = (hypreWrapperDevice::boomerAMG_t*) this->boomerAMG;
+      boomerAMG->solve(o_bufr, o_bufz);
     }
 
   } else if(elliptic->options.compareArgs("COARSE SOLVER", "AMGX") && useDevice){
 
-    AMGXsolve(o_bufr.ptr(), o_bufz.ptr());
+    AMGX->solve(o_bufr.ptr(), o_bufz.ptr());
 
   } else {
 

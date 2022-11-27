@@ -244,7 +244,6 @@ set(SRC
     src/postProcessing/planarAvg.cpp
     ${BENCH_SOURCES}
     ${MESH_SOURCES}
-    ${PARALMOND_SOURCES}
     ${ELLIPTIC_SOURCES}
     ${BLASLAPACK_SOURCES}
     ${OGS_SOURCES}

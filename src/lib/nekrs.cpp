@@ -14,7 +14,9 @@
 #include "nrssys.hpp"
 #include "linAlg.hpp"
 #include "cfl.hpp"
-#include "amgx.h"
+#include "AMGX.hpp"
+#include "hypreWrapper.hpp"
+#include "hypreWrapperDevice.hpp"
 
 // extern variable from nrssys.hpp
 platform_t* platform;
@@ -337,7 +339,7 @@ int lastStep(double time, int tstep, double elapsedTime)
     double maxElaspedTime;
     platform->options.getArgs("STOP AT ELAPSED TIME", maxElaspedTime);
     if(elapsedTime > 60.0*maxElaspedTime) nrs->lastStep = 1; 
-  } else if (endTime() > 0) { 
+  } else if (endTime() >= 0) { 
      const double eps = 1e-12;
      nrs->lastStep = fabs((time+nrs->dt[0]) - endTime()) < eps || (time+nrs->dt[0]) > endTime();
   } else {
@@ -361,8 +363,11 @@ void* nrsPtr(void)
 void finalize(void)
 {
   if(options.compareArgs("BUILD ONLY", "FALSE")) {
-    AMGXfree();
     nek::end();
+    if(nrs->pSolver) delete nrs->pSolver;
+    hypreWrapper::finalize();
+    hypreWrapperDevice::finalize();
+    AMGXfinalize();
   }
 }
 

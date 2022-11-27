@@ -27,17 +27,17 @@ struct nrs_t {
 
   int dim, elementType;
 
-  mesh_t *_mesh;
-  mesh_t *meshV;
+  mesh_t *_mesh = nullptr;
+  mesh_t *meshV = nullptr;
 
-  elliptic_t *uSolver;
-  elliptic_t *vSolver;
-  elliptic_t *wSolver;
-  elliptic_t *uvwSolver;
-  elliptic_t *pSolver;
-  elliptic_t *meshSolver;
+  elliptic_t *uSolver = nullptr;
+  elliptic_t *vSolver = nullptr;
+  elliptic_t *wSolver = nullptr;
+  elliptic_t *uvwSolver = nullptr;
+  elliptic_t *pSolver = nullptr;
+  elliptic_t *meshSolver = nullptr;
 
-  cds_t *cds;
+  cds_t *cds = nullptr;
 
   oogs_t *gsh;
 

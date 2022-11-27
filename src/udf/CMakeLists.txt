@@ -22,7 +22,7 @@ set(INCLUDE_DIRS
   ${NEKRS_INSTALL_DIR}/include/io
   ${NEKRS_INSTALL_DIR}/include/core
   ${NEKRS_INSTALL_DIR}/include/utils
-  ${NEKRS_INSTALL_DIR}/include/timeStepper
+  ${NEKRS_INSTALL_DIR}/include/setup
   ${NEKRS_INSTALL_DIR}/include/udf
   ${NEKRS_INSTALL_DIR}/include/setup
   ${NEKRS_INSTALL_DIR}/include/navierStokes

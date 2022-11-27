@@ -301,6 +301,8 @@ void meshParallelGatherScatterSetup(mesh_t* mesh,
 mesh_t* meshSetup(char* filename, int N, setupAide &options);
 void meshFree(mesh_t*);
 
+void printMeshMetrics(mesh_t* mesh);
+
 void occaTimerTic(occa::device device,std::string name);
 void occaTimerToc(occa::device device,std::string name);
 

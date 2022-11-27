@@ -28,7 +28,7 @@
 #define ELLIPTIC_MGLEVEL_HPP
 
 #include "elliptic.h"
-#include "amgSolver/parAlmond/level.hpp"
+#include "MGSolver/MGSolver.hpp"
 #include <vector>
 
 enum class SmootherType
@@ -49,7 +49,7 @@ enum class ChebyshevSmootherType
 
 std::vector<pfloat> optimalCoeffs(int ChebyshevDegree);
 
-class MGLevel : public parAlmond::multigridLevel
+class pMGLevel : public MGSolver_t::multigridLevel
 {
 public:
   static constexpr hlong Narnoldi {10};
@@ -75,11 +75,10 @@ public:
   int DownLegChebyshevDegree;
   int UpLegChebyshevDegree;
 
-  static size_t smootherResidualBytes;
-  static pfloat* smootherResidual;
-  static occa::memory o_smootherResidual;
-  static occa::memory o_smootherResidual2;
-  static occa::memory o_smootherUpdate;
+  inline static pfloat* smootherResidual;
+  inline static occa::memory o_smootherResidual;
+  inline static occa::memory o_smootherResidual2;
+  inline static occa::memory o_smootherUpdate;
   occa::kernel preFDMKernel;
   bool overlap;
   occa::kernel fusedFDMKernel;
@@ -116,12 +115,12 @@ public:
   std::vector<pfloat> DownLegBetas;
 
   //build a single level
-  MGLevel(elliptic_t* ellipticBase, int Nc,
+  pMGLevel(elliptic_t* ellipticBase, int Nc,
           setupAide options_, MPI_Comm comm_,
           bool _isCoarse = false
           );
   //build a level and connect it to the previous one
-  MGLevel(elliptic_t* ellipticBase, //finest level
+  pMGLevel(elliptic_t* ellipticBase, //finest level
           mesh_t** meshLevels,
           elliptic_t* ellipticFine,          //previous level
           elliptic_t* ellipticCoarse,          //current level
@@ -163,7 +162,5 @@ public:
 
   void buildCoarsenerQuadHex(mesh_t **meshLevels, int Nf, int Nc);
 };
-
-void MGLevelAllocateStorage(MGLevel* level, int k, parAlmond::CycleType ctype);
 
 #endif

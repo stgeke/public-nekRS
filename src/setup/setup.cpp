@@ -630,6 +630,9 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
   nek::ocopyToNek(startTime, 0);
 
+  if (platform->comm.mpiRank == 0) std::cout << std::endl;
+  printMeshMetrics(nrs->_mesh);
+  
   printICMinMax(nrs);
 
   // setup elliptic solvers
@@ -666,7 +669,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       cds->solver[is]->name = "scalar" + sid;
       cds->solver[is]->blockSolver = 0;
       cds->solver[is]->Nfields = 1;
-      cds->solver[is]->Ntotal = nrs->fieldOffset;
+      cds->solver[is]->fieldOffset = nrs->fieldOffset;
       cds->solver[is]->o_wrk = o_mempoolElliptic;
       cds->solver[is]->mesh = mesh;
       cds->solver[is]->dim = cds->dim;
@@ -726,7 +729,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->vOptions.setArgs("LINEAR SOLVER STOPPING CRITERION",
                           options.getArgs("VELOCITY LINEAR SOLVER STOPPING CRITERION"));
     nrs->vOptions.setArgs("DISCRETIZATION", options.getArgs("VELOCITY DISCRETIZATION"));
-    nrs->vOptions.setArgs("BASIS", options.getArgs("VELOCITY BASIS"));
     nrs->vOptions.setArgs("PRECONDITIONER", options.getArgs("VELOCITY PRECONDITIONER"));
     nrs->vOptions.setArgs("INITIAL GUESS", options.getArgs("VELOCITY INITIAL GUESS"));
     nrs->vOptions.setArgs("RESIDUAL PROJECTION VECTORS",
@@ -737,13 +739,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->vOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("VELOCITY MULTIGRID SMOOTHER"));
     nrs->vOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE",
                           options.getArgs("VELOCITY MULTIGRID CHEBYSHEV DEGREE"));
-    nrs->vOptions.setArgs("PARALMOND CYCLE", options.getArgs("VELOCITY PARALMOND CYCLE"));
-    nrs->vOptions.setArgs("PARALMOND SMOOTHER", options.getArgs("VELOCITY PARALMOND SMOOTHER"));
-    nrs->vOptions.setArgs("PARALMOND PARTITION", options.getArgs("VELOCITY PARALMOND PARTITION"));
-    nrs->vOptions.setArgs("PARALMOND CHEBYSHEV DEGREE",
-                          options.getArgs("VELOCITY PARALMOND CHEBYSHEV DEGREE"));
-    nrs->vOptions.setArgs("PARALMOND AGGREGATION STRATEGY",
-                          options.getArgs("VELOCITY PARALMOND AGGREGATION STRATEGY"));
+    nrs->vOptions.setArgs("MGSOLVER CYCLE", options.getArgs("VELOCITY MGSOLVER CYCLE"));
+    nrs->vOptions.setArgs("MGSOLVER SMOOTHER", options.getArgs("VELOCITY MGSOLVER SMOOTHER"));
+    nrs->vOptions.setArgs("MGSOLVER PARTITION", options.getArgs("VELOCITY MGSOLVER PARTITION"));
+    nrs->vOptions.setArgs("MGSOLVER CHEBYSHEV DEGREE",
+                          options.getArgs("VELOCITY MGSOLVER CHEBYSHEV DEGREE"));
+    nrs->vOptions.setArgs("MGSOLVER AGGREGATION STRATEGY",
+                          options.getArgs("VELOCITY MGSOLVER AGGREGATION STRATEGY"));
     nrs->vOptions.setArgs("MAXIMUM ITERATIONS", options.getArgs("VELOCITY MAXIMUM ITERATIONS"));
     nrs->vOptions.setArgs("STABILIZATION METHOD", options.getArgs("VELOCITY STABILIZATION METHOD"));
     nrs->vOptions.setArgs("HPFRT STRENGTH", options.getArgs("VELOCITY HPFRT STRENGTH"));
@@ -754,7 +756,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->mOptions.setArgs("KRYLOV SOLVER", options.getArgs("MESH KRYLOV SOLVER"));
     nrs->mOptions.setArgs("SOLVER TOLERANCE", options.getArgs("MESH SOLVER TOLERANCE"));
     nrs->mOptions.setArgs("DISCRETIZATION", options.getArgs("MESH DISCRETIZATION"));
-    nrs->mOptions.setArgs("BASIS", options.getArgs("MESH BASIS"));
     nrs->mOptions.setArgs("PRECONDITIONER", options.getArgs("MESH PRECONDITIONER"));
     nrs->mOptions.setArgs("INITIAL GUESS", options.getArgs("MESH INITIAL GUESS"));
     nrs->mOptions.setArgs("RESIDUAL PROJECTION VECTORS", options.getArgs("MESH RESIDUAL PROJECTION VECTORS"));
@@ -763,12 +764,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->mOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("MESH MULTIGRID SCHEDULE"));
     nrs->mOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("MESH MULTIGRID SMOOTHER"));
     nrs->mOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE", options.getArgs("MESH MULTIGRID CHEBYSHEV DEGREE"));
-    nrs->mOptions.setArgs("PARALMOND CYCLE", options.getArgs("MESH PARALMOND CYCLE"));
-    nrs->mOptions.setArgs("PARALMOND SMOOTHER", options.getArgs("MESH PARALMOND SMOOTHER"));
-    nrs->mOptions.setArgs("PARALMOND PARTITION", options.getArgs("MESH PARALMOND PARTITION"));
-    nrs->mOptions.setArgs("PARALMOND CHEBYSHEV DEGREE", options.getArgs("MESH PARALMOND CHEBYSHEV DEGREE"));
-    nrs->mOptions.setArgs("PARALMOND AGGREGATION STRATEGY",
-                          options.getArgs("MESH PARALMOND AGGREGATION STRATEGY"));
+    nrs->mOptions.setArgs("MGSOLVER CYCLE", options.getArgs("MESH MGSOLVER CYCLE"));
+    nrs->mOptions.setArgs("MGSOLVER SMOOTHER", options.getArgs("MESH MGSOLVER SMOOTHER"));
+    nrs->mOptions.setArgs("MGSOLVER PARTITION", options.getArgs("MESH MGSOLVER PARTITION"));
+    nrs->mOptions.setArgs("MGSOLVER CHEBYSHEV DEGREE", options.getArgs("MESH MGSOLVER CHEBYSHEV DEGREE"));
+    nrs->mOptions.setArgs("MGSOLVER AGGREGATION STRATEGY",
+                          options.getArgs("MESH MGSOLVER AGGREGATION STRATEGY"));
     nrs->mOptions.setArgs("MAXIMUM ITERATIONS", options.getArgs("MESH MAXIMUM ITERATIONS"));
 
     // coeff used by ellipticSetup to detect allNeumann
@@ -782,7 +783,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       if (options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
         nrs->uvwSolver->stressForm = 1;
       nrs->uvwSolver->Nfields = nrs->NVfields;
-      nrs->uvwSolver->Ntotal = nrs->fieldOffset;
+      nrs->uvwSolver->fieldOffset = nrs->fieldOffset;
       nrs->uvwSolver->o_wrk = o_mempoolElliptic;
       nrs->uvwSolver->mesh = mesh;
       nrs->uvwSolver->options = nrs->vOptions;
@@ -834,7 +835,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uSolver = new elliptic_t();
       nrs->uSolver->blockSolver = 0;
       nrs->uSolver->Nfields = 1;
-      nrs->uSolver->Ntotal = nrs->fieldOffset;
+      nrs->uSolver->fieldOffset = nrs->fieldOffset;
       nrs->uSolver->o_wrk = o_mempoolElliptic;
       nrs->uSolver->mesh = mesh;
       nrs->uSolver->options = nrs->vOptions;
@@ -858,7 +859,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->vSolver = new elliptic_t();
       nrs->vSolver->blockSolver = 0;
       nrs->vSolver->Nfields = 1;
-      nrs->vSolver->Ntotal = nrs->fieldOffset;
+      nrs->vSolver->fieldOffset = nrs->fieldOffset;
       nrs->vSolver->o_wrk = o_mempoolElliptic;
       nrs->vSolver->mesh = mesh;
       nrs->vSolver->options = nrs->vOptions;
@@ -882,7 +883,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->wSolver = new elliptic_t();
       nrs->wSolver->blockSolver = 0;
       nrs->wSolver->Nfields = 1;
-      nrs->wSolver->Ntotal = nrs->fieldOffset;
+      nrs->wSolver->fieldOffset = nrs->fieldOffset;
       nrs->wSolver->o_wrk = o_mempoolElliptic;
       nrs->wSolver->mesh = mesh;
       nrs->wSolver->options = nrs->vOptions;
@@ -925,7 +926,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pOptions.setArgs("LINEAR SOLVER STOPPING CRITERION",
                           options.getArgs("PRESSURE LINEAR SOLVER STOPPING CRITERION"));
     nrs->pOptions.setArgs("DISCRETIZATION", options.getArgs("PRESSURE DISCRETIZATION"));
-    nrs->pOptions.setArgs("BASIS", options.getArgs("PRESSURE BASIS"));
     nrs->pOptions.setArgs("PRECONDITIONER", options.getArgs("PRESSURE PRECONDITIONER"));
     nrs->pOptions.setArgs("COARSE SOLVER", options.getArgs("PRESSURE COARSE SOLVER"));
     nrs->pOptions.setArgs("COARSE SOLVER PRECISION", options.getArgs("PRESSURE COARSE SOLVER PRECISION"));
@@ -937,16 +937,17 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("PRESSURE MULTIGRID SCHEDULE"));
     nrs->pOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
     nrs->pOptions.setArgs("MULTIGRID COARSE SOLVE", options.getArgs("PRESSURE MULTIGRID COARSE SOLVE"));
+    nrs->pOptions.setArgs("MULTIGRID COARSE SOLVE AND SMOOTH", options.getArgs("PRESSURE MULTIGRID COARSE SOLVE AND SMOOTH"));
     nrs->pOptions.setArgs("MULTIGRID SEMFEM", options.getArgs("PRESSURE MULTIGRID SEMFEM"));
     nrs->pOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE",
                           options.getArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE"));
-    nrs->pOptions.setArgs("PARALMOND CYCLE", options.getArgs("PRESSURE PARALMOND CYCLE"));
-    nrs->pOptions.setArgs("PARALMOND SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
-    nrs->pOptions.setArgs("PARALMOND PARTITION", options.getArgs("PRESSURE PARALMOND PARTITION"));
-    nrs->pOptions.setArgs("PARALMOND CHEBYSHEV DEGREE",
-                          options.getArgs("PRESSURE PARALMOND CHEBYSHEV DEGREE"));
-    nrs->pOptions.setArgs("PARALMOND AGGREGATION STRATEGY",
-                          options.getArgs("PRESSURE PARALMOND AGGREGATION STRATEGY"));
+    nrs->pOptions.setArgs("MGSOLVER CYCLE", options.getArgs("PRESSURE MGSOLVER CYCLE"));
+    nrs->pOptions.setArgs("MGSOLVER SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
+    nrs->pOptions.setArgs("MGSOLVER PARTITION", options.getArgs("PRESSURE MGSOLVER PARTITION"));
+    nrs->pOptions.setArgs("MGSOLVER CHEBYSHEV DEGREE",
+                          options.getArgs("PRESSURE MGSOLVER CHEBYSHEV DEGREE"));
+    nrs->pOptions.setArgs("MGSOLVER AGGREGATION STRATEGY",
+                          options.getArgs("PRESSURE MGSOLVER AGGREGATION STRATEGY"));
     nrs->pOptions.setArgs("INITIAL GUESS", options.getArgs("PRESSURE INITIAL GUESS"));
     nrs->pOptions.setArgs("RESIDUAL PROJECTION VECTORS",
                           options.getArgs("PRESSURE RESIDUAL PROJECTION VECTORS"));
@@ -962,7 +963,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pSolver->name = "pressure";
     nrs->pSolver->blockSolver = 0;
     nrs->pSolver->Nfields = 1;
-    nrs->pSolver->Ntotal = nrs->fieldOffset;
+    nrs->pSolver->fieldOffset = nrs->fieldOffset;
     nrs->pSolver->o_wrk = o_mempoolElliptic;
     nrs->pSolver->mesh = mesh;
     nrs->pSolver->dim = nrs->dim;
@@ -1033,7 +1034,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       if (options.compareArgs("MESH STRESSFORMULATION", "TRUE"))
         nrs->meshSolver->stressForm = 1;
       nrs->meshSolver->Nfields = nrs->NVfields;
-      nrs->meshSolver->Ntotal = nrs->fieldOffset;
+      nrs->meshSolver->fieldOffset = nrs->fieldOffset;
       nrs->meshSolver->o_wrk = o_mempoolElliptic;
       nrs->meshSolver->mesh = mesh;
       nrs->meshSolver->options = nrs->mOptions;

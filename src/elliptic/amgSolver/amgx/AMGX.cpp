@@ -2,43 +2,30 @@
 #include <string.h>
 #include <mpi.h>
 
+#include "AMGX.hpp"
+
 #ifdef ENABLE_AMGX
 
-#include <amgx_c.h>
-
-typedef struct { 
-  MPI_Comm comm;
-  int nLocalRows;
-  AMGX_vector_handle AmgXP;
-  AMGX_vector_handle AmgXRHS;
-  AMGX_matrix_handle AmgXA;
-  AMGX_solver_handle solver;
-  AMGX_config_handle cfg;
-} amgx_data;
-
-static amgx_data *handle; 
-static AMGX_resources_handle rsrc;
+static int AMGXinit = 0;
 
 void printHandler(const char *msg, int length)
 {
   int myid;
-  MPI_Comm_rank(handle->comm, &myid);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myid);
   if(myid == 0) printf("%s", msg);
 }
 
-int AMGXsetup(const int nLocalRows, const int nnz,
-              const long long *rows, const long long *cols, const double *values, /* COO */ 
-              const int nullspace, const MPI_Comm comm, int deviceID,
-              int useFP32, int MPI_DIRECT, const char* cfgFile)
+AMGX_t::AMGX_t(const int nLocalRows_, const int nnz,
+               const long long *rows, const long long *cols, const double *values, /* COO */ 
+               const int nullspace, const MPI_Comm comm_, int deviceID,
+               int useFP32, int MPI_DIRECT, const char* cfgFile)
 {
-  handle = (amgx_data*) malloc(sizeof(amgx_data));
-
-  MPI_Comm_dup(comm,&handle->comm);
-  handle->nLocalRows = nLocalRows;
+  MPI_Comm_dup(comm_,&comm);
+  nLocalRows = nLocalRows_;
  
   int myid, commSize;
-  MPI_Comm_rank(handle->comm, &myid);
-  MPI_Comm_size(handle->comm, &commSize);
+  MPI_Comm_rank(comm, &myid);
+  MPI_Comm_size(comm, &commSize);
 
   const int useDevice = (deviceID < 0) ? 0 : 1; 
 
@@ -52,12 +39,14 @@ int AMGXsetup(const int nLocalRows, const int nnz,
   else if (useDevice && useFP32)
     mode = AMGX_mode_hFFI;
 
-  AMGX_SAFE_CALL(AMGX_initialize());
-  AMGX_SAFE_CALL(AMGX_initialize_plugins());
-  AMGX_SAFE_CALL(AMGX_register_print_callback(&printHandler));
+  if(!AMGXinit) {
+    AMGX_SAFE_CALL(AMGX_initialize());
+    AMGX_SAFE_CALL(AMGX_initialize_plugins());
+    AMGX_SAFE_CALL(AMGX_register_print_callback(&printHandler));
+  }
 
   if (cfgFile) { 
-    AMGX_SAFE_CALL(AMGX_config_create_from_file(&handle->cfg, cfgFile));
+    AMGX_SAFE_CALL(AMGX_config_create_from_file(&cfg, cfgFile));
   } else {
     char solverSettings[] = 
       "\"solver\": {\
@@ -86,23 +75,23 @@ int AMGXsetup(const int nLocalRows, const int nnz,
     strcat(cfgStr, solverSettings);
     strcat(cfgStr, "}");
     //printf("cfgStr: %s\n", cfgStr); fflush(stdout);
-    AMGX_SAFE_CALL(AMGX_config_create(&handle->cfg, cfgStr));
+    AMGX_SAFE_CALL(AMGX_config_create(&cfg, cfgStr));
   }
 
-  AMGX_resources_create(&rsrc, handle->cfg, &handle->comm, 1, &deviceID);
+  AMGX_resources_create(&rsrc, cfg, &comm, 1, &deviceID);
 
-  AMGX_solver_create(&handle->solver, rsrc, mode, handle->cfg);
+  AMGX_solver_create(&solver, rsrc, mode, cfg);
 
-  AMGX_vector_create(&handle->AmgXP, rsrc, mode);
-  AMGX_vector_create(&handle->AmgXRHS, rsrc, mode);
-  AMGX_matrix_create(&handle->AmgXA, rsrc, mode);
+  AMGX_vector_create(&AmgXP, rsrc, mode);
+  AMGX_vector_create(&AmgXRHS, rsrc, mode);
+  AMGX_matrix_create(&AmgXA, rsrc, mode);
 
   AMGX_distribution_handle dist;
-  AMGX_distribution_create(&dist, handle->cfg);
+  AMGX_distribution_create(&dist, cfg);
 
   long long *partitionOffsets = (long long*) calloc(commSize + 1, sizeof(long long));
   long long n64 = nLocalRows;
-  MPI_Allgather(&n64, 1, MPI_LONG_LONG, &partitionOffsets[1], 1, MPI_LONG_LONG, handle->comm);
+  MPI_Allgather(&n64, 1, MPI_LONG_LONG, &partitionOffsets[1], 1, MPI_LONG_LONG, comm);
   for (int r=2; r<commSize+1; r++) partitionOffsets[r] += partitionOffsets[r-1]; 
   const long long nGlobalRows = partitionOffsets[commSize]; 
   AMGX_distribution_set_partition_data(dist, AMGX_DIST_PARTITION_OFFSETS, partitionOffsets);
@@ -119,14 +108,14 @@ int AMGXsetup(const int nLocalRows, const int nnz,
     float *csrValues = (float*) malloc(nnz * sizeof(float));
     for (int i = 0; i < nnz; i++) csrValues[i] = values[i]; 
     AMGX_matrix_upload_distributed(
-      handle->AmgXA, (int) nGlobalRows, nLocalRows, nnz, 1, 1,
+      AmgXA, (int) nGlobalRows, nLocalRows, nnz, 1, 1,
       csrRows, cols, csrValues, NULL, dist);
     free(csrValues);
   } else {
     double *csrValues = (double*) malloc(nnz * sizeof(double));
     for (int i = 0; i < nnz; i++) csrValues[i] = values[i]; 
     AMGX_matrix_upload_distributed(
-      handle->AmgXA, (int) nGlobalRows, nLocalRows, nnz, 1, 1,
+      AmgXA, (int) nGlobalRows, nLocalRows, nnz, 1, 1,
       csrRows, cols, csrValues, NULL, dist);
     free(csrValues);
   }
@@ -134,55 +123,65 @@ int AMGXsetup(const int nLocalRows, const int nnz,
   free(csrRows);
   free(partitionOffsets);
 
-  AMGX_solver_setup(handle->solver, handle->AmgXA);
-  AMGX_vector_bind(handle->AmgXP, handle->AmgXA);
-  AMGX_vector_bind(handle->AmgXRHS, handle->AmgXA);
+  AMGX_solver_setup(solver, AmgXA);
+  AMGX_vector_bind(AmgXP, AmgXA);
+  AMGX_vector_bind(AmgXRHS, AmgXA);
 
-  return 0;
+  AMGXinit = 1;
 }
 
-int AMGXsolve(void *rhs, void *x)
+int AMGX_t::solve(void *rhs, void *x)
 {
-  AMGX_vector_upload(handle->AmgXP, handle->nLocalRows, 1, x);
-  AMGX_vector_upload(handle->AmgXRHS, handle->nLocalRows, 1, rhs);
+  AMGX_vector_upload(AmgXP, nLocalRows, 1, x);
+  AMGX_vector_upload(AmgXRHS, nLocalRows, 1, rhs);
 
-  AMGX_solver_solve(handle->solver, handle->AmgXRHS, handle->AmgXP);
+  AMGX_solver_solve(solver, AmgXRHS, AmgXP);
   AMGX_SOLVE_STATUS status; 
-  AMGX_solver_get_status(handle->solver, &status);
+  AMGX_solver_get_status(solver, &status);
   if (status != AMGX_SOLVE_SUCCESS) return status; 
 
-  AMGX_vector_download(handle->AmgXP, x);
+  AMGX_vector_download(AmgXP, x);
 
   return 0;
 }
 
-void AMGXfree() 
+void AMGXfinalize() 
 {
-  if(!handle) return;
-  AMGX_vector_destroy(handle->AmgXP);
-  AMGX_vector_destroy(handle->AmgXRHS);
-  AMGX_matrix_destroy(handle->AmgXA);
-  AMGX_solver_destroy(handle->solver);
-  AMGX_resources_destroy(rsrc);
-  rsrc = NULL;
+  if(!AMGXinit) return;
+
   /* destroy config (need to use AMGX_SAFE_CALL after this point) */
-  AMGX_SAFE_CALL(AMGX_config_destroy(handle->cfg));
   AMGX_SAFE_CALL(AMGX_finalize_plugins());
   AMGX_SAFE_CALL(AMGX_finalize());
-  MPI_Comm_free(&handle->comm);
-  free(handle);
-  handle = NULL;
 }
+
+AMGX_t::~AMGX_t()
+{
+  AMGX_vector_destroy(AmgXP);
+  AMGX_vector_destroy(AmgXRHS);
+  AMGX_matrix_destroy(AmgXA);
+  AMGX_solver_destroy(solver);
+  AMGX_resources_destroy(rsrc);
+  AMGX_SAFE_CALL(AMGX_config_destroy(cfg));
+  MPI_Comm_free(&comm);
+}
+
 int AMGXenabled()
 {
   return 1;
 }
 
 #else
-int AMGXsetup(const int nLocalRows, const int nnz,
-              const long long *rows, const long long *cols, const double *values, /* COO */ 
-              const int null_space, const MPI_Comm comm, int deviceID,
-              int useFP32, int MPI_DIRECT, const char* cfgFile)
+AMGX_t::AMGX_t(const int nLocalRows, const int nnz,
+               const long long *rows, const long long *cols, const double *values, /* COO */
+               const int nullspace, const MPI_Comm comm, int deviceID,
+               int useFP32, int MPI_DIRECT, const char* cfgFile)
+{
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);  
+  if(rank == 0) printf("ERROR: Recompile with AMGX support!\n");
+}
+
+int AMGX_t::solve(void *x, void *rhs)
 {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);  
@@ -190,15 +189,11 @@ int AMGXsetup(const int nLocalRows, const int nnz,
   return 1;
 }
 
-int AMGXsolve(void *x, void *rhs)
+void AMGX_t::finalize()
 {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);  
-  if(rank == 0) printf("ERROR: Recompile with AMGX support!\n");
-  return 1;
 }
 
-void AMGXfree()
+AMGX_t::~AMGX_t()
 {
 }
 

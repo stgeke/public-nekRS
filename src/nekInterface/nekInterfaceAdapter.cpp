@@ -53,6 +53,7 @@ static void (* nek_setabbd_ptr)(double *, double*, int*, int*);
 static void (* nek_storesol_ptr)(void);
 static void (* nek_restoresol_ptr)(void);
 static void (* nek_updggeom_ptr)(void);
+static void (* nek_meshmetrics_ptr)(void);
 
 void noop_func(void) {}
 
@@ -330,6 +331,8 @@ void set_usr_handles(const char* session_in,int verbose)
   nek_restoresol_ptr = (void (*)(void))dlsym(handle, fname("nekf_restoresol"));
   check_error(dlerror());
   nek_updggeom_ptr = (void (*)(void))dlsym(handle, fname("nekf_updggeom"));
+  check_error(dlerror());
+  nek_meshmetrics_ptr = (void (*)(void))dlsym(handle, fname("mesh_metrics"));
   check_error(dlerror());
 
 #define postfix(x) x ## _ptr
@@ -996,4 +999,7 @@ void coeffAB(double *coeff, double *dt, int order)
 }
 
 void recomputeGeometry() { (*nek_updggeom_ptr)(); }
+
+void printMeshMetrics() { (*nek_meshmetrics_ptr)(); }
+
 }

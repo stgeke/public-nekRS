@@ -128,7 +128,7 @@ PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 60
 PenaltyIndentedWhitespace: 0
 PointerAlignment: Right
-PPIndentWidth:   -1
+PPIndentWidth:  0 
 ReferenceAlignment: Pointer
 ReflowComments:  true
 ShortNamespaceLines: 1

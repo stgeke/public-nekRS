@@ -383,38 +383,38 @@ void timer_t::printRunStat(int step)
       std::cout << "    flops/rank          " << flops << "\n";
   }
 
-  printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTime);
-  printStatEntry("    udfExecuteStep      ", "udfExecuteStep", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTimeSolve);
+  printStatEntry("    udfExecuteStep      ", "udfExecuteStep", "DEVICE:MAX", tElapsedTimeSolve);
 
   const double tMakef = query("makef", "DEVICE:MAX");
-  printStatEntry("    makef               ", "makef", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    makef               ", "makef", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      udfUEqnSource     ", "udfUEqnSource", "DEVICE:MAX", tMakef);
 
   const double tMakeq = query("makeq", "DEVICE:MAX");
   printStatEntry("    makeq               ", "makeq", "DEVICE:MAX", tElapsedTime);
   printStatEntry("      udfSEqnSource     ", "udfSEqnSource", "DEVICE:MAX", tMakeq);
 
-  printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tElapsedTimeSolve);
 
-  printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tElapsedTimeSolve);
   const double tMesh = query("meshSolve", "DEVICE:MAX");
-  printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");
-  printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      rhs               ", "velocity rhs", "DEVICE:MAX", tVelocity);
   printStatEntry("      preconditioner    ", "velocity preconditioner", "DEVICE:MAX", tVelocity);
   printStatEntry("      initial guess     ", "velocity proj", "DEVICE:MAX", tVelocity);
 
   const double tPressure = query("pressureSolve", "DEVICE:MAX");
-  printStatEntry("    pressureSolve       ", "pressureSolve", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    pressureSolve       ", "pressureSolve", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      rhs               ", "pressure rhs", "DEVICE:MAX", tPressure);
 
   const double tPressurePreco = query("pressure preconditioner", "DEVICE:MAX");
   printStatEntry("      preconditioner    ", "pressure preconditioner", "DEVICE:MAX", tPressure);
 
-  for (int i = 15; i > 0; i--) {
+  for (int i = 15; i > 1; i--) {
     const std::string tag = "pressure preconditioner smoother N=" + std::to_string(i);
     if (m_.find(tag) == m_.end())
       continue;
@@ -428,7 +428,7 @@ void timer_t::printRunStat(int step)
   platform->options.getArgs("NUMBER OF SCALARS", nScalar);
 
   const double tScalar = query("scalarSolve", "DEVICE:MAX");
-  printStatEntry("    scalarSolve         ", "scalarSolve", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    scalarSolve         ", "scalarSolve", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      rhs               ", "scalar rhs", "DEVICE:MAX", tScalar);
 
   auto precoTimeScalars = 0.0;
@@ -447,11 +447,11 @@ void timer_t::printRunStat(int step)
   printStatEntry("      initial guess     ", "scalar proj", "DEVICE:MAX", tScalar);
 
 
-  printStatEntry("    gsMPI               ", gsTime, tElapsedTime);
+  printStatEntry("    gsMPI               ", gsTime, tElapsedTimeSolve);
 
-  printStatEntry("    dotp                ", "dotp", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    dotp                ", "dotp", "DEVICE:MAX", tElapsedTimeSolve);
 
-  printStatEntry("    dotp multi          ", "dotpMulti", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    dotp multi          ", "dotpMulti", "DEVICE:MAX", tElapsedTimeSolve);
 
   if (rank == 0)
     std::cout << std::endl;

@@ -195,6 +195,7 @@ static std::vector<std::string> boomeramgKeys = {
   {"strongThreshold"},
   {"nonGalerkinTol"},
   {"aggressiveCoarseningLevels"},
+  {"chebyshevRelaxOrder"},
 };
 
 static std::vector<std::string> amgxKeys = {
@@ -1862,11 +1863,14 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       if (par->extract("boomeramg", "nongalerkintol", nonGalerkinTol))
         options.setArgs("BOOMERAMG NONGALERKIN TOLERANCE",
                         to_string_f(nonGalerkinTol));
-
       int aggLevels;
       if (par->extract("boomeramg", "aggressivecoarseninglevels", aggLevels))
         options.setArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS",
                         std::to_string(aggLevels));
+      int chebyRelaxOrder;
+      if (par->extract("boomeramg", "chebyshevrelaxorder", chebyRelaxOrder))
+        options.setArgs("BOOMERAMG CHEBYSHEV RELAX ORDER",
+                        std::to_string(chebyRelaxOrder));
     }
 
     if (par->sections.count("amgx")) {

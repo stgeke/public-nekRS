@@ -5,7 +5,7 @@
 
 namespace hypreWrapper {
 
-constexpr int NPARAM = 10;
+constexpr int NPARAM = 11;
 
 #ifndef HYPRE_HEADER
 // has to match HYPRE config

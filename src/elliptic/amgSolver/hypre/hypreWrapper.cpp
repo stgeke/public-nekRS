@@ -57,6 +57,8 @@ boomerAMG_t::boomerAMG_t(int _nRows,
     params[6] = 1;    /* sweeps   */
     params[7] = 0.25; /* threshold */
     params[8] = 0.0;  /* non galerkin tolerance */
+    params[9] = 0.0;  /* agressive coarsening */
+    params[10] = 2;  /* chebyRelaxOrder */
   }
 
   // Setup matrix
@@ -121,7 +123,7 @@ boomerAMG_t::boomerAMG_t(int _nRows,
   HYPRE_BoomerAMGSetCoarsenType(*solver, params[0]);
   HYPRE_BoomerAMGSetInterpType(*solver, params[1]);
 
-  // HYPRE_BoomerAMGSetRelaxOrder(*solver, 1);
+  HYPRE_BoomerAMGSetChebyOrder(*solver, params[10]);
   // HYPRE_BoomerAMGSetChebyFraction(*solver, 0.2);
 
   if (params[5] > 0) {

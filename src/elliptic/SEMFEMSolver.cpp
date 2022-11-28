@@ -73,6 +73,7 @@ SEMFEMSolver_t::SEMFEMSolver_t(elliptic_t* elliptic_)
       settings[8]  = 0.25; /* strong threshold             */
       settings[9]  = 0.05; /* non galerkin tol             */
       settings[10] = 0;    /* aggressive coarsening levels */
+      settings[11] = 2;    /* chebyRelaxOrder */
 
       if(elliptic->options.compareArgs("MULTIGRID SEMFEM", "TRUE")) {
         settings[4]  = 16;
@@ -88,6 +89,7 @@ SEMFEMSolver_t::SEMFEMSolver_t(elliptic_t* elliptic_)
       platform->options.getArgs("BOOMERAMG STRONG THRESHOLD", settings[8]);
       platform->options.getArgs("BOOMERAMG NONGALERKIN TOLERANCE" , settings[9]);
       platform->options.getArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS" , settings[10]);
+      platform->options.getArgs("BOOMERAMG CHEBYSHEV RELAX ORDER" , settings[11]);
 
       if(platform->device.mode() != "Serial" && useDevice) {
         boomerAMG = new hypreWrapperDevice::boomerAMG_t(

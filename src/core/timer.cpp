@@ -414,7 +414,7 @@ void timer_t::printRunStat(int step)
   const double tPressurePreco = query("pressure preconditioner", "DEVICE:MAX");
   printStatEntry("      preconditioner    ", "pressure preconditioner", "DEVICE:MAX", tPressure);
 
-  for (int i = 15; i > 1; i--) {
+  for (int i = 15; i > 0; i--) {
     const std::string tag = "pressure preconditioner smoother N=" + std::to_string(i);
     if (m_.find(tag) == m_.end())
       continue;

@@ -89,6 +89,7 @@ void MGSolver_t::coarseLevel_t::setupSolver(
     settings[8]  = 0.25; /* strong threshold             */
     settings[9]  = 0.05; /* non galerkin tol             */
     settings[10] = 0;    /* aggressive coarsening levels */
+    settings[11] = 2;    /* chebyRelaxOrder */
 
     options.getArgs("BOOMERAMG COARSEN TYPE", settings[1]);
     options.getArgs("BOOMERAMG INTERPOLATION TYPE", settings[2]);
@@ -99,6 +100,7 @@ void MGSolver_t::coarseLevel_t::setupSolver(
     options.getArgs("BOOMERAMG STRONG THRESHOLD", settings[8]);
     options.getArgs("BOOMERAMG NONGALERKIN TOLERANCE" , settings[9]);
     options.getArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS" , settings[10]);
+    options.getArgs("BOOMERAMG CHEBYSHEV RELAX ORDER" , settings[11]);
 
     if(useDevice) {
       boomerAMG = new hypreWrapperDevice::boomerAMG_t(

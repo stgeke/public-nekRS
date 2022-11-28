@@ -5,14 +5,14 @@ polynomialOrder = 7
 stopAt = endTime
 endTime = 200
 
-dt = targetCFL=2 + max=1e-2 + initial=5e-3
+dt = targetCFL=2 + max=2e-2 + initial=5e-3
 timeStepper = tombo2
 
 writeControl = simulationTime 
-writeInterval = 2
+writeInterval = 20
 
 regularization = hpfrt + nModes=1 + scalingCoeff=5
-constFlowRate = meanVelocity=1.0 + direction=X
+#constFlowRate = meanVelocity=1.0 + direction=X
 
 [PRESSURE]
 residualTol = 1e-04
@@ -24,7 +24,7 @@ density = 1.0
 residualTol = 1e-06
 
 [CASEDATA]
-Re_tau = 550
+ReTau = 550
 xLength = 6.283185307 
 zLength = 3.141592653 
 betaY = 2.2

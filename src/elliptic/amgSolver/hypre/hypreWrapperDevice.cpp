@@ -332,6 +332,10 @@ __attribute__((visibility("default"))) boomerAMG_t::~boomerAMG_t()
 {
 }
 
+void __attribute__((visibility("default"))) finalize()
+{
+}
+
 int __attribute__((visibility("default"))) enabled() { return 0; }
 
 } // namespace hypreWrapperDevice

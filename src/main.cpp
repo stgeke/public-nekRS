@@ -449,6 +449,7 @@ int main(int argc, char** argv)
   nekrs::resetTimer("udfExecuteStep");
 
   int lastStep = nekrs::lastStep(time, tStep, elapsedTime);
+  if (nekrs::endTime() > nekrs::startTime()) lastStep = 0;
   double elapsedStepSum = 0;
 
   double tSolveStepMin = std::numeric_limits<double>::max();

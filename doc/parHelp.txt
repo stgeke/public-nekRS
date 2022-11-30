@@ -102,10 +102,10 @@ smootherType                Jacobi
                             RAS                                        overlapping restrictive Schwarz
                             +Chebyshev                                 1st Chebyshev acceleration
                             +FourthChebyshev                           4th Kind Chebyshev acceleration
-                            +FourthOptChebyshev                        4th Opt Chebyshev acceleration
-                              +degree=<int>
-                              +minEigenvalueBoundFactor=<float>          only valid for 1st kind Chebyshev
-                              +maxEigenvalueBoundFactor=<float> 
+                            +FourthOptChebyshev [D]                    4th Opt Chebyshev acceleration
+                            +degree=<int>
+                            +minEigenvalueBoundFactor=<float>          only valid for 1st kind Chebyshev
+                            +maxEigenvalueBoundFactor=<float> 
 
 boundaryTypeMap             <...>, <...>, ...                          boundary type for each boundary ID
                             fixedValue                                 user specified Dirichlet

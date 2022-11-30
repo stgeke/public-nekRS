@@ -141,7 +141,7 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
   platform->copyDfloatToPfloatKernel(Nfq * Ncq, o_interp, elliptic->o_interp);
 
   precon->coarsenKernel(mesh->Nelements, elliptic->o_interp, 
-                                  baseElliptic->o_lambda, elliptic->o_lambda);
+                        baseElliptic->o_lambda, elliptic->o_lambda);
 
   free(fToCInterp);
 

@@ -190,6 +190,7 @@ static int n_x, n_y, n_z, n_elem;
 static int n_xyz, n_xyze;
 static long long *glo_num;
 static double *pmask;
+static double lambda0;
 static int num_loc_dofs;
 static long long *dof_map;
 static long long row_start;
@@ -222,6 +223,7 @@ SEMFEMSolver_t::matrix_t *SEMFEMSolver_t::build(const int N_,
                                 occa::memory _o_y,
                                 occa::memory _o_z,
                                 double *pmask_,
+                                double lambda0_,
                                 hypreWrapper::IJ_t &hypreIJ,
                                 MPI_Comm mpiComm,
                                 long long int *gatherGlobalNodes)
@@ -234,6 +236,7 @@ SEMFEMSolver_t::matrix_t *SEMFEMSolver_t::build(const int N_,
   o_z = _o_z;
   n_elem = n_elem_;
   pmask = pmask_;
+  lambda0 = lambda0_;
 
   n_xyz = n_x * n_y * n_z;
   n_xyze = n_x * n_y * n_z * n_elem;
@@ -671,7 +674,7 @@ void fem_assembly_host(hypreWrapper::IJ_t &hypreIJ)
                   long long end = rowOffsets[local_row_id + 1];
 
                   long long id = linear_search_index(cols, col, start, end);
-                  vals[id] += A_loc[i][j];
+                  vals[id] += lambda0 * A_loc[i][j];
                 }
               }
             }

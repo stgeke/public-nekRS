@@ -78,8 +78,12 @@ void ellipticBuildContinuousHex3D(elliptic_t* elliptic,
   mesh_t* mesh = elliptic->mesh;
   setupAide& options = elliptic->options;
 
-  // Poisson only
-  const dfloat lambda = 0.0;
+  // here we assume lambda0 is constant (in space and time) 
+  // use first entry of o_lambda as representative value 
+  pfloat lambda0;
+  elliptic->o_lambda.copyTo(&lambda0, sizeof(pfloat));
+
+  const dfloat lambda1 = 0.0;  // Poisson
 
   int rank = platform->comm.mpiRank;
 
@@ -138,6 +142,7 @@ void ellipticBuildContinuousHex3D(elliptic_t* elliptic,
     for (int nz = 0; nz < mesh->Nq; nz++)
       for (int ny = 0; ny < mesh->Nq; ny++)
         for (int nx = 0; nx < mesh->Nq; nx++) {
+
           int idn = nx + ny * mesh->Nq + nz * mesh->Nq * mesh->Nq;
           if (mask[e * mesh->Np + idn]) continue; //skip masked nodes
 
@@ -207,15 +212,16 @@ void ellipticBuildContinuousHex3D(elliptic_t* elliptic,
                   }
                 }
 
+                dfloat valDiag = 0.;
                 if ((nx == mx) && (ny == my) && (nz == mz)) {
                   id = nx + ny * mesh->Nq + nz * mesh->Nq * mesh->Nq;
                   dfloat JW = mesh->ggeo[e * mesh->Np * mesh->Nggeo + id + GWJID * mesh->Np];
-                  val += JW * lambda;
+                  valDiag = JW * lambda1;
                 }
 
                 // pack non-zero
                 if (fabs(val) > dropTol) {
-                  sendNonZeros[cnt].val = val;
+                  sendNonZeros[cnt].val = lambda0*val + lambda1*valDiag;
                   sendNonZeros[cnt].row = globalNumbering[e * mesh->Np + idn];
                   sendNonZeros[cnt].col = globalNumbering[e * mesh->Np + idm];
                   sendNonZeros[cnt].ownerRank = globalOwners[e * mesh->Np + idn];

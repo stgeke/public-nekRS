@@ -33,6 +33,11 @@ SEMFEMSolver_t::SEMFEMSolver_t(elliptic_t* elliptic_)
     free(maskIds);
   }
 
+  // here we assume lambda0 is constant (in space and time)
+  // use first entry of o_lambda as representative value
+  pfloat lambda0;
+  elliptic->o_lambda.copyTo(&lambda0, sizeof(pfloat));
+
   auto hypreIJ = new hypreWrapper::IJ_t();
   matrix_t* matrix = build(
     mesh->Nq,
@@ -41,6 +46,7 @@ SEMFEMSolver_t::SEMFEMSolver_t(elliptic_t* elliptic_)
     mesh->o_y,
     mesh->o_z,
     mask,
+    lambda0,
     *hypreIJ,
     platform->comm.mpiComm,
     mesh->globalIds

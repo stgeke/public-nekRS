@@ -65,14 +65,15 @@ private:
   };
   
   matrix_t *build(const int N_,
-                const int n_elem_,
-                occa::memory _o_x,
-                occa::memory _o_y,
-                occa::memory _o_z,
-                double *pmask_,
-                hypreWrapper::IJ_t &hypreIJ,
-                MPI_Comm comm,
-                long long int *gatherGlobalNodes);
+                  const int n_elem_,
+                  occa::memory _o_x,
+                  occa::memory _o_y,
+                  occa::memory _o_z,
+                  double *pmask_,
+                  double lambda,
+                  hypreWrapper::IJ_t &hypreIJ,
+                  MPI_Comm comm,
+                  long long int *gatherGlobalNodes);
 
 };
 

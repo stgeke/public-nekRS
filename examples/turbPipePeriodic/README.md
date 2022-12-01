@@ -26,23 +26,24 @@
 
 ### AMD MI250X/1
 ```
-  elapsedStepSum        2.35982e+01s  0.11
-  solve                 2.35922e+01s  0.11
-    min                 5.87667e-02s
-    max                 9.92639e-02s
-    flop/s              1.00710e+12
-
-    makef               6.85422e+00s  0.29  200
-      udfUEqnSource     6.26127e-03s  0.00  200
-    udfProperties       9.04159e-04s  0.00  201
-    velocitySolve       5.38714e+00s  0.23  200
-      rhs               3.83831e-01s  0.07  200
-    pressureSolve       1.05776e+01s  0.45  200
-      rhs               8.74453e-01s  0.08  200
-      preconditioner    7.89478e+00s  0.75  776
-        pMG smoother    6.02886e+00s  0.76  3104
-        coarse grid     1.08808e+00s  0.14  776
-      initial guess     5.38374e-01s  0.05  200
+  solve                 2.20199e+01s  33.8      
+    min                 9.40218e-02s
+    max                 2.59696e-01s
+    flops/rank          1.00712e+12
+    udfExecuteStep      1.08784e-03s   0.0   0.0  200
+    makef               6.87332e+00s  10.5  31.2  200
+      udfUEqnSource     6.21969e-03s   0.0   0.1  200
+    udfProperties       9.22722e-04s   0.0   0.0  201
+    velocitySolve       3.32075e+00s   5.1  15.1  200
+      rhs               3.11703e-01s   0.5   9.4  200
+      preconditioner    1.69817e-01s   0.3   5.1  858
+    pressureSolve       1.07468e+01s  16.5  48.8  200
+      rhs               8.67965e-01s   1.3   8.1  200
+      preconditioner    8.15062e+00s  12.5  75.8  758
+        pMG smoother    5.27370e+00s   8.1  64.7  1516
+        pMG smoother    1.10941e+00s   1.7  13.6  1516
+        coarse grid     1.13773e+00s   1.7  14.0  758
+      initial guess     4.83602e-01s   0.7   4.5  200
 ```
 
 ### AMD EPYC 7742

@@ -22,8 +22,8 @@ equation = navierStokes+variableViscosity
 solver = pfcg
 residualTol = 1e-04
 preconditioner = multigrid
-smootherType = JAC+Chebyshev+degree=2
-pMultigridCoarsening = 8,4,1
+smootherType = JAC+Chebyshev
+pMGSchedule = p=8, p=4, p=1, p=4, p=8
 
 [VELOCITY]
 boundaryTypeMap = v, shl

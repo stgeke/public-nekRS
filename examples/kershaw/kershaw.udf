@@ -94,6 +94,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
       // warm-up
       ellipticSolve(nrs->pSolver, platform->o_mempool.slice0, nrs->o_P);
 
+      platform->timer.reset();
       platform->device.finish();
       MPI_Barrier(platform->comm.mpiComm);
       const auto tStart = MPI_Wtime();
@@ -111,8 +112,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
       }
       crsTime.push_back(platform->timer.query("coarseSolve", "DEVICE:MAX"));
  
-      platform->timer.reset();
-    }
+          }
     if(platform->comm.mpiRank == 0) printf("\n"); 
 
     hlong Ntotal = mesh->Nelements * (mesh->N * mesh->N * mesh->N);

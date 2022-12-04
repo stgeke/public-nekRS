@@ -68,11 +68,6 @@ c-----------------------------------------------------------------------
         ym1(i,1,1,1) = (1. - yw/ymax)*y + yw 
       enddo
 
-c      scale = 1./hmax
-c      call rescale_x(xm1,xmin*scale,xmax*scale)
-c      call rescale_x(ym1,ymin*scale,ymax*scale)
-c      call rescale_x(zm1,zmin*scale,zmax*scale)
-
       do e=1,nelt
       do f=1,2*ndim
         if (cbc(f,e,1) .eq. 'W  ') boundaryID(f,e) = 1

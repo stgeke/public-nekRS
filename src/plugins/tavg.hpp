@@ -22,11 +22,11 @@
 
 namespace tavg
 {
-typedef std::vector< std::tuple<occa::memory, occa::memory> > fieldPairs;
+typedef std::vector< std::vector<occa::memory> > fields;
 
 void buildKernel(occa::properties kernelInfo);
 void run(dfloat time);
-void setup(nrs_t *nrs_, const fieldPairs& fields);
+void setup(nrs_t *nrs_, const fields& fields);
 void setup(nrs_t* nrs_);
 void outfld();
 void outfld(int outXYZ, int FP64);

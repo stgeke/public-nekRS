@@ -298,13 +298,13 @@ void UDF_Setup(nrs_t *nrs)
     auto o_dwdy    = o_avg.slice(4*nrs->fieldOffset*sizeof(dfloat), nrs->fieldOffset*sizeof(dfloat));
     auto o_dtempdy = o_avg.slice(5*nrs->fieldOffset*sizeof(dfloat), nrs->fieldOffset*sizeof(dfloat));
 
-    tavg::fieldPairs tRunAvgList;
-    tRunAvgList.push_back({o_u      , o_NULL});
-    tRunAvgList.push_back({o_w      , o_NULL});
-    tRunAvgList.push_back({o_temp   , o_NULL});
-    tRunAvgList.push_back({o_dudy   , o_NULL});
-    tRunAvgList.push_back({o_dwdy   , o_NULL});
-    tRunAvgList.push_back({o_dtempdy, o_NULL});
+    tavg::fields tRunAvgList;
+    tRunAvgList.push_back({o_u});
+    tRunAvgList.push_back({o_w});
+    tRunAvgList.push_back({o_temp});
+    tRunAvgList.push_back({o_dudy});
+    tRunAvgList.push_back({o_dwdy});
+    tRunAvgList.push_back({o_dtempdy});
     tRunAvgList.push_back({o_u, o_temp});
     tRunAvgList.push_back({o_w, o_temp});
     nAvgFields = tRunAvgList.size();

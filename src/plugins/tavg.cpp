@@ -14,12 +14,13 @@ static occa::memory o_Urm2;
 static occa::memory o_Pavg, o_Prms;
 static occa::memory o_Savg, o_Srms;
 
-tavg::fieldPairs userFieldList;
+tavg::fields userFieldList;
 static occa::memory o_userFieldAvg;
 
 static occa::kernel EXKernel;
 static occa::kernel EXXKernel;
 static occa::kernel EXYKernel;
+static occa::kernel EXYZKernel;
 
 static bool buildKernelCalled = 0;
 static bool setupCalled = 0;
@@ -54,6 +55,13 @@ static void EXY(dlong N, dfloat a, dfloat b, int nflds, occa::memory o_x, occa::
   EXYKernel(N, nrs->fieldOffset, nflds, a, b, o_x, o_y, o_EXY);
 }
 
+static void EXYZ(dlong N, dfloat a, dfloat b, int nflds, occa::memory o_x, occa::memory o_y, occa::memory o_z, 
+                 occa::memory& o_EXYZ)
+{
+  EXYZKernel(N, nrs->fieldOffset, nflds, a, b, o_x, o_y, o_z, o_EXYZ);
+}
+
+
 void tavg::buildKernel(occa::properties kernelInfo)
 {
 
@@ -75,6 +83,10 @@ void tavg::buildKernel(occa::properties kernelInfo)
     kernelName = "EXY";
     fileName = path + kernelName + extension;
     EXYKernel = platform->device.buildKernel(fileName, kernelInfo, true);
+
+    kernelName = "EXYZ";
+    fileName = path + kernelName + extension;
+    EXYZKernel = platform->device.buildKernel(fileName, kernelInfo, true);
   }
   buildKernelCalled = 1;
 }
@@ -117,17 +129,22 @@ void tavg::run(dfloat time)
   if(userFieldList.size()) {
     int cnt = 0;
     for(auto& entry : userFieldList) {
-      auto& o_x = std::get<0>(entry);
-      auto& o_y = std::get<1>(entry);
       auto o_avg = o_userFieldAvg.slice(cnt*nrs->fieldOffset*sizeof(dfloat), nrs->fieldOffset*sizeof(dfloat));
-      if(o_x.ptr() && o_y.ptr() == nullptr) {
-        EX(N, a, b, 1, o_x, o_avg);
-      } else {
-        if(o_x.ptr() == o_y.ptr())
-          EXX(N, a, b, 1, o_x, o_avg);
+      if(entry.size() == 1) 
+      {
+        EX(N, a, b, 1, entry.at(0), o_avg);
+      } else 
+      if(entry.size() == 2) 
+      {
+        if(entry.at(0).ptr() == entry.at(1).ptr())
+          EXX(N, a, b, 1, entry.at(0), o_avg);
         else
-          EXY(N, a, b, 1, o_x, o_y, o_avg);
-      }
+          EXY(N, a, b, 1, entry.at(0), entry.at(1), o_avg);
+      } else
+      if(entry.size() == 3)
+      {
+        EXYZ(N, a, b, 1, entry.at(0), entry.at(1), entry.at(2), o_avg);
+      }      
       cnt++;
     }
   } else {
@@ -160,9 +177,18 @@ void tavg::run(dfloat time)
   timel = time;
 }
 
-void tavg::setup(nrs_t *nrs_, const fieldPairs& fields) 
+void tavg::setup(nrs_t *nrs_, const fields& flds) 
 {
-  userFieldList = fields;
+  userFieldList = flds;
+
+  for(auto& entry : userFieldList) {
+    if(entry.size() > 3) {
+      if(platform->comm.mpiRank == 0)
+        std::cout << "tavg supports fields up to 3 entries!\n";
+      ABORT(1);
+    }
+ }
+ 
   setup(nrs_);
 }
 
@@ -213,6 +239,12 @@ void tavg::setup(nrs_t *nrs_)
 
 void tavg::outfld(int _outXYZ, int FP64)
 {
+  if (!setupCalled || !buildKernelCalled) {
+    if(platform->comm.mpiRank == 0)
+      std::cout << "tavg::outfld() was called prior to tavg::setup()!\n";
+    ABORT(1);
+  }
+
   if (!nrs->timeStepConverged)
     return;
 
@@ -252,5 +284,11 @@ void tavg::outfld()
 
 occa::memory tavg::userFieldAvg()
 {
+  if (!setupCalled || !buildKernelCalled) {
+    if(platform->comm.mpiRank == 0)
+      std::cout << "tavg::userFieldAvg() was called prior to tavg::setup()!\n";
+    ABORT(1);
+  }
+
   return o_userFieldAvg;
 }

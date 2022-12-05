@@ -138,13 +138,11 @@ c-----------------------------------------------------------------------
       real kx, ky
 
       ux = 1.0
-c      if(y.le.1.) ux = y*(2.-y)
-
       uy = 0.0
       uz = 0.0
 
       ! thin boundary layer at the lower wall
-      if(y.le.1) then
+      if(y.le.1.0) then
          kx  = 23
          kz  = 13
          alpha = kx * 2*PI/XLEN

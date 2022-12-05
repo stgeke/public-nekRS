@@ -79,9 +79,6 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
       nrs->pSolver->options.setArgs("LINEAR SOLVER STOPPING CRITERION", "RELATIVE");
     }
 
-    platform->timer.reset();
-    platform->flopCounter->clear();
-
     std::vector<double> eTime; 
     std::vector<double> precoTime; 
     std::vector<double> smootherTime; 
@@ -112,8 +109,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
         if(val > 0) smootherTime.push_back(val); 
       }
       crsTime.push_back(platform->timer.query("coarseSolve", "DEVICE:MAX"));
- 
-          }
+    }
     if(platform->comm.mpiRank == 0) printf("\n"); 
 
     hlong Ntotal = mesh->Nelements * (mesh->N * mesh->N * mesh->N);

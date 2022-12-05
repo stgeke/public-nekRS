@@ -17,7 +17,6 @@
 #include "nrs.hpp"
 #include "nekInterfaceAdapter.hpp"
 
-#include <tuple>
 #include <vector>
 
 namespace tavg

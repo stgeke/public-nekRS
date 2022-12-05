@@ -191,8 +191,8 @@ void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_SU)
 {
   mesh_t* mesh = nrs->meshV;
   const auto fieldOffsetByte = nrs->fieldOffset * sizeof(dfloat);
-  auto o_divTauZ = o_divTau.slice(2*fieldOffsetByte, fieldOffsetByte);
-  platform->linAlg->axpby(mesh->Nlocal, -1.0, o_divTauZ, 1.0, o_SU, 0, 0); 
+  auto o_divTauY = o_divTau.slice(1*fieldOffsetByte, fieldOffsetByte);
+  platform->linAlg->axpby(mesh->Nlocal, -1.0, o_divTauY, 1.0, o_SU, 0, 0); 
 }
 
 
@@ -298,18 +298,18 @@ void UDF_Setup(nrs_t *nrs)
     auto o_dwdy    = o_avg.slice(4*nrs->fieldOffset*sizeof(dfloat), nrs->fieldOffset*sizeof(dfloat));
     auto o_dtempdy = o_avg.slice(5*nrs->fieldOffset*sizeof(dfloat), nrs->fieldOffset*sizeof(dfloat));
 
-    tavg::fields tRunAvgList;
-    tRunAvgList.push_back({o_u});
-    tRunAvgList.push_back({o_w});
-    tRunAvgList.push_back({o_temp});
-    tRunAvgList.push_back({o_dudy});
-    tRunAvgList.push_back({o_dwdy});
-    tRunAvgList.push_back({o_dtempdy});
-    tRunAvgList.push_back({o_u, o_temp});
-    tRunAvgList.push_back({o_w, o_temp});
-    nAvgFields = tRunAvgList.size();
+    std::vector< std::vector<occa::memory> > tavgFields;
+    tavgFields.push_back({o_u});
+    tavgFields.push_back({o_w});
+    tavgFields.push_back({o_temp});
+    tavgFields.push_back({o_dudy});
+    tavgFields.push_back({o_dwdy});
+    tavgFields.push_back({o_dtempdy});
+    tavgFields.push_back({o_u, o_temp});
+    tavgFields.push_back({o_w, o_temp});
+    nAvgFields = tavgFields.size();
 
-    tavg::setup(nrs, tRunAvgList); 
+    tavg::setup(nrs, tavgFields); 
   }
 }
 

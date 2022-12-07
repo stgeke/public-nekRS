@@ -30,7 +30,7 @@ void registerLinAlgKernels()
       {"axmyMany", true},
       {"axmyVector", true},
       {"axmyz", false},
-      {"paxmyz", false},
+      {"paxmyz", true},
       {"axmyzMany", false},
       {"paxmyzMany", false},
       {"ady", false},

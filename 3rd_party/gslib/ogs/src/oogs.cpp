@@ -746,7 +746,7 @@ void oogs::finish(occa::memory &o_v,
   if (ogs->NhaloGather && !OGS_OVERLAP)
     ogs->device.finish();
 
-  if (ogs->NhaloGather && OOGS_HOSTMPI) {
+  if (ogs->NhaloGather && gs->mode == OOGS_HOSTMPI) {
     ogs->device.setStream(ogs::dataStream);
 
     struct gs_data *hgs = (gs_data *)ogs->haloGshSym;

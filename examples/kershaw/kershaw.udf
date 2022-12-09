@@ -66,7 +66,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 
     int Nrep = 0;
     if(benchmark == "BP5"){
-      Nrep = 25;
+      Nrep = 20;
       nrs->pSolver->options.setArgs("PRECONDITIONER", "NONE");
       nrs->pSolver->options.setArgs("KRYLOV SOLVER", "PCG");
       nrs->pSolver->options.setArgs("MAXIMUM ITERATIONS", "500");
@@ -104,7 +104,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 
       eTime.push_back(platform->timer.query("pressureSolve", "DEVICE:MAX"));
       precoTime.push_back(platform->timer.query("pressure preconditioner", "DEVICE:MAX"));
-      for(int i = mesh->N; i > 1; i--) {
+      for(int i = mesh->N; i > 0; i--) {
         const auto val = platform->timer.query("pressure preconditioner smoother N=" + std::to_string(i), "DEVICE:MAX"); 
         if(val > 0) smootherTime.push_back(val); 
       }

@@ -46,11 +46,11 @@ void linAlg_t::runTimers()
   auto o_r = platform->device.malloc(Nlocal * sizeof(dfloat));
   auto o_z = platform->device.malloc(Nlocal * sizeof(dfloat));
 
-  const auto Nrep = 10;
+  const auto Nrep = 20;
 
   {
     // warm-up
-    weightedInnerProdMany(Nlocal, fields, 1, o_weight, o_r, o_z, MPI_COMM_NULL);
+    weightedInnerProdMany(Nlocal, fields, 1, o_weight, o_r, o_z, platform->comm.mpiComm);
 
     platform->device.finish();
     MPI_Barrier(platform->comm.mpiComm);
@@ -60,8 +60,10 @@ void linAlg_t::runTimers()
     }
     platform->device.finish();
     const auto elapsed = (MPI_Wtime() - tStart) / Nrep;
+    auto elapsedMax = 0.0;
+    MPI_Allreduce(&elapsed, &elapsedMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
     if (platform->comm.mpiRank == 0)
-      printf("wdotp: %.3es  ", elapsed);
+      printf("wdotp: %.3es  ", elapsedMax);
   }
 
   if (platform->comm.mpiCommSize > 1) {
@@ -73,8 +75,10 @@ void linAlg_t::runTimers()
     }
     platform->device.finish();
     const auto elapsed = (MPI_Wtime() - tStart) / Nrep;
+    auto elapsedMax = 0.0;
+    MPI_Allreduce(&elapsed, &elapsedMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
     if (platform->comm.mpiRank == 0)
-      printf("(local: %.3es)\n", elapsed);
+      printf("(local: %.3es)\n", elapsedMax);
   }
   else {
     if (platform->comm.mpiRank == 0)

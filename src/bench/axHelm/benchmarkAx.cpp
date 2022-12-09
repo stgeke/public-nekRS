@@ -124,9 +124,9 @@ occa::kernel benchmarkAx(int Nelements,
     const auto wordSize = sizeof(FPType);
     constexpr int p_Nggeo{7};
 
-    int Nkernels = 1;
+    int Nkernels = 2;
     if (kernelName == "ellipticPartialAxHex3D")
-      Nkernels = 7;
+      Nkernels = 8;
     std::vector<int> kernelVariants;
     if (platform->serial) {
       kernelVariants.push_back(0);
@@ -218,7 +218,7 @@ occa::kernel benchmarkAx(int Nelements,
       const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
 
       auto kernel = platform->device.buildKernel(fileName, newProps, suffix, true);
-
+      
       if (platform->options.compareArgs("BUILD ONLY", "TRUE"))
         return kernel;
 
@@ -236,7 +236,7 @@ occa::kernel benchmarkAx(int Nelements,
         err = std::max(err, std::abs(refResults[i] - results[i]));
       }
 
-      const auto tol = 100. * std::numeric_limits<FPType>::epsilon();
+      const auto tol = 200. * std::numeric_limits<FPType>::epsilon();
       if (platform->comm.mpiRank == 0 && verbosity > 1 && err > tol) {
         std::cout << "Error in kernel compared to reference implementation " << kernelVariant << ": " << err
                   << std::endl;

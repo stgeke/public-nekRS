@@ -16,8 +16,6 @@ preconditioner = multigrid
 smootherType = RAS+OptFourthChebyshev #+maxEigenvalueBoundFactor=1.1
 #coarseSolver = boomerAMG+device #AmgX
 #coarseGridDiscretization = FEM #+Galerkin
-
-# degree must match specification in smootherType, else omit from smootherType
 #pMGSchedule = p=7+degree=3, p=3+degree=3, p=1, p=3+degree=3, p=7+degree=3
 
 # p-MG additive V-cycle, overlapping coarse grid solve

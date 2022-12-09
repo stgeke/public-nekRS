@@ -310,13 +310,13 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
         nrs->fieldOffset * nrs->NVfields, 0.0, nrs->o_FU);
     makef(nrs, time, tstep, nrs->o_FU, nrs->o_BF);
     platform->timer.toc("makef");
-  }
 
-  // extrapolate p0th
-  if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
-    nrs->p0the = 0.0;
-    for (int ext = 0; ext < nrs->nEXT; ++ext) {
-      nrs->p0the += nrs->coeffEXT[ext] * nrs->p0th[ext];
+    // extrapolate p0th
+    if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
+      nrs->p0the = 0.0;
+      for (int ext = 0; ext < nrs->nEXT; ++ext) {
+        nrs->p0the += nrs->coeffEXT[ext] * nrs->p0th[ext];
+      }
     }
   }
 
@@ -404,7 +404,8 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
   nrs->dt[2] = nrs->dt[1];
   nrs->dt[1] = nrs->dt[0];
 
-  if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
+  if (nrs->flow) {
+    if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE"))
     nrs->p0the = nrs->p0th[0];
   }
 }

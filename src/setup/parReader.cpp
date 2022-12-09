@@ -667,7 +667,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
       {"fourthcheby"},
       {"fourthoptcheby"},
       {"jac"},
-      {"degree"},
       {"mineigenvalueboundfactor"},
       {"maxeigenvalueboundfactor"},
   };
@@ -693,10 +692,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
         chebyshevType = "FOURTHCHEBYSHEV";
       }
       for (std::string s : list) {
-
-        const auto degreeStr = parseValueForKey(s, "degree");
-        if(!degreeStr.empty())
-          options.setArgs(parSection + " MULTIGRID CHEBYSHEV DEGREE", degreeStr);
 
         const auto minEigBoundStr = parseValueForKey(s, "mineigenvalueboundfactor");
         if(!minEigBoundStr.empty()){
@@ -1778,15 +1773,14 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
           }
         }
 
-#if 0
         // bail if coarse degree is set, but we're not smoothing on the coarsest level
-        if(scheduleMap[{minDegree, true}] != INVALID){
-          const bool smoothCrs = options.compareArgs("PRESSURE COARSE SOLVER", "SMOOTHER");
-          if(!smoothCrs){
+        if(scheduleMap[{minDegree, true}] > 0){
+           
+          const bool smoothCrs = options.compareArgs("PRESSURE COARSE SOLVER", "SMOOTHER") ||
+                                 options.compareArgs("PRESSURE MULTIGRID COARSE SOLVE AND SMOOTH", "TRUE");
+          if(!smoothCrs)
             append_error("ERROR: specified coarse degree, but coarseSolver=smoother is not set.\n");
-          }
         }
-#endif
 
       }
     }

@@ -101,10 +101,9 @@ smootherType                Jacobi
                             ASM [D]                                    overlapping additive Schwarz 
                             RAS                                        overlapping restrictive Schwarz
                             +Chebyshev                                 1st Chebyshev acceleration
+                              +minEigenvalueBoundFactor=<float>
                             +FourthChebyshev                           4th Kind Chebyshev acceleration
                             +FourthOptChebyshev [D]                    4th Opt Chebyshev acceleration
-                            +degree=<int>
-                            +minEigenvalueBoundFactor=<float>          only valid for 1st kind Chebyshev
                             +maxEigenvalueBoundFactor=<float> 
 
 boundaryTypeMap             <...>, <...>, ...                          boundary type for each boundary ID

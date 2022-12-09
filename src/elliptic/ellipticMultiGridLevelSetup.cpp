@@ -112,10 +112,10 @@ pMGLevel::pMGLevel(elliptic_t* ellipticBase, //finest level
 void pMGLevel::setupSmoother(elliptic_t* ellipticBase)
 {
 
-  dfloat minMultiplier;
+  dfloat minMultiplier = 0.9;
   options.getArgs("MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR", minMultiplier);
 
-  dfloat maxMultiplier;
+  dfloat maxMultiplier = 1.1;
   options.getArgs("MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR", maxMultiplier);
 
   const bool useASM = options.compareArgs("MULTIGRID SMOOTHER","ASM");
@@ -151,12 +151,13 @@ void pMGLevel::setupSmoother(elliptic_t* ellipticBase)
     DownLegChebyshevDegree = 3;
 
     if(isCoarse) {
-      if(options.compareArgs("MULTIGRID COARSE SOLVE AND SMOOTH", "FALSE")) {
-        UpLegChebyshevDegree = 8;
-        DownLegChebyshevDegree = 8;
+      if(options.compareArgs("MULTIGRID COARSE SOLVE AND SMOOTH", "TRUE")) {
+        UpLegChebyshevDegree = 3;
+        DownLegChebyshevDegree = 3;
+      } else {
+        UpLegChebyshevDegree = 5;
+        DownLegChebyshevDegree = 5;
       }
-      options.getArgs("COARSE MULTIGRID CHEBYSHEV DEGREE", UpLegChebyshevDegree);
-      options.getArgs("COARSE MULTIGRID CHEBYSHEV DEGREE", DownLegChebyshevDegree);
     } else {
       options.getArgs("MULTIGRID CHEBYSHEV DEGREE", UpLegChebyshevDegree);
       options.getArgs("MULTIGRID CHEBYSHEV DEGREE", DownLegChebyshevDegree);
@@ -167,8 +168,10 @@ void pMGLevel::setupSmoother(elliptic_t* ellipticBase)
   std::string schedule = options.getArgs("MULTIGRID SCHEDULE");
   if (!schedule.empty()) {
     auto [scheduleMap, errorString] = parseMultigridSchedule(schedule, options, DownLegChebyshevDegree);
-    UpLegChebyshevDegree = scheduleMap[{degree, true}];
-    DownLegChebyshevDegree = scheduleMap[{degree, false}];
+    if(scheduleMap[{degree, true}] > -1)
+      UpLegChebyshevDegree = scheduleMap[{degree, true}];
+    if(scheduleMap[{degree, false}] > -1)
+      DownLegChebyshevDegree = scheduleMap[{degree, false}];
   }
 
   if(options.compareArgs("MULTIGRID SMOOTHER", "FOURTHOPT")){
@@ -216,7 +219,7 @@ void pMGLevel::Report()
       if(options.compareArgs("MULTIGRID COARSE SOLVE AND SMOOTH","TRUE")) {
 
       printf(     "|    pMG     |   Matrix-free   | %s\n", smootherString.c_str());
-      printf("     |            |     Degree %2d   |\n", degree);
+      printf("     |            |     p = %2d      |\n", degree);
       if(useSEMFEM)
       printf("     |    AMG     |   SEMFEM Matrix | \n");
       else
@@ -232,7 +235,7 @@ void pMGLevel::Report()
 
     } else {
       printf(     "|    pMG     |   Matrix-free   | %s\n", smootherString.c_str());
-      printf("     |            |     Degree %2d   |\n", degree);
+      printf("     |            |     p = %2d      |\n", degree);
     }
   }
 

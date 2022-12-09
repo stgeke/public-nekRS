@@ -50,6 +50,7 @@ viscosity = 1.0
 #strongThreshold = 0.25
 #nonGalerkinTol = 0.0
 #aggressiveCoarseningLevels = 0
+#chebyshevRelaxOrder = 1
 
 #[AMGX]
 #configFile = "amgx.json"

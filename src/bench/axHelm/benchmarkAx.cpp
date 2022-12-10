@@ -116,8 +116,6 @@ occa::kernel benchmarkAx(int Nelements,
     }
   }
   kernelName += "Hex3D";
-  if (Ndim > 1 && !stressForm)
-    kernelName += "_N" + std::to_string(Ndim);
 
   auto benchmarkAxWithPrecision = [&](auto sampleWord) {
     using FPType = decltype(sampleWord);
@@ -127,13 +125,16 @@ occa::kernel benchmarkAx(int Nelements,
     int Nkernels = 2;
     if (kernelName == "ellipticPartialAxHex3D")
       Nkernels = 8;
+    if (kernelName == "ellipticBlockPartialAxCoeffHex3D")
+      Nkernels = 1;
+    if (kernelName == "ellipticBlockPartialAxHex3D")
+      Nkernels = 1;
+
     std::vector<int> kernelVariants;
     if (platform->serial) {
       kernelVariants.push_back(0);
-    }
-    else {
+    } else {
       for (int knl = 0; knl < Nkernels; ++knl) {
-
 #if 0
         // v3 requires Nq^3 < 1024 (max threads/thread block on CUDA/HIP)
         if (knl == 3 && Np > 1024)
@@ -153,7 +154,10 @@ occa::kernel benchmarkAx(int Nelements,
     if (kernelVariants.size() == 1 && !requiresBenchmark) {
 
       auto newProps = props;
-      if (kernelName == "ellipticPartialAxHex3D" && !platform->serial) {
+      if (kernelName == "ellipticPartialAxHex3D" ||
+          kernelName == "ellipticBlockPartialAxCoeffHex3D" || 
+          kernelName == "ellipticBlockPartialAxHex3D" && 
+          !platform->serial) {
         newProps["defines/p_knl"] = kernelVariants.back();
       }
 

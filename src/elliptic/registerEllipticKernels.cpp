@@ -162,8 +162,6 @@ void registerEllipticKernels(std::string section, int poissonEquation)
     if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR"))
       kernelName += "Trilinear";
     kernelName += suffix;
-    if (blockSolver && !stressForm)
-      kernelName += "_N" + std::to_string(Nfields);
 
     const std::string _kernelName = kernelNamePrefix + "Partial" + kernelName;
     const std::string prefix = (poissonEquation) ? "poisson-" : "";

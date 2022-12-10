@@ -1,5 +1,5 @@
 extern "C"
-void FUNC(ellipticBlockPartialAxHex3D_N3)(const dlong & Nelements,
+void FUNC(ellipticBlockPartialAxHex3D)(const dlong & Nelements,
                                 const dlong & offset,
                                 const dlong & loffset,
                                 const dlong* __restrict__ elementList,

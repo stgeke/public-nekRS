@@ -242,8 +242,6 @@ void ellipticSolveSetup(elliptic_t* elliptic)
       if (elliptic->coeffField) kernelName += "Coeff";
       if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR")) kernelName += "Trilinear";
       kernelName += suffix; 
-      if (elliptic->blockSolver && !elliptic->stressForm) 
-        kernelName += "_N" + std::to_string(elliptic->Nfields);
 
       elliptic->AxKernel = 
         platform->kernels.get(kernelNamePrefix + "Partial" + kernelName);

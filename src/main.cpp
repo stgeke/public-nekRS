@@ -190,7 +190,7 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
       }
     }
 
-    {
+    if(cmdOpt->setupFile.empty()){
       int cnt = 0;
       for (auto &p : std::filesystem::directory_iterator{"."})
       {

@@ -71,7 +71,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   expectedErr[2] = 0.2973762E-05;
   expectedErr[3] = 0.5820565E-06;
   expectedErr[4] = 0.2465620E-05;
-  expectedErr[5] = 0.1042903E-05;
+  expectedErr[5] = 0.2558128E-05;
 
   int expectedPIter = 5;
   if(ciMode == 1)
@@ -79,12 +79,15 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   }
   if(ciMode == 2)
   {
+    expectedErr[5] = 0.1042903E-05;
   }
   if(ciMode == 3)
   {
+    expectedErr[5] = 0.1042903E-05;
   }
   if(ciMode == 4)
   {
+    expectedErr[5] = 0.1042903E-05;
   }
   if(ciMode == 5)
   {

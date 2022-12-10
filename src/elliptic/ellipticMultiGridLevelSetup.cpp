@@ -313,7 +313,7 @@ dfloat pMGLevel::maxEigSmoothAx()
   MPI_Allreduce(&Nlocal, &Nglobal, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
 
   occa::memory o_invDegree = platform->device.malloc(Nlocal*sizeof(dfloat), elliptic->ogs->invDegree);
-  int k = std::min(pMGLevel::Narnoldi, Nglobal);
+  const int k = (int) std::min(pMGLevel::Narnoldi, Nglobal);
 
   // allocate memory for Hessenberg matrix
   double* H = (double*) calloc(k * k,sizeof(double));

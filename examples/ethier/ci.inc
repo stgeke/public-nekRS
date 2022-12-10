@@ -302,7 +302,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     int NiterP = nrs->pSolver->Niter;
 
     // mode 11 uses Chebyshev+Jacobi smoothing
-    const int expectedNiterP = (ciMode == 11) ? 13 : 6;
+    const int expectedNiterP = (ciMode == 11) ? 19 : 6;
     const int pIterErr = abs(NiterP - expectedNiterP);
     if(pIterErr >= 2) {
       if(rank==0){

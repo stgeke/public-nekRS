@@ -76,6 +76,7 @@
 #include <sstream>
 #include <fcntl.h>
 #include <chrono>
+#include <filesystem>
 
 #include "nekrs.hpp"
 
@@ -186,6 +187,21 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         break;
       default:
         err = 1;
+      }
+    }
+
+    {
+      int cnt = 0;
+      for (auto &p : std::filesystem::directory_iterator{"."})
+      {
+        if (p.path().extension() == ".par") {
+          cmdOpt->setupFile.assign(p.path().stem().string());
+          cnt++; 
+        }
+      }
+      if(cnt > 1) {
+        std::cout << "Multiple .par files found!\n"; 
+        err++; 
       }
     }
   }

@@ -70,7 +70,7 @@ void velRecycling::copy()
   o_wrk.copyFrom(nrs->o_U, nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
   setBCVectorValueKernel(mesh->Nelements, zero, bID, nrs->fieldOffset, o_wrk, mesh->o_vmapM, mesh->o_EToB);
 
-  oogs::startFinish(o_wrk, nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
+  oogs::startFinish(o_wrk, nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsAdd, ogs);
 
   // rescale
   getBCFluxKernel(mesh->Nelements,
@@ -131,16 +131,16 @@ void velRecycling::setup(nrs_t *nrs_,
     }
   }
 
-  oogs::setup(Ntotal,
-              ids,
-              nrs->NVfields,
-              nrs->fieldOffset,
-              ogsDfloat,
-              platform->comm.mpiComm,
-              0,
-              platform->device.occaDevice(),
-              NULL,
-              OOGS_AUTO);
+  ogs = oogs::setup(Ntotal,
+                    ids,
+                    nrs->NVfields,
+                    nrs->fieldOffset,
+                    ogsDfloat,
+                    platform->comm.mpiComm,
+                    0,
+                    platform->device.occaDevice(),
+                    NULL,
+                    OOGS_AUTO);
 
   free(ids);
 

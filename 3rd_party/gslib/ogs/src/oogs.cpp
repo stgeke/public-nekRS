@@ -359,7 +359,12 @@ oogs_t *oogs::setup(ogs_t *ogs,
   std::list<oogs_modeExchange> oogs_modeExchange_list;
   oogs_modeExchange_list.push_back(OOGS_EX_PW);
 
-  if (ogs->NhaloGather > 0) {
+  {
+    const hlong NhaloGather = ogs->NhaloGather;
+    MPI_Allreduce(&NhaloGather, &(ogs->NhaloGatherGlobal), 1, MPI_HLONG, MPI_SUM, gs->comm);
+  }
+
+  if (ogs->NhaloGatherGlobal > 0) {
     gs->bufSend = (unsigned char *)ogsHostMallocPinned(ogs->device,
                                                        pwd->comm[send].total * nVec * sizeof(double),
                                                        NULL,
@@ -547,7 +552,7 @@ oogs_t *oogs::setup(ogs_t *ogs,
     std::string configStr = (gs->modeExchange == OOGS_EX_NBC) ? "nbc" : "pw";
     configStr += (gs->earlyPrepostRecv) ? "+early" : "";
     if (gs->rank == 0) {
-      if (ogs->NhaloGather > 0) {
+      if (ogs->NhaloGatherGlobal > 0) {
         switch (gs->mode) {
         case OOGS_DEFAULT:
           if (ogs->device.mode() != "Serial") configStr += "+host";
@@ -604,6 +609,8 @@ static void packBuf(oogs_t *gs,
                     occa::memory &o_v,
                     occa::memory &o_gv)
 {
+  if(Ngather == 0) return;
+
   if (!strcmp(type, "float") && !strcmp(op, ogsAdd)) {
     gs->packBufFloatAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
@@ -635,6 +642,8 @@ static void unpackBuf(oogs_t *gs,
                       occa::memory &o_v,
                       occa::memory &o_gv)
 {
+  if(Ngather == 0) return;
+
   if (!strcmp(type, "float") && !strcmp(op, ogsAdd)) {
     gs->unpackBufFloatAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
@@ -672,7 +681,7 @@ void oogs::start(occa::memory &o_v,
     return;
   }
 
-  if (ogs->NhaloGather && gs->mode != OOGS_LOCAL) {
+  if (ogs->NhaloGatherGlobal && gs->mode != OOGS_LOCAL) {
     reallocBuffers(unit_size, gs);
 
     packBuf(gs,
@@ -707,7 +716,7 @@ void oogs::start(occa::memory &o_v,
       }
     }
 
-    ogs->device.finish();
+    ogs->device.finish(); // send buffer ready for MPI to be consumed
   }
 }
 
@@ -743,19 +752,20 @@ void oogs::finish(occa::memory &o_v,
                            o_v);
 
 
-  if (ogs->NhaloGather && !OGS_OVERLAP)
+  if (ogs->NhaloGatherGlobal && !OGS_OVERLAP)
     ogs->device.finish();
 
-  if (ogs->NhaloGather && gs->mode == OOGS_HOSTMPI) {
+  if (ogs->NhaloGatherGlobal && gs->mode == OOGS_HOSTMPI) {
     ogs->device.setStream(ogs::dataStream);
 
     struct gs_data *hgs = (gs_data *)ogs->haloGshSym;
     const void *execdata = hgs->r.data;
     const struct pw_data *pwd = (pw_data *)execdata;
 
-    gs->o_bufSend.copyTo(gs->bufSend, pwd->comm[send].total * unit_size, 0, "async: true");
+    if(pwd->comm[send].total)
+      gs->o_bufSend.copyTo(gs->bufSend, pwd->comm[send].total * unit_size, 0, "async: true");
 
-    // syncs device on exit (MPI is not stream-aware)
+    // MPI syncs device on exit
     ogsHostTic(gs->comm, 1);
     if (gs->modeExchange == OOGS_EX_NBC)
       neighborAllToAll(unit_size, gs);
@@ -763,15 +773,15 @@ void oogs::finish(occa::memory &o_v,
       pairwiseExchange(unit_size, gs);
     ogsHostToc();
 
-    gs->o_bufRecv.copyFrom(gs->bufRecv, pwd->comm[recv].total * unit_size, 0, "async: true");
+    if(pwd->comm[recv].total)
+      gs->o_bufRecv.copyFrom(gs->bufRecv, pwd->comm[recv].total * unit_size, 0, "async: true");
 
     ogs->device.finish();
     ogs->device.setStream(ogs::defaultStream);
   }
 
-
-  if (ogs->NhaloGather && gs->mode == OOGS_DEVICEMPI) {
-    // syncs device on exit (MPI is not stream-aware)
+  if (ogs->NhaloGatherGlobal && gs->mode == OOGS_DEVICEMPI) {
+    // MPI syncs device on exit
     ogsHostTic(gs->comm, 1);
     if (gs->modeExchange == OOGS_EX_NBC)
       neighborAllToAll(unit_size, gs);
@@ -780,19 +790,18 @@ void oogs::finish(occa::memory &o_v,
     ogsHostToc();
   }
 
-  if (ogs->NhaloGather)
-     unpackBuf(gs,
-              ogs->NhaloGather,
-              k,
-              stride,
-              gs->o_gatherOffsets,
-              gs->o_gatherIds,
-              ogs->o_haloGatherOffsets,
-              ogs->o_haloGatherIds,
-              type,
-              op,
-              gs->o_bufRecv,
-              o_v);
+  unpackBuf(gs,
+           ogs->NhaloGather,
+           k,
+           stride,
+           gs->o_gatherOffsets,
+           gs->o_gatherIds,
+           ogs->o_haloGatherOffsets,
+           ogs->o_haloGatherIds,
+           type,
+           op,
+           gs->o_bufRecv,
+           o_v);
 
 }
 

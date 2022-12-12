@@ -1,13 +1,20 @@
-# Release v22.1
+# Release v23.0
 
 ## What is new? 
 
 * Single source udf+oudf (see ethier example) 
-* Support BoomerAMG on device
+* BoomerAMG on device
+* Improved runtime statistics
+* Improved Chebyshev smoother
+* User defined tavg fields
+* turbulent Channel and periodicHill example
+* Extrapolation initialGuess method
+* Support for external nekRS plugins
+* Various bug fixes 
 
 ## Good to know
 
-* ... 
+* n/a 
 
 ## Breaking Changes
 * [nrsconfig] Optional build settings have to be passed as a command line arg e.g. `-DENABLE_AMGX=ON`
@@ -21,6 +28,8 @@
 ## Known Bugs / Restrictions
 
 * Mesh solver does not support CHT and unaligned sym/shl BCs
+* Poor performance of Schwarz smoother on CPUs
+* Poor performance of OIFS (advSub kernel) CPUs
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
 * [258](https://github.com/Nek5000/nekRS/issues/258)
 

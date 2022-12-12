@@ -149,6 +149,7 @@ typedef struct {
   int         NlocalGather;   //  number of local gathered nodes 
   int         Nhalo;          //  number of halo nodes
   int         NhaloGather;    //  number of gathered nodes on halo
+  hlong       NhaloGatherGlobal;
   int         NownedHalo;     //  number of owned halo nodes
   int         NrowBlocks;
 

@@ -28,7 +28,7 @@ void ellipticOgs(mesh_t *mesh,
         if (bc > 0) {
           for (int n = 0; n < mesh->Nfp; n++) {
             int fid = mesh->faceNodes[n + f * mesh->Nfp];
-            mapB[fid + e * mesh->Np + fld * offset] = mymin(bc, mapB[fid + e * mesh->Np + fld * offset]);
+            mapB[fid + e * mesh->Np + fld * offset] = mymin(bc, mapB[fid + e * mesh->Np + fld * offset]); // DIRICHLET wins
           }
         }
       }
@@ -38,7 +38,7 @@ void ellipticOgs(mesh_t *mesh,
                        nFields,
                        offset,
                        ogsInt,
-                       ogsMin,
+                       ogsMin, // DIRICHLET wins
                        mesh->ogs);
 
   Nmasked = 0;

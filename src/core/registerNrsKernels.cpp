@@ -103,6 +103,14 @@ void registerNrsKernels(occa::properties kernelInfoBC)
     fileName = oklpath + "nrs/" + kernelName + ".okl";
     platform->kernels.add(section + kernelName, fileName, meshProps);
 
+    kernelName = "SijOij" + suffix;
+    fileName = oklpath + "nrs/" + kernelName + ".okl";
+    platform->kernels.add(section + kernelName, fileName, meshProps);
+
+    kernelName = "SijOijMag2";
+    fileName = oklpath + "nrs/" + kernelName + ".okl";
+    platform->kernels.add(section + kernelName, fileName, meshProps);
+
     kernelName = "gradientVolume" + suffix;
     fileName = oklpath + "nrs/" + kernelName + ".okl";
     platform->kernels.add(section + kernelName, fileName, meshProps);

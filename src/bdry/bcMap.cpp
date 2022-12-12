@@ -58,14 +58,14 @@ static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
     {"zerovalue", 1},
     {"fixedvalue", 2},
-    {"codedFixedvalue", 2},
+    {"codedfixedvalue", 2},
     {"zerogradient", 3},
     {"zeroxvalue/zerogradient", 4},
     {"zeroyvalue/zerogradient", 5},
     {"zerozvalue/zerogradient", 6},
     {"zeronvalue/zerogradient", 7},
     {"zeronvalue/fixedgradient", 8},
-    {"zeronvalue/codedFixedgradient", 8}
+    {"zeronvalue/codedfixedgradient", 8}
 };
 
 static std::map<int, std::string> vBcIDToText = {{0, "periodic"},

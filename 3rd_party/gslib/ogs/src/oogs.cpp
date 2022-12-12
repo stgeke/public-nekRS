@@ -681,7 +681,7 @@ void oogs::start(occa::memory &o_v,
     return;
   }
 
-  if (ogs->NhaloGatherGlobal && gs->mode != OOGS_LOCAL) {
+  if (gs->mode != OOGS_LOCAL) {
     reallocBuffers(unit_size, gs);
 
     packBuf(gs,
@@ -755,7 +755,7 @@ void oogs::finish(occa::memory &o_v,
   if (ogs->NhaloGatherGlobal && !OGS_OVERLAP)
     ogs->device.finish();
 
-  if (ogs->NhaloGatherGlobal && gs->mode == OOGS_HOSTMPI) {
+  if (gs->mode == OOGS_HOSTMPI) {
     ogs->device.setStream(ogs::dataStream);
 
     struct gs_data *hgs = (gs_data *)ogs->haloGshSym;
@@ -780,7 +780,7 @@ void oogs::finish(occa::memory &o_v,
     ogs->device.setStream(ogs::defaultStream);
   }
 
-  if (ogs->NhaloGatherGlobal && gs->mode == OOGS_DEVICEMPI) {
+  if (gs->mode == OOGS_DEVICEMPI) {
     // MPI syncs device on exit
     ogsHostTic(gs->comm, 1);
     if (gs->modeExchange == OOGS_EX_NBC)

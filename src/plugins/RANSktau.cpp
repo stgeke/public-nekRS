@@ -19,8 +19,6 @@ static occa::memory o_k;
 static occa::memory o_tau;
 
 static occa::kernel computeKernel;
-static occa::kernel SijOijKernel;
-static occa::kernel SijOijMag2Kernel;
 static occa::kernel limitKernel;
 static occa::kernel mueKernel;
 
@@ -101,14 +99,6 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
     fileName = path + kernelName + extension;
     computeKernel = platform->device.buildKernel(fileName, kernelInfo, true);
 
-    kernelName = "SijOijHex3D";
-    fileName = install_dir + "/kernels/nrs/" + kernelName + extension;
-    SijOijKernel = platform->device.buildKernel(fileName, kernelInfo, true);
-
-    kernelName = "SijOijMag2";
-    fileName = install_dir + "/kernels/nrs/" + kernelName + extension;
-    SijOijMag2Kernel = platform->device.buildKernel(fileName, kernelInfo, true);
-
     kernelName = "limit";
     fileName = path + kernelName + extension;
     limitKernel = platform->device.buildKernel(fileName, kernelInfo, true);
@@ -156,14 +146,14 @@ void RANSktau::updateSourceTerms()
   occa::memory o_BFDiag = cds->o_BFDiag + cds->fieldOffsetScan[kFieldIndex] * sizeof(dfloat);
 
   const int NSOfields = 9;
-  SijOijKernel(mesh->Nelements, nrs->fieldOffset, 1, mesh->o_vgeo, mesh->o_D, nrs->o_U, o_SijOij);
+  nrs->SijOijKernel(mesh->Nelements, nrs->fieldOffset, 1, mesh->o_vgeo, mesh->o_D, nrs->o_U, o_SijOij);
 
   oogs::startFinish(o_SijOij, NSOfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
 
   platform->linAlg
       ->axmyMany(mesh->Nlocal, NSOfields, nrs->fieldOffset, 0, 1.0, nrs->meshV->o_invLMM, o_SijOij);
 
-  SijOijMag2Kernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, 1, o_SijOij, o_OiOjSk, o_SijMag2);
+  nrs->SijOijMag2Kernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, 1, o_SijOij, o_OiOjSk, o_SijMag2);
 
   limitKernel(mesh->Nelements * mesh->Np, o_k, o_tau);
 

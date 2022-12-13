@@ -28,7 +28,7 @@ defaults:
 jobs:
 
   install:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -55,7 +55,7 @@ jobs:
 
   ethier:
     needs: install
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -131,7 +131,7 @@ jobs:
 
   lowMach:
     needs: install
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -159,7 +159,7 @@ jobs:
 
   mv_cyl:
     needs: install
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -233,7 +233,7 @@ jobs:
 
   conj_ht:
     needs: install
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -261,7 +261,7 @@ jobs:
 
   channelStress:
     needs: install
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -292,7 +292,7 @@ jobs:
 
   tractionBoundary:
     needs: install
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -322,7 +322,7 @@ jobs:
       run: ${{ env.NEKRS_HOME }}/bin/nrsmpi channel 2 --cimode 2
 
   kershaw:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -345,7 +345,7 @@ jobs:
 
 
   ktauChannel:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -368,7 +368,7 @@ jobs:
 
 
   turbPipe:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -391,7 +391,7 @@ jobs:
 
 
   turbPipePeriodic:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -414,7 +414,7 @@ jobs:
 
 
   pb146:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -439,7 +439,7 @@ jobs:
 
 
   rbc:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -462,7 +462,7 @@ jobs:
 
 
   tgv:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -485,7 +485,7 @@ jobs:
 
 
   double_shear:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -508,7 +508,7 @@ jobs:
 
 
   eddyPeriodic:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3
@@ -531,7 +531,7 @@ jobs:
 
 
   gabls1:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
 
     - uses: actions/checkout@v3

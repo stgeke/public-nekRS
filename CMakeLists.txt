@@ -175,6 +175,17 @@ endif()
 include(config/hypre.cmake)
 
 ###############################################################################
+# Build OpenBLAS
+###############################################################################
+set(BUILD_TESTING OFF CACHE BOOL "Build LAPACK testsuite when building LAPACK")
+#set(BUILD_SHARED_LIBS TRUE)
+set(BUILD_DOUBLE TRUE)
+#set(BUILD_SINGLE TRUE)
+set(USE_THREAD FALSE)
+set(NUM_THREADS 0)
+add_subdirectory(3rd_party/OpenBLAS)
+
+###############################################################################
 # Build Nek5000 dependencies                                                  #
 ###############################################################################
 include(config/nek5000.cmake)
@@ -186,7 +197,6 @@ include(config/bench.cmake)
 include(config/mesh.cmake)
 include(config/elliptic.cmake)
 include(config/gslib.cmake)
-include(config/blaslapack.cmake)
 
 set(SRC 
     src/lib/nekrs.cpp
@@ -245,7 +255,6 @@ set(SRC
     ${BENCH_SOURCES}
     ${MESH_SOURCES}
     ${ELLIPTIC_SOURCES}
-    ${BLASLAPACK_SOURCES}
     ${OGS_SOURCES}
 )
 
@@ -261,7 +270,7 @@ set_property(
 add_library(nekrs-lib SHARED ${SRC})
 
 set_target_properties(nekrs-lib PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
-target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB})
+target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB} openblas)
 
 target_compile_definitions(nekrs-lib PUBLIC
     -DDOGS="${CMAKE_INSTALL_PREFIX}/gatherScatter"

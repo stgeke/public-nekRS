@@ -1193,7 +1193,6 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE", "3");
   options.setArgs("PRESSURE MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR", "1.1");
 
-  options.setArgs("ENABLE FLOATCOMMHALF GS SUPPORT", "FALSE");
   options.setArgs("MOVING MESH", "FALSE");
   options.setArgs("GS OVERLAP", "TRUE");
 

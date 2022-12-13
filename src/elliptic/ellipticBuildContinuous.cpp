@@ -56,7 +56,7 @@ void ellipticBuildContinuous(elliptic_t* elliptic,
   mesh_t *mesh = elliptic->mesh;
   MPI_Barrier(platform->comm.mpiComm);
   const double tStart = MPI_Wtime();
-  if(platform->comm.mpiRank == 0) printf("building full FEM matrix ... ");
+  if(platform->comm.mpiRank == 0) printf("building FEM matrix ... ");
   fflush(stdout);
 
   switch(elliptic->elementType) {
@@ -389,7 +389,7 @@ void ellipticBuildContinuousGalerkinHex3D(elliptic_t* elliptic,
 
   MPI_Barrier(platform->comm.mpiComm);
   const double tStart = MPI_Wtime();
-  if(platform->comm.mpiRank == 0) printf("building full FEM matrix using Galerkin projection ... ");
+  if(platform->comm.mpiRank == 0) printf("building FEM matrix using Galerkin projection ... ");
   fflush(stdout);
 
   int rank = platform->comm.mpiRank;

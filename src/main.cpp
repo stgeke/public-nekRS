@@ -412,9 +412,11 @@ int main(int argc, char** argv)
      tm *gmtm = gmtime(&now);
      char *dt = asctime(gmtm);
      std::cout << "UTC time: " << dt << std::endl;
+     fflush(stdout);
   }
 
   if (cmdOpt->debug) {
+    MPI_Barrier(comm);
     for(int currRank = 0; currRank < size; ++currRank)
       if(rank == currRank) printf("rank %d: pid<%d>\n", rank, ::getpid());
     fflush(stdout);

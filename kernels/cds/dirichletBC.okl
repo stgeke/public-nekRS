@@ -53,7 +53,7 @@
         const dlong idM = vmapM[sk];
         const dlong bcType = EToB[f + p_Nfaces * e];
 
-        if (bcType == 1) {
+        if (bcType == p_bcTypeS) {
           bc.id = EToBM[f + p_Nfaces * e];
           bc.idM = idM;
           bc.time = time;

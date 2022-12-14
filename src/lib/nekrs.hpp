@@ -31,6 +31,7 @@ double endTime(void);
 int numSteps(void);
 int lastStep(double time, int tstep, double elapsedTime);
 int writeControlRunTime(void);
+int exitValue(void);
 void processUpdFile();
 void printInfo(double time, int tstep, bool printStepInfo, bool printVerboseInfo);
 void verboseInfo(bool enabled);

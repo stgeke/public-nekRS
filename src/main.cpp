@@ -545,13 +545,20 @@ int main(int argc, char** argv)
   }
   MPI_Pcontrol(0);
 
+  auto exitValue = nekrs::exitValue();
   nekrs::finalize();
 
   MPI_Barrier(commGlobal);
-  if (rank == 0)
-    std::cout << "End\n";
+  if (rank == 0) {
+    if(exitValue)
+      std::cout << "End with exitValue=" << exitValue << std::endl;
+    else
+      std::cout << "End\n";
+  }
 
   MPI_Finalize();
-
-  return EXIT_SUCCESS;
+  if(exitValue)
+    return EXIT_FAILURE;
+  else
+    return EXIT_SUCCESS;
 }

@@ -241,6 +241,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
   mesh_t *mesh = nrs->meshV;
 
+  if (nrs->flow) {
+    if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {
+       if(options.compareArgs("VELOCITY INITIAL GUESS", "EXTRAPOLATION"))
+          platform->options.setArgs("VELOCITY INITIAL GUESS", "PREVIOUS"); // overrule as currently not supported!
+    }
+  }
+
   {
     double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
     MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);

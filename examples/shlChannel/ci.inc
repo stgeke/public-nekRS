@@ -2,9 +2,6 @@
 
 static int ciMode = 0;
 
-#define PASS { if (rank == 0) printf("TESTS passed \n"); MPI_Finalize(); exit(0); }
-#define FAIL { if (rank == 0) printf("TESTS failed!\n"); MPI_Finalize(); exit(2); }
-
 void ciSetup(MPI_Comm comm, setupAide &options)
 {
   options.setArgs("POLYNOMIAL DEGREE", std::string("7"));

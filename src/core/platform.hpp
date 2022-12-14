@@ -100,6 +100,7 @@ public:
   linAlg_t* linAlg;
   std::unique_ptr<flopCounter_t> flopCounter;
   memPool_t mempool;
+  int exitValue;
 
   occa::kernel copyDfloatToPfloatKernel;
   occa::kernel copyPfloatToDfloatKernel;

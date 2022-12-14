@@ -13,6 +13,7 @@
 
 #include <elliptic.h>
 #include "alignment.hpp"
+#include "bcMap.hpp"
 
 namespace {
 boundaryAlignment_t computeAlignment(mesh_t *mesh, dlong element, dlong face)
@@ -56,42 +57,42 @@ static bool importFromNek = true;
 
 static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
-    {"zerovalue", 1},
-    {"fixedvalue", 2},
-    {"codedfixedvalue", 2},
-    {"zerogradient", 3},
-    {"zeroxvalue/zerogradient", 4},
-    {"zeroyvalue/zerogradient", 5},
-    {"zerozvalue/zerogradient", 6},
-    {"zeronvalue/zerogradient", 7},
-    {"zeronvalue/fixedgradient", 8},
-    {"zeronvalue/codedfixedgradient", 8}
+    {"zerovalue", bcMap::bcTypeW},
+    {"fixedvalue", bcMap::bcTypeV},
+    {"codedfixedvalue", bcMap::bcTypeV},
+    {"zerogradient", bcMap::bcTypeO},
+    {"zeroxvalue/zerogradient", bcMap::bcTypeSYMX},
+    {"zeroyvalue/zerogradient", bcMap::bcTypeSYMY},
+    {"zerozvalue/zerogradient", bcMap::bcTypeSYMZ},
+    {"zeronvalue/zerogradient", bcMap::bcTypeSYM},
+    {"zeronvalue/fixedgradient", bcMap::bcTypeSHL},
+    {"zeronvalue/codedfixedgradient", bcMap::bcTypeSHL}
 };
 
 static std::map<int, std::string> vBcIDToText = {{0, "periodic"},
-                                                 {1, "zeroValue"},
-                                                 {2, "codedFixedValue"},
-                                                 {3, "zeroGradient"},
-                                                 {4, "zeroXValue/zeroGradient"},
-                                                 {5, "zeroYValue/zeroGradient"},
-                                                 {6, "zeroZValue/zeroGradient"},
-                                                 {7, "zeroNValue/zeroGradient"},
-                                                 {8, "zeroNValue/codedFixedGradient"}};
+                                                 {bcMap::bcTypeW, "zeroValue"},
+                                                 {bcMap::bcTypeV, "codedFixedValue"},
+                                                 {bcMap::bcTypeO, "zeroGradient"},
+                                                 {bcMap::bcTypeSYMX, "zeroXValue/zeroGradient"},
+                                                 {bcMap::bcTypeSYMY, "zeroYValue/zeroGradient"},
+                                                 {bcMap::bcTypeSYMZ, "zeroZValue/zeroGradient"},
+                                                 {bcMap::bcTypeSYM, "zeroNValue/zeroGradient"},
+                                                 {bcMap::bcTypeSHL, "zeroNValue/codedFixedGradient"}};
 
 static std::map<std::string, int> sBcTextToID = {
   {"periodic", 0},
-  {"fixedvalue", 1},
-  {"codedFixedvalue", 1},
-  {"zerogradient", 2},
-  {"fixedgradient", 3},
-  {"codedFixedgradient", 3}
+  {"fixedvalue", bcMap::bcTypeS},
+  {"codedFixedvalue", bcMap::bcTypeS},
+  {"zerogradient", bcMap::bcTypeF0},
+  {"fixedgradient", bcMap::bcTypeF},
+  {"codedFixedgradient", bcMap::bcTypeF}
 };
 
 static std::map<int, std::string> sBcIDToText = {
-  {0, "periodic"     },
-  {1, "codedFixedValue"   },
-  {2, "zeroGradient" },
-  {3, "codedFixedGradient"}
+  {0, "periodic"},
+  {bcMap::bcTypeS, "codedFixedValue"},
+  {bcMap::bcTypeF0, "zeroGradient"},
+  {bcMap::bcTypeF, "codedFixedGradient"}
 };
 
 static void v_setup(std::string s);
@@ -118,8 +119,7 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     if (key.compare("symy") == 0) key = "zeroyvalue/zerogradient";
     if (key.compare("symz") == 0) key = "zerozvalue/zerogradient";
     if (key.compare("sym") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("shl") == 0)
-      key = "zeronvalue/fixedgradient";
+    if (key.compare("shl") == 0) key = "zeronvalue/fixedgradient";
 
     if (vBcTextToID.find(key) == vBcTextToID.end()) {
       std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
@@ -215,8 +215,7 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
     if (key.compare("symy") == 0) key = "zeronvalue/zerogradient";
     if (key.compare("symz") == 0) key = "zeronvalue/zerogradient";
     if (key.compare("sym") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("shl") == 0)
-      key = "zeronvalue/zerogradient";
+    if (key.compare("shl") == 0) key = "zeronvalue/zerogradient";
 
     if (vBcTextToID.find(key) == vBcTextToID.end()) {
       std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
@@ -250,146 +249,92 @@ int type(int bid, std::string field)
 
   try {
     int bcType;
-    if (field.compare("x-velocity") == 0) {
-      const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1)
+    if (field.compare("x-velocity") == 0 || field.compare("x-mesh") == 0) {
+      int bcID = bToBc.at({"velocity", bid - 1});
+      if(field.compare("x-mesh") == 0) bcID = bToBc.at({"mesh", bid - 1});
+      if (bcID == bcTypeW)
         bcType = DIRICHLET;
-      if (bcID == 2)
+      if (bcID == bcTypeV)
         bcType = DIRICHLET;
-      if (bcID == 3)
+      if (bcID == bcTypeO)
         bcType = NEUMANN;
-      if (bcID == 4)
+      if (bcID == bcTypeSYMX)
         bcType = DIRICHLET;
-      if (bcID == 5)
+      if (bcID == bcTypeSYMY)
         bcType = NEUMANN;
-      if (bcID == 6)
+      if (bcID == bcTypeSYMZ)
         bcType = NEUMANN;
-      if (bcID == 7)
+      if (bcID == bcTypeSYM)
         bcType = ZERO_NORMAL;
-      if (bcID == 8)
-        bcType = ZERO_NORMAL;
-    }
-    else if (field.compare("y-velocity") == 0) {
-      const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1)
-        bcType = DIRICHLET;
-      if (bcID == 2)
-        bcType = DIRICHLET;
-      if (bcID == 3)
-        bcType = NEUMANN;
-      if (bcID == 4)
-        bcType = NEUMANN;
-      if (bcID == 5)
-        bcType = DIRICHLET;
-      if (bcID == 6)
-        bcType = NEUMANN;
-      if (bcID == 7)
-        bcType = ZERO_NORMAL;
-      if (bcID == 8)
+      if (bcID == bcTypeSHL)
         bcType = ZERO_NORMAL;
     }
-    else if (field.compare("z-velocity") == 0) {
-      const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1)
+    else if (field.compare("y-velocity") == 0 || field.compare("y-mesh") == 0) {
+      int bcID = bToBc.at({"velocity", bid - 1});
+      if(field.compare("y-mesh") == 0) bcID = bToBc.at({"mesh", bid - 1});
+      if (bcID == bcTypeW)
         bcType = DIRICHLET;
-      if (bcID == 2)
+      if (bcID == bcTypeV)
         bcType = DIRICHLET;
-      if (bcID == 3)
+      if (bcID == bcTypeO)
         bcType = NEUMANN;
-      if (bcID == 4)
+      if (bcID == bcTypeSYMX)
         bcType = NEUMANN;
-      if (bcID == 5)
-        bcType = NEUMANN;
-      if (bcID == 6)
+      if (bcID == bcTypeSYMY)
         bcType = DIRICHLET;
-      if (bcID == 7)
+      if (bcID == bcTypeSYMZ)
+        bcType = NEUMANN;
+      if (bcID == bcTypeSYM)
         bcType = ZERO_NORMAL;
-      if (bcID == 8)
-        bcType = ZERO_NORMAL;
-    }
-    else if (field.compare("x-mesh") == 0) {
-      const int bcID = bToBc.at({"mesh", bid - 1});
-      if (bcID == 1)
-        bcType = DIRICHLET;
-      if (bcID == 2)
-        bcType = DIRICHLET;
-      if (bcID == 3)
-        bcType = NEUMANN;
-      if (bcID == 4)
-        bcType = DIRICHLET;
-      if (bcID == 5)
-        bcType = NEUMANN;
-      if (bcID == 6)
-        bcType = NEUMANN;
-      if (bcID == 7)
-        bcType = ZERO_NORMAL;
-      if (bcID == 8)
+      if (bcID == bcTypeSHL)
         bcType = ZERO_NORMAL;
     }
-    else if (field.compare("y-mesh") == 0) {
-      const int bcID = bToBc.at({"mesh", bid - 1});
-      if (bcID == 1)
+    else if (field.compare("z-velocity") == 0 || field.compare("z-mesh") == 0) {
+      int bcID = bToBc.at({"velocity", bid - 1});
+      if(field.compare("z-mesh") == 0) bcID = bToBc.at({"mesh", bid - 1});
+      if (bcID == bcTypeW)
         bcType = DIRICHLET;
-      if (bcID == 2)
+      if (bcID == bcTypeV)
         bcType = DIRICHLET;
-      if (bcID == 3)
+      if (bcID == bcTypeO)
         bcType = NEUMANN;
-      if (bcID == 4)
+      if (bcID == bcTypeSYMX)
         bcType = NEUMANN;
-      if (bcID == 5)
+      if (bcID == bcTypeSYMY)
+        bcType = NEUMANN;
+      if (bcID == bcTypeSYMZ)
         bcType = DIRICHLET;
-      if (bcID == 6)
-        bcType = NEUMANN;
-      if (bcID == 7)
+      if (bcID == bcTypeSYM)
         bcType = ZERO_NORMAL;
-      if (bcID == 8)
-        bcType = ZERO_NORMAL;
-    }
-    else if (field.compare("z-mesh") == 0) {
-      const int bcID = bToBc.at({"mesh", bid - 1});
-      if (bcID == 1)
-        bcType = DIRICHLET;
-      if (bcID == 2)
-        bcType = DIRICHLET;
-      if (bcID == 3)
-        bcType = NEUMANN;
-      if (bcID == 4)
-        bcType = NEUMANN;
-      if (bcID == 5)
-        bcType = NEUMANN;
-      if (bcID == 6)
-        bcType = DIRICHLET;
-      if (bcID == 7)
-        bcType = ZERO_NORMAL;
-      if (bcID == 8)
+      if (bcID == bcTypeSHL)
         bcType = ZERO_NORMAL;
     }
     else if (field.compare("pressure") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == 1)
+      if (bcID == bcTypeW)
         bcType = NEUMANN;
-      if (bcID == 2)
+      if (bcID == bcTypeV)
         bcType = NEUMANN;
-      if (bcID == 3)
+      if (bcID == bcTypeO)
         bcType = DIRICHLET;
-      if (bcID == 4)
+      if (bcID == bcTypeSYMX)
         bcType = NEUMANN;
-      if (bcID == 5)
+      if (bcID == bcTypeSYMY)
         bcType = NEUMANN;
-      if (bcID == 6)
+      if (bcID == bcTypeSYMZ)
         bcType = NEUMANN;
-      if (bcID == 7)
+      if (bcID == bcTypeSYM)
         bcType = NEUMANN;
-      if (bcID == 8)
+      if (bcID == bcTypeSHL)
         bcType = NEUMANN;
     }
     else if (field.compare(0, 6, "scalar") == 0) {
       const int bcID = bToBc.at({field, bid - 1});
-      if (bcID == 1)
+      if (bcID == bcTypeS)
         bcType = DIRICHLET;
-      if (bcID == 2)
+      if (bcID == bcTypeF0)
         bcType = NEUMANN;
-      if (bcID == 3)
+      if (bcID == bcTypeF)
         bcType = NEUMANN;
     }
     return bcType;
@@ -405,20 +350,20 @@ std::string text(int bid, std::string field)
 
   const int bcID = bToBc.at({field, bid - 1});
 
-  if (field.compare("velocity") == 0 && bcID == 2)
+  if (field.compare("velocity") == 0 && bcID == bcTypeV)
     oudfFindDirichlet(field);
-  if (field.compare("mesh") == 0 && bcID == 2)
+  if (field.compare("mesh") == 0 && bcID == bcTypeV)
     oudfFindDirichlet(field);
-  if (field.compare("pressure") == 0 && bcID == 3)
+  if (field.compare("pressure") == 0 && bcID == bcTypeO)
     oudfFindDirichlet(field);
-  if (field.compare(0, 6, "scalar") == 0 && bcID == 1)
+  if (field.compare(0, 6, "scalar") == 0 && bcID == bcTypeS)
     oudfFindDirichlet(field);
 
-  if (field.compare("velocity") == 0 && bcID == 8)
+  if (field.compare("velocity") == 0 && bcID == bcTypeSHL)
     oudfFindNeumann(field);
-  if (field.compare("mesh") == 0 && bcID == 8)
+  if (field.compare("mesh") == 0 && bcID == bcTypeSHL)
     oudfFindNeumann(field);
-  if (field.compare(0, 6, "scalar") == 0 && bcID == 3)
+  if (field.compare(0, 6, "scalar") == 0 && bcID == bcTypeF)
     oudfFindNeumann(field);
 
   if (field.compare("velocity") == 0 || field.compare("mesh") == 0)
@@ -513,7 +458,7 @@ void checkBoundaryAlignment(mesh_t *mesh)
       for (int f = 0; f < mesh->Nfaces; f++) {
         int bid = mesh->EToB[e * mesh->Nfaces + f];
         int bc = id(bid, field);
-        if (bc == 4 || bc == 5 || bc == 6) {
+        if (bc == bcTypeSYMX || bc == bcTypeSYMY || bc == bcTypeSYMZ) {
           auto expectedAlignment = boundaryAlignment_t::UNALIGNED;
           switch (bc) {
           case 4:
@@ -614,7 +559,7 @@ void remapUnalignedBoundaries(mesh_t *mesh)
 
     for (int bid = 1; bid <= nid; ++bid) {
       int bcType = id(bid, field);
-      remapBID[bid] = (bcType == 7);
+      remapBID[bid] = (bcType == bcTypeSYM);
     }
 
     for (int e = 0; e < mesh->Nelements; e++) {
@@ -636,7 +581,7 @@ void remapUnalignedBoundaries(mesh_t *mesh)
     for (int bid = 1; bid <= nid; ++bid) {
       int canRemap = remapBID[bid];
       int bc = id(bid, field);
-      bool unalignedBoundaryType = bc == 7 || bc == 8;
+      bool unalignedBoundaryType = bc == bcTypeSYM || bc == bcTypeSHL;
       if (!canRemap && unalignedBoundaryType) {
         unalignedBoundaryPresent++;
       }
@@ -660,13 +605,13 @@ void remapUnalignedBoundaries(mesh_t *mesh)
         int newBcType = 0;
         switch (alignmentType) {
         case boundaryAlignment_t::X:
-          newBcType = 4;
+          newBcType = bcTypeSYMX;
           break;
         case boundaryAlignment_t::Y:
-          newBcType = 5;
+          newBcType = bcTypeSYMY;
           break;
         case boundaryAlignment_t::Z:
-          newBcType = 6;
+          newBcType = bcTypeSYMZ;
           break;
         default:
           break;
@@ -686,9 +631,9 @@ bool unalignedBoundary(bool cht, std::string field)
 
   for (int bid = 1; bid <= nid; bid++) {
     int bcType = id(bid, field);
-    if (bcType == 7)
+    if (bcType == bcTypeSYM)
       return true;
-    if (bcType == 8)
+    if (bcType == bcTypeSHL)
       return true;
   }
 

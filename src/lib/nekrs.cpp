@@ -478,6 +478,8 @@ void updateTimer(const std::string &key, double time) { platform->timer.set(key,
 
 void resetTimer(const std::string &key) { platform->timer.reset(key); }
 
+int exitValue() { return platform->exitValue; }
+
 
 } // namespace
 

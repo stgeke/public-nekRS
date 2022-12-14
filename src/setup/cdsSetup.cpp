@@ -216,8 +216,8 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
     kernelName = "sumMakef";
     cds->sumMakefKernel = platform->kernels.get(section + kernelName);
 
-    kernelName = "helmholtzBC" + suffix;
-    cds->helmholtzRhsBCKernel = platform->kernels.get(section + kernelName);
+    kernelName = "neumannBC" + suffix;
+    cds->neumannBCKernel = platform->kernels.get(section + kernelName);
     kernelName = "dirichletBC";
     cds->dirichletBCKernel = platform->kernels.get(section + kernelName);
 

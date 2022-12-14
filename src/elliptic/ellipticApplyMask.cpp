@@ -18,7 +18,8 @@ void ellipticApplyMask(elliptic_t *solver,
 
   if (solver->applyZeroNormalMask) {
     if (precision != dfloatString) {
-      std::cout << "Precision level (" << precision << ") not supported in applyZeroNormalMask\n";
+      if(platform->comm.mpiRank == 0)
+        std::cout << "Precision level (" << precision << ") not supported in applyZeroNormalMask\n";
       ABORT(EXIT_FAILURE);
     }
     solver->applyZeroNormalMask(Nelements, o_elementList, o_x);

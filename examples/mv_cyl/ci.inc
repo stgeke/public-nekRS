@@ -3,9 +3,6 @@
 
 static int ciMode = 0;
 
-#define PASS { if (rank == 0) printf("TESTS passed \n"); MPI_Finalize(); exit(0); }
-#define FAIL { if (rank == 0) printf("TESTS failed!\n"); MPI_Finalize(); exit(2); }
-
 #define EPS 1e-1
 
 void ciSetup(MPI_Comm comm, setupAide &options)
@@ -73,7 +70,9 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   expectedErr[4] = 0.2465620E-05;
   expectedErr[5] = 0.2558128E-05;
 
-  int expectedPIter = 5;
+  int expectedPIter = 6;
+  int expectedVIter = 3;
+
   if(ciMode == 1)
   {
   }
@@ -91,13 +90,14 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   }
   if(ciMode == 5)
   {
+    expectedVIter = 9; // no extrap
   }
   if(ciMode == 6)
   {
+    expectedVIter = 9; // no extrap
   }
 
   const dfloat absTol = 1e-8; // values below this threshold are ignored
-  const int expectedVIter = 3;
 
   double vxErr, prErr;
   double s1Err;

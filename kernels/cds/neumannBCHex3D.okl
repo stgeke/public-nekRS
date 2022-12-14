@@ -52,9 +52,9 @@
     bc.usrwrk = W;                                                                                           \
     const dfloat WsJ = sgeo[sk * p_Nsgeo + p_WSJID];                                                         \
     const dlong bcType = EToB[face + p_Nfaces * e];                                                          \
-    bc.flux = 0.f;                                                                                           \
+    bc.flux = 0;                                                                                             \
     bc.scalarId = scalarId;                                                                                  \
-    if (bcType == 3) {                                                                                       \
+    if (bcType == p_bcTypeF) {                                                                               \
       scalarNeumannConditions(&bc);                                                                          \
     }                                                                                                        \
     s_ndU[j][i] = -WsJ * (bc.flux);                                                                          \
@@ -62,23 +62,23 @@
 
 // RHS contributions for continuous solver
 
-@kernel void helmholtzBCHex3D(const dlong Nelements,
-                              @ restrict const dfloat *sgeo,
-                              @ restrict const dlong *vmapM,
-                              @ restrict const int *EToBM,
-                              const dlong scalarId,
-                              const dfloat time,
-                              const dlong offset,
-                              @ restrict const dfloat *x,
-                              @ restrict const dfloat *y,
-                              @ restrict const dfloat *z,
-                              @ restrict const dfloat *U,
-                              @ restrict const dfloat *S,
-                              @ restrict const int *EToB,
-                              @ restrict const dfloat *diff,
-                              @ restrict const dfloat *rho,
-                              @ restrict const dfloat *W,
-                              @ restrict dfloat *rhsU)
+@kernel void neumannBCHex3D(const dlong Nelements,
+                            @ restrict const dfloat *sgeo,
+                            @ restrict const dlong *vmapM,
+                            @ restrict const int *EToBM,
+                            const dlong scalarId,
+                            const dfloat time,
+                            const dlong offset,
+                            @ restrict const dfloat *x,
+                            @ restrict const dfloat *y,
+                            @ restrict const dfloat *z,
+                            @ restrict const dfloat *U,
+                            @ restrict const dfloat *S,
+                            @ restrict const int *EToB,
+                            @ restrict const dfloat *diff,
+                            @ restrict const dfloat *rho,
+                            @ restrict const dfloat *W,
+                            @ restrict dfloat *rhsU)
 {
   for (dlong e = 0; e < Nelements; ++e; @outer(0)) {
     @shared dfloat s_ndU[p_Nq][p_Nq];

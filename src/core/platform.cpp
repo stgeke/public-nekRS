@@ -63,6 +63,8 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
     : options(_options), warpSize(32), comm(_commg, _comm), device(options, comm),
       timer(_comm, device.occaDevice(), 0, 0), kernels(*this)
 {
+  exitValue = 0;
+
   srand48((long int)comm.mpiRank);
   oogs::gpu_mpi(std::stoi(getenv("NEKRS_GPU_MPI")));
 

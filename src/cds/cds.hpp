@@ -106,8 +106,7 @@ struct cds_t
   occa::kernel strongAdvectionCubatureVolumeKernel;
   occa::kernel advectMeshVelocityKernel;
 
-  occa::kernel helmholtzRhsIpdgBCKernel;
-  occa::kernel helmholtzRhsBCKernel;
+  occa::kernel neumannBCKernel;
   occa::kernel dirichletBCKernel;
   occa::kernel setEllipticCoeffKernel;
 

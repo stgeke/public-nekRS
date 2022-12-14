@@ -107,7 +107,7 @@ void registerCdsKernels(occa::properties kernelInfoBC)
       platform->kernels.add(section + kernelName, fileName, prop);
     }
 
-    kernelName = "helmholtzBC" + suffix;
+    kernelName = "neumannBC" + suffix;
     fileName = oklpath + "cds/" + kernelName + ".okl";
     platform->kernels.add(section + kernelName, fileName, kernelInfoBC);
     kernelName = "dirichletBC";

@@ -43,10 +43,11 @@
 #define ELLIPTIC_ENABLE_TIMER
 
 #define NO_OP 0
+
+// lower id wins
 #define DIRICHLET 1
-#define NEUMANN 2
-#define ZERO_NORMAL 3
-#define ZERO_TANGENTIAL 4
+#define ZERO_NORMAL 2
+#define NEUMANN 3
 
 class SolutionProjection;
 class elliptic_t;

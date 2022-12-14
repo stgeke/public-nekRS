@@ -38,7 +38,7 @@
     const dfloat WSJ = sgeo[sk * p_Nsgeo + p_WSJID];                                                         \
     const dlong bcType = EToB[face + p_Nfaces * e];                                                          \
     dfloat flux = 0;                                                                                         \
-    if (bcType == 2) {                                                                                       \
+    if (bcType == p_bcTypeV) {                                                                               \
       flux = (nx * u + ny * v + nz * w);                                                                     \
     }                                                                                                        \
     s_flux[id] += WSJ * flux;                                                                                \

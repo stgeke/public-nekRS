@@ -21,7 +21,6 @@
 // Boundary conditions
 void velocityNeumannConditions(bcData* bc)
 {
-  bc->trn = 0.0;
   bc->tr1 = -3.0 * p_visc;
   bc->tr2 = 0.0;
 }

@@ -723,7 +723,7 @@ mesh_t *create_extended_mesh(elliptic_t *elliptic, hlong *maskedGlobalIds)
     for (int edge = 0; edge < mesh->NedgeNodes; ++edge)
       if (mesh->edgeNodes[edge] == node)
         isEdgeNode = true;
-    if (mapB[n] == 1)
+    if (mapB[n] == DIRICHLET)
       maskIds[Nmasked++] = n;
     else if (isEdgeNode)
       maskIds[Nmasked++] = n;

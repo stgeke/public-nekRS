@@ -52,16 +52,16 @@
         const dlong bcType = EToB[f + p_Nfaces * e];
 
         if (bcType > 0) {
-          if (bcType == 7 || bcType == 8) {
+          if (bcType == p_bcTypeSYM || bcType == p_bcTypeSHL) {
             // handled elsewhere...
           }
-          else if (bcType == 4) {
+          else if (bcType == p_bcTypeSYMX) {
             UH[idM + 0 * offset] = 0.0;
           }
-          else if (bcType == 5) {
+          else if (bcType == p_bcTypeSYMY) {
             UH[idM + 1 * offset] = 0.0;
           }
-          else if (bcType == 6) {
+          else if (bcType == p_bcTypeSYMZ) {
             UH[idM + 2 * offset] = 0.0;
           }
         }
@@ -78,7 +78,7 @@
         const dlong idM = vmapM[sk];
         const dlong bcType = EToB[f + p_Nfaces * e];
 
-        if (bcType == 2) {
+        if (bcType == p_bcTypeV) {
           bc.id = EToBM[f + p_Nfaces * e];
           bc.idM = idM;
           bc.time = time;
@@ -125,7 +125,7 @@
         const dlong bcType = EToB[f + p_Nfaces * e];
 
         if (bcType > 0) {
-          if (bcType == 1) {
+          if (bcType == p_bcTypeW) {
             UH[idM + 0 * offset] = 0.0;
             UH[idM + 1 * offset] = 0.0;
             UH[idM + 2 * offset] = 0.0;

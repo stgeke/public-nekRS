@@ -15,7 +15,6 @@ void velocityNeumannConditions(bcData *bc)
   const dfloat ut1x = bc->u*bc->t1x +  bc->v*bc->t1y +  bc->w*bc->t1z;
   const dfloat ut2x = bc->u*bc->t2x +  bc->v*bc->t2y +  bc->w*bc->t2z;
 
-  bc->trn  = 0;
   bc->tr1  = -ut1x*invMagUWall * uTau*uTau; 
   bc->tr2  = -ut2x*invMagUWall * uTau*uTau;
 }

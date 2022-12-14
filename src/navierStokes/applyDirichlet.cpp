@@ -71,6 +71,13 @@ void applyZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory &o_mask,
 
 void applyDirichlet(nrs_t *nrs, double time)
 {
+  if (nrs->flow) {
+    if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {
+      applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
+      applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Ue);
+    }
+  }
+
   if (nrs->Nscalar) {
     cds_t *cds = nrs->cds;
     for (int is = 0; is < cds->NSfields; is++) {
@@ -102,7 +109,7 @@ void applyDirichlet(nrs_t *nrs, double time)
                                mesh->o_vmapM,
                                mesh->o_EToB,
                                cds->o_EToB[is],
-                               cds->o_U,
+                               cds->o_Ue,
                                o_diff_i,
                                o_rho_i,
                                *(cds->o_usrwrk),
@@ -130,13 +137,10 @@ void applyDirichlet(nrs_t *nrs, double time)
   if (nrs->flow) {
     mesh_t *mesh = nrs->meshV;
 
-    if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
-      applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
-    }
-
     platform->linAlg->fill((1 + nrs->NVfields) * nrs->fieldOffset,
                            -1.0 * std::numeric_limits<dfloat>::max(),
                            platform->o_mempool.slice6);
+
     for (int sweep = 0; sweep < 2; sweep++) {
       nrs->pressureDirichletBCKernel(mesh->Nelements,
                                      time,
@@ -151,7 +155,7 @@ void applyDirichlet(nrs_t *nrs, double time)
                                      nrs->o_rho,
                                      nrs->o_mue,
                                      nrs->o_usrwrk,
-                                     nrs->o_U,
+                                     nrs->o_Ue,
                                      platform->o_mempool.slice6);
 
       nrs->velocityDirichletBCKernel(mesh->Nelements,
@@ -171,20 +175,14 @@ void applyDirichlet(nrs_t *nrs, double time)
                                      nrs->o_U,
                                      platform->o_mempool.slice7);
 
-      if (sweep == 0)
-        oogs::startFinish(platform->o_mempool.slice6,
-                          1 + nrs->NVfields,
-                          nrs->fieldOffset,
-                          ogsDfloat,
-                          ogsMax,
-                          nrs->gsh);
-      if (sweep == 1)
-        oogs::startFinish(platform->o_mempool.slice6,
-                          1 + nrs->NVfields,
-                          nrs->fieldOffset,
-                          ogsDfloat,
-                          ogsMin,
-                          nrs->gsh);
+      auto gsOp = ogsMax;
+      if (sweep == 1) gsOp = ogsMin;
+      oogs::startFinish(platform->o_mempool.slice6,
+                        1 + nrs->NVfields,
+                        nrs->fieldOffset,
+                        ogsDfloat,
+                        gsOp,
+                        nrs->gsh);
     }
 
     if (nrs->pSolver->Nmasked)

@@ -17,23 +17,23 @@ occa::memory cdsSolve(const int is, cds_t* cds, dfloat time, int stage)
   auto o_rho_i = cds->o_rho + cds->fieldOffsetScan[is] * sizeof(dfloat);
 
   platform->o_mempool.slice1.copyFrom(cds->o_BF, cds->fieldOffset[is] * sizeof(dfloat), 0,  cds->fieldOffsetScan[is] * sizeof(dfloat));
-  cds->helmholtzRhsBCKernel(mesh->Nelements,
-                            mesh->o_sgeo,
-                            mesh->o_vmapM,
-                            mesh->o_EToB,
-                            is,
-                            time,
-                            cds->fieldOffset[is],
-                            mesh->o_x,
-                            mesh->o_y,
-                            mesh->o_z,
-                            cds->o_U,
-                            o_Si,
-                            cds->o_EToB[is],
-                            o_diff_i,
-                            o_rho_i,
-                            *(cds->o_usrwrk),
-                            platform->o_mempool.slice1);
+  cds->neumannBCKernel(mesh->Nelements,
+                       mesh->o_sgeo,
+                       mesh->o_vmapM,
+                       mesh->o_EToB,
+                       is,
+                       time,
+                       cds->fieldOffset[is],
+                       mesh->o_x,
+                       mesh->o_y,
+                       mesh->o_z,
+                       cds->o_Ue,
+                       o_Si,
+                       cds->o_EToB[is],
+                       o_diff_i,
+                       o_rho_i,
+                       *(cds->o_usrwrk),
+                       platform->o_mempool.slice1);
 
   platform->timer.toc("scalar rhs"); 
 

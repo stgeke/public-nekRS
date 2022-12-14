@@ -50,16 +50,16 @@
         const dlong idM = vmapM[sk];
         const dlong bcType = EToB[f + p_Nfaces * e];
 
-        if (bcType == 7 || bcType == 8) {
+        if (bcType == p_bcTypeSYM || bcType == p_bcTypeSHL) {
           // handled elsewhere...
         }
-        else if (bcType == 4) {
+        else if (bcType == p_bcTypeSYMX) {
           W[idM + 0 * offset] = 0.0;
         }
-        else if (bcType == 5) {
+        else if (bcType == p_bcTypeSYMY) {
           W[idM + 1 * offset] = 0.0;
         }
-        else if (bcType == 6) {
+        else if (bcType == p_bcTypeSYMZ) {
           W[idM + 2 * offset] = 0.0;
         }
       }
@@ -71,7 +71,7 @@
         const dlong bcType = EToB[f + p_Nfaces * e];
         const int sk = e * p_Nfp * p_Nfaces + f * p_Nfp + m;
         const dlong idM = vmapM[sk];
-        if (bcType == 2) {
+        if (bcType == p_bcTypeV) {
           if (useDerivedBoundaryCondition) {
             W[idM + 0 * offset] = U[idM + 0 * offset];
             W[idM + 1 * offset] = U[idM + 1 * offset];
@@ -129,7 +129,7 @@
         const dlong bcType = EToB[f + p_Nfaces * e];
         const int sk = e * p_Nfp * p_Nfaces + f * p_Nfp + m;
         const dlong idM = vmapM[sk];
-        if (bcType == 1) {
+        if (bcType == p_bcTypeW) {
           W[idM + 0 * offset] = 0.0;
           W[idM + 1 * offset] = 0.0;
           W[idM + 2 * offset] = 0.0;

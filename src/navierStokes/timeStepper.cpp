@@ -190,7 +190,7 @@ void extrapolate(nrs_t *nrs)
   mesh_t *mesh = nrs->meshV;
   cds_t *cds = nrs->cds;
 
-  if (nrs->flow)
+  if (nrs->flow) {
     nrs->extrapolateKernel(mesh->Nelements,
         nrs->NVfields,
         nrs->nEXT,
@@ -198,6 +198,14 @@ void extrapolate(nrs_t *nrs)
         nrs->o_coeffEXT,
         nrs->o_U,
         nrs->o_Ue);
+
+    if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
+      nrs->p0the = 0.0;
+      for (int ext = 0; ext < nrs->nEXT; ++ext) {
+        nrs->p0the += nrs->coeffEXT[ext] * nrs->p0th[ext];
+      }
+    }
+  }
 
   if (nrs->Nscalar)
     nrs->extrapolateKernel(cds->mesh[0]->Nelements,
@@ -311,13 +319,6 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     makef(nrs, time, tstep, nrs->o_FU, nrs->o_BF);
     platform->timer.toc("makef");
 
-    // extrapolate p0th
-    if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
-      nrs->p0the = 0.0;
-      for (int ext = 0; ext < nrs->nEXT; ++ext) {
-        nrs->p0the += nrs->coeffEXT[ext] * nrs->p0th[ext];
-      }
-    }
   }
 
   if (movingMesh) {
@@ -454,6 +455,7 @@ void coeffs(nrs_t *nrs, double dt, int tstep) {
     nrs->cds->ig0 = nrs->ig0;
   }
 }
+
 void makeq(
     nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o_BF) {
   cds_t *cds = nrs->cds;

@@ -13,6 +13,9 @@
 #include "plugins/lowMach.hpp"
 #include "plugins/RANSktau.hpp"
 
+#define PASS { if (platform->comm.mpiRank == 0) printf("TESTS passed \n"); platform->exitValue = 0;}
+#define FAIL { if (platform->comm.mpiRank == 0) printf("TESTS failed!\n"); platform->exitValue = 1;}
+
 extern "C" {
 void UDF_Setup0(MPI_Comm comm, setupAide &options);
 void UDF_Setup(nrs_t* nrs);

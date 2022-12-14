@@ -5,8 +5,24 @@
 #include <vector>
 #include "nekInterfaceAdapter.hpp"
 
+
 namespace bcMap
 {
+
+// lower id wins
+constexpr int bcTypeW = 1;
+constexpr int bcTypeV = 2;
+constexpr int bcTypeSYMX = 3;
+constexpr int bcTypeSYMY = 4;
+constexpr int bcTypeSYMZ = 5;
+constexpr int bcTypeSYM = 6;
+constexpr int bcTypeSHL = 7;
+constexpr int bcTypeO = 8;
+
+constexpr int bcTypeS = 1;
+constexpr int bcTypeF0 = 2;
+constexpr int bcTypeF = 3;
+
 bool useNekBCs();
 void setup(std::vector<std::string> slist, std::string field);
 int id(int bid, std::string field);

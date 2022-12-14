@@ -5,9 +5,6 @@ static int NELGX;
 static int NELGY;
 static int NELGZ;
 
-#define PASS { if (platform->comm.mpiRank == 0) printf("TESTS passed \n"); MPI_Finalize(); exit(0); }
-#define FAIL { if (platform->comm.mpiRank == 0) printf("TESTS failed!\n"); MPI_Finalize(); exit(2); }
-
 #define EPS 1e-2
 
 void ciSetup(MPI_Comm comm, setupAide &options)

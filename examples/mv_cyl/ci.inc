@@ -117,16 +117,20 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   }
   velIterErr = abs(expectedVIter - nrs->uvwSolver->Niter);
   pIterErr = abs(expectedPIter - nrs->pSolver->Niter);
-  if(rank == 0) printf("velIter=%d pIter=%d\n", velIterErr, pIterErr);
+  if(rank == 0) printf("velIter=%d pIter=%d ", velIterErr, pIterErr);
   if(velIterErr >= 3) passed = false;
   if(pIterErr >= 2) passed = false;
 
+#if 0
   if(ciMode == 3)
   {
     const int expectedMeshIter =  47;
     const int meshIterErr = abs(nrs->meshSolver->Niter - expectedMeshIter);
+    if(rank == 0) printf("meshIter=%d ", meshIterErr);
     if(meshIterErr >= 3) passed = false;
   }
+#endif
 
+  if(rank == 0) printf("\n"); 
   passed ? (PASS) : (FAIL);
 }

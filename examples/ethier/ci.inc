@@ -509,7 +509,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     const int errSteps = abs(expectedSteps - tstep);
     if (rank == 0)
       printf("nSteps err variable dt:  %d\n", errSteps);
-    (errSteps <= 2) ? ({/** no-op **/}) : (FAIL);
+    if (errSteps > 2) FAIL;
   }
 
   if(ciMode == 5 || ciMode == 6)

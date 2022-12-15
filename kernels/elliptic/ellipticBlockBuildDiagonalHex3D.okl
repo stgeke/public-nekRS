@@ -32,7 +32,7 @@
                                              @ restrict const dfloat *D,
                                              @ restrict const dfloat *S,
                                              @ restrict const dfloat *lambda,
-                                             @ restrict pfloat *Aq)
+                                             @ restrict dfloat *Aq)
 {
   for (dlong e = 0; e < Nelements; ++e; @outer(0)) {
     @shared dfloat s_D[p_Nq][p_Nq];

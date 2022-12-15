@@ -43,15 +43,14 @@ void ellipticPreconditioner(elliptic_t *elliptic, occa::memory &o_r, occa::memor
 
   platform->timer.tic(elliptic->name + " preconditioner", 1);
   if (options.compareArgs("PRECONDITIONER", "JACOBI")) {
-
-    const pfloat one = 1.0;
-    elliptic->axmyzManyPfloatKernel(Nlocal,
-                                    elliptic->Nfields,
-                                    elliptic->fieldOffset,
-                                    one,
-                                    o_r, /* dfloat */
-                                    precon->o_invDiagA,
-                                    o_z /* dfloat */
+    const dfloat one = 1.0;
+    platform->linAlg->axmyzMany(Nlocal,
+                                elliptic->Nfields,
+                                elliptic->fieldOffset,
+                                one,
+                                o_r, /* dfloat */
+                                precon->o_invDiagA,
+                                o_z /* dfloat */
     );
     platform->flopCounter->add("jacobiPrecon", static_cast<double>(Nlocal) * elliptic->Nfields);
   }

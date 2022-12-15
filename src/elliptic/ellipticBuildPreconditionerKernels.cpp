@@ -61,7 +61,5 @@ void ellipticBuildPreconditionerKernels(elliptic_t* elliptic)
     kernelName = "ellipticBlockBuildDiagonalPfloatHex3D";
     elliptic->ellipticBlockBuildDiagonalPfloatKernel =
         platform->kernels.get(poissonPrefix + kernelName + orderSuffix);
-
-    elliptic->axmyzManyPfloatKernel = platform->kernels.get("axmyzManyPfloat");
   }
 }

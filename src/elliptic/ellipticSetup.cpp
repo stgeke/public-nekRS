@@ -226,7 +226,6 @@ void ellipticSolveSetup(elliptic_t* elliptic)
       const std::string sectionIdentifier = std::to_string(elliptic->Nfields) + "-";
       kernelName = "ellipticBlockBuildDiagonal" + suffix;
       elliptic->ellipticBlockBuildDiagonalKernel = platform->kernels.get(sectionIdentifier + kernelName);
-      elliptic->axmyzManyPfloatKernel = platform->kernels.get("axmyzManyPfloat");
 
       kernelName = "fusedCopyDfloatToPfloat";
       elliptic->fusedCopyDfloatToPfloatKernel =

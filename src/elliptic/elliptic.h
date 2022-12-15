@@ -143,7 +143,6 @@ struct elliptic_t
   occa::kernel AxPfloatKernel;
 
   occa::kernel fusedCopyDfloatToPfloatKernel;
-  occa::kernel axmyzManyPfloatKernel;
 
   // update for 1st Kind Chebyshev iteration
   occa::kernel updateChebyshevKernel;

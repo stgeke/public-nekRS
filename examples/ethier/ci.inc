@@ -97,6 +97,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   }
   if (ciMode == 11) {
     options.setArgs("PRESSURE MULTIGRID SMOOTHER", "DAMPEDJACOBI,CHEBYSHEV");
+    options.setArgs("PRESSURE MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR", "0.1");
     options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
     options.setArgs("PRESSURE INITIAL GUESS", "PROJECTION-ACONJ");
@@ -299,7 +300,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     int NiterP = nrs->pSolver->Niter;
 
     // mode 11 uses Chebyshev+Jacobi smoothing
-    const int expectedNiterP = (ciMode == 11) ? 19 : 7;
+    const int expectedNiterP = (ciMode == 11) ? 11 : 7;
     const int pIterErr = abs(NiterP - expectedNiterP);
     if(pIterErr >= 2) {
       if(rank==0){

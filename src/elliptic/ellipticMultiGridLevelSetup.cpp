@@ -112,7 +112,7 @@ pMGLevel::pMGLevel(elliptic_t* ellipticBase, //finest level
 void pMGLevel::setupSmoother(elliptic_t* ellipticBase)
 {
 
-  dfloat minMultiplier = 0.9;
+  dfloat minMultiplier = 0.1;
   options.getArgs("MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR", minMultiplier);
 
   dfloat maxMultiplier = 1.1;

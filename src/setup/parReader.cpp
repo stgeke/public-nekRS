@@ -685,11 +685,15 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
 
     if (p_smoother.find("cheb") != std::string::npos) {
       bool surrogateSmootherSet = false;
-      std::string chebyshevType = "CHEBYSHEV";
+      std::string chebyshevType = "";
       if(p_smoother.find("fourthopt") != std::string::npos){
         chebyshevType = "FOURTHOPTCHEBYSHEV";
       } else if (p_smoother.find("fourth") != std::string::npos){
         chebyshevType = "FOURTHCHEBYSHEV";
+      } else {
+        // using 1st-kind Chebyshev, so set a reasonable lmin multiplier
+        chebyshevType = "CHEBYSHEV";
+        options.setArgs(parSection + " MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR", "0.1");
       }
       for (std::string s : list) {
 

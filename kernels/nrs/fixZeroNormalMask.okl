@@ -60,9 +60,10 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
 
           const dfloat volNMag = sqrt(volNx * volNx + volNy * volNy + volNz * volNz);
 
-          const dfloat tol = 1e-6;
-          if (fabs(1.0 - volNMag) > tol) {
+          const dfloat tol = 1e-5;
+          if (fabs(1.0 - volNMag) > tol) {  // finite angle between two p_ZERO_NORMAL faces
 
+            printf("%g\n", fabs(1.0 - volNMag));
             const dfloat invVolNMag = 1.0 / volNMag;
             volNx *= invVolNMag;
             volNy *= invVolNMag;
@@ -93,14 +94,15 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
             const dfloat dot2 =
                 dot(T2CrossNx, T2CrossNy, T2CrossNz, T2CrossVolNx, T2CrossVolNy, T2CrossVolNz);
 
-            const dfloat tolN = 1e-7;
+            const dfloat tolN = 1e-05;
 
-            if (dot1 < tolN || (1.0 - dot1) < tolN) {
+            // only allow direction parallel to the edge to be non-zero 
+            if (dot1 < tolN || fabs(1.0 - dot1) < tolN) {
               mask[idM + 0 * offset] = 0.0;
               mask[idM + 1 * offset] = 0.0;
               mask[idM + 2 * offset] = 1.0;
             }
-            else if (dot2 < tolN || (1.0 - dot2) < tolN) {
+            else if (dot2 < tolN || fabs(1.0 - dot2) < tolN) {
               mask[idM + 0 * offset] = 0.0;
               mask[idM + 1 * offset] = 0.0;
               mask[idM + 2 * offset] = 1.0;

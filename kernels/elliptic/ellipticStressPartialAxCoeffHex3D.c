@@ -65,9 +65,9 @@ extern "C" void FUNC(ellipticStressPartialAxCoeffHex3D)(const dlong &Nelements,
           const dfloat JW = vgeo[gid + p_JWID * p_Np];
 
           // compute 1D derivatives
-          dfloat ur = 0.f, us = 0.f, ut = 0.f;
-          dfloat vr = 0.f, vs = 0.f, vt = 0.f;
-          dfloat wr = 0.f, ws = 0.f, wt = 0.f;
+          dfloat ur = 0, us = 0, ut = 0;
+          dfloat vr = 0, vs = 0, vt = 0;
+          dfloat wr = 0, ws = 0, wt = 0;
           for(int m = 0; m < p_Nq; ++m) {
             const dfloat Dim = s_D[i][m]; // Dr
             const dfloat Djm = s_D[j][m]; // Ds
@@ -132,7 +132,7 @@ extern "C" void FUNC(ellipticStressPartialAxCoeffHex3D)(const dlong &Nelements,
     for(int k = 0; k < p_Nq; ++k)
       for(int j = 0; j < p_Nq; ++j)
         for(int i = 0; i < p_Nq; ++i) {
-          dfloat r_Au = 0.f, r_Av = 0.f, r_Aw = 0.f;
+          dfloat r_Au = 0, r_Av = 0, r_Aw = 0;
           for(int m = 0; m < p_Nq; m++) {
             const dfloat Dim = s_D[m][i]; // Dr'
             const dfloat Djm = s_D[m][j]; // Ds'

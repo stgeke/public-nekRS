@@ -1,4 +1,3 @@
-// pre: normal is set to 0
 @kernel void averageNormalBcType(const dlong Nelements,
                                  const dlong offset,
                                  const dlong bcTypeCheck,
@@ -8,6 +7,21 @@
                                  @ restrict dfloat *normal)
 {
   for (dlong e = 0; e < Nelements; e++; @outer(0)) {
+
+    for (int f = 0; f < p_Nfaces; f++) {
+      for (int m = 0; m < p_Nfp; ++m; @inner(0)) {
+        const int n = m + f * p_Nfp;
+        const int sk = e * p_Nfp * p_Nfaces + n;
+        const dlong idM = vmapM[sk];
+
+        normal[idM + 0 * offset] = 0;
+        normal[idM + 1 * offset] = 0;
+        normal[idM + 2 * offset] = 0;
+        // last component is count
+        normal[idM + 3 * offset] = 0;
+      }
+      @barrier();
+    }
 
     for (int f = 0; f < p_Nfaces; f++) {
       for (int m = 0; m < p_Nfp; ++m; @inner(0)) {

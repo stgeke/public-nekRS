@@ -241,12 +241,14 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
   mesh_t *mesh = nrs->meshV;
 
+#if 0
   if (nrs->flow) {
     if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {
        if(options.compareArgs("VELOCITY INITIAL GUESS", "EXTRAPOLATION"))
           platform->options.setArgs("VELOCITY INITIAL GUESS", "PREVIOUS"); // overrule as currently not supported!
     }
   }
+#endif
 
   {
     double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
@@ -826,12 +828,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
         }
       }
 
-      ellipticSolveSetup(nrs->uvwSolver);
       if (unalignedBoundary) {
         nrs->o_zeroNormalMaskVelocity = platform->device.malloc((3 * sizeof(dfloat)) * nrs->fieldOffset);
         nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(dlong));
         createEToBV(nrs->meshV, nrs->uvwSolver->EToB, nrs->o_EToBVVelocity);
-        createZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
+        auto o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->uvwSolver->Nfields, sizeof(int));
+        o_EToB.copyFrom(nrs->uvwSolver->EToB, o_EToB.size()); 
+        createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
 
         nrs->uvwSolver->applyZeroNormalMask =
             [nrs](dlong Nelements, occa::memory &o_elementList, occa::memory &o_x) {
@@ -843,6 +846,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
                                   o_x);
             };
       }
+      ellipticSolveSetup(nrs->uvwSolver);
     }
     else {
       nrs->uSolver = new elliptic_t();
@@ -1078,12 +1082,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
         }
       }
 
-      ellipticSolveSetup(nrs->meshSolver);
       if (unalignedBoundary) {
         nrs->o_zeroNormalMaskMeshVelocity = platform->device.malloc((3 * sizeof(dfloat)) * nrs->fieldOffset);
-        nrs->o_EToBVMeshVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(dlong));
+        nrs->o_EToBVMeshVelocity = platform->device.malloc(mesh->Nlocal * sizeof(dlong));
+        auto o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields, sizeof(int));
+        o_EToB.copyFrom(nrs->meshSolver->EToB, o_EToB.size()); 
         createEToBV(nrs->meshV, nrs->meshSolver->EToB, nrs->o_EToBVMeshVelocity);
-        createZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
+        createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
         nrs->meshSolver->applyZeroNormalMask =
             [nrs](dlong Nelements, occa::memory &o_elementList, occa::memory &o_x) {
               applyZeroNormalMask(nrs,
@@ -1094,6 +1099,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
                                   o_x);
             };
       }
+      ellipticSolveSetup(nrs->meshSolver);
     }
   }
 }

@@ -62,8 +62,8 @@
       TRz = -bc.p * bc.nz;                                                                                   \
     }                                                                                                        \
     if (bcType == p_bcTypeSHL) {                                                                             \
-      bc.tr1 = 0.0;                                                                                          \
-      bc.tr2 = 0.0;                                                                                          \
+      bc.tr1 = 0;                                                                                            \
+      bc.tr2 = 0;                                                                                            \
       velocityNeumannConditions(&bc);                                                                        \
       TRx = bc.t1x * bc.tr1 + bc.t2x * bc.tr2;                                                               \
       TRy = bc.t1y * bc.tr1 + bc.t2y * bc.tr2;                                                               \

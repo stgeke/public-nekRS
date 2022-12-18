@@ -56,9 +56,9 @@ void FUNC(ellipticBlockPartialAxHex3D)(const dlong & Nelements,
           const dfloat r_lam10 = lambda[1 * loffset];
           const dfloat r_lam20 = lambda[2 * loffset];
 
-          dfloat qr0 = 0.f, qr1 = 0.f, qr2 = 0.f;
-          dfloat qs0 = 0.f, qs1 = 0.f, qs2 = 0.f;
-          dfloat qt0 = 0.f, qt1 = 0.f, qt2 = 0.f;
+          dfloat qr0 = 0, qr1 = 0, qr2 = 0;
+          dfloat qs0 = 0, qs1 = 0, qs2 = 0;
+          dfloat qt0 = 0, qt1 = 0, qt2 = 0;
 
           for(int m = 0; m < p_Nq; m++) {
             qr0 += s_S[m][i] * s_q[0][k][j][m];
@@ -115,9 +115,9 @@ void FUNC(ellipticBlockPartialAxHex3D)(const dlong & Nelements,
           dfloat r_Aq1 = r_GwJ * r_lam11 * s_q[1][k][j][i];
           dfloat r_Aq2 = r_GwJ * r_lam21 * s_q[2][k][j][i];
 
-          dfloat r_Aqr0 = 0.f, r_Aqs0 = 0.f, r_Aqt0 = 0.f;
-          dfloat r_Aqr1 = 0.f, r_Aqs1 = 0.f, r_Aqt1 = 0.f;
-          dfloat r_Aqr2 = 0.f, r_Aqs2 = 0.f, r_Aqt2 = 0.f;
+          dfloat r_Aqr0 = 0, r_Aqs0 = 0, r_Aqt0 = 0;
+          dfloat r_Aqr1 = 0, r_Aqs1 = 0, r_Aqt1 = 0;
+          dfloat r_Aqr2 = 0, r_Aqs2 = 0, r_Aqt2 = 0;
 
           for(int m = 0; m < p_Nq; m++) {
             r_Aqr0 += s_D[m][i] * s_Gqr[0][k][j][m];

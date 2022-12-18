@@ -5,13 +5,10 @@ void createZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory& o_EToB
 {
   auto mesh = nrs->meshV;
 
-  platform->linAlg->fill(3 * nrs->fieldOffset, 0.0, o_mask);
-
   nrs->initializeZeroNormalMaskKernel(mesh->Nlocal, nrs->fieldOffset, o_EToBV, o_mask);
 
   // normal + count (4 fields)
   auto o_avgNormal = platform->o_mempool.slice0;
-
   nrs->averageNormalBcTypeKernel(mesh->Nelements,
                                  nrs->fieldOffset,
                                  ZERO_NORMAL,
@@ -175,13 +172,11 @@ void applyDirichlet(nrs_t *nrs, double time)
                                      nrs->o_U,
                                      platform->o_mempool.slice7);
 
-      auto gsOp = ogsMax;
-      if (sweep == 1) gsOp = ogsMin;
       oogs::startFinish(platform->o_mempool.slice6,
                         1 + nrs->NVfields,
                         nrs->fieldOffset,
                         ogsDfloat,
-                        gsOp,
+                        (sweep == 0) ? ogsMax : ogsMin,
                         nrs->gsh);
     }
 

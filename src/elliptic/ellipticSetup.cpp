@@ -91,7 +91,6 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   const double tStart = MPI_Wtime();
 
   const dlong Nlocal = mesh->Np * mesh->Nelements;
-  elliptic->resNormFactor = 1 / (elliptic->Nfields * mesh->volume);
 
   checkConfig(elliptic);
 

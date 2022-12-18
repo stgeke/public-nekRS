@@ -73,9 +73,9 @@ extern "C" void FUNC(ellipticPartialAxHex3D)(const dlong & Nelements,
           const dfloat r_G02 = ggeo[gbase + p_G02ID * p_Np];
           const dfloat r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
-          dfloat qr = 0.f;
-          dfloat qs = 0.f;
-          dfloat qt = 0.f;
+          dfloat qr = 0;
+          dfloat qs = 0;
+          dfloat qt = 0;
 
           for(int m = 0; m < p_Nq; m++) {
             qr += s_D[i][m] * s_q[k][j][m];

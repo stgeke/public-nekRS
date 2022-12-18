@@ -42,9 +42,9 @@ extern "C" void FUNC(ellipticPartialAxCoeffHex3D)(const dlong & Nelements,
           const dlong id = element * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
           const dfloat r_lam0 = lambda[id + 0 * offset];
 
-          dfloat qr = 0.f;
-          dfloat qs = 0.f;
-          dfloat qt = 0.f;
+          dfloat qr = 0;
+          dfloat qs = 0;
+          dfloat qt = 0;
 
           for(int m = 0; m < p_Nq; m++){
             qr += S[m*p_Nq + i] * s_q[k][j][m];

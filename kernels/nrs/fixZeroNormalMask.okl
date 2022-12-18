@@ -60,10 +60,9 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
 
           const dfloat volNMag = sqrt(volNx * volNx + volNy * volNy + volNz * volNz);
 
-          const dfloat tol = 1e-5;
+          const dfloat tol = 1e-4;
           if (fabs(1.0 - volNMag) > tol) {  // finite angle between two p_ZERO_NORMAL faces
 
-            printf("%g\n", fabs(1.0 - volNMag));
             const dfloat invVolNMag = 1.0 / volNMag;
             volNx *= invVolNMag;
             volNy *= invVolNMag;

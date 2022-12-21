@@ -23,13 +23,14 @@
    SOFTWARE.
 
  */
+
 inline dfloat computeMinGLLGridSpacing(const dlong i,
                                        const dlong j,
                                        const dlong k,
                                        const dlong e,
-                                       @ restrict const dfloat *x,
-                                       @ restrict const dfloat *y,
-                                       @ restrict const dfloat *z)
+                                       const dfloat *x,
+                                       const dfloat *y,
+                                       const dfloat *z)
 {
   const dlong index = e * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
   const dfloat x_curr = x[index];
@@ -114,6 +115,7 @@ inline dfloat computeMinGLLGridSpacing(const dlong i,
 
   return sqrt(he);
 }
+
 inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat ramp)
 {
   dfloat multiplier = 0.0;
@@ -136,7 +138,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
                             const dfloat visCoeff,
                             const dfloat scalingCoeff,
                             const dfloat Uinf,
-                            const bool useHPFResidual,
+                            const int useHPFResidual,
                             @ restrict const dfloat *x,
                             @ restrict const dfloat *y,
                             @ restrict const dfloat *z,
@@ -174,7 +176,7 @@ inline dfloat nu_k(const dfloat s, const dfloat logReferenceSensor, const dfloat
           dfloat visc_max = visCoeff * he * Umag;
 
           if (useHPFResidual) {
-            const dfloat errorTerm = scalingCoeff * he * he * abs(hpfResidual[id]) * Uinf;
+            const dfloat errorTerm = scalingCoeff * he * he * fabs(hpfResidual[id]) * Uinf;
             visc_max = (visc_max < errorTerm) ? visc_max : errorTerm;
           }
 

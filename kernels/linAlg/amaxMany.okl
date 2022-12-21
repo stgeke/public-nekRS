@@ -41,7 +41,7 @@ SOFTWARE.
       s[t] = 0.0;
       if (id < N) {
         for (int field = 0; field < Nfields; ++field) {
-          const dfloat value = abs(x[id + field * offset]);
+          const dfloat value = fabs(x[id + field * offset]);
           s[t] = (s[t] > value) ? s[t] : value;
         }
       }

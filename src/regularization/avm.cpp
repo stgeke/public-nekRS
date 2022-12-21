@@ -95,7 +95,7 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
     o_logRelativeMassHighestMode
   );
 
-  const bool useHPFResidual = cds->options[scalarIndex].compareArgs("REGULARIZATION METHOD", "HPF_RESIDUAL");
+  const int useHPFResidual = cds->options[scalarIndex].compareArgs("REGULARIZATION METHOD", "HPF_RESIDUAL");
 
   dfloat Uinf = 1.0;
   if(useHPFResidual){

@@ -7,9 +7,9 @@
       dfloat k = K[n];
       dfloat tau = TAU[n];
       if (k < 0)
-        k = 0.01 * abs(k);
+        k = 0.01 * fabs(k);
       if (tau < 0)
-        tau = 0.01 * abs(tau);
+        tau = 0.01 * fabs(tau);
 
       K[n] = k;
       TAU[n] = tau;

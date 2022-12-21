@@ -35,7 +35,7 @@ SOFTWARE.
       dlong id = t + b * p_blockSize;
       s[t] = -9e30;
       if (id < N) {
-        s[t] = abs(x[id]);
+        s[t] = fabs(x[id]);
       }
     }
 

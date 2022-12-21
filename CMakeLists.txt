@@ -162,6 +162,12 @@ if(NOT Allowed_LD_Flag_BSYMBOLIC OR APPLE)
   set(BSYMBOLIC_FLAG "")
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+    message(FATAL_ERROR "GNU compiler version must be at least 8.0!")
+  endif()
+endif()
+
 ###############################################################################
 # Build OCCA                                                                  #
 ###############################################################################

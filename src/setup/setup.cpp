@@ -241,7 +241,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
   mesh_t *mesh = nrs->meshV;
 
-#if 0
+#if 1
   // over-rule initial guess method as only previous is supported for now
   if (nrs->flow) {
     if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {

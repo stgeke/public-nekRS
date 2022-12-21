@@ -2562,7 +2562,7 @@ hypre_BoomerAMGIndepPMISa( hypre_ParCSRMatrix    *S,
 
       HYPRE_BigInt big_graph_size = (HYPRE_BigInt) graph_size;
       /* stop the coarsening if nothing left to be coarsened */
-      hypre_MPI_Allreduce(&big_graph_size, &global_graph_size, 1, HYPRE_MPI_INT, hypre_MPI_SUM, comm);
+      hypre_MPI_Allreduce(&big_graph_size, &global_graph_size, 1, HYPRE_MPI_BIG_INT, hypre_MPI_SUM, comm);
 
       if (global_graph_size == 0)
       {
@@ -3058,7 +3058,7 @@ hypre_BoomerAMGCoarsenCR( hypre_ParCSRMatrix    *A,
                                  rlx_type, fpt,
                                  relax_weight, omega, NULL,
                                  e1_vec, e0_vec,
-                                 Relax_temp, 0);
+                                 Relax_temp);
             /*if (i==num_CR_relax_steps-1) */
             if (i == 1)
             {

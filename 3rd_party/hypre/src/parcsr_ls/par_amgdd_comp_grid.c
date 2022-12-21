@@ -51,7 +51,7 @@ hypre_AMGDDCompGridLocalIndexBinarySearch( hypre_AMGDDCompGrid *compGrid,
    return -1;
 }
 
-hypre_AMGDDCompGridMatrix* hypre_AMGDDCompGridMatrixCreate()
+hypre_AMGDDCompGridMatrix* hypre_AMGDDCompGridMatrixCreate( void )
 {
    hypre_AMGDDCompGridMatrix *matrix = hypre_CTAlloc(hypre_AMGDDCompGridMatrix, 1, HYPRE_MEMORY_HOST);
 
@@ -81,11 +81,20 @@ hypre_AMGDDCompGridMatrixDestroy( hypre_AMGDDCompGridMatrix *matrix )
       }
       else if (hypre_AMGDDCompGridMatrixOwnsOffdColIndices(matrix))
       {
+         HYPRE_MemoryLocation memory_location = hypre_CSRMatrixMemoryLocation(
+                                                   hypre_AMGDDCompGridMatrixOwnedOffd(matrix));
+
          if (hypre_CSRMatrixJ(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)))
          {
-            hypre_TFree(hypre_CSRMatrixJ(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)),
-                        hypre_CSRMatrixMemoryLocation(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)));
+            hypre_TFree(hypre_CSRMatrixJ(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)), memory_location);
          }
+
+#if defined(HYPRE_USING_CUSPARSE) || defined(HYPRE_USING_ROCSPARSE) || defined(HYPRE_USING_ONEMKLSPARSE)
+         hypre_TFree(hypre_CSRMatrixSortedData(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)), memory_location);
+         hypre_TFree(hypre_CSRMatrixSortedJ(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)), memory_location);
+         hypre_CsrsvDataDestroy(hypre_CSRMatrixCsrsvData(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)));
+         hypre_GpuMatDataDestroy(hypre_CSRMatrixGPUMatData(hypre_AMGDDCompGridMatrixOwnedOffd(matrix)));
+#endif
 
          hypre_TFree(hypre_AMGDDCompGridMatrixOwnedOffd(matrix), HYPRE_MEMORY_HOST);
       }
@@ -241,7 +250,7 @@ hypre_AMGDDCompGridRealMatvec( HYPRE_Complex alpha,
    return hypre_error_flag;
 }
 
-hypre_AMGDDCompGridVector *hypre_AMGDDCompGridVectorCreate()
+hypre_AMGDDCompGridVector *hypre_AMGDDCompGridVectorCreate( void )
 {
    hypre_AMGDDCompGridVector *vector = hypre_CTAlloc(hypre_AMGDDCompGridVector, 1, HYPRE_MEMORY_HOST);
 
@@ -479,7 +488,7 @@ hypre_AMGDDCompGridVectorRealCopy( hypre_AMGDDCompGridVector *x,
    return hypre_error_flag;
 }
 
-hypre_AMGDDCompGrid *hypre_AMGDDCompGridCreate ()
+hypre_AMGDDCompGrid *hypre_AMGDDCompGridCreate ( void )
 {
    hypre_AMGDDCompGrid      *compGrid;
 

@@ -1,3 +1,4 @@
+#if p_knl == 0
 @kernel void ellipticBlockPartialAxHex3D_v0(const dlong Nelements,
                                             const dlong offset,
                                             const dlong loffset,
@@ -178,3 +179,4 @@
     }
   }
 }
+#endif

@@ -24,7 +24,8 @@
 
  */
 
-extern "C" void FUNC(ellipticPartialAxHex3D)(const dlong & Nelements,
+#if p_knl == 0
+extern "C" void FUNC(ellipticPartialAxHex3D_v0)(const dlong & Nelements,
                      const dlong & offset,
                      const dlong & loffset,
                      const dlong* __restrict__ elementList,
@@ -123,3 +124,4 @@ extern "C" void FUNC(ellipticPartialAxHex3D)(const dlong & Nelements,
         }
   }
 }
+#endif

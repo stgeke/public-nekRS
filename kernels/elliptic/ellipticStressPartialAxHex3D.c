@@ -1,5 +1,6 @@
+#if p_knl == 0
 extern "C"
-void FUNC(ellipticStressPartialAxHex3D)(const dlong &Nelements,
+void FUNC(ellipticStressPartialAxHex3D_v0)(const dlong &Nelements,
                               const dlong &offset,
                               const dlong &loffset,
                               const dlong* __restrict__ elementList,
@@ -164,3 +165,4 @@ void FUNC(ellipticStressPartialAxHex3D)(const dlong &Nelements,
         }
   }
 }
+#endif

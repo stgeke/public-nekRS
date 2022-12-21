@@ -1,4 +1,5 @@
-@kernel void ellipticStressPartialAxHex3D(const dlong Nelements,
+#if p_knl == 0
+@kernel void ellipticStressPartialAxHex3D_v0(const dlong Nelements,
                                           const dlong offset,
                                           const dlong loffset,
                                           @ restrict const dlong *elementList,
@@ -196,3 +197,4 @@
     }
   }
 }
+#endif

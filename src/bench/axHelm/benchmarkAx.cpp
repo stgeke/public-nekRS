@@ -122,58 +122,68 @@ occa::kernel benchmarkAx(int Nelements,
     const auto wordSize = sizeof(FPType);
     constexpr int p_Nggeo{7};
 
-    int Nkernels = 2;
-    if (kernelName == "ellipticPartialAxHex3D")
-      Nkernels = 8;
-    if (kernelName == "ellipticBlockPartialAxCoeffHex3D") {
-      Nkernels = 2;
-      int n_plane = 1;
-      switch (Nq) {
-      case 4: n_plane = 2; break;
-      case 5: n_plane = 1; break;
-      case 6: n_plane = 3; break;
-      case 7: n_plane = 1; break;
-      case 8: n_plane = 2; break;
-      case 9: n_plane = 3; break;
-      case 10: n_plane = 2; break;
-      case 11: n_plane = 1; break;
-      }
-      props["defines/n_plane"] = n_plane;
-      props["defines/pts_per_thread"] = Nq/n_plane;      
-    }
-    if (kernelName == "ellipticBlockPartialAxHex3D")
-      Nkernels = 1;
-
     std::vector<int> kernelVariants;
-    if (platform->serial) {
-      kernelVariants.push_back(0);
-    } else {
-      for (int knl = 0; knl < Nkernels; ++knl) {
-#if 0
-        // v3 requires Nq^3 < 1024 (max threads/thread block on CUDA/HIP)
-        if (knl == 3 && Np > 1024)
-          continue;
-#else
-        // disable v3 for now, since correctness check is off
-        if (knl == 3)
-          continue;
-#endif
+
+    int Nkernels = 0;
+    if(platform->serial) {
+      Nkernels = 1;
+      for (int knl = 0; knl < Nkernels; ++knl)
         kernelVariants.push_back(knl);
+    } else {
+      if (kernelName == "ellipticPartialAxHex3D") {
+        Nkernels = 8;
+        for (int knl = 0; knl < Nkernels; ++knl)
+          kernelVariants.push_back(knl);
+
+        kernelVariants.erase(kernelVariants.begin()+3); // correctness check is off
+      }
+      if (kernelName == "ellipticPartialAxCoeffHex3D") {
+        Nkernels = 2;
+        for (int knl = 0; knl < Nkernels; ++knl)
+          kernelVariants.push_back(knl);
+      }
+      if (kernelName == "ellipticStressPartialAxHex3D") {
+        Nkernels = 1;
+        for (int knl = 0; knl < Nkernels; ++knl)
+          kernelVariants.push_back(knl);
+      }
+      if (kernelName == "ellipticStressPartialAxCoeffHex3D") {
+        Nkernels = 1;
+        for (int knl = 0; knl < Nkernels; ++knl)
+          kernelVariants.push_back(knl);
+      }
+      if (kernelName == "ellipticBlockPartialAxHex3D") {
+        Nkernels = 1;
+        for (int knl = 0; knl < Nkernels; ++knl)
+          kernelVariants.push_back(knl);
+      }
+      if (kernelName == "ellipticBlockPartialAxCoeffHex3D") {
+        Nkernels = 2;
+        for (int knl = 0; knl < Nkernels; ++knl)
+          kernelVariants.push_back(knl);
+
+        int n_plane = 1;
+        switch (Nq) {
+        case 4: n_plane = 2; break;
+        case 5: n_plane = 1; break;
+        case 6: n_plane = 3; break;
+        case 7: n_plane = 1; break;
+        case 8: n_plane = 2; break;
+        case 9: n_plane = 3; break;
+        case 10: n_plane = 2; break;
+        case 11: n_plane = 1; break;
+        }
+        props["defines/n_plane"] = n_plane;
+        props["defines/pts_per_thread"] = Nq/n_plane;      
       }
     }
-
     const std::string installDir(getenv("NEKRS_HOME"));
 
     // only a single choice, no need to run benchmark
     if (kernelVariants.size() == 1 && !requiresBenchmark) {
 
       auto newProps = props;
-      if (kernelName == "ellipticPartialAxHex3D" ||
-          kernelName == "ellipticBlockPartialAxCoeffHex3D" || 
-          kernelName == "ellipticBlockPartialAxHex3D" && 
-          !platform->serial) {
-        newProps["defines/p_knl"] = kernelVariants.back();
-      }
+      newProps["defines/p_knl"] = kernelVariants.back();
 
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
@@ -207,8 +217,7 @@ occa::kernel benchmarkAx(int Nelements,
     occa::kernel referenceKernel;
     {
       auto newProps = props;
-      if (!platform->serial)
-        newProps["defines/p_knl"] = kernelVariants.front();
+      newProps["defines/p_knl"] = kernelVariants.front();
       
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
@@ -229,8 +238,7 @@ occa::kernel benchmarkAx(int Nelements,
 
     auto axKernelBuilder = [&](int kernelVariant) {
       auto newProps = props;
-      if (!platform->serial)
-        newProps["defines/p_knl"] = kernelVariant;
+      newProps["defines/p_knl"] = kernelVariant;
 
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;

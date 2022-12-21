@@ -131,7 +131,6 @@ occa::kernel device_t::buildKernel(const std::string &fileName,
       propsWithSuffix["defines/FP32"] = 1;
     }
 
-    // if p_knl is defined, add _v(p_knl) to the kernel name
     std::string newKernelName = kernelName;
     if (props.has("defines/p_knl")) {
       const int kernelVariant = static_cast<int>(props["defines/p_knl"]);
@@ -141,13 +140,20 @@ occa::kernel device_t::buildKernel(const std::string &fileName,
     return _device.buildKernel(fileName, newKernelName, propsWithSuffix);
   }
   else {
+    std::string newKernelName = kernelName;
+    if (props.has("defines/p_knl")) {
+      const int kernelVariant = static_cast<int>(props["defines/p_knl"]);
+      newKernelName += "_v" + std::to_string(kernelVariant);
+    };
+
     occa::properties propsWithSuffix = props;
     propsWithSuffix["defines/SUFFIX"] = suffix;
     propsWithSuffix["defines/TOKEN_PASTE_(a,b)"] = std::string("a##b");
     propsWithSuffix["defines/TOKEN_PASTE(a,b)"] = std::string("TOKEN_PASTE_(a,b)");
     propsWithSuffix["defines/FUNC(a)"] = std::string("TOKEN_PASTE(a,SUFFIX)");
-    const std::string alteredName = kernelName + suffix;
-    return this->buildNativeKernel(fileName, alteredName, propsWithSuffix);
+    newKernelName += suffix;
+
+    return this->buildNativeKernel(fileName, newKernelName, propsWithSuffix);
   }
 }
 

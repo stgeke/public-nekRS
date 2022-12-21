@@ -662,7 +662,9 @@ c-----------------------------------------------------------------------
 
       integer sum
       integer*8 bid8(2*ldim*lelt)
+      integer maxbid
 
+#if 0
       if(isTmsh.eq.1) then
         n = 2*ndim*nelt
         do i = 1,n
@@ -683,6 +685,22 @@ c-----------------------------------------------------------------------
       enddo
 
       nekf_nbid = iglsum(sum,1)
+#else
+      maxbid = 0
+      if(isTmsh.eq.1) then
+        n = 2*ndim*nelt
+        do i = 1,n
+           if(boundaryIDt(i,1) .gt. maxbid) maxbid = boundaryIDt(i,1) 
+        enddo
+      else
+        n = 2*ndim*nelv
+        do i = 1,n
+           if(boundaryID(i,1) .gt. maxbid) maxbid = boundaryID(i,1) 
+        enddo
+      endif
+
+      nekf_nbid = iglsum(maxbid,1)
+#endif
 
       return
       end

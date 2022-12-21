@@ -1,6 +1,6 @@
 @kernel void initializeZeroNormalMask(const dlong N,
                                       const dlong offset,
-                                      @ restrict const dlong *mapB,
+                                      @ restrict const int *mapB,
                                       @ restrict dfloat *mask)
 {
   for (dlong id = 0; id < N; ++id; @tile(p_blockSize, @outer, @inner)) {

@@ -124,7 +124,7 @@
           const dfloat w2 = dmuedx * (dudy + dvdx) + dmuedy * 2 * dvdy + dmuedz * (dvdz + dwdy);
           const dfloat w3 = dmuedx * (dudz + dwdx) + dmuedy * (dvdz + dwdy) + dmuedz * 2 * dwdz;
 
-          const dfloat scale = -2. / 3;
+          const dfloat scale = -2./3;
 
           OUT[id + 0 * offset] -= JW * (w1 + scale * div * dmuedx);
           OUT[id + 1 * offset] -= JW * (w2 + scale * div * dmuedy);

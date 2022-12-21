@@ -26,7 +26,7 @@ constexpr int bcTypeF = 3;
 bool useNekBCs();
 void setup(std::vector<std::string> slist, std::string field);
 int id(int bid, std::string field);
-int type(int bid, std::string field);
+int ellipticType(int bid, std::string field);
 std::string text(int bid, std::string field);
 int size(int isTmesh);
 void check(mesh_t* mesh);

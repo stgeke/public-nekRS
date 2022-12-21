@@ -85,9 +85,9 @@
           const dfloat dtdz = vgeo[gid + p_TZID * p_Np];
           const dfloat JW = vgeo[gid + p_JWID * p_Np];
 
-          dfloat duxdr = 0.f, duxds = 0.f, duxdt = 0.f;
-          dfloat duydr = 0.f, duyds = 0.f, duydt = 0.f;
-          dfloat duzdr = 0.f, duzds = 0.f, duzdt = 0.f;
+          dfloat duxdr = 0, duxds = 0, duxdt = 0;
+          dfloat duydr = 0, duyds = 0, duydt = 0;
+          dfloat duzdr = 0, duzds = 0, duzdt = 0;
 
 #pragma unroll p_Nq
           for (int n = 0; n < p_Nq; ++n) {

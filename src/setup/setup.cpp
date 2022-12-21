@@ -242,10 +242,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   mesh_t *mesh = nrs->meshV;
 
 #if 0
+  // over-rule initial guess method as only previous is supported for now
   if (nrs->flow) {
     if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {
-       if(options.compareArgs("VELOCITY INITIAL GUESS", "EXTRAPOLATION"))
-          platform->options.setArgs("VELOCITY INITIAL GUESS", "PREVIOUS"); // overrule as currently not supported!
+      platform->options.setArgs("VELOCITY INITIAL GUESS", "PREVIOUS");
     }
   }
 #endif
@@ -704,7 +704,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
           const int bID = mesh->EToB[f + e * mesh->Nfaces];
-          cds->solver[is]->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "scalar" + sid);
+          cds->solver[is]->EToB[f + e * mesh->Nfaces] = bcMap::ellipticType(bID, "scalar" + sid);
         }
       }
 
@@ -823,17 +823,19 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           for (int f = 0; f < mesh->Nfaces; f++) {
             const int offset = fld * mesh->Nelements * mesh->Nfaces;
             const int bID = mesh->EToB[f + e * mesh->Nfaces];
-            nrs->uvwSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::type(bID, key);
+            nrs->uvwSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::ellipticType(bID, key);
           }
         }
       }
 
       if (unalignedBoundary) {
-        nrs->o_zeroNormalMaskVelocity = platform->device.malloc((3 * sizeof(dfloat)) * nrs->fieldOffset);
-        nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(dlong));
+        nrs->o_zeroNormalMaskVelocity = 
+          platform->device.malloc((nrs->uvwSolver->Nfields * sizeof(dfloat)) * 
+                                  nrs->uvwSolver->fieldOffset);
+        nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(int));
         createEToBV(nrs->meshV, nrs->uvwSolver->EToB, nrs->o_EToBVVelocity);
-        auto o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->uvwSolver->Nfields, sizeof(int));
-        o_EToB.copyFrom(nrs->uvwSolver->EToB, o_EToB.size()); 
+        auto o_EToB = 
+          platform->device.malloc(sizeof(nrs->uvwSolver->EToB), nrs->uvwSolver->EToB);
         createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
 
         nrs->uvwSolver->applyZeroNormalMask =
@@ -867,7 +869,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
           const int bID = mesh->EToB[f + e * mesh->Nfaces];
-          nrs->uSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "x-velocity");
+          nrs->uSolver->EToB[f + e * mesh->Nfaces] = bcMap::ellipticType(bID, "x-velocity");
         }
       }
 
@@ -891,7 +893,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
           const int bID = mesh->EToB[f + e * mesh->Nfaces];
-          nrs->vSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "y-velocity");
+          nrs->vSolver->EToB[f + e * mesh->Nfaces] = bcMap::ellipticType(bID, "y-velocity");
         }
       }
 
@@ -915,7 +917,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       for (dlong e = 0; e < mesh->Nelements; e++) {
         for (int f = 0; f < mesh->Nfaces; f++) {
           const int bID = mesh->EToB[f + e * mesh->Nfaces];
-          nrs->wSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "z-velocity");
+          nrs->wSolver->EToB[f + e * mesh->Nfaces] = bcMap::ellipticType(bID, "z-velocity");
         }
       }
 
@@ -1012,7 +1014,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     for (dlong e = 0; e < mesh->Nelements; e++) {
       for (int f = 0; f < mesh->Nfaces; f++) {
         const int bID = mesh->EToB[f + e * mesh->Nfaces];
-        nrs->pSolver->EToB[f + e * mesh->Nfaces] = bcMap::type(bID, "pressure");
+        nrs->pSolver->EToB[f + e * mesh->Nfaces] = bcMap::ellipticType(bID, "pressure");
       }
     }
 
@@ -1077,16 +1079,18 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           for (int f = 0; f < mesh->Nfaces; f++) {
             const int offset = fld * mesh->Nelements * mesh->Nfaces;
             const int bID = mesh->EToB[f + e * mesh->Nfaces];
-            nrs->meshSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::type(bID, key);
+            nrs->meshSolver->EToB[f + e * mesh->Nfaces + offset] = bcMap::ellipticType(bID, key);
           }
         }
       }
 
       if (unalignedBoundary) {
-        nrs->o_zeroNormalMaskMeshVelocity = platform->device.malloc((3 * sizeof(dfloat)) * nrs->fieldOffset);
-        nrs->o_EToBVMeshVelocity = platform->device.malloc(mesh->Nlocal * sizeof(dlong));
-        auto o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields, sizeof(int));
-        o_EToB.copyFrom(nrs->meshSolver->EToB, o_EToB.size()); 
+        nrs->o_zeroNormalMaskMeshVelocity = 
+          platform->device.malloc((nrs->meshSolver->Nfields * sizeof(dfloat)) * 
+                                  nrs->meshSolver->fieldOffset);
+        nrs->o_EToBVMeshVelocity = platform->device.malloc(mesh->Nlocal * sizeof(int));
+        auto o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields, 
+                                              sizeof(int), nrs->meshSolver->EToB);
         createEToBV(nrs->meshV, nrs->meshSolver->EToB, nrs->o_EToBVMeshVelocity);
         createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
         nrs->meshSolver->applyZeroNormalMask =

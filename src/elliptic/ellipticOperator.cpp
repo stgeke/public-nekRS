@@ -27,6 +27,7 @@
 #include <type_traits>
 #include "elliptic.h"
 #include <iostream>
+
 void ellipticAx(elliptic_t* elliptic,
                 dlong NelementsList,
                 occa::memory &o_elementsList,

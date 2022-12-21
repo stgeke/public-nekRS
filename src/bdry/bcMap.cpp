@@ -240,7 +240,7 @@ int id(int bid, std::string field)
   }
 }
 
-int type(int bid, std::string field)
+int ellipticType(int bid, std::string field)
 {
   if (bid < 1)
     return NO_OP;
@@ -311,22 +311,9 @@ int type(int bid, std::string field)
     }
     else if (field.compare("pressure") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
-      if (bcID == bcTypeW)
-        bcType = NEUMANN;
-      if (bcID == bcTypeV)
-        bcType = NEUMANN;
+      bcType = NEUMANN;
       if (bcID == bcTypeO)
         bcType = DIRICHLET;
-      if (bcID == bcTypeSYMX)
-        bcType = NEUMANN;
-      if (bcID == bcTypeSYMY)
-        bcType = NEUMANN;
-      if (bcID == bcTypeSYMZ)
-        bcType = NEUMANN;
-      if (bcID == bcTypeSYM)
-        bcType = NEUMANN;
-      if (bcID == bcTypeSHL)
-        bcType = NEUMANN;
     }
     else if (field.compare(0, 6, "scalar") == 0) {
       const int bcID = bToBc.at({field, bid - 1});

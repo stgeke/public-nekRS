@@ -71,7 +71,7 @@
           bc.trans = rho[idM];
           bc.diff = mue[idM];
 
-          bc.p = 0.f;
+          bc.p = 0;
           pressureDirichletConditions(&bc);
           PI[idM] = bc.p;
         }

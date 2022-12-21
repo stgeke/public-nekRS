@@ -57,9 +57,9 @@
 
 #pragma unroll p_Nq
         for (int k = 0; k < p_Nq; ++k) {
-          r_gradU[k] = 0.f;
-          r_gradV[k] = 0.f;
-          r_gradW[k] = 0.f;
+          r_gradU[k] = 0;
+          r_gradV[k] = 0;
+          r_gradW[k] = 0;
         }
       }
     }

@@ -138,17 +138,12 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
   double flopCount = 0.0;
   mesh_t* mesh = nrs->meshV;
  
-  dfloat scale = -1./3;
-  if(platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE")) scale = 2./3;
-
-
   platform->linAlg->axmyz(
        mesh->Nlocal,
-       scale,
+       (platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE")) ? -2./3 : 1./3,
        nrs->o_mue,
        nrs->o_div,
        platform->o_mempool.slice3);
-
   nrs->gradientVolumeKernel(
     mesh->Nelements,
     mesh->o_vgeo,
@@ -156,25 +151,41 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
     nrs->fieldOffset,
     platform->o_mempool.slice3,
     platform->o_mempool.slice0);
-
   flopCount += static_cast<double>(mesh->Nelements) * (6 * mesh->Np * mesh->Nq + 18 * mesh->Np);
 
-  nrs->wgradientVolumeKernel(
-    mesh->Nelements,
-    mesh->o_vgeo,
-    mesh->o_D,
-    nrs->fieldOffset,
-    nrs->o_P,
-    platform->o_mempool.slice3);
+  const bool weakPressure = true;
+  if(weakPressure) {
+    nrs->wgradientVolumeKernel(
+      mesh->Nelements,
+      mesh->o_vgeo,
+      mesh->o_D,
+      nrs->fieldOffset,
+      nrs->o_P,
+      platform->o_mempool.slice3);
 
+    platform->linAlg->axpby(
+      nrs->NVfields*nrs->fieldOffset,
+      1.0,
+      platform->o_mempool.slice3,
+      1.0,
+      platform->o_mempool.slice0);
+  } else { 
+    nrs->gradientVolumeKernel(
+      mesh->Nelements,
+      mesh->o_vgeo,
+      mesh->o_D,
+      nrs->fieldOffset,
+      nrs->o_P,
+      platform->o_mempool.slice3);
+
+    platform->linAlg->axpby(
+      nrs->NVfields*nrs->fieldOffset,
+      -1.0,
+      platform->o_mempool.slice3,
+      1.0,
+      platform->o_mempool.slice0);
+  }
   flopCount += static_cast<double>(mesh->Nelements) * 18 * (mesh->Np * mesh->Nq + mesh->Np);
-
-  platform->linAlg->axpby(
-    nrs->NVfields*nrs->fieldOffset,
-    1.0,
-    platform->o_mempool.slice3,
-    -1.0,
-    platform->o_mempool.slice0);
 
   nrs->velocityNeumannBCKernel(mesh->Nelements,
                                nrs->fieldOffset,

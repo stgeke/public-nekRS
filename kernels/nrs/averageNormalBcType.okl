@@ -1,6 +1,6 @@
 @kernel void averageNormalBcType(const dlong Nelements,
                                  const dlong offset,
-                                 const dlong bcTypeCheck,
+                                 const int bcTypeCheck,
                                  @ restrict const dfloat *sgeo,
                                  @ restrict const dlong *vmapM,
                                  @ restrict const int *EToB,

@@ -7,11 +7,13 @@ void createZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory& o_EToB
 
   nrs->initializeZeroNormalMaskKernel(mesh->Nlocal, nrs->fieldOffset, o_EToBV, o_mask);
 
+#if 1
   // normal + count (4 fields)
   auto o_avgNormal = platform->o_mempool.slice0;
+  int bcType = ZERO_NORMAL;
   nrs->averageNormalBcTypeKernel(mesh->Nelements,
                                  nrs->fieldOffset,
-                                 ZERO_NORMAL,
+                                 bcType,
                                  mesh->o_sgeo,
                                  mesh->o_vmapM,
                                  o_EToB,
@@ -26,10 +28,10 @@ void createZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory& o_EToB
                      o_EToB,
                      o_avgNormal,
                      o_mask);
+#endif
 
   oogs::startFinish(o_mask, 3, nrs->fieldOffset, ogsDfloat, ogsMin, nrs->gsh);
 }
-
 
 void applyZeroNormalMask(nrs_t *nrs,
                          dlong Nelements,
@@ -42,7 +44,6 @@ void applyZeroNormalMask(nrs_t *nrs,
     return;
 
   auto *mesh = nrs->meshV;
-
   nrs->applyZeroNormalMaskKernel(Nelements,
                                  nrs->fieldOffset,
                                  o_elementList,
@@ -194,6 +195,7 @@ void applyDirichlet(nrs_t *nrs, double time)
                             nrs->uvwSolver->o_maskIds,
                             platform->o_mempool.slice7,
                             nrs->o_U, nrs->o_Ue);
+
     }
     else {
       if (nrs->uSolver->Nmasked)

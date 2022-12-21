@@ -30,7 +30,7 @@ elif [ "$1" == "AMGX" ]; then
 git rm -rf 3rd_party/AMGX
 git commit -m 'remove AMGX'
 git subtree add --prefix 3rd_party/AMGX https://github.com/NVIDIA/AMGX.git main --squash
-git reset HEAD~1 --soft
+git reset HEAD~2 --soft
 git add -u
 git commit -m 'import latest AMGX'
 

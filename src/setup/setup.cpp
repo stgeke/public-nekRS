@@ -250,13 +250,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   }
 #endif
 
-  {
-    double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
-    MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
-    if (platform->comm.mpiRank == 0)
-      printf("min %2.0f%% of the local elements are internal\n", 100 * val);
-  }
-
   nrs->NVfields = 3;
   nrs->NTfields = nrs->NVfields + 1; // Total Velocity + Pressure
   mesh->Nfields = 1;

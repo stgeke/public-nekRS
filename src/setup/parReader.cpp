@@ -1202,8 +1202,9 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
 
   options.setArgs("VARIABLE DT", "FALSE");
 
-  // coeff fields
   options.setArgs("VELOCITY ELLIPTIC COEFF FIELD", "TRUE");
+
+  options.setArgs("PRESSURE ELLIPTIC COEFF FIELD", "FALSE");
 
   const auto dropTol = 5.0 * std::numeric_limits<pfloat>::epsilon();
   options.setArgs("AMG DROP TOLERANCE", to_string_f(dropTol));
@@ -1943,7 +1944,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
     parseRegularization(rank, options, par, "velocity");
   } else {
-    options.setArgs("VELOCITY", "FALSE");
+    options.setArgs("VELOCITY SOLVER", "FALSE");
   }
 
   // MESH

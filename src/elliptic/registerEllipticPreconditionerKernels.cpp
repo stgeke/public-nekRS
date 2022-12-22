@@ -31,6 +31,7 @@ void registerAxKernels(const std::string &section, int N, int poissonEquation)
   const std::string oklpath = installDir + "/kernels/elliptic/";
   const bool serial = platform->serial;
   const std::string fileNameExtension = (serial) ? ".c" : ".okl";
+  const std::string optionsPrefix = createOptionsPrefix(section);
   const std::string poissonPrefix = poissonEquation ? "poisson-" : "";
 
   int nelgt, nelgv;
@@ -41,6 +42,9 @@ void registerAxKernels(const std::string &section, int N, int poissonEquation)
   occa::properties AxKernelInfo = kernelInfo;
   const auto Nq = N + 1;
   for (auto &&coeffField : {true, false}) {
+    if (platform->options.compareArgs(optionsPrefix + "PRECONDITIONER COEFF FIELD","TRUE") != coeffField) {
+      continue;
+    }
     const auto floatString = std::string(pfloatString);
     const auto wordSize = sizeof(pfloat);
 
@@ -61,7 +65,7 @@ void registerAxKernels(const std::string &section, int N, int poissonEquation)
                                 false,
                                 kernelSuffix);
 
-    const std::string suffix = coeffField ? "CoeffHex3D" : "Hex3D";
+    const std::string suffix = "CoeffHex3D";
 
     if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR"))
       kernelName = "ellipticPartialAxTrilinear" + suffix;

@@ -92,13 +92,17 @@ occa::kernel benchmarkAx(int Nelements,
   if (poisson)
     props["defines/p_poisson"] = 1;
 
+  if (constCoeff)
+    props["defines/p_lambda"] = 0;
+  else
+    props["defines/p_lambda"] = 1;
+
   std::string kernelName = "elliptic";
   if (Ndim > 1) {
     kernelName += stressForm ? "Stress" : "Block";
   }
   kernelName += "PartialAx";
-  if (!constCoeff)
-    kernelName += "Coeff";
+  kernelName += "Coeff";
   if (Ng != N) {
     if (computeGeom) {
       if (Ng == 1) {
@@ -124,41 +128,25 @@ occa::kernel benchmarkAx(int Nelements,
 
     std::vector<int> kernelVariants;
 
-    int Nkernels = 0;
     if(platform->serial) {
-      Nkernels = 1;
+      const int Nkernels = 1;
       for (int knl = 0; knl < Nkernels; ++knl)
         kernelVariants.push_back(knl);
     } else {
-      if (kernelName == "ellipticPartialAxHex3D") {
-        Nkernels = 8;
+      if (kernelName == "ellipticPartialAxCoeffHex3D") {
+        const int Nkernels = 8;
         for (int knl = 0; knl < Nkernels; ++knl)
           kernelVariants.push_back(knl);
 
         kernelVariants.erase(kernelVariants.begin()+3); // correctness check is off
       }
-      if (kernelName == "ellipticPartialAxCoeffHex3D") {
-        Nkernels = 2;
-        for (int knl = 0; knl < Nkernels; ++knl)
-          kernelVariants.push_back(knl);
-      }
-      if (kernelName == "ellipticStressPartialAxHex3D") {
-        Nkernels = 1;
-        for (int knl = 0; knl < Nkernels; ++knl)
-          kernelVariants.push_back(knl);
-      }
       if (kernelName == "ellipticStressPartialAxCoeffHex3D") {
-        Nkernels = 1;
-        for (int knl = 0; knl < Nkernels; ++knl)
-          kernelVariants.push_back(knl);
-      }
-      if (kernelName == "ellipticBlockPartialAxHex3D") {
-        Nkernels = 1;
+        const int Nkernels = 1;
         for (int knl = 0; knl < Nkernels; ++knl)
           kernelVariants.push_back(knl);
       }
       if (kernelName == "ellipticBlockPartialAxCoeffHex3D") {
-        Nkernels = 2;
+        const int Nkernels = 2;
         for (int knl = 0; knl < Nkernels; ++knl)
           kernelVariants.push_back(knl);
 
@@ -278,7 +266,6 @@ occa::kernel benchmarkAx(int Nelements,
     };
 
     auto printPerformanceInfo = [&](int kernelVariant, double elapsed, int Ntests, bool skipPrint) {
-      const bool BKmode = constCoeff && poisson;
 
       // print statistics
       const dfloat GDOFPerSecond = (Nelements * Ndim * (N * N * N) / elapsed) / 1.e9;
@@ -318,7 +305,8 @@ occa::kernel benchmarkAx(int Nelements,
             std::cout << " elapsed time=" << elapsed;
 
           std::cout << " wordSize=" << 8 * wordSize << " GDOF/s=" << GDOFPerSecond << " GB/s=" << bw
-                    << " GFLOPS/s=" << gflops << " bkMode=" << BKmode << " kernelVer=" << kernelVariant
+                    << " GFLOPS/s=" << gflops 
+                    << " constCoeff=" << constCoeff << " poisson=" << poisson << " kernelVer=" << kernelVariant
                     << "\n";
         }
       }

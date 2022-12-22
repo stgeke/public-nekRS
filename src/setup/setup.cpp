@@ -196,8 +196,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     platform->options.setArgs("GS OVERLAP", "FALSE");
 
   nrs->flow = 1;
-  if (platform->options.compareArgs("VELOCITY", "FALSE"))
-    nrs->flow = 0;
   if (platform->options.compareArgs("VELOCITY SOLVER", "NONE"))
     nrs->flow = 0;
 
@@ -690,7 +688,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
       platform->linAlg->fill(2 * nrs->fieldOffset, 1.0, nrs->o_ellipticCoeff);
       cds->solver[is]->o_lambda = cds->o_ellipticCoeff;
-      cds->solver[is]->loffset = 0;
+      cds->solver[is]->loffset = 0; // not used
       cds->solver[is]->options = cds->options[is];
 
       cds->solver[is]->EToB = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
@@ -856,7 +854,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uSolver->coeffField = velCoeffField;
       nrs->uSolver->coeffFieldPreco = velCoeffField;
       nrs->uSolver->o_lambda = nrs->o_ellipticCoeff;
-      nrs->uSolver->loffset = 0;
+      nrs->uSolver->loffset = 0; // not used
       nrs->uSolver->poisson = 0;
       nrs->uSolver->EToB = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
@@ -880,7 +878,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->vSolver->coeffField = velCoeffField;
       nrs->vSolver->coeffFieldPreco = velCoeffField;
       nrs->vSolver->o_lambda = nrs->o_ellipticCoeff;
-      nrs->vSolver->loffset = 0;
+      nrs->vSolver->loffset = 0; // not used 
       nrs->vSolver->poisson = 0;
       nrs->vSolver->EToB = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
@@ -904,7 +902,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->wSolver->coeffField = velCoeffField;
       nrs->wSolver->coeffFieldPreco = velCoeffField;
       nrs->wSolver->o_lambda = nrs->o_ellipticCoeff;
-      nrs->wSolver->loffset = 0;
+      nrs->wSolver->loffset = 0; // not used
       nrs->wSolver->poisson = 0;
       nrs->wSolver->EToB = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
@@ -964,7 +962,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pOptions.setArgs("RESIDUAL PROJECTION VECTORS",
                           options.getArgs("PRESSURE RESIDUAL PROJECTION VECTORS"));
     nrs->pOptions.setArgs("RESIDUAL PROJECTION START", options.getArgs("PRESSURE RESIDUAL PROJECTION START"));
-    nrs->pOptions.setArgs("MULTIGRID VARIABLE COEFFICIENT", "FALSE");
     nrs->pOptions.setArgs("MAXIMUM ITERATIONS", options.getArgs("PRESSURE MAXIMUM ITERATIONS"));
     nrs->pOptions.setArgs("MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR",
                           options.getArgs("PRESSURE MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR"));
@@ -981,12 +978,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->pSolver->dim = nrs->dim;
     nrs->pSolver->elementType = nrs->elementType;
 
-    int pCoeffField = 0;
-    if (platform->options.compareArgs("LOWMACH", "TRUE"))
-      pCoeffField = 1; // rho varies in space
-
-    nrs->pSolver->coeffField = pCoeffField;
-    nrs->pSolver->coeffFieldPreco = pCoeffField;
+    nrs->pSolver->coeffField = platform->options.compareArgs("PRESSURE ELLIPTIC COEFF FIELD", "TRUE");
+    nrs->pSolver->coeffFieldPreco = platform->options.compareArgs("PRESSURE PRECONDITIONER COEFF FIELD", "TRUE"); 
     nrs->pSolver->poisson = 1;
 
     // lambda0 = 1/rho  lambda1 = 0
@@ -994,7 +987,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->o_ellipticCoeff.copyFrom(nrs->o_rho, nrs->fieldOffset * sizeof(dfloat));
     platform->linAlg->ady(mesh->Nlocal, 1.0, nrs->o_ellipticCoeff);
     nrs->pSolver->o_lambda = nrs->o_ellipticCoeff;
-    nrs->pSolver->loffset = 0; // Poisson
+    nrs->pSolver->loffset = 0; // not used 
     nrs->pSolver->options = nrs->pOptions;
     {
       const std::vector<int> levels = determineMGLevels("pressure");

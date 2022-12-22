@@ -83,6 +83,13 @@ void compileKernels() {
   std::string section;
   int poissonEquation;
   for (auto&& entry : sections) {
+    if ((entry.first == "velocity" || entry.first == "pressure")
+        && platform->options.compareArgs("VELOCITY SOLVER", "NONE"))
+      continue;
+
+    if (entry.first == "mesh" && !platform->options.compareArgs("MESH SOLVER", "ELASTICITY"))
+      continue;
+
     std::tie(section, poissonEquation) = entry;
     registerEllipticKernels(section, poissonEquation);
     registerEllipticPreconditionerKernels(section, poissonEquation);

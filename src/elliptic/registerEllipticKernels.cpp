@@ -152,13 +152,15 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   const int verbosity = verbose ? 2 : 1;
 
   for (auto &&coeffField : {true, false}) {
+    if (platform->options.compareArgs(optionsPrefix + "ELLIPTIC COEFF FIELD","TRUE") != coeffField)
+      continue;
+
     std::string kernelNamePrefix = "elliptic";
     if (blockSolver)
       kernelNamePrefix += (stressForm) ? "Stress" : "Block";
 
     kernelName = "Ax";
-    if (coeffField)
-      kernelName += "Coeff";
+    kernelName += "Coeff";
     if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR"))
       kernelName += "Trilinear";
     kernelName += suffix;

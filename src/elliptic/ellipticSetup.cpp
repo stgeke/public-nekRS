@@ -52,24 +52,14 @@ void checkConfig(elliptic_t* elliptic)
   if (elliptic->blockSolver &&  
       !options.compareArgs("PRECONDITIONER","JACOBI")) {
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: Block solver requires Jacobi preconditioner\n");
+      printf("ERROR: Block solver only supports Jacobi preconditioner\n");
     err++;
-  }
-
-  if (options.compareArgs("COEFFICIENT","VARIABLE")) {
-    if(options.compareArgs("PRECONDITIONER", "MULTIGRID") &&
-       !options.compareArgs("MULTIGRID VARIABLE COEFFICIENT", "FALSE")) {
-       if(platform->comm.mpiRank == 0)
-         printf(
-           "ERROR: Multigrid preconditioner does not support variable coefficients\n");
-       err++;
-    }
   }
 
   if (options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
     if (elliptic->poisson == 0) {
       if(platform->comm.mpiRank == 0)
-        printf("ERROR: No multigrid preconditioner support for Helmholz\n");
+        printf("ERROR: Multigrid preconditioner only supports Poisson type equations\n");
       err++;
     }
   }
@@ -237,7 +227,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
         kernelNamePrefix += (elliptic->stressForm) ? "Stress" : "Block";
  
       kernelName = "Ax";
-      if (elliptic->coeffField) kernelName += "Coeff";
+      kernelName += "Coeff";
       if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR")) kernelName += "Trilinear";
       kernelName += suffix; 
 

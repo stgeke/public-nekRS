@@ -52,9 +52,9 @@ extern "C" void FUNC(ellipticBlockPartialAxCoeffHex3D_v0)(const dlong & Nelement
 
           const dlong id      = element * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
 
-          const dfloat r_lam00 = lambda[id + 0 * offset + 0 * loffset];
-          const dfloat r_lam10 = lambda[id + 0 * offset + 1 * loffset];
-          const dfloat r_lam20 = lambda[id + 0 * offset + 2 * loffset];
+          const dfloat r_lam00 = lambda[p_lambda*id + 0 * offset + 0 * loffset];
+          const dfloat r_lam10 = lambda[p_lambda*id + 0 * offset + 1 * loffset];
+          const dfloat r_lam20 = lambda[p_lambda*id + 0 * offset + 2 * loffset];
 
           dfloat qr0 = 0, qr1 = 0, qr2 = 0;
           dfloat qs0 = 0, qs1 = 0, qs2 = 0;
@@ -107,9 +107,9 @@ extern "C" void FUNC(ellipticBlockPartialAxCoeffHex3D_v0)(const dlong & Nelement
 
           const dlong id = element * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
 
-          const dfloat r_lam01 = lambda[id + 1 * offset + 0 * loffset];
-          const dfloat r_lam11 = lambda[id + 1 * offset + 1 * loffset];
-          const dfloat r_lam21 = lambda[id + 1 * offset + 2 * loffset];
+          const dfloat r_lam01 = lambda[p_lambda*id + 1 * offset + 0 * loffset];
+          const dfloat r_lam11 = lambda[p_lambda*id + 1 * offset + 1 * loffset];
+          const dfloat r_lam21 = lambda[p_lambda*id + 1 * offset + 2 * loffset];
 
           dfloat r_Aq0 = r_GwJ * r_lam01 * s_q[0][k][j][i];
           dfloat r_Aq1 = r_GwJ * r_lam11 * s_q[1][k][j][i];

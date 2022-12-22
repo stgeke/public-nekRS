@@ -56,6 +56,9 @@ void lowMach::buildKernel(occa::properties kernelInfo)
     fileName = path + kernelName + extension;
     surfaceFluxKernel = platform->device.buildKernel(fileName, kernelInfo, true);
   }
+
+  platform->options.setArgs("PRESSURE ELLIPTIC COEFF FIELD", "TRUE");
+  //platform->options.setArgs("PRESSURE PRECONDITIONER COEFF FIELD", "TRUE");
 }
 
 void lowMach::setup(nrs_t *nrs, dfloat gamma)

@@ -96,7 +96,7 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
   if(Nc > 1 || elliptic->options.compareArgs("MULTIGRID COARSE SOLVE", "FALSE"))
 #endif
   {
-      const std::string AxSuffix = elliptic->coeffFieldPreco ? "CoeffHex3D" : "Hex3D";
+      const std::string AxSuffix = "CoeffHex3D";
       // check for trilinear
       if(elliptic->elementType != HEXAHEDRA) {
         kernelName = "ellipticPartialAx" + AxSuffix;

@@ -56,8 +56,13 @@ void evaluateProperties(nrs_t *nrs, const double timeNew) {
   if(nrs->Nscalar){
     cds_t* cds = nrs->cds;
     for(int is = 0 ; is < cds->NSfields; ++is){
+      const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(scalarWidth) << is;
+      std::string sid = ss.str();
+
       std::string regularizationMethod;
-      cds->options[is].getArgs("REGULARIZATION METHOD", regularizationMethod);
+      platform->options.getArgs("SCALAR" + sid + " REGULARIZATION METHOD", regularizationMethod);
       const bool applyAVM = regularizationMethod.find("HPF_RESIDUAL") != std::string::npos
         || regularizationMethod.find("HIGHEST_MODAL_DECAY") != std::string::npos;
       if(applyAVM){
@@ -338,11 +343,11 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     }
     mesh->move();
 
-    if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
+    if (bcMap::unalignedRobinBoundary("velocity")) {
       createZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
     }
 
-    if (bcMap::unalignedBoundary(mesh->cht, "mesh") && platform->options.compareArgs("MESH SOLVER", "ELASTICITY")){
+    if (bcMap::unalignedRobinBoundary("mesh") && platform->options.compareArgs("MESH SOLVER", "ELASTICITY")){
       createZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
     }
 
@@ -471,11 +476,16 @@ void makeq(
     if (!cds->compute[is])
       continue;
 
+    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(scalarWidth) << is;
+    std::string sid = ss.str();
+
     mesh_t *mesh;
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0];
     const dlong isOffset = cds->fieldOffsetScan[is];
 
-    if(cds->options[is].compareArgs("REGULARIZATION METHOD", "RELAXATION")){
+    if(platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "RELAXATION")){
       cds->filterRTKernel(
         cds->meshV->Nelements,
         is,
@@ -490,7 +500,7 @@ void makeq(
       flops *= static_cast<double>(mesh->Nelements);
       platform->flopCounter->add("scalarFilterRT", flops);
     }
-    const int movingMesh = cds->options[is].compareArgs("MOVING MESH", "TRUE");
+    const int movingMesh = platform->options.compareArgs("MOVING MESH", "TRUE");
     if (movingMesh && !cds->Nsubsteps) {
       cds->advectMeshVelocityKernel(cds->meshV->Nelements,
           mesh->o_vgeo,
@@ -507,7 +517,7 @@ void makeq(
     }
 
     occa::memory o_Usubcycling = platform->o_mempool.slice0;
-    if (cds->options[is].compareArgs("ADVECTION", "TRUE")) {
+    if (platform->options.compareArgs("ADVECTION", "TRUE")) {
       if (cds->Nsubsteps) {
         if (movingMesh)
           o_Usubcycling = scalarSubCycleMovingMesh(
@@ -516,7 +526,7 @@ void makeq(
           o_Usubcycling = scalarSubCycle(
               cds, mymin(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
       } else {
-        if (cds->options[is].compareArgs("ADVECTION TYPE", "CUBATURE"))
+        if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
           cds->strongAdvectionCubatureVolumeKernel(cds->meshV->Nelements,
                                                    mesh->o_vgeo,
                                                    mesh->o_cubDiffInterpT,
@@ -783,6 +793,30 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
   }
   if (platform->comm.mpiRank == 0) {
     if (verboseInfo && printVerboseInfo){
+      for(int is = 0; is < nrs->Nscalar; is++) {
+        if (cds->compute[is]) {
+          elliptic_t *solver = cds->solver[is];
+          if (solver->solutionProjection) {
+            const int prevVecs = solver->solutionProjection->getPrevNumVecsProjection();
+            if (prevVecs > 0) {
+              printf("projS%02d  : resNorm0 %.2e  resNorm %.2e  ratio = %.3e  %d/%d\n",
+                     is,
+                     solver->res00Norm,
+                     solver->res0Norm,
+                     solver->res00Norm / solver->res0Norm,
+                     prevVecs,
+                     solver->solutionProjection->getMaxNumVecsProjection());
+            }
+          }
+          printf("S%02d      : iter %03d  resNorm0 %.2e  "
+                 "resNorm %.2e\n",
+              is,
+              solver->Niter,
+              solver->res0Norm,
+              solver->resNorm);
+        }
+      }
+
       if (nrs->flow) {
         elliptic_t *solver = nrs->pSolver;
         if(solver->solutionProjection){
@@ -896,29 +930,6 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
                solver->Niter, solver->res0Norm, solver->resNorm);
       }
  
-      for(int is = 0; is < nrs->Nscalar; is++) {
-        if (cds->compute[is]) {
-          elliptic_t *solver = cds->solver[is];
-          if (solver->solutionProjection) {
-            const int prevVecs = solver->solutionProjection->getPrevNumVecsProjection();
-            if (prevVecs > 0) {
-              printf("projS%02d  : resNorm0 %.2e  resNorm %.2e  ratio = %.3e  %d/%d\n",
-                     is,
-                     solver->res00Norm,
-                     solver->res0Norm,
-                     solver->res00Norm / solver->res0Norm,
-                     prevVecs,
-                     solver->solutionProjection->getMaxNumVecsProjection());
-            }
-          }
-          printf("S%02d      : iter %03d  resNorm0 %.2e  "
-                 "resNorm %.2e\n",
-              is,
-              solver->Niter,
-              solver->res0Norm,
-              solver->resNorm);
-        }
-      }
     }
 
     if(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")){
@@ -929,21 +940,21 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
       printf("step= %d  t= %.8e  dt=%.1e  C= %.2f", tstep, time, nrs->dt[0], cfl);
 
     if (!verboseInfo) {
+      for(int is = 0; is < nrs->Nscalar; is++)
+        if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
+
       if (nrs->flow) {
+        printf("  P: %d", nrs->pSolver->Niter);
         if (nrs->uvwSolver)
-          printf("  UVW: %d  P: %d", nrs->uvwSolver->Niter, nrs->pSolver->Niter);
+          printf("  UVW: %d", nrs->uvwSolver->Niter);
         else
-          printf("  U: %d  V: %d  W: %d  P: %d",
+          printf("  U: %d  V: %d  W: %d",
               nrs->uSolver->Niter,
               nrs->vSolver->Niter,
-              nrs->wSolver->Niter,
-              nrs->pSolver->Niter);
+              nrs->wSolver->Niter);
       }
       if(nrs->meshSolver)
         printf("  MSH: %d", nrs->meshSolver->Niter);
-        
-      for(int is = 0; is < nrs->Nscalar; is++)
-        if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
     }
 
     if (nrs->timeStepConverged && printStepInfo)

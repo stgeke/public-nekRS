@@ -1,6 +1,5 @@
 #include <compileKernels.hpp>
 #include "nrs.hpp"
-#include "elliptic.h"
 #include "benchmarkFDM.hpp"
 #include "benchmarkAx.hpp"
 

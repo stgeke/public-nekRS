@@ -95,7 +95,12 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
     o_logRelativeMassHighestMode
   );
 
-  const int useHPFResidual = cds->options[scalarIndex].compareArgs("REGULARIZATION METHOD", "HPF_RESIDUAL");
+  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(scalarWidth) << scalarIndex;
+  std::string sid = ss.str();
+
+  const int useHPFResidual = platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "HPF_RESIDUAL");
 
   dfloat Uinf = 1.0;
   if(useHPFResidual){
@@ -154,14 +159,14 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
   const dfloat logReferenceSensor = -4.0 * log10(p);
 
   dfloat coeff = 0.5;
-  cds->options[scalarIndex].getArgs("REGULARIZATION VISMAX COEFF", coeff);
+  platform->options.getArgs("SCALAR" + sid + " REGULARIZATION VISMAX COEFF", coeff);
 
   dfloat rampParameter = 1.0;
-  cds->options[scalarIndex].getArgs("REGULARIZATION RAMP CONSTANT", rampParameter);
+  platform->options.getArgs("SCALAR" + sid + " REGULARIZATION RAMP CONSTANT", rampParameter);
 
 
   dfloat scalingCoeff = 1.0;
-  cds->options[scalarIndex].getArgs("REGULARIZATION SCALING COEFF", scalingCoeff);
+  platform->options.getArgs("SCALAR" + sid + " REGULARIZATION SCALING COEFF", scalingCoeff);
 
   computeMaxViscKernel(
     mesh->Nelements,
@@ -181,7 +186,7 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
     o_epsilon // max(|df/du|) <- max visc
   );
 
-  const bool makeCont = cds->options[scalarIndex].compareArgs("REGULARIZATION AVM C0", "TRUE");
+  const bool makeCont = platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION AVM C0", "TRUE");
   if(makeCont){
     oogs_t* gsh;
     if(scalarIndex){

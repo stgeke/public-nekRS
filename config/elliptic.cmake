@@ -7,8 +7,6 @@ set(ELLIPTIC_SOURCES
         ${ELLIPTIC_SOURCE_DIR}/ellipticApplyMask.cpp
         ${ELLIPTIC_SOURCE_DIR}/ellipticBuildContinuous.cpp
         ${ELLIPTIC_SOURCE_DIR}/ellipticUpdateJacobi.cpp
-        ${ELLIPTIC_SOURCE_DIR}/registerEllipticKernels.cpp
-        ${ELLIPTIC_SOURCE_DIR}/registerEllipticPreconditionerKernels.cpp
         ${ELLIPTIC_SOURCE_DIR}/ellipticBuildPreconditionerKernels.cpp
         ${ELLIPTIC_SOURCE_DIR}/ellipticBuildMultigridLevelFine.cpp
         ${ELLIPTIC_SOURCE_DIR}/ellipticBuildMultigridLevel.cpp

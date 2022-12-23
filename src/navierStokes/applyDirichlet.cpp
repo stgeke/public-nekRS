@@ -70,7 +70,7 @@ void applyZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory &o_mask,
 void applyDirichlet(nrs_t *nrs, double time)
 {
   if (nrs->flow) {
-    if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {
+    if (bcMap::unalignedRobinBoundary("velocity")) {
       applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
       applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Ue);
     }
@@ -222,7 +222,7 @@ void applyDirichlet(nrs_t *nrs, double time)
   if (platform->options.compareArgs("MESH SOLVER", "ELASTICITY")) {
     mesh_t *mesh = nrs->meshV;
     if (mesh->cht) mesh = nrs->cds->mesh[0]; 
-    if (bcMap::unalignedBoundary(mesh->cht, "mesh")) {
+    if (bcMap::unalignedRobinBoundary("mesh")) {
       applyZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_U);
     }
     platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset,

@@ -55,7 +55,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
       if(platform->comm.mpiRank == 0){
         std::cout << "Unexpected input file for CI mode" << std::endl;
       }
-      FAIL;
+      ABORT(EXIT_FAILURE);
     }
   }
   if (ciMode == 6) {
@@ -67,7 +67,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
       if(platform->comm.mpiRank == 0){
         std::cout << "Unexpected input file for CI mode" << std::endl;
       }
-      FAIL;
+      ABORT(EXIT_FAILURE);
     }
   }
   if (ciMode == 7) {
@@ -114,7 +114,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
       if(platform->comm.mpiRank == 0){
         std::cout << "Unexpected input file for CI" << std::endl;
       }
-      FAIL;
+      ABORT(EXIT_FAILURE);
     }
   }
 
@@ -465,7 +465,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
       if(platform->comm.mpiRank == 0){
         std::cout << "Unexpected solver configuration for CI mode 12" << std::endl;
       }
-      FAIL;
+      ABORT(EXIT_FAILURE);
     }
   }
   if(ciMode == 13){
@@ -478,7 +478,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
       if(platform->comm.mpiRank == 0){
         std::cout << "Unexpected solver configuration for CI mode 13" << std::endl;
       }
-      FAIL;
+      ABORT(EXIT_FAILURE);
     }
 
  

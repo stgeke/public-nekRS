@@ -239,15 +239,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
   mesh_t *mesh = nrs->meshV;
 
-#if 1
-  // over-rule initial guess method as only previous is supported for now
-  if (nrs->flow) {
-    if (bcMap::unalignedBoundary(nrs->meshV->cht, "velocity")) {
-      platform->options.setArgs("VELOCITY INITIAL GUESS", "PREVIOUS");
-    }
-  }
-#endif
-
   nrs->NVfields = 3;
   nrs->NTfields = nrs->NVfields + 1; // Total Velocity + Pressure
   mesh->Nfields = 1;
@@ -689,7 +680,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       platform->linAlg->fill(2 * nrs->fieldOffset, 1.0, nrs->o_ellipticCoeff);
       cds->solver[is]->o_lambda = cds->o_ellipticCoeff;
       cds->solver[is]->loffset = 0; // not used
-      cds->solver[is]->options = cds->options[is];
 
       cds->solver[is]->EToB = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
       for (dlong e = 0; e < mesh->Nelements; e++) {
@@ -710,7 +700,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     nrs->uvwSolver = NULL;
 
-    bool unalignedBoundary = bcMap::unalignedBoundary(mesh->cht, "velocity");
+    bool unalignedBoundary = bcMap::unalignedRobinBoundary("velocity");
     if (unalignedBoundary) {
       if (!options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
         if (platform->comm.mpiRank == 0)
@@ -728,62 +718,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
         printf("bID %d -> bcType %s\n", bID, bcTypeText.c_str());
     }
 
-    nrs->vOptions = options;
-    nrs->vOptions.setArgs("PGMRES RESTART", options.getArgs("VELOCITY PGMRES RESTART"));
-    nrs->vOptions.setArgs("KRYLOV SOLVER", options.getArgs("VELOCITY KRYLOV SOLVER"));
-    nrs->vOptions.setArgs("SOLVER TOLERANCE", options.getArgs("VELOCITY SOLVER TOLERANCE"));
-    nrs->vOptions.setArgs("LINEAR SOLVER STOPPING CRITERION",
-                          options.getArgs("VELOCITY LINEAR SOLVER STOPPING CRITERION"));
-    nrs->vOptions.setArgs("DISCRETIZATION", options.getArgs("VELOCITY DISCRETIZATION"));
-    nrs->vOptions.setArgs("PRECONDITIONER", options.getArgs("VELOCITY PRECONDITIONER"));
-    nrs->vOptions.setArgs("INITIAL GUESS", options.getArgs("VELOCITY INITIAL GUESS"));
-    nrs->vOptions.setArgs("RESIDUAL PROJECTION VECTORS",
-                          options.getArgs("VELOCITY RESIDUAL PROJECTION VECTORS"));
-    nrs->vOptions.setArgs("RESIDUAL PROJECTION START", options.getArgs("VELOCITY RESIDUAL PROJECTION START"));
-    nrs->vOptions.setArgs("MULTIGRID COARSENING", options.getArgs("VELOCITY MULTIGRID COARSENING"));
-    nrs->vOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("VELOCITY MULTIGRID SCHEDULE"));
-    nrs->vOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("VELOCITY MULTIGRID SMOOTHER"));
-    nrs->vOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE",
-                          options.getArgs("VELOCITY MULTIGRID CHEBYSHEV DEGREE"));
-    nrs->vOptions.setArgs("MGSOLVER CYCLE", options.getArgs("VELOCITY MGSOLVER CYCLE"));
-    nrs->vOptions.setArgs("MGSOLVER SMOOTHER", options.getArgs("VELOCITY MGSOLVER SMOOTHER"));
-    nrs->vOptions.setArgs("MGSOLVER PARTITION", options.getArgs("VELOCITY MGSOLVER PARTITION"));
-    nrs->vOptions.setArgs("MGSOLVER CHEBYSHEV DEGREE",
-                          options.getArgs("VELOCITY MGSOLVER CHEBYSHEV DEGREE"));
-    nrs->vOptions.setArgs("MGSOLVER AGGREGATION STRATEGY",
-                          options.getArgs("VELOCITY MGSOLVER AGGREGATION STRATEGY"));
-    nrs->vOptions.setArgs("MAXIMUM ITERATIONS", options.getArgs("VELOCITY MAXIMUM ITERATIONS"));
-    nrs->vOptions.setArgs("STABILIZATION METHOD", options.getArgs("VELOCITY STABILIZATION METHOD"));
-    nrs->vOptions.setArgs("HPFRT STRENGTH", options.getArgs("VELOCITY HPFRT STRENGTH"));
-    nrs->vOptions.setArgs("HPFRT MODES", options.getArgs("VELOCITY HPFRT MODES"));
-
-    nrs->mOptions = options;
-    nrs->mOptions.setArgs("PGMRES RESTART", options.getArgs("MESH PGMRES RESTART"));
-    nrs->mOptions.setArgs("KRYLOV SOLVER", options.getArgs("MESH KRYLOV SOLVER"));
-    nrs->mOptions.setArgs("SOLVER TOLERANCE", options.getArgs("MESH SOLVER TOLERANCE"));
-    nrs->mOptions.setArgs("DISCRETIZATION", options.getArgs("MESH DISCRETIZATION"));
-    nrs->mOptions.setArgs("PRECONDITIONER", options.getArgs("MESH PRECONDITIONER"));
-    nrs->mOptions.setArgs("INITIAL GUESS", options.getArgs("MESH INITIAL GUESS"));
-    nrs->mOptions.setArgs("RESIDUAL PROJECTION VECTORS", options.getArgs("MESH RESIDUAL PROJECTION VECTORS"));
-    nrs->mOptions.setArgs("RESIDUAL PROJECTION START", options.getArgs("MESH RESIDUAL PROJECTION START"));
-    nrs->mOptions.setArgs("MULTIGRID COARSENING", options.getArgs("MESH MULTIGRID COARSENING"));
-    nrs->mOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("MESH MULTIGRID SCHEDULE"));
-    nrs->mOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("MESH MULTIGRID SMOOTHER"));
-    nrs->mOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE", options.getArgs("MESH MULTIGRID CHEBYSHEV DEGREE"));
-    nrs->mOptions.setArgs("MGSOLVER CYCLE", options.getArgs("MESH MGSOLVER CYCLE"));
-    nrs->mOptions.setArgs("MGSOLVER SMOOTHER", options.getArgs("MESH MGSOLVER SMOOTHER"));
-    nrs->mOptions.setArgs("MGSOLVER PARTITION", options.getArgs("MESH MGSOLVER PARTITION"));
-    nrs->mOptions.setArgs("MGSOLVER CHEBYSHEV DEGREE", options.getArgs("MESH MGSOLVER CHEBYSHEV DEGREE"));
-    nrs->mOptions.setArgs("MGSOLVER AGGREGATION STRATEGY",
-                          options.getArgs("MESH MGSOLVER AGGREGATION STRATEGY"));
-    nrs->mOptions.setArgs("MAXIMUM ITERATIONS", options.getArgs("MESH MAXIMUM ITERATIONS"));
-
     // coeff used by ellipticSetup to detect allNeumann
     platform->linAlg->fill(2 * nrs->fieldOffset, 1.0, nrs->o_ellipticCoeff);
 
     const int velCoeffField = platform->options.compareArgs("VELOCITY ELLIPTIC COEFF FIELD", "TRUE");
 
     if (nrs->uvwSolver) {
+      nrs->uvwSolver->name = "velocity";
       nrs->uvwSolver->blockSolver = 1;
       nrs->uvwSolver->stressForm = 0;
       if (options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
@@ -792,7 +733,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->uvwSolver->fieldOffset = nrs->fieldOffset;
       nrs->uvwSolver->o_wrk = o_mempoolElliptic;
       nrs->uvwSolver->mesh = mesh;
-      nrs->uvwSolver->options = nrs->vOptions;
       nrs->uvwSolver->dim = nrs->dim;
       nrs->uvwSolver->elementType = nrs->elementType;
       nrs->uvwSolver->coeffField = velCoeffField;
@@ -843,12 +783,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     }
     else {
       nrs->uSolver = new elliptic_t();
+      nrs->uSolver->name = "velocity";
       nrs->uSolver->blockSolver = 0;
       nrs->uSolver->Nfields = 1;
       nrs->uSolver->fieldOffset = nrs->fieldOffset;
       nrs->uSolver->o_wrk = o_mempoolElliptic;
       nrs->uSolver->mesh = mesh;
-      nrs->uSolver->options = nrs->vOptions;
       nrs->uSolver->dim = nrs->dim;
       nrs->uSolver->elementType = nrs->elementType;
       nrs->uSolver->coeffField = velCoeffField;
@@ -867,12 +807,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       ellipticSolveSetup(nrs->uSolver);
 
       nrs->vSolver = new elliptic_t();
+      nrs->vSolver->name = "velocity";
       nrs->vSolver->blockSolver = 0;
       nrs->vSolver->Nfields = 1;
       nrs->vSolver->fieldOffset = nrs->fieldOffset;
       nrs->vSolver->o_wrk = o_mempoolElliptic;
       nrs->vSolver->mesh = mesh;
-      nrs->vSolver->options = nrs->vOptions;
       nrs->vSolver->dim = nrs->dim;
       nrs->vSolver->elementType = nrs->elementType;
       nrs->vSolver->coeffField = velCoeffField;
@@ -891,12 +831,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       ellipticSolveSetup(nrs->vSolver);
 
       nrs->wSolver = new elliptic_t();
+      nrs->wSolver->name = "velocity";
       nrs->wSolver->blockSolver = 0;
       nrs->wSolver->Nfields = 1;
       nrs->wSolver->fieldOffset = nrs->fieldOffset;
       nrs->wSolver->o_wrk = o_mempoolElliptic;
       nrs->wSolver->mesh = mesh;
-      nrs->wSolver->options = nrs->vOptions;
       nrs->wSolver->dim = nrs->dim;
       nrs->wSolver->elementType = nrs->elementType;
       nrs->wSolver->coeffField = velCoeffField;
@@ -914,59 +854,11 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
       ellipticSolveSetup(nrs->wSolver);
     }
-
-    if (platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
-      nrs->uvwSolver->name = "velocity";
-    }
-    else {
-      nrs->uSolver->name = "x-velocity";
-      nrs->vSolver->name = "y-velocity";
-      nrs->wSolver->name = "z-velocity";
-    }
   } // flow
 
   if (nrs->flow) {
     if (platform->comm.mpiRank == 0)
       printf("================ ELLIPTIC SETUP PRESSURE ================\n");
-
-    nrs->pOptions = options;
-    nrs->pOptions.setArgs("PGMRES RESTART", options.getArgs("PRESSURE PGMRES RESTART"));
-    nrs->pOptions.setArgs("KRYLOV SOLVER", options.getArgs("PRESSURE KRYLOV SOLVER"));
-    nrs->pOptions.setArgs("SOLVER TOLERANCE", options.getArgs("PRESSURE SOLVER TOLERANCE"));
-    nrs->pOptions.setArgs("LINEAR SOLVER STOPPING CRITERION",
-                          options.getArgs("PRESSURE LINEAR SOLVER STOPPING CRITERION"));
-    nrs->pOptions.setArgs("DISCRETIZATION", options.getArgs("PRESSURE DISCRETIZATION"));
-    nrs->pOptions.setArgs("PRECONDITIONER", options.getArgs("PRESSURE PRECONDITIONER"));
-    nrs->pOptions.setArgs("COARSE SOLVER", options.getArgs("PRESSURE COARSE SOLVER"));
-    nrs->pOptions.setArgs("COARSE SOLVER PRECISION", options.getArgs("PRESSURE COARSE SOLVER PRECISION"));
-    if (platform->device.mode() == "Serial")
-     options.setArgs("PRESSURE COARSE SOLVER LOCATION","CPU"); 
-    nrs->pOptions.setArgs("COARSE SOLVER LOCATION", options.getArgs("PRESSURE COARSE SOLVER LOCATION"));
-    nrs->pOptions.setArgs("GALERKIN COARSE OPERATOR", options.getArgs("PRESSURE GALERKIN COARSE OPERATOR"));
-    nrs->pOptions.setArgs("MULTIGRID COARSENING", options.getArgs("PRESSURE MULTIGRID COARSENING"));
-    nrs->pOptions.setArgs("MULTIGRID SCHEDULE", options.getArgs("PRESSURE MULTIGRID SCHEDULE"));
-    nrs->pOptions.setArgs("MULTIGRID SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
-    nrs->pOptions.setArgs("MULTIGRID COARSE SOLVE", options.getArgs("PRESSURE MULTIGRID COARSE SOLVE"));
-    nrs->pOptions.setArgs("MULTIGRID COARSE SOLVE AND SMOOTH", options.getArgs("PRESSURE MULTIGRID COARSE SOLVE AND SMOOTH"));
-    nrs->pOptions.setArgs("MULTIGRID SEMFEM", options.getArgs("PRESSURE MULTIGRID SEMFEM"));
-    nrs->pOptions.setArgs("MULTIGRID CHEBYSHEV DEGREE",
-                          options.getArgs("PRESSURE MULTIGRID CHEBYSHEV DEGREE"));
-    nrs->pOptions.setArgs("MGSOLVER CYCLE", options.getArgs("PRESSURE MGSOLVER CYCLE"));
-    nrs->pOptions.setArgs("MGSOLVER SMOOTHER", options.getArgs("PRESSURE MULTIGRID SMOOTHER"));
-    nrs->pOptions.setArgs("MGSOLVER PARTITION", options.getArgs("PRESSURE MGSOLVER PARTITION"));
-    nrs->pOptions.setArgs("MGSOLVER CHEBYSHEV DEGREE",
-                          options.getArgs("PRESSURE MGSOLVER CHEBYSHEV DEGREE"));
-    nrs->pOptions.setArgs("MGSOLVER AGGREGATION STRATEGY",
-                          options.getArgs("PRESSURE MGSOLVER AGGREGATION STRATEGY"));
-    nrs->pOptions.setArgs("INITIAL GUESS", options.getArgs("PRESSURE INITIAL GUESS"));
-    nrs->pOptions.setArgs("RESIDUAL PROJECTION VECTORS",
-                          options.getArgs("PRESSURE RESIDUAL PROJECTION VECTORS"));
-    nrs->pOptions.setArgs("RESIDUAL PROJECTION START", options.getArgs("PRESSURE RESIDUAL PROJECTION START"));
-    nrs->pOptions.setArgs("MAXIMUM ITERATIONS", options.getArgs("PRESSURE MAXIMUM ITERATIONS"));
-    nrs->pOptions.setArgs("MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR",
-                          options.getArgs("PRESSURE MULTIGRID CHEBYSHEV MAX EIGENVALUE BOUND FACTOR"));
-    nrs->pOptions.setArgs("MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR",
-                          options.getArgs("PRESSURE MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR"));
 
     nrs->pSolver = new elliptic_t();
     nrs->pSolver->name = "pressure";
@@ -988,7 +880,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     platform->linAlg->ady(mesh->Nlocal, 1.0, nrs->o_ellipticCoeff);
     nrs->pSolver->o_lambda = nrs->o_ellipticCoeff;
     nrs->pSolver->loffset = 0; // not used 
-    nrs->pSolver->options = nrs->pOptions;
     {
       const std::vector<int> levels = determineMGLevels("pressure");
       nrs->pSolver->nLevels = levels.size();
@@ -1011,7 +902,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     if (options.compareArgs("MESH SOLVER", "ELASTICITY")) {
 
-      bool unalignedBoundary = bcMap::unalignedBoundary(mesh->cht, "mesh");
+      bool unalignedBoundary = bcMap::unalignedRobinBoundary("mesh");
       if (unalignedBoundary) {
         if (platform->comm.mpiRank == 0) {
           printf("ERROR: unaligned SYM/SHL boundary condition are currently not supported with the mesh "
@@ -1042,7 +933,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->meshSolver->fieldOffset = nrs->fieldOffset;
       nrs->meshSolver->o_wrk = o_mempoolElliptic;
       nrs->meshSolver->mesh = mesh;
-      nrs->meshSolver->options = nrs->mOptions;
       nrs->meshSolver->dim = nrs->dim;
       nrs->meshSolver->elementType = nrs->elementType;
       nrs->meshSolver->coeffField = meshCoeffField;

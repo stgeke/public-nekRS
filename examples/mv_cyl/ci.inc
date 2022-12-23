@@ -90,11 +90,11 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   }
   if(ciMode == 5)
   {
-    expectedVIter = 9; // no extrap
+    //expectedVIter = 9; // no extrap
   }
   if(ciMode == 6)
   {
-    expectedVIter = 9; // no extrap
+    //expectedVIter = 9; // no extrap
   }
 
   const dfloat absTol = 1e-8; // values below this threshold are ignored

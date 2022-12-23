@@ -237,6 +237,10 @@ set(SRC
     src/bdry/alignment.cpp
     src/core/registerNrsKernels.cpp
     src/core/registerPostProcessingKernels.cpp
+    src/core/registerEllipticKernels.cpp
+    src/core/registerEllipticPreconditionerKernels.cpp
+    src/core/registerCdsKernels.cpp
+    src/core/registerLinAlgKernels.cpp
     src/bdry/createEToBV.cpp
     src/navierStokes/applyDirichlet.cpp
     src/navierStokes/timeStepper.cpp
@@ -244,7 +248,6 @@ set(SRC
     src/navierStokes/tombo.cpp
     src/navierStokes/constantFlowRate.cpp
     src/cds/cdsSolve.cpp
-    src/cds/registerCdsKernels.cpp
     src/cds/subCycling.cpp
     src/setup/parReader.cpp
     src/setup/parseMultigridSchedule.cpp
@@ -262,7 +265,6 @@ set(SRC
     src/linAlg/matrixEig.cpp
     src/linAlg/matrixTranspose.cpp
     src/linAlg/matrixRightSolve.cpp
-    src/linAlg/registerLinAlgKernels.cpp
     src/plugins/tavg.cpp
     src/plugins/velRecycling.cpp
     src/plugins/RANSktau.cpp

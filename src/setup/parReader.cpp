@@ -1979,9 +1979,9 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     if (solver == "none") {
       options.setArgs("SCALAR" + sid + " SOLVER", "NONE");
     } else {
-
       options.setArgs("SCALAR" + sid + " KRYLOV SOLVER", "PCG");
       options.setArgs("SCALAR" + sid + " PRECONDITIONER", "JACOBI");
+      options.setArgs("SCALAR" + sid + " DISCRETIZATION", "CONTINUOUS");
       options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
       parseInitialGuess(rank, options, par, "temperature");
@@ -2052,7 +2052,6 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         options.setArgs("SCALAR" + sid + " MAXIMUM ITERATIONS", keyValue);
     }
 
-    options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
     {
       parseRegularization(rank, options, par, parScope);
@@ -2066,10 +2065,11 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     }
 
     options.setArgs("SCALAR" + sid + " KRYLOV SOLVER", "PCG");
+    options.setArgs("SCALAR" + sid + " PRECONDITIONER", "JACOBI");
+    options.setArgs("SCALAR" + sid + " DISCRETIZATION", "CONTINUOUS");
+    options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
     parseInitialGuess(rank, options, par, "scalar" + sid);
-
-    options.setArgs("SCALAR" + sid + " PRECONDITIONER", "JACOBI");
 
     parseSolverTolerance(rank, options, par, parScope);
 
@@ -2105,9 +2105,6 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         append_error("ERROR: boundaryTypeMap has to be defined for all fields");
       bcInPar = 0;
     }
-  }
-  if (nscal) {
-    options.setArgs("SCALAR DISCRETIZATION", "CONTINUOUS");
   }
 
   // check if dt is provided if numSteps or endTime > 0

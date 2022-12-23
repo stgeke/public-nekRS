@@ -606,7 +606,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
             nrs->uvwSolver->o_maskIds,
             platform->o_mempool.slice3,
             nrs->o_Uc);
-      if (bcMap::unalignedBoundary(mesh->cht, "velocity")) {
+      if (bcMap::unalignedRobinBoundary("velocity")) {
         applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Uc);
       }
     } else {

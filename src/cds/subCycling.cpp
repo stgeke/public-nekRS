@@ -33,7 +33,12 @@ occa::memory scalarSubCycleMovingMesh(cds_t *cds,
     dfloat time,
     int is,
     occa::memory o_U,
-    occa::memory o_S) {
+    occa::memory o_S) 
+{
+  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(scalarWidth) << is;
+  std::string sid = ss.str();
 
   linAlg_t *linAlg = platform->linAlg;
 
@@ -119,7 +124,7 @@ occa::memory scalarSubCycleMovingMesh(cds_t *cds,
         linAlg->aydx(cds->mesh[0]->Nlocal, 1.0, o_LMMe, o_u1);
 
         if (cds->meshV->NglobalGatherElements) {
-          if (cds->options[is].compareArgs("ADVECTION TYPE", "CUBATURE"))
+          if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
             cds->subCycleStrongCubatureVolumeKernel(cds->meshV->NglobalGatherElements,
                                                     cds->meshV->o_globalGatherElementList,
                                                     cds->meshV->o_cubDiffInterpT,
@@ -155,7 +160,7 @@ occa::memory scalarSubCycleMovingMesh(cds_t *cds,
             o_rhs, 1, cds->fieldOffset[is], ogsDfloat, ogsAdd, cds->gsh);
 
         if (cds->meshV->NlocalGatherElements) {
-          if (cds->options[is].compareArgs("ADVECTION TYPE", "CUBATURE"))
+          if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
             cds->subCycleStrongCubatureVolumeKernel(cds->meshV->NlocalGatherElements,
                                                     cds->meshV->o_localGatherElementList,
                                                     cds->meshV->o_cubDiffInterpT,
@@ -220,7 +225,13 @@ occa::memory scalarSubCycle(cds_t *cds,
     dfloat time,
     int is,
     occa::memory o_U,
-    occa::memory o_S) {
+    occa::memory o_S) 
+{
+  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(scalarWidth) << is;
+  std::string sid = ss.str();
+
   linAlg_t *linAlg = platform->linAlg;
 
   // Solve for Each SubProblem
@@ -280,7 +291,7 @@ occa::memory scalarSubCycle(cds_t *cds,
         }
 
         if (cds->meshV->NglobalGatherElements) {
-          if (cds->options[is].compareArgs("ADVECTION TYPE", "CUBATURE"))
+          if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
             cds->subCycleStrongCubatureVolumeKernel(
                 cds->meshV->NglobalGatherElements,
                 cds->meshV->o_globalGatherElementList,
@@ -327,7 +338,7 @@ occa::memory scalarSubCycle(cds_t *cds,
             o_rhs, 1, cds->fieldOffset[is], ogsDfloat, ogsAdd, cds->gsh);
 
         if (cds->meshV->NlocalGatherElements) {
-          if (cds->options[is].compareArgs("ADVECTION TYPE", "CUBATURE"))
+          if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
             cds->subCycleStrongCubatureVolumeKernel(
                 cds->meshV->NlocalGatherElements,
                 cds->meshV->o_localGatherElementList,

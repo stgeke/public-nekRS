@@ -1,3 +1,5 @@
+static const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+
 cds_t *cdsSetup(nrs_t *nrs, setupAide options)
 {
   const std::string section = "cds-";
@@ -60,7 +62,6 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   cds->prop = (dfloat *)calloc(2 * cds->fieldOffsetSum, sizeof(dfloat));
 
   for (int is = 0; is < cds->NSfields; is++) {
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(scalarWidth) << is;
     std::string sid = ss.str();
@@ -99,7 +100,6 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   cds->o_Urst = nrs->o_Urst;
 
   for (int is = 0; is < cds->NSfields; is++) {
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(scalarWidth) << is;
     std::string sid = ss.str();
@@ -112,35 +112,6 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
 
     mesh_t *mesh;
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0]; // only first scalar can be a CHT mesh
-
-    cds->options[is] = options;
-
-    cds->options[is].setArgs("REGULARIZATION RAMP CONSTANT",
-                             options.getArgs("SCALAR" + sid + " REGULARIZATION RAMP CONSTANT"));
-    cds->options[is].setArgs("REGULARIZATION AVM C0",
-                             options.getArgs("SCALAR" + sid + " REGULARIZATION AVM C0"));
-    cds->options[is].setArgs("REGULARIZATION METHOD",
-                             options.getArgs("SCALAR" + sid + " REGULARIZATION METHOD"));
-    cds->options[is].setArgs("REGULARIZATION VISMAX COEFF",
-                             options.getArgs("SCALAR" + sid + " REGULARIZATION VISMAX COEFF"));
-    cds->options[is].setArgs("REGULARIZATION SCALING COEFF",
-                             options.getArgs("SCALAR" + sid + " REGULARIZATION SCALING COEFF"));
-    cds->options[is].setArgs("HPFRT STRENGTH", options.getArgs("SCALAR" + sid + " HPFRT STRENGTH"));
-    cds->options[is].setArgs("HPFRT MODES", options.getArgs("SCALAR" + sid + " HPFRT MODES"));
-    cds->options[is].setArgs("KRYLOV SOLVER", options.getArgs("SCALAR" + sid + " KRYLOV SOLVER"));
-    cds->options[is].setArgs("PGMRES RESTART", options.getArgs("SCALAR" + sid + " PGMRES RESTART"));
-    cds->options[is].setArgs("DISCRETIZATION", options.getArgs("SCALAR DISCRETIZATION"));
-    cds->options[is].setArgs("BASIS", options.getArgs("SCALAR BASIS"));
-    cds->options[is].setArgs("PRECONDITIONER", options.getArgs("SCALAR" + sid + " PRECONDITIONER"));
-    cds->options[is].setArgs("SOLVER TOLERANCE", options.getArgs("SCALAR" + sid + " SOLVER TOLERANCE"));
-    cds->options[is].setArgs("LINEAR SOLVER STOPPING CRITERION",
-                             options.getArgs("SCALAR" + sid + " LINEAR SOLVER STOPPING CRITERION"));
-    cds->options[is].setArgs("INITIAL GUESS", options.getArgs("SCALAR" + sid + " INITIAL GUESS"));
-    cds->options[is].setArgs("RESIDUAL PROJECTION VECTORS",
-                             options.getArgs("SCALAR" + sid + " RESIDUAL PROJECTION VECTORS"));
-    cds->options[is].setArgs("RESIDUAL PROJECTION START",
-                             options.getArgs("SCALAR" + sid + " RESIDUAL PROJECTION START"));
-    cds->options[is].setArgs("MAXIMUM ITERATIONS", options.getArgs("SCALAR" + sid + " MAXIMUM ITERATIONS"));
 
     dfloat largeNumber = 1 << 20;
     cds->EToB[is] = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
@@ -159,11 +130,15 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   bool avmEnabled = false;
   {
     for (int is = 0; is < cds->NSfields; is++) {
-      if (!cds->options[is].compareArgs("REGULARIZATION METHOD", "NONE"))
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(scalarWidth) << is;
+      std::string sid = ss.str();
+
+      if (!options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "NONE"))
         scalarFilteringEnabled = true;
-      if (cds->options[is].compareArgs("REGULARIZATION METHOD", "HPF_RESIDUAL"))
+      if (options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "HPF_RESIDUAL"))
         avmEnabled = true;
-      if (cds->options[is].compareArgs("REGULARIZATION METHOD", "HIGHEST_MODAL_DECAY"))
+      if (options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "HIGHEST_MODAL_DECAY"))
         avmEnabled = true;
     }
   }
@@ -172,14 +147,19 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
     const dlong Nmodes = cds->mesh[0]->N + 1;
     cds->o_filterMT = platform->device.malloc(cds->NSfields * Nmodes * Nmodes, sizeof(dfloat));
     for (int is = 0; is < cds->NSfields; is++) {
-      if (cds->options[is].compareArgs("REGULARIZATION METHOD", "NONE"))
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(scalarWidth) << is;
+      std::string sid = ss.str();
+
+
+      if (options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "NONE"))
         continue;
       if (!cds->compute[is])
         continue;
       int filterNc = -1;
-      cds->options[is].getArgs("HPFRT MODES", filterNc);
+      options.getArgs("SCALAR" + sid + " HPFRT MODES", filterNc);
       dfloat filterS;
-      cds->options[is].getArgs("HPFRT STRENGTH", filterS);
+      options.getArgs("SCALAR" + sid + " HPFRT STRENGTH", filterS);
       filterS = -1.0 * fabs(filterS);
       cds->filterS[is] = filterS;
 

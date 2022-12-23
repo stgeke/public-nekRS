@@ -610,18 +610,28 @@ void remapUnalignedBoundaries(mesh_t *mesh)
   }
 }
 
-bool unalignedBoundary(bool cht, std::string field)
+bool unalignedRobinBoundary(std::string field)
 {
   int nid = nbid[0];
-  if (cht)
-    nid = nbid[1];
+
+  {
+    const int is = 0; // temperature
+    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(scalarWidth) << is;
+    std::string sid = ss.str();
+ 
+    if(field.find("scalar" + sid) != std::string::npos) {
+      nid = nbid[1];
+    }
+  }
 
   for (int bid = 1; bid <= nid; bid++) {
     int bcType = id(bid, field);
-    if (bcType == bcTypeSYM)
+    if (bcType == bcTypeSYM) // bcType will be automatically adjusted
       return true;
     if (bcType == bcTypeSHL)
-      return true;
+      return true; // always treat as unaligned
   }
 
   return false;

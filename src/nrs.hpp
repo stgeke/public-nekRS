@@ -49,7 +49,6 @@ struct nrs_t {
   int NVfields, NTfields;
   dlong fieldOffset;
   dlong cubatureOffset;
-  setupAide vOptions, pOptions, mOptions;
 
   int timeStepConverged;
 

@@ -27,15 +27,16 @@
 
 ## Known Bugs / Restrictions
 
-* Mesh solver does not support CHT and unaligned sym/shl BCs
+* Mesh solver does not support unaligned sym/shl BCs nor CHT
 * Poor performance of Schwarz smoother on CPUs
-* Poor performance of OIFS (advSub kernel) CPUs
+* Poor performance of OIFS (advSub kernel) on CPUs
+* shl and unaligned sym BCs are not supported in case of a non-zero Dirichlet for pressure
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
 * [258](https://github.com/Nek5000/nekRS/issues/258)
 
 ## Thanks to our Contributors
 
-@pwang234
+@pwang234, @kris-rowe
 
 We are grateful to all who added new features, filed issues or helped resolve them, 
 asked and answered questions, and were part of inspiring discussions.

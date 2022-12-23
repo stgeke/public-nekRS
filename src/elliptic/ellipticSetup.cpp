@@ -70,9 +70,28 @@ void checkConfig(elliptic_t* elliptic)
 }
 
 
+#define UPPER(a) transform(a.begin(), a.end(), a.begin(), [](int c){return std::toupper(c);});                                                              \
+
 void ellipticSolveSetup(elliptic_t* elliptic)
 {
-  mesh_t* mesh = elliptic->mesh;
+  if(elliptic->name.size() == 0) {
+    if(platform->comm.mpiRank == 0) printf("ERROR: empty elliptic solver name!");
+    ABORT(EXIT_FAILURE);
+  }
+
+  // create private options based on platform
+  for(auto& entry : platform->options.keyWordToDataMap) {
+    std::string prefix = elliptic->name;
+    UPPER(prefix);
+    if(entry.first.find(prefix) != std::string::npos) {
+      std::string key = entry.first;
+      key.erase(0,prefix.size()+1);
+      elliptic->options.setArgs(key, entry.second); 
+    }
+  }
+  if (platform->device.mode() == "Serial")
+    elliptic->options.setArgs("COARSE SOLVER LOCATION","CPU");
+
   setupAide& options = elliptic->options;
 
   const int verbose = options.compareArgs("VERBOSE","TRUE") ? 1:0;
@@ -80,6 +99,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   MPI_Barrier(platform->comm.mpiComm);
   const double tStart = MPI_Wtime();
 
+  mesh_t* mesh = elliptic->mesh;
   const dlong Nlocal = mesh->Np * mesh->Nelements;
 
   checkConfig(elliptic);

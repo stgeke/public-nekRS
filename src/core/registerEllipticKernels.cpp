@@ -1,5 +1,4 @@
 #include <compileKernels.hpp>
-#include "elliptic.h"
 #include "re2Reader.hpp"
 #include "benchmarkAx.hpp"
 

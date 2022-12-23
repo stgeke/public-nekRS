@@ -21,7 +21,7 @@ void meshSolve(nrs_t* nrs, dfloat time, occa::memory o_U, int stage)
 
     platform->linAlg->fill(nrs->NVfields*nrs->fieldOffset, 0, platform->o_mempool.slice3);
 
-    const occa::memory& o_U0 = nrs->meshSolver->options.compareArgs("INITIAL GUESS", "EXTRAPOLATION") && stage == 1 ?   
+    const occa::memory& o_U0 = platform->options.compareArgs("MESH INITIAL GUESS", "EXTRAPOLATION") && stage == 1 ?   
                                mesh->o_Ue : mesh->o_U;
     platform->o_mempool.slice0.copyFrom(o_U0, nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
     ellipticSolve(nrs->meshSolver, platform->o_mempool.slice3, platform->o_mempool.slice0);

@@ -153,7 +153,9 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
     platform->o_mempool.slice0);
   flopCount += static_cast<double>(mesh->Nelements) * (6 * mesh->Np * mesh->Nq + 18 * mesh->Np);
 
-  const bool weakPressure = true;
+  bool weakPressure = true;
+  if(bcMap::unalignedRobinBoundary("velocity")) weakPressure = false;
+
   if(weakPressure) {
     nrs->wgradientVolumeKernel(
       mesh->Nelements,
@@ -219,14 +221,8 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
   platform->o_mempool.slice0.copyFrom(nrs->o_U, nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
 
   occa::memory o_U0;
-  if(nrs->uvwSolver) 
-    o_U0 = nrs->uvwSolver->options.compareArgs("INITIAL GUESS", "EXTRAPOLATION") && stage == 1 ? 
-           nrs->o_Ue : nrs->o_U;
-  else
-    o_U0 = (nrs->uSolver->options.compareArgs("INITIAL GUESS", "EXTRAPOLATION")   || 
-            nrs->vSolver->options.compareArgs("INITIAL GUESS", "EXTRAPOLATION")   || 
-            nrs->wSolver->options.compareArgs("INITIAL GUESS", "EXTRAPOLATION"))  && stage == 1 ? 
-            nrs->o_Ue : nrs->o_U;
+  o_U0 = platform->options.compareArgs("VELOCITY INITIAL GUESS", "EXTRAPOLATION") && stage == 1 ? 
+         nrs->o_Ue : nrs->o_U;
 
   platform->o_mempool.slice0.copyFrom(o_U0, nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
 

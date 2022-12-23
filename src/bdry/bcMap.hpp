@@ -33,7 +33,7 @@ void check(mesh_t* mesh);
 void setBcMap(std::string field, int* map, int nbid);
 void checkBoundaryAlignment(mesh_t *mesh);
 void remapUnalignedBoundaries(mesh_t *mesh);
-bool unalignedBoundary(bool cht, std::string field);
+bool unalignedRobinBoundary(std::string field);
 void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs);
 bool useDerivedMeshBoundaryConditions();
 }

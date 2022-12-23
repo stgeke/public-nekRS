@@ -25,8 +25,6 @@ struct cds_t
   int NVfields;            // Number of velocity fields
   int NSfields;            // Number of scalar fields
 
-  setupAide options[NSCALAR_MAX];
-
   oogs_t *gsh, *gshT;
 
   dlong vFieldOffset;

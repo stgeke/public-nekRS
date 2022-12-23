@@ -42,7 +42,6 @@ SOFTWARE.
 
 class setupAide {
 private:
-  std::map<std::string, std::string> keyWordToDataMap;
 
 public:
   setupAide(){};
@@ -50,6 +49,8 @@ public:
 
   setupAide(const setupAide&) = default;
   setupAide& operator=(const setupAide&) = default;
+
+  std::map<std::string, std::string> keyWordToDataMap;
 
   std::string getArgs(std::string) const;
 

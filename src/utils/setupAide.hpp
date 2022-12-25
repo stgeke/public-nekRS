@@ -68,6 +68,9 @@ public:
 
   int compareArgs(std::string key, std::string token) const;
 
+  auto begin() const { return keyWordToDataMap.begin(); }
+  auto end() const { return keyWordToDataMap.end(); }
+
   friend std::ostream & operator << (std::ostream &out, const setupAide &aide);  
 };
 

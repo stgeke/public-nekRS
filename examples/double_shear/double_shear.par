@@ -3,6 +3,7 @@ numSteps = 2000
 polynomialOrder = 5
 dt = 1e-03
 timeStepper = tombo2
+nScalars=3
 
 [PRESSURE]
 residualTol = 1e-08
@@ -18,21 +19,17 @@ rhocp = 1
 conductivity = -100000
 regularization=none
 
-[SCALAR01]
+[SCALAR]
 residualTol = 1e-8
 rho = 1
 diffusivity = -100000
+
+[SCALAR01]
 regularization=none
 
 [SCALAR02]
-residualTol = 1e-8
-rho = 1
-diffusivity = -100000
 regularization=avm+c0+highestModalDecay+scalingCoeff=0.5+rampconstant=1
 
 [SCALAR03]
-residualTol = 1e-8
 initialGuess = projectionAconj+nVector=3
-rho = 1
-diffusivity = -100000
 regularization=avm+c0+hpfResidual+nmodes=1+scalingCoeff=1.0

@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <vector>
 #include <limits>
+#include <optional>
 
 #include "inipp.hpp"
 #include "tinyexpr.h"
@@ -30,8 +31,11 @@ static std::string mapTemperatureToScalarString()
   std::string sid = ss.str();
   return "scalar" + sid;
 }
-int parseScalarIntegerFromString(const std::string &scalarString)
+std::optional<int> parseScalarIntegerFromString(const std::string &scalarString)
 {
+  if (scalarString == std::string("scalar"))
+    return {};
+
   if (scalarString.length() > std::string("scalar").length()) {
     const auto numString = scalarString.substr(std::string("scalar").length());
 
@@ -39,14 +43,15 @@ int parseScalarIntegerFromString(const std::string &scalarString)
       return std::stoi(numString);
     }
     catch (std::invalid_argument &e) {
-      std::cout << "Hit an invalid_argument error. It said\n" << e.what() << "\n";
+      std::cout << "Hit an invalid_argument error for scalarString=\"" << scalarString << "\". It said\n"
+                << e.what() << "\n";
       ABORT(EXIT_FAILURE);
-      return 0;
+      return {};
     }
   }
   else {
     ABORT(EXIT_FAILURE);
-    return 0;
+    return {};
   }
 }
 std::string parPrefixFromParSection(const std::string &parSection)
@@ -61,10 +66,15 @@ std::string parPrefixFromParSection(const std::string &parSection)
     const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
     const auto is = parseScalarIntegerFromString(parSection);
 
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
-    return "scalar" + sid + " ";
+    if (is) {
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(scalarWidth) << is.value();
+      std::string sid = ss.str();
+      return "scalar" + sid + " ";
+    }
+    else {
+      return "scalar default ";
+    }
   }
   return parSection + std::string(" ");
 }
@@ -113,27 +123,28 @@ static bool enforceLowerCase = false;
 
 static std::vector<std::string> nothing = {};
 static std::vector<std::string> generalKeys = {
-  {"dt"},
-  {"endTime"},
-  {"numSteps"},
-  {"polynomialOrder"},
-  {"dealiasing"},
-  {"cubaturePolynomialOrder"},
-  {"startFrom"},
-  {"stopAt"},
-  {"elapsedtime"},
-  {"timestepper"},
-  {"subCyclingSteps"},
-  {"subCycling"},
-  {"writeControl"},
-  {"writeInterval"},
-  {"constFlowRate"},
-  {"verbose"},
-  {"variableDT"},
+    {"dt"},
+    {"endTime"},
+    {"numSteps"},
+    {"polynomialOrder"},
+    {"dealiasing"},
+    {"cubaturePolynomialOrder"},
+    {"startFrom"},
+    {"stopAt"},
+    {"elapsedtime"},
+    {"timestepper"},
+    {"subCyclingSteps"},
+    {"subCycling"},
+    {"writeControl"},
+    {"writeInterval"},
+    {"constFlowRate"},
+    {"verbose"},
+    {"variableDT"},
+    {"nScalars"}, // sans temperature
 
-  {"oudf"},
-  {"udf"},
-  {"usr"},
+    {"oudf"},
+    {"udf"},
+    {"usr"},
 
 };
 
@@ -309,13 +320,15 @@ int validateKeys(const inipp::Ini::Sections& sections)
 
     bool isScalar = sec.first.find("scalar") != std::string::npos;
     if (isScalar) {
-      const int scalarNumber = parseScalarIntegerFromString(sec.first);
-      if (scalarNumber >= NSCALAR_MAX) {
-        std::ostringstream error;
-        error << "ERROR: specified " << scalarNumber << " scalars, while the maximum allowed is "
-              << NSCALAR_MAX << "\n";
-        append_error(error.str());
-        err++;
+      const auto scalarNumber = parseScalarIntegerFromString(sec.first);
+      if (scalarNumber) {
+        if (scalarNumber.value() >= NSCALAR_MAX) {
+          std::ostringstream error;
+          error << "ERROR: specified " << scalarNumber.value() << " scalars, while the maximum allowed is "
+                << NSCALAR_MAX << "\n";
+          append_error(error.str());
+          err++;
+        }
       }
     }
 
@@ -1359,6 +1372,21 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     append_error("cannot find mandatory parameter GENERAL::polynomialOrder");
   }
 
+  // optional nScalar setting, not including temperature
+  auto optionalNscalar = [par]() -> std::optional<int> {
+    int nScalar = 0;
+    if (par->extract("general", "nscalars", nScalar)) {
+      if (nScalar < 0) {
+        std::ostringstream error;
+        error << "nScalar must be non-negative, but is " << nScalar << "\n";
+        append_error(error.str());
+      }
+      return nScalar;
+    }
+
+    return {};
+  }();
+
   // udf file
   {
     std::string udfFile;
@@ -1950,7 +1978,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   // MESH
 
   // SCALARS
-  int nscal = 0;
+  int nscal = optionalNscalar ? optionalNscalar.value() : 0;
   int isStart = 0;
 
   const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
@@ -2023,27 +2051,52 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
   const auto sections = par->sections;
 
-  for (auto &sec : par->sections) {
-    std::string key = sec.first;
-    if (key.compare(0, 6, "scalar") == 0)
-      nscal++;
+  // optionalNscalar <-> [scalar] section
+  if (optionalNscalar) {
+    // check that generic [SCALAR] section exists
+    if (sections.count("scalar") == 0) {
+      append_error("ERROR: [scalar] section is required when generic::nscalars is specified");
+    }
+  }
+  else {
+    for (auto &sec : par->sections) {
+      std::string key = sec.first;
+      if (key.compare(0, 6, "scalar") == 0)
+        nscal++;
+    }
   }
   options.setArgs("NUMBER OF SCALARS", std::to_string(nscal));
-  for (auto &&sec : sections) {
+
+  auto parseScalarParSection = [&](const auto &sec) {
     const auto parScope = sec.first;
     if (parScope.compare(0, 6, "scalar") != 0)
-      continue;
+      return;
 
     const auto is = parseScalarIntegerFromString(parScope);
 
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
-    std::string sidPar = sid;
-    if (isStart == 0) {
+    std::string sid, sidPar;
+    if (is) {
+
+      if (optionalNscalar) {
+        if (is.value() > optionalNscalar.value()) {
+          append_error("ERROR: scalar index " + std::to_string(is.value()) +
+                       " is larger than general::nscalar=" + std::to_string(optionalNscalar.value()));
+        }
+      }
+
       std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is + 1;
-      sidPar = ss.str();
+      ss << std::setfill('0') << std::setw(scalarWidth) << is.value();
+      sid = ss.str();
+      sidPar = sid;
+      if (isStart == 0) {
+        std::stringstream ss;
+        ss << std::setfill('0') << std::setw(scalarWidth) << is.value() + 1;
+        sidPar = ss.str();
+      }
+    }
+    else {
+      sid = " DEFAULT";
+      sidPar = "scalar";
     }
 
     {
@@ -2061,7 +2114,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     par->extract(parScope, "solver", solver);
     if (solver == "none") {
       options.setArgs("SCALAR" + sid + " SOLVER", "NONE");
-      continue;
+      return;
     }
 
     options.setArgs("SCALAR" + sid + " KRYLOV SOLVER", "PCG");
@@ -2069,7 +2122,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     options.setArgs("SCALAR" + sid + " DISCRETIZATION", "CONTINUOUS");
     options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
-    parseInitialGuess(rank, options, par, "scalar" + sid);
+    parseInitialGuess(rank, options, par, parScope);
 
     parseSolverTolerance(rank, options, par, parScope);
 
@@ -2100,11 +2153,72 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       sList = serializeString(s_bcMap, ',');
       bcMap::setup(sList, "scalar" + sid);
     }
+    else if (!is || optionalNscalar) {
+      // do not throw if generic [SCALAR] section _or_ [SCALAR0X] with a generic [SCALAR] section specifying
+      // the boundary conditions
+    }
     else {
       if (bcInPar)
         append_error("ERROR: boundaryTypeMap has to be defined for all fields");
       bcInPar = 0;
     }
+  };
+
+  // If applicable, read default section first.
+  if (sections.count("scalar") != 0) {
+    parseScalarParSection(std::make_pair(std::string("scalar"), sections.at("scalar")));
+  }
+
+  // For all scalars != temperature, set defaults from generic [SCALAR] section.
+  // All SCALAR_DEFAULT <...> options are transferred to SCALAR{is} <...>
+  const std::string defaultSettingStr = "SCALAR DEFAULT ";
+  for (int is = 1; is < nscal; ++is) {
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(scalarWidth) << is;
+    std::string sid = ss.str();
+    const auto options_ = options;
+    for (auto [keyWord, value] : options_) {
+      auto delPos = keyWord.find(defaultSettingStr);
+      if (delPos != std::string::npos) {
+        auto newKey = keyWord;
+        newKey.erase(delPos, defaultSettingStr.size());
+        options.setArgs("SCALAR" + sid + " " + newKey, value);
+      }
+    }
+  }
+
+  // However, the user is always able to override the generic [SCALAR] settings.
+  for (auto &&sec : sections) {
+    parseScalarParSection(sec);
+  }
+
+  // Add in boundarytypemap handling for scalars using the default [SCALAR] settings.
+  if (sections.count("scalar") != 0) {
+    std::string s_bcMap;
+    if (bcInPar) {
+      std::vector<std::string> sList;
+      if (par->extract("scalar", "boundarytypemap", s_bcMap)) {
+        sList = serializeString(s_bcMap, ',');
+      }
+      for (int is = 1; is < nscal; ++is) {
+        std::stringstream ss;
+        ss << std::setfill('0') << std::setw(scalarWidth) << is;
+        std::string sid = ss.str();
+        std::string dummy;
+        if (!par->extract("scalar" + sid, "boundarytypemap", dummy)) {
+          if (sList.size() > 0) {
+            bcMap::setup(sList, "scalar" + sid);
+          }
+          else {
+            append_error("ERROR: boundaryTypeMap has to be defined for all fields");
+          }
+        }
+      }
+    }
+  }
+
+  if (nscal) {
+    options.setArgs("SCALAR DISCRETIZATION", "CONTINUOUS");
   }
 
   // check if dt is provided if numSteps or endTime > 0
@@ -2143,4 +2257,13 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
     if(length > 0) ABORT(EXIT_FAILURE);
   }
+
+#if 0
+  if (rank == 0) {
+    std::cout << "Options are:\n";
+    std::cout << "====================\n";
+    std::cout << options << "\n";
+    std::cout << "====================\n";
+  }
+#endif
 }

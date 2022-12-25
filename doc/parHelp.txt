@@ -57,6 +57,10 @@ udf                         "<string>"                                 name of .
 oudf                        "<string>"                                 name of .oudf file
 
 usr                i        "<string>"                                 name of .usr file
+
+nScalars                    <int>                                      number of non-temperature scalars
+                                                                       by default, the scalars will have the settings
+                                                                       as outlined by the default [SCALAR] section
 ----------------------------------------------------------------------------------------------------------------------
 [PROBLEMTYPE]
 equation                    stokes, navierStokes [D]
@@ -154,6 +158,14 @@ viscosity                   <float>                                    dynamic v
 rhoCp                       <float>                                    rho*Cp 
 
 conductivity                <float>                                    thermal conductivity 
+----------------------------------------------------------------------------------------------------------------------
+[SCALAR]                                                               default scalar section, see general::nScalars
+                                                                       all non-temperature scalars will have settings
+                                                                       as set from this section, unless explicitly overriden
+
+rho                         <float>                                    density
+
+diffusivity                 <float>                                    diffusivity 
 ----------------------------------------------------------------------------------------------------------------------
 [SCALAR01]
 

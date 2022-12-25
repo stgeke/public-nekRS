@@ -81,6 +81,12 @@ bool Ini::extract(const std::string & key,
 {
   auto lowerCaseKey = toLowerCase(key);
   auto lowerCaseValue = toLowerCase(value);
+
+  // section does not exist
+  if (sections.count(lowerCaseKey) == 0) {
+    return false;
+  }
+
   if (sections[lowerCaseKey].count(lowerCaseValue)) {
     dst = sections[lowerCaseKey][lowerCaseValue];
     return true;

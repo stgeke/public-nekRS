@@ -403,18 +403,18 @@ void processUpdFile()
   long fsize = 0;
 
   if (rank == 0) {
-    const std::string cmdFile = "nekrs.upd";
-    const char* ptr = realpath(cmdFile.c_str(), NULL);
+    const std::string updFile = "nekrs.upd";
+    const char* ptr = realpath(updFile.c_str(), NULL);
     if (ptr) {
-      if(rank == 0) std::cout << "processing " << cmdFile << " ...\n";
-      FILE* f = fopen(cmdFile.c_str(), "rb");
+      if(rank == 0) std::cout << "processing " << updFile << " ...\n";
+      FILE* f = fopen(updFile.c_str(), "rb");
       fseek(f, 0, SEEK_END);
       fsize = ftell(f);
       fseek(f, 0, SEEK_SET);
       rbuf = new char[fsize];
       fread(rbuf, 1, fsize, f);
       fclose(f);
-      remove(cmdFile.c_str());
+      remove(updFile.c_str());
     }
   }
   MPI_Bcast(&fsize, sizeof(fsize), MPI_BYTE, 0, comm);

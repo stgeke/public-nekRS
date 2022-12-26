@@ -176,10 +176,10 @@ c-----------------------------------------------------------------------
       call initdat
       call files
 
-      ls = ltrunc(PATH,132)
-      call chcopy(re2fle1(ls+1),mesh_in,len(mesh_in))
-      ls = ltrunc(PATH,132) + len(mesh_in)
-      call blank(re2fle1(ls+1),132-ls)
+      lp = 0 !ltrunc(PATH,132)
+      call chcopy(re2fle1(lp+1),mesh_in,len(mesh_in))
+      ls = lp + len(mesh_in)
+      call blank(re2fle1(ls+1),len(re2fle)-ls)
 
       return
       end

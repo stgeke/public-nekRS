@@ -60,8 +60,6 @@ void meshConnectFaceNodes3D(mesh_t *mesh)
 {
   /* volume indices of the interior and exterior face nodes for each element */
   mesh->vmapM = (dlong*) calloc(mesh->Nfp * mesh->Nfaces * mesh->Nelements, sizeof(dlong));
-  mesh->vmapP = (dlong*) calloc(mesh->Nfp * mesh->Nfaces * mesh->Nelements, sizeof(dlong));
-  mesh->mapP  = (dlong*) calloc(mesh->Nfp * mesh->Nfaces * mesh->Nelements, sizeof(dlong));
 
   /* assume elements already connected */
   for(dlong e = 0; e < mesh->Nelements; ++e)
@@ -78,19 +76,9 @@ void meshConnectFaceNodes3D(mesh_t *mesh)
         dfloat xM = mesh->x[idM];
         dfloat yM = mesh->y[idM];
         dfloat zM = mesh->z[idM];
-        int nP;
-
-        int idP = findBestMatch(xM, yM, zM,
-                                mesh->Nfp,
-                                mesh->faceNodes + fP * mesh->Nfp,
-                                mesh->x + eP * mesh->Np,
-                                mesh->y + eP * mesh->Np,
-                                mesh->z + eP * mesh->Np, &nP);
 
         dlong id = mesh->Nfaces * mesh->Nfp * e + f * mesh->Nfp + n;
         mesh->vmapM[id] = idM;
-        mesh->vmapP[id] = idP + eP * mesh->Np;
-        mesh->mapP[id] = eP * mesh->Nfaces * mesh->Nfp + fP * mesh->Nfp + nP;
       }
     }
 }

@@ -150,8 +150,6 @@ struct mesh_t
   int Nfp;        // number of nodes per face
   int* faceNodes; // list of element reference interpolation nodes on element faces
   dlong* vmapM;     // list of volume nodes that are face nodes
-  dlong* vmapP;     // list of volume nodes that are paired with face nodes
-  dlong* mapP;     // list of surface nodes that are paired with -ve surface  nodes
   int* faceVertices; // list of mesh vertices on each face
 
   dlong Nsgeo;

@@ -365,7 +365,7 @@ mesh_t *createMeshV(
   mesh->ggeo = meshT->ggeo;
 
   // connect face nodes (find trace indices)
-  // find vmapM, vmapP, mapP based on EToE and EToF
+  // find vmapM, based on EToE and EToF
   meshConnectFaceNodes3D(mesh);
 
   // meshGlobalIds(mesh);
@@ -450,9 +450,6 @@ void meshVOccaSetup3D(mesh_t* mesh, occa::properties &kernelInfo)
   mesh->o_vmapM =
     platform->device.malloc(mesh->Nelements * mesh->Nfp * mesh->Nfaces * sizeof(dlong),
                         mesh->vmapM);
-  mesh->o_vmapP =
-    platform->device.malloc(mesh->Nelements * mesh->Nfp * mesh->Nfaces * sizeof(dlong),
-                        mesh->vmapP);
   mesh->o_invLMM =
     platform->device.malloc(mesh->Nelements * mesh->Np ,  sizeof(dfloat));
 }

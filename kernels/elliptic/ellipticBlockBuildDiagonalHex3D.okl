@@ -106,7 +106,7 @@
             r_q += gwJ * lambda_1;
 #endif
 
-            Aq[id + l * offset] = (pfloat)r_q;
+            Aq[id + l * offset] = r_q;
           }
         }
       }

@@ -154,7 +154,6 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
   flopCount += static_cast<double>(mesh->Nelements) * (6 * mesh->Np * mesh->Nq + 18 * mesh->Np);
 
   bool weakPressure = true;
-  if(bcMap::unalignedRobinBoundary("velocity")) weakPressure = false;
 
   if(weakPressure) {
     nrs->wgradientVolumeKernel(

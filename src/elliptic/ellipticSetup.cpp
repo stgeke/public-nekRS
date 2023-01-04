@@ -49,14 +49,13 @@ void checkConfig(elliptic_t* elliptic)
     err++;
   } 
 
-  if (elliptic->blockSolver &&  
-      !options.compareArgs("PRECONDITIONER","JACOBI")) {
+  if (elliptic->blockSolver && options.compareArgs("PRECONDITIONER","MULTIGRID")) { 
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: Block solver only supports Jacobi preconditioner\n");
+      printf("ERROR: Block solver does not support multigrid preconditioner\n");
     err++;
   }
 
-  if (options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
+  if (options.compareArgs("PRECONDITIONER","MULTIGRID")) {
     if (elliptic->poisson == 0) {
       if(platform->comm.mpiRank == 0)
         printf("ERROR: Multigrid preconditioner only supports Poisson type equations\n");

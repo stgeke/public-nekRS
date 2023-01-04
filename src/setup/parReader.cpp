@@ -842,7 +842,7 @@ void parsePreconditioner(const int rank, setupAide &options,
   const bool mg = p_preconditioner.find("pmg") != std::string::npos ||
                   p_preconditioner.find("multigrid") != std::string::npos;
 
-  if (p_preconditioner == "none") {
+  if (p_preconditioner.find("none") != std::string::npos) {
     options.setArgs(parSection + " PRECONDITIONER", "NONE");
   } else if (p_preconditioner.find("jac") != std::string::npos) {
     options.setArgs(parSection + " PRECONDITIONER", "JACOBI");
@@ -1188,7 +1188,7 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
 
   options.setArgs("START TIME", "0.0");
 
-  options.setArgs("VELOCITY MAXIMUM ITERATIONS", "200");
+  options.setArgs("VELOCITY MAXIMUM ITERATIONS", "2000");
   options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
   options.setArgs("VELOCITY KRYLOV SOLVER", "PCG");
   options.setArgs("VELOCITY PRECONDITIONER", "JACOBI");
@@ -1920,6 +1920,8 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
     parseInitialGuess(rank, options, par, "velocity");
 
+    parsePreconditioner(rank, options, par, "velocity");
+
     if(par->extract("velocity", "solver", vsolver)){
       const std::vector<std::string> validValues = {
         {"none"},
@@ -2013,6 +2015,8 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
       parseInitialGuess(rank, options, par, "temperature");
+
+      parsePreconditioner(rank, options, par, "temperature");
 
       parseSolverTolerance(rank, options, par, "temperature");
 
@@ -2123,6 +2127,8 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     options.setArgs("SCALAR" + sid + " ELLIPTIC COEFF FIELD", "TRUE");
 
     parseInitialGuess(rank, options, par, parScope);
+
+    parsePreconditioner(rank, options, par, parScope);
 
     parseSolverTolerance(rank, options, par, parScope);
 

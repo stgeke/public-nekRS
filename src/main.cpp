@@ -76,7 +76,9 @@
 #include <sstream>
 #include <fcntl.h>
 #include <chrono>
+#if 0
 #include <filesystem>
+#endif
 
 #include "nekrs.hpp"
 
@@ -190,7 +192,8 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
       }
     }
 
-    if(cmdOpt->setupFile.empty()){
+#if 0
+    if(cmdOpt->setupFile.empty() && cmdOpt->multiSessionFile.empty()){
       int cnt = 0;
       for (auto &p : std::filesystem::directory_iterator{"."})
       {
@@ -204,6 +207,8 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         err++; 
       }
     }
+#endif
+
   }
 
   char buf[FILENAME_MAX];

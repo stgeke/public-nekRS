@@ -39,7 +39,7 @@ static void (* nek_uf_ptr)(double*, double*, double*);
 static int (* nek_lglel_ptr)(int*);
 static void (* nek_bootstrap_ptr)(int*, char*, char*, char*, int, int, int);
 static void (
-    *nek_setup_ptr)(int *, int *, int *, int *, double *, double *, double *, double *, double *, int *);
+    *nek_setup_ptr)(int *, int *, int *, int *, int *, double *, double *, double *, double *, double *, int *);
 static void (* nek_ifoutfld_ptr)(int*);
 static void (* nek_setics_ptr)(void);
 static int (* nek_bcmap_ptr)(int*, int*,int*);
@@ -283,7 +283,7 @@ void set_usr_handles(const char* session_in,int verbose)
     (void (*)(int*, char*, char*, char*, int, int, int))dlsym(handle, fname("nekf_bootstrap"));
   check_error(dlerror());
   nek_setup_ptr =
-      (void (*)(int *, int *, int *, int *, double *, double *, double *, double *, double *, int *))
+      (void (*)(int *, int *, int *, int *, int *, double *, double *, double *, double *, double *, int *))
           dlsym(handle, fname("nekf_setup"));
   check_error(dlerror());
   nek_uic_ptr = (void (*)(int*))dlsym(handle, fname("nekf_uic"));
@@ -543,7 +543,7 @@ void buildNekInterface(int ldimt, int N, int np, setupAide& options)
       if(recompile) {
         const double tStart = MPI_Wtime();
         const std::string pipeToNull = (rank == 0) ? std::string("") :  std::string(">/dev/null 2>&1");
-	    const std::string include_dirs = "./ " + case_dir;
+	const std::string include_dirs = "./ " + case_dir + " " + installDir + "/include/bdry";
         std::string make_args = "-j8 "; 
         if(!verbose) make_args += "-s "; 
         if(rank == 0) 
@@ -562,12 +562,12 @@ void buildNekInterface(int ldimt, int N, int np, setupAide& options)
              cache_dir.c_str(), 
              nek5000_dir.c_str(),
              make_args.c_str(), 
-		     nek5000_dir.c_str(), 
-		     include_dirs.c_str(), 
-		     usrname.c_str(), 
-		     cache_dir.c_str(), 
+	     nek5000_dir.c_str(), 
+	     include_dirs.c_str(), 
+	     usrname.c_str(), 
+	     cache_dir.c_str(), 
              nekInterface_dir.c_str(), 
-		     pipeToNull.c_str());
+	     pipeToNull.c_str());
         if(verbose && rank == 0) printf("\n%s\n", buf);
         if(system(buf)) return EXIT_FAILURE;
         fileSync(libFile);
@@ -665,8 +665,23 @@ int setup(nrs_t* nrs_in)
   std::string casename;
   options->getArgs("CASENAME", casename);
 
-  int nscal = 0;
+  int nscal;
   options->getArgs("NUMBER OF SCALARS", nscal);
+  int nscalSolve = nscal;
+  auto scalarCompute = (int *) calloc(nscal, sizeof(int));
+  {
+    int cnt = 0;
+    for(int is = 0; is < nscal; is++) {
+      std::stringstream ss;
+      static const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
+      ss << std::setfill('0') << std::setw(scalarWidth) << is;
+      std::string sid = ss.str();
+      if (options->compareArgs("SCALAR" + sid + " SOLVER", "NONE")) {
+        scalarCompute[is] = -1;     
+        nscalSolve--;
+      }
+    }
+  }
 
   std::string velocitySolver;
   int flow = 1;
@@ -679,9 +694,9 @@ int setup(nrs_t* nrs_in)
   double meshConTol = 0.2;
   options->getArgs("MESH CONNECTIVITY TOL", meshConTol);
 
-  int nBcRead = 1;
+  int nBcRead = 1; // at the very least we have to read the boundaryIDs
   if (bcMap::useNekBCs())
-    nBcRead = flow + nscal;
+    nBcRead += nscalSolve;
 
   dfloat rho;
   options->getArgs("DENSITY", rho);
@@ -699,6 +714,7 @@ int setup(nrs_t* nrs_in)
 
   (*nek_setup_ptr)(&flow,
                    &nscal,
+                   scalarCompute,
                    &nBcRead,
                    &meshPartType,
                    &meshConTol,
@@ -787,6 +803,9 @@ int setup(nrs_t* nrs_in)
       std::stringstream ss;
       ss << std::setfill('0') << std::setw(getDigitsRepresentation(NSCALAR_MAX - 1)) << is;
       std::string sid = ss.str();
+
+      if (options->compareArgs("SCALAR" + sid + " SOLVER", "NONE"))
+        continue;
 
       int isTMesh = 0;
       if (cht && is == 0) isTMesh = 1;

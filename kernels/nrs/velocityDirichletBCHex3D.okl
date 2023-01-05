@@ -52,17 +52,32 @@
         const dlong bcType = EToB[f + p_Nfaces * e];
 
         if (bcType > 0) {
-          if (bcType == p_bcTypeSYM || bcType == p_bcTypeSHL) {
-            // handled elsewhere...
+          if (bcType == p_bcTypeONX) {
+            UH[idM + 1 * offset] = 0.0;
+            UH[idM + 2 * offset] = 0.0;
           }
-          else if (bcType == p_bcTypeSYMX) {
+          else if (bcType == p_bcTypeONY) {
             UH[idM + 0 * offset] = 0.0;
+            UH[idM + 2 * offset] = 0.0;
           }
-          else if (bcType == p_bcTypeSYMY) {
+          else if (bcType == p_bcTypeONZ) {
+            UH[idM + 0 * offset] = 0.0;
             UH[idM + 1 * offset] = 0.0;
           }
-          else if (bcType == p_bcTypeSYMZ) {
+          else if (bcType == p_bcTypeON) {
+            // handled in ellipticApplyMask
+          }
+          else if (bcType == p_bcTypeSYMX || bcType == p_bcTypeSHLX) {
+            UH[idM + 0 * offset] = 0.0;
+          }
+          else if (bcType == p_bcTypeSYMY || bcType == p_bcTypeSHLY) {
+            UH[idM + 1 * offset] = 0.0;
+          }
+          else if (bcType == p_bcTypeSYMZ || bcType == p_bcTypeSHLZ) {
             UH[idM + 2 * offset] = 0.0;
+          }
+          else if (bcType == p_bcTypeSYM || bcType == p_bcTypeSHL) {
+            // handled in ellipticApplyMask
           }
         }
       }

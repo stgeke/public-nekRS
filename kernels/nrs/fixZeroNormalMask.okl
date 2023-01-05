@@ -45,10 +45,6 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
 
         if (bcType == p_ZERO_NORMAL) {
 
-          const dfloat nx = sgeo[sid * p_Nsgeo + p_NXID];
-          const dfloat ny = sgeo[sid * p_Nsgeo + p_NYID];
-          const dfloat nz = sgeo[sid * p_Nsgeo + p_NZID];
-
           dfloat volNx = normal[idM + 0 * offset];
           dfloat volNy = normal[idM + 1 * offset];
           dfloat volNz = normal[idM + 2 * offset];
@@ -67,6 +63,10 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
 
           const dfloat tol = 1e-4;
           if (fabs(1.0 - volNMag) > tol) {  // finite angle between two p_ZERO_NORMAL faces
+
+            const dfloat nx = sgeo[sid * p_Nsgeo + p_NXID];
+            const dfloat ny = sgeo[sid * p_Nsgeo + p_NYID];
+            const dfloat nz = sgeo[sid * p_Nsgeo + p_NZID];
 
             const dfloat t1x = sgeo[sid * p_Nsgeo + p_T1XID];
             const dfloat t1y = sgeo[sid * p_Nsgeo + p_T1YID];

@@ -201,7 +201,7 @@ occa::memory velocitySolve(nrs_t* nrs, dfloat time, int stage)
                                nrs->o_rho,
                                nrs->o_mue,
                                nrs->o_usrwrk,
-                               nrs->o_U,
+                               nrs->o_Ue,
                                platform->o_mempool.slice0);
 
   flopCount += static_cast<double>(mesh->Nelements) * (3 * mesh->Np + 36 * mesh->Nq * mesh->Nq);

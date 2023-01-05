@@ -121,7 +121,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   if(!_backend.empty()) options.setArgs("THREAD MODEL", _backend);
   if(!_deviceID.empty()) options.setArgs("DEVICE NUMBER", _deviceID);
 
-  // setup device (requires THREAD MODEL)
+  // setup platform (requires THREAD MODEL)
   platform_t* _platform = platform_t::getInstance(options, commg, comm);
   platform = _platform;
   platform->par = par;

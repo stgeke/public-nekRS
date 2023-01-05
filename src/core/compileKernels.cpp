@@ -26,12 +26,20 @@ void compileKernels() {
 
   platform->kernelInfo["defines/p_bcTypeW"] = bcMap::bcTypeW;
   platform->kernelInfo["defines/p_bcTypeV"] = bcMap::bcTypeV;
-  platform->kernelInfo["defines/p_bcTypeO"] = bcMap::bcTypeO;
   platform->kernelInfo["defines/p_bcTypeSYMX"] = bcMap::bcTypeSYMX;
   platform->kernelInfo["defines/p_bcTypeSYMY"] = bcMap::bcTypeSYMY;
   platform->kernelInfo["defines/p_bcTypeSYMZ"] = bcMap::bcTypeSYMZ;
   platform->kernelInfo["defines/p_bcTypeSYM"] = bcMap::bcTypeSYM;
+  platform->kernelInfo["defines/p_bcTypeSHLX"] = bcMap::bcTypeSHLX;
+  platform->kernelInfo["defines/p_bcTypeSHLY"] = bcMap::bcTypeSHLY;
+  platform->kernelInfo["defines/p_bcTypeSHLZ"] = bcMap::bcTypeSHLZ;
   platform->kernelInfo["defines/p_bcTypeSHL"] = bcMap::bcTypeSHL;
+  platform->kernelInfo["defines/p_bcTypeONX"] = bcMap::bcTypeONX;
+  platform->kernelInfo["defines/p_bcTypeONY"] = bcMap::bcTypeONY;
+  platform->kernelInfo["defines/p_bcTypeONZ"] = bcMap::bcTypeONZ;
+  platform->kernelInfo["defines/p_bcTypeON"] = bcMap::bcTypeON;
+  platform->kernelInfo["defines/p_bcTypeO"] = bcMap::bcTypeO;
+
   platform->kernelInfo["defines/p_bcTypeS"] = bcMap::bcTypeS;
   platform->kernelInfo["defines/p_bcTypeF0"] = bcMap::bcTypeF0;
   platform->kernelInfo["defines/p_bcTypeF"] = bcMap::bcTypeF;

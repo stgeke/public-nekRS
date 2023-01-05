@@ -47,7 +47,8 @@
 // lower id wins
 #define DIRICHLET 1
 #define ZERO_NORMAL 2
-#define NEUMANN 3
+#define ZERO_TANGENTIAL 3
+#define NEUMANN 4
 
 class SolutionProjection;
 class elliptic_t;

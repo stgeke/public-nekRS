@@ -4,24 +4,34 @@
 #include <string>
 #include <vector>
 #include "nekInterfaceAdapter.hpp"
-
+#include "bcType.h"
 
 namespace bcMap
 {
 
-// lower id wins
-constexpr int bcTypeW = 1;
-constexpr int bcTypeV = 2;
-constexpr int bcTypeSYMX = 3;
-constexpr int bcTypeSYMY = 4;
-constexpr int bcTypeSYMZ = 5;
-constexpr int bcTypeSYM = 6;
-constexpr int bcTypeSHL = 7;
-constexpr int bcTypeO = 8;
+constexpr int bcTypeW = p_bcTypeW;
+constexpr int bcTypeV = p_bcTypeV;
 
-constexpr int bcTypeS = 1;
-constexpr int bcTypeF0 = 2;
-constexpr int bcTypeF = 3;
+constexpr int bcTypeSYMX = p_bcTypeSYMX;
+constexpr int bcTypeSYMY = p_bcTypeSYMY;
+constexpr int bcTypeSYMZ = p_bcTypeSYMZ;
+constexpr int bcTypeSYM  = p_bcTypeSYM;
+
+constexpr int bcTypeSHLX = p_bcTypeSHLX;
+constexpr int bcTypeSHLY = p_bcTypeSHLY;
+constexpr int bcTypeSHLZ = p_bcTypeSHLZ;
+constexpr int bcTypeSHL  = p_bcTypeSHL;
+
+constexpr int bcTypeONX = p_bcTypeONX;
+constexpr int bcTypeONY = p_bcTypeONY;
+constexpr int bcTypeONZ = p_bcTypeONZ;
+
+constexpr int bcTypeON = p_bcTypeON;
+constexpr int bcTypeO = p_bcTypeO;
+
+constexpr int bcTypeS = p_bcTypeS;
+constexpr int bcTypeF0 = p_bcTypeF0;
+constexpr int bcTypeF = p_bcTypeF;
 
 bool useNekBCs();
 void setup(std::vector<std::string> slist, std::string field);

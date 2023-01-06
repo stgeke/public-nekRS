@@ -27,6 +27,10 @@ occa::properties compileUDFKernels()
     // kernelInfoBC will include any relevant user-defined kernel props
     udf.loadKernels(kernelInfoBC);
   }
+  if (udf.autoloadKernels) {
+    // kernelInfoBC will include any relevant user-defined kernel props
+    udf.autoloadKernels(kernelInfoBC);
+  }
   const std::string bcDataFile = installDir + "/include/bdry/bcData.h";
   kernelInfoBC["includes"] += bcDataFile.c_str();
   std::string boundaryHeaderFileName;

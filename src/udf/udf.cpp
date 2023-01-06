@@ -213,7 +213,7 @@ void udfBuild(const char* udfFile, setupAide& options)
         std::string cmakeBuildDir = cache_dir + "/udf"; 
 
         sprintf(cmd, "rm -f %s/udf/*.so && cmake %s -S %s -B %s -DCASE_DIR=\"%s\" -DCMAKE_CXX_COMPILER=\"$NEKRS_CXX\" "
-	            "-DCMAKE_CXX_FLAGS=\"$NEKRS_CXXFLAGS\" %s >cmake.log 2>&1",
+	             "-DCMAKE_CXX_FLAGS=\"$NEKRS_CXXFLAGS\" %s >cmake.log 2>&1",
                  udf_dir.c_str(),
                  cmakeFlags.c_str(),
                  cmakeBuildDir.c_str(),
@@ -227,6 +227,14 @@ void udfBuild(const char* udfFile, setupAide& options)
         if(retVal)
          return EXIT_FAILURE;
 
+        { // generate dummy 
+          const std::string includeFile = std::string(cache_dir + std::string("/udf/udfAutoLoadKernel.hpp"));
+          std::ofstream f(includeFile);
+          f << "//automatically generated\n";
+          f.close();
+          fileSync(includeFile.c_str());
+        }
+
         if(!fileExists(oudfFile.c_str())) {
           sprintf(cmd, "cd %s/udf && make -j1 udf.i %s", cache_dir.c_str(), pipeToNull.c_str());
           const int retVal = system(cmd);
@@ -235,6 +243,40 @@ void udfBuild(const char* udfFile, setupAide& options)
           }
           if(retVal) return EXIT_FAILURE;
           convertSingleSourceUdf(udfFileCache, oudfFileCache);
+
+          {
+            const std::string includeFile = std::string(cache_dir + std::string("/udf/udfAutoLoadKernel.hpp"));
+            std::ifstream stream(oudfFileCache);
+            std::regex exp(R"(\s*@kernel\s*void\s*([\S]*)\s*\()");
+            std::smatch res;
+            std::ofstream f(includeFile);
+            f << "//automatically generated\n";
+     
+            std::string line;
+            std::vector<std::string> kernelNameList;
+            while (std::getline(stream, line)) {
+              if(std::regex_search(line, res, exp)) {
+                std::string kernelName = res[1];
+                kernelNameList.push_back(kernelName);
+                f << "occa::kernel " << kernelName << "Kernel;\n";
+              }
+            }
+     
+            f << "void UDF_AutoLoadKernels(occa::properties& kernelInfo)" << std::endl
+              << "{" << std::endl;
+     
+            for(auto entry: kernelNameList) {
+              f << "  "
+                << entry << "Kernel = " << "oudfBuildKernel(kernelInfo, \"" << entry << "\");" << std::endl;
+            }
+     
+            f << "}" << std::endl;
+     
+            f.close();
+            fileSync(includeFile.c_str());
+            stream.close();
+          }
+
         }
 
       }
@@ -307,6 +349,7 @@ void udfLoad(void)
   *(void**)(&udf.setup0) = udfLoadFunction("UDF_Setup0",0);
   *(void**)(&udf.setup) = udfLoadFunction("UDF_Setup",0);
   *(void**)(&udf.loadKernels) = udfLoadFunction("UDF_LoadKernels",1);
+  *(void**)(&udf.autoloadKernels) = udfLoadFunction("UDF_AutoLoadKernels",0);
   *(void**)(&udf.executeStep) = udfLoadFunction("UDF_ExecuteStep",0);
 }
 

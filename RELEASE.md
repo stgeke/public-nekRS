@@ -8,6 +8,7 @@
 * Improved Chebyshev smoother
 * User defined tavg fields
 * turbulent Channel and periodicHill example
+* Unaligned `on` boundary condition
 * Extrapolation initialGuess method
 * Support for external nekRS plugins
 * Various bug fixes 
@@ -24,13 +25,13 @@
 * [par] Remove multigrid qualifier `coarse`
 * [par] Remove SEMFEM solver specification from key `preconditioner`, use `semfemSolver` instead
 * [par] Replace `stressFormulation = true` by `equation = navierStokes+variableViscosity` 
+# [par] Replace bcType `fixedValue` by `codedFixedValue`
 
 ## Known Bugs / Restrictions
 
 * Mesh solver does not support unaligned sym/shl BCs nor CHT
 * Poor performance of Schwarz smoother on CPUs
 * Poor performance of OIFS (advSub kernel) on CPUs
-* shl and unaligned sym BCs are not supported in case of a non-zero Dirichlet for pressure
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
 * [258](https://github.com/Nek5000/nekRS/issues/258)
 

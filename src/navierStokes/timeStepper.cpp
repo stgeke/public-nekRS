@@ -421,7 +421,7 @@ void coeffs(nrs_t *nrs, double dt, int tstep) {
   if (std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0])) {
     if (platform->comm.mpiRank == 0)
       std::cout << "Unreasonable dt! Dying ...\n" << std::endl;
-    ABORT(1);
+    EXIT_AND_FINALIZE(1);
   }
 
   nrs->idt = 1 / nrs->dt[0];
@@ -967,7 +967,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
   if (largeCFLCheck || std::isnan(cfl) || std::isinf(cfl)) {
     if (platform->comm.mpiRank == 0)
       std::cout << "Unreasonable CFL! Dying ...\n" << std::endl;
-    ABORT(1);
+    EXIT_AND_FINALIZE(1);
   }
 }
 

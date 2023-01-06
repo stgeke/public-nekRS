@@ -54,7 +54,7 @@
     dfloat TRy = 0;                                                                                          \
     dfloat TRz = 0;                                                                                          \
     const dlong bcType = EToB[face + p_Nfaces * e];                                                          \
-    if (bcType == p_bcTypeO) {                                                                               \
+    if (bcType == p_bcTypeONX || bcType == p_bcTypeONY || bcType == p_bcTypeONZ || bcType == p_bcTypeON || bcType == p_bcTypeO) { \
       bc.p = 0;                                                                                              \
       pressureDirichletConditions(&bc);                                                                      \
       TRx = -bc.p * bc.nx;                                                                                   \

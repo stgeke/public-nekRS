@@ -4,10 +4,11 @@
 #include <string>
 #include <vector>
 #include "nekInterfaceAdapter.hpp"
-#include "bcType.h"
 
 namespace bcMap
 {
+
+#include "bcType.h"
 
 constexpr int bcTypeW = p_bcTypeW;
 constexpr int bcTypeV = p_bcTypeV;
@@ -27,11 +28,30 @@ constexpr int bcTypeONY = p_bcTypeONY;
 constexpr int bcTypeONZ = p_bcTypeONZ;
 
 constexpr int bcTypeON = p_bcTypeON;
-constexpr int bcTypeO = p_bcTypeO;
+constexpr int bcTypeO  = p_bcTypeO;
 
-constexpr int bcTypeS = p_bcTypeS;
+constexpr int bcTypeS  = p_bcTypeS;
 constexpr int bcTypeF0 = p_bcTypeF0;
-constexpr int bcTypeF = p_bcTypeF;
+constexpr int bcTypeF  = p_bcTypeF;
+
+#undef p_bcTypeW
+#undef p_bcTypeV
+#undef p_bcTypeSYMX
+#undef p_bcTypeSYMY
+#undef p_bcTypeSYMZ
+#undef p_bcTypeSYM 
+#undef p_bcTypeSHLX
+#undef p_bcTypeSHLY
+#undef p_bcTypeSHLZ
+#undef p_bcTypeSHL
+#undef p_bcTypeONX
+#undef p_bcTypeONY
+#undef p_bcTypeONZ
+#undef p_bcTypeON
+#undef p_bcTypeO
+#undef p_bcTypeS
+#undef p_bcTypeF0
+#undef p_bcTypeF
 
 bool useNekBCs();
 void setup(std::vector<std::string> slist, std::string field);

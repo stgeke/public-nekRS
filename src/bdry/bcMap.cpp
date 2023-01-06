@@ -58,7 +58,6 @@ static bool importFromNek = true;
 static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
     {"zerovalue", bcMap::bcTypeW},
-    {"fixedvalue", bcMap::bcTypeV},
     {"codedfixedvalue", bcMap::bcTypeV},
     {"zeroxvalue/zerogradient", bcMap::bcTypeSYMX},
     {"zeroyvalue/zerogradient", bcMap::bcTypeSYMY},
@@ -96,8 +95,7 @@ static std::map<int, std::string> vBcIDToText = {
 
 static std::map<std::string, int> sBcTextToID = {
   {"periodic", 0},
-  {"fixedvalue", bcMap::bcTypeS},
-  {"codedFixedvalue", bcMap::bcTypeS},
+  {"codedfixedvalue", bcMap::bcTypeS},
   {"zerogradient", bcMap::bcTypeF0},
   {"codedfixedgradient", bcMap::bcTypeF},
   {"codedFixedgradient", bcMap::bcTypeF}
@@ -122,10 +120,10 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     if (key.compare("w") == 0) key = "zerovalue";
     if (key.compare("wall") == 0) key = "zerovalue";
 
-    if (key.compare("inlet") == 0) key = "fixedvalue";
-    if (key.compare("v") == 0) key = "fixedvalue";
-    if (key.compare("mv") == 0) key = "fixedvalue";
-    if (key.compare("fixedvalue+moving") == 0) key = "fixedvalue";
+    if (key.compare("inlet") == 0) key = "codedfixedvalue";
+    if (key.compare("v") == 0) key = "codedfixedvalue";
+    if (key.compare("mv") == 0) key = "codedfixedvalue";
+    if (key.compare("fixedvalue+moving") == 0) key = "codedfixedvalue";
 
     if (key.compare("slipx") == 0) key = "zeroxvalue/zerogradient";
     if (key.compare("slipy") == 0) key = "zeroyvalue/zerogradient";
@@ -154,8 +152,8 @@ static void v_setup(std::string field, std::vector<std::string> slist)
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if(rank == 0)
-        std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
-      ABORT(1);
+        std::cout << "Invalid velocity bcType " << "\'" << key << "\'" << "!\n";
+      EXIT_AND_FINALIZE(EXIT_FAILURE);
     }
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
@@ -168,8 +166,8 @@ static void s_setup(std::string field, std::vector<std::string> slist)
     std::string key = slist[bid];
     if (key.compare("p") == 0) key = "periodic";
 
-    if (key.compare("t") == 0) key = "fixedvalue";
-    if (key.compare("inlet") == 0) key = "fixedvalue";
+    if (key.compare("t") == 0) key = "codedfixedvalue";
+    if (key.compare("inlet") == 0) key = "codedfixedvalue";
 
     if (key.compare("flux") == 0) key = "codedfixedgradient";
     if (key.compare("f") == 0) key = "codedfixedgradient";
@@ -186,8 +184,8 @@ static void s_setup(std::string field, std::vector<std::string> slist)
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if(rank == 0)
-        std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
-      ABORT(1);
+        std::cout << "Invalid scalar bcType " << "\'" << key << "\'" << "!\n";
+      EXIT_AND_FINALIZE(EXIT_FAILURE);
     }
 
     bToBc[make_pair(field, bid)] = sBcTextToID.at(key);
@@ -241,8 +239,8 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
     if (key.compare("wall") == 0) key = "zerovalue";
     if (key.compare("inlet") == 0) key = "zerovalue";
     if (key.compare("v") == 0) key = "zerovalue";
-    if (key.compare("mv") == 0) key = "fixedvalue";
-    if (key.compare("fixedvalue+moving") == 0) key = "fixedvalue";
+    if (key.compare("mv") == 0) key = "codedfixedvalue";
+    if (key.compare("fixedvalue+moving") == 0) key = "codedfixedvalue";
 
     // all other bounds map to SYM
     if (key.compare("outlet") == 0) key = "zeronvalue/zerogradient";
@@ -262,7 +260,7 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if(rank == 0)
         std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
-      ABORT(1);
+      EXIT_AND_FINALIZE(EXIT_FAILURE);
     }
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
@@ -288,7 +286,7 @@ int ellipticType(int bid, std::string field)
   if (bid < 1)
     return NO_OP;
 
-  // printf("%d %s\n", bid, field.c_str());
+  //printf("%d %s\n", bid, field.c_str());
 
   try {
     int bcType;
@@ -299,9 +297,9 @@ int ellipticType(int bid, std::string field)
       bcType = DIRICHLET;
       if (bcID == bcTypeO)
         bcType = NEUMANN;
-      if (bcID == bcTypeSYMY || bcTypeSHLY)
+      if (bcID == bcTypeSYMY || bcID == bcTypeSHLY)
         bcType = NEUMANN;
-      if (bcID == bcTypeSYMZ || bcTypeSHLZ)
+      if (bcID == bcTypeSYMZ || bcID == bcTypeSHLZ)
         bcType = NEUMANN;
       if (bcID == bcTypeSYM || bcID == bcTypeSHL)
         bcType = ZERO_NORMAL;
@@ -317,9 +315,9 @@ int ellipticType(int bid, std::string field)
       bcType = DIRICHLET;
       if (bcID == bcTypeO)
         bcType = NEUMANN;
-      if (bcID == bcTypeSYMX || bcTypeSHLX)
+      if (bcID == bcTypeSYMX || bcID == bcTypeSHLX)
         bcType = NEUMANN;
-      if (bcID == bcTypeSYMZ || bcTypeSHLZ)
+      if (bcID == bcTypeSYMZ || bcID == bcTypeSHLZ)
         bcType = NEUMANN;
       if (bcID == bcTypeSYM || bcID == bcTypeSHL)
         bcType = ZERO_NORMAL;
@@ -586,12 +584,14 @@ void checkBoundaryAlignment(mesh_t *mesh)
   }
 
   if (bail) {
-    ABORT(1);
+    EXIT_AND_FINALIZE(EXIT_FAILURE);
   }
 }
 
 void remapUnalignedBoundaries(mesh_t *mesh)
 {
+  return; // disable to avoid invalid combinations
+
   for (auto &&field : fields) {
     if (field != std::string("velocity") && field != std::string("mesh"))
       continue;

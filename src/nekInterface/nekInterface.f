@@ -839,7 +839,7 @@ c
          else if(cb.eq.'v  ') then
            boundaryID(ifc,iel) = map(p_bcTypeV) 
          else if(cb.eq.'mv ') then
-           boundaryID(ifc,iel) = map(BID_TYPES) 
+           boundaryID(ifc,iel) = map(p_bcTypeMV) 
          else if(cb.eq.'o  ' .or. cb.eq.'O  ') then
            boundaryID(ifc,iel) = map(p_bcTypeO) 
          else if(cb.eq.'on ' .or. cb.eq.'ON ') then

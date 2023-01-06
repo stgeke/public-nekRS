@@ -152,7 +152,7 @@ mesh_t *createMesh(MPI_Comm comm,
   meshGlobalIds(mesh);
   bcMap::check(mesh);
   bcMap::checkBoundaryAlignment(mesh);
-  //bcMap::remapUnalignedBoundaries(mesh);
+  bcMap::remapUnalignedBoundaries(mesh);
 
   meshOccaSetup3D(mesh, platform->options, kernelInfo);
 
@@ -242,7 +242,7 @@ mesh_t* duplicateMesh(MPI_Comm comm,
 
   bcMap::check(mesh);
   bcMap::checkBoundaryAlignment(mesh);
-  //bcMap::remapUnalignedBoundaries(mesh);
+  bcMap::remapUnalignedBoundaries(mesh);
 
   meshOccaSetup3D(mesh, platform->options, kernelInfo);
 
@@ -373,7 +373,7 @@ mesh_t *createMeshV(
 
   bcMap::check(mesh);
   bcMap::checkBoundaryAlignment(mesh);
-  //bcMap::remapUnalignedBoundaries(mesh);
+  bcMap::remapUnalignedBoundaries(mesh);
 
   meshVOccaSetup3D(mesh, kernelInfo);
 

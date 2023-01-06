@@ -16,21 +16,21 @@ lower value wins on shared edges/corners
 #define p_bcTypeSYMZ 5
 #define p_bcTypeSYM  6
 
-#define p_bcTypeSHLX 8
-#define p_bcTypeSHLY 9
-#define p_bcTypeSHLZ 10
-#define p_bcTypeSHL  11
+#define p_bcTypeSHLX 7
+#define p_bcTypeSHLY 8
+#define p_bcTypeSHLZ 9 
+#define p_bcTypeSHL  10
 
-#define p_bcTypeONX 12
-#define p_bcTypeONY 13
-#define p_bcTypeONZ 14
+#define p_bcTypeONX 11
+#define p_bcTypeONY 12
+#define p_bcTypeONZ 13
 
-#define p_bcTypeON 15
-#define p_bcTypeO 16
+#define p_bcTypeON 14
+#define p_bcTypeO 15
 
-#define p_bcTypeMV 17 
+#define p_bcTypeMV 16 
 
-#define p_velNBcType 18
+#define p_velNBcType 16
 
 #define p_bcTypeS 1
 #define p_bcTypeF0 2

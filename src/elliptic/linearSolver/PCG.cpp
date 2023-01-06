@@ -38,7 +38,7 @@ int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
   setupAide& options = elliptic->options;
 
   const int flexible = options.compareArgs("KRYLOV SOLVER", "FLEXIBLE");
-  const int verbose = options.compareArgs("VERBOSE", "TRUE");
+  const int verbose = platform->options.compareArgs("VERBOSE", "TRUE");
   const int fixedIteration = false;
 
   dfloat rdotz1;

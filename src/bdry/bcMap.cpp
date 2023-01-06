@@ -669,7 +669,7 @@ void remapUnalignedBoundaries(mesh_t *mesh)
   }
 }
 
-bool unalignedRobinBoundary(std::string field)
+bool unalignedMixedBoundary(std::string field)
 {
   int nid = nbid[0];
 

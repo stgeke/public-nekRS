@@ -700,7 +700,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     nrs->uvwSolver = NULL;
 
-    bool unalignedBoundary = bcMap::unalignedRobinBoundary("velocity");
+    bool unalignedBoundary = bcMap::unalignedMixedBoundary("velocity");
     if (unalignedBoundary) {
       if (!options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
         if (platform->comm.mpiRank == 0)
@@ -903,7 +903,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
     if (options.compareArgs("MESH SOLVER", "ELASTICITY")) {
 
-      bool unalignedBoundary = bcMap::unalignedRobinBoundary("mesh");
+      bool unalignedBoundary = bcMap::unalignedMixedBoundary("mesh");
       if (unalignedBoundary) {
         if (platform->comm.mpiRank == 0) {
           printf("ERROR: unaligned SYM/SHL boundary condition are currently not supported with the mesh "

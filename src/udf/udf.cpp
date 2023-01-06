@@ -43,13 +43,6 @@ void oudfFindDirichlet(std::string &field)
     ABORT(EXIT_FAILURE);
   }
   if(field == "pressure" && !pressureDirichletConditions) {
-    if(bcMap::unalignedRobinBoundary("velocity")) {
-      if (platform->comm.mpiRank == 0) 
-       std::cout << "Unaligned Robin boundary conditions (shl or sym) currently not supported "
-                 << "when pressureDirichletConditions is defined!\n";
-       ABORT(EXIT_FAILURE);
-    }
-
     if (platform->comm.mpiRank == 0) 
      std::cout << "WARNING: Cannot find oudf function: pressureDirichletConditions!\n";
     // ABORT(EXIT_FAILURE); this bc is optional 

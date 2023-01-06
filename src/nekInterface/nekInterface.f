@@ -651,7 +651,7 @@ c-----------------------------------------------------------------------
         endif
       endif
 
-      write(6,*) ifld, 'bcmap: ', bID, 'cbc: ', c, 'ibc: ', ibc
+c      write(6,*) ifld, 'bcmap: ', bID, 'cbc: ', c, 'ibc: ', ibc
 
       if (ibc.eq.0) then
         write(6,*) 'Found unsupport BC type:', c

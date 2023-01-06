@@ -484,7 +484,7 @@ void checkBoundaryAlignment(mesh_t *mesh)
         int bc = id(bid, field);
         if (bc == bcTypeSYMX || bc == bcTypeSYMY || bc == bcTypeSYMZ || 
             bc == bcTypeSHLX || bc == bcTypeSHLY || bc == bcTypeSHLZ ||
-            bc == bcTypeONX || bc == bcTypeONY || bc == bcTypeONZ) {
+            bc == bcTypeONX  || bc == bcTypeONY || bc == bcTypeONZ) {
           auto expectedAlignment = boundaryAlignment_t::UNALIGNED;
           switch (bc) {
           case bcTypeSYMX:

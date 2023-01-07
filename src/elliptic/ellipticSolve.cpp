@@ -29,6 +29,7 @@
 #include "platform.hpp"
 #include "linAlg.hpp"
 
+
 void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
 {
   setupAide& options = elliptic->options;

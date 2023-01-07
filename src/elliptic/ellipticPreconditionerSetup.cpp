@@ -40,6 +40,16 @@ void ellipticPreconditionerSetup(elliptic_t* elliptic, ogs_t* ogs)
   MPI_Barrier(platform->comm.mpiComm);
   const double tStart = MPI_Wtime();
 
+  if(options.compareArgs("PRECONDITIONER", "MULTIGRID") ||
+     options.compareArgs("PRECONDITIONER", "SEMFEM")) { 
+ 
+    const std::vector<int> levels = determineMGLevels(elliptic->name);
+    elliptic->nLevels = levels.size();
+    elliptic->levels = (int *)calloc(elliptic->nLevels, sizeof(int));
+    for (int i = 0; i < elliptic->nLevels; ++i)
+      elliptic->levels[i] = levels.at(i);
+  }
+
   if(options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
     ellipticMultiGridSetup(elliptic,precon);
   } else if(options.compareArgs("PRECONDITIONER", "SEMFEM")) {

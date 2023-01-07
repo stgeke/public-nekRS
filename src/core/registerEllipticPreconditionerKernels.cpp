@@ -2,6 +2,7 @@
 #include "nrs.hpp"
 #include "benchmarkFDM.hpp"
 #include "benchmarkAx.hpp"
+#include "ellipticPrecon.h" 
 
 #include "re2Reader.hpp"
 

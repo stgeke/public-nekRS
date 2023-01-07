@@ -966,8 +966,9 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           platform->device.malloc((nrs->meshSolver->Nfields * sizeof(dfloat)) * 
                                   nrs->meshSolver->fieldOffset);
         nrs->o_EToBVMeshVelocity = platform->device.malloc(mesh->Nlocal * sizeof(int));
-        auto o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields, 
-                                              sizeof(int), nrs->meshSolver->EToB);
+        auto o_EToB =
+            platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields * sizeof(int),
+                                    nrs->meshSolver->EToB);
         createEToBV(nrs->meshV, nrs->meshSolver->EToB, nrs->o_EToBVMeshVelocity);
         createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
         nrs->meshSolver->applyZeroNormalMask =

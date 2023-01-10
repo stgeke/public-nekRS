@@ -25,7 +25,8 @@
 * [par] Remove multigrid qualifier `coarse`
 * [par] Remove SEMFEM solver specification from key `preconditioner`, use `semfemSolver` instead
 * [par] Replace `stressFormulation = true` by `equation = navierStokes+variableViscosity` 
-# [par] Replace bcType `fixedValue` by `codedFixedValue`
+* [par] Replace bcType `fixedValue` by `codedFixedValue`
+* [oudf] Rename `bc->wrk` => `bc->usrwrk`
 
 ## Known Bugs / Restrictions
 
@@ -68,7 +69,6 @@ asked and answered questions, and were part of inspiring discussions.
 * [udf] Rename plug-in name `avg`  => `tavg`
 * [udf] Rename `udf.converged` => `udf.timeStepConverged`
 * [nrsconfig] Rename env-var `AMGX_ENABLE` => `ENABLE_AMGX`
-* [oudf] Rename `bc->wrk` => `bc->usrwrk`
 
 ## Known Bugs / Restrictions
 

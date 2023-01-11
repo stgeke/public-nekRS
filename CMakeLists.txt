@@ -189,7 +189,7 @@ endif()
 # Build HYPRE
 ###############################################################################
 if(ENABLE_CUDA)
-  set(ENABLE_HYPRE_GPU ON CACHE BOOL "Enable HYPRE GPU support")
+  set(ENABLE_HYPRE_GPU OFF CACHE BOOL "Enable HYPRE GPU support")
 endif()
 include(config/hypre.cmake)
 

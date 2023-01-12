@@ -156,7 +156,9 @@ void RANSktau::updateSourceTerms()
   nrs->SijOijMag2Kernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, 1, o_SijOij, o_OiOjSk, o_SijMag2);
 
   const dfloat taumin = platform->linAlg->min(mesh->Nlocal, o_tau, platform->comm.mpiComm);
-  
+  if(platform->comm.mpiRank == 0){
+    printf("Min Tau = %f\n",taumin);
+  }
   computeKernel(mesh->Nelements,
                 nrs->cds->fieldOffset[kFieldIndex],
                 rho,

@@ -155,7 +155,7 @@
 	  S_taun = min(Scoefn * xt, 4.0 * p_beta0 / 3.0);
 	  const dfloat Scoeft = p_alpinf_str * kk * p_sigma_tau;
 	  const dfloat S_taut = 2.0 * Scoeft * xt;
-	  const dfloat S_tau = S_taun + S_taut;
+	  dfloat S_tau = S_taun + S_taut;
 	  if(taumin < 0.0){
 	    S_tau = 0.0;
 	  }

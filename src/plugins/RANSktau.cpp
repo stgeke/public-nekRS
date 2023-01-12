@@ -17,7 +17,8 @@ static occa::memory o_mut;
 
 static occa::memory o_k;
 static occa::memory o_tau;
-
+static occa::memory o_ywd;
+  
 static occa::kernel computeKernel;
 static occa::kernel limitKernel;
 static occa::kernel mueKernel;
@@ -127,7 +128,6 @@ void RANSktau::updateProperties()
   occa::memory o_mue = nrs->o_mue;
   occa::memory o_diff = cds->o_diff + cds->fieldOffsetScan[kFieldIndex] * sizeof(dfloat);
 
-  limitKernel(mesh->Nelements * mesh->Np, o_k, o_tau);
   mueKernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, rho, mueLam, o_k, o_tau, o_mut, o_mue, o_diff);
 }
 
@@ -155,18 +155,20 @@ void RANSktau::updateSourceTerms()
 
   nrs->SijOijMag2Kernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, 1, o_SijOij, o_OiOjSk, o_SijMag2);
 
-  limitKernel(mesh->Nelements * mesh->Np, o_k, o_tau);
-
+  const dfloat taumin = platform->linAlg->min(mesh->Nlocal, o_tau, platform->comm.mpiComm);
+  
   computeKernel(mesh->Nelements,
                 nrs->cds->fieldOffset[kFieldIndex],
                 rho,
                 mueLam,
+		taumin,
                 mesh->o_vgeo,
                 mesh->o_D,
                 o_k,
                 o_tau,
                 o_SijMag2,
                 o_OiOjSk,
+		o_ywd,
                 o_BFDiag,
                 o_FS);
 }
@@ -202,5 +204,9 @@ void RANSktau::setup(nrs_t *nrsIn, dfloat mueIn, dfloat rhoIn, int ifld, const d
     platform->linAlg->fill(cds->fieldOffsetSum, 0.0, cds->o_BFDiag);
   }
 
+  double *ywd = (double *) nek::scPtr(1);
+  o_ywd = platform->device.malloc(nrs->fieldOffset,sizeof(dfloat));
+  o_ywd.copyFrom(ywd,nrs->fieldOffset*sizeof(dfloat));
+  
   setupCalled = 1;
 }

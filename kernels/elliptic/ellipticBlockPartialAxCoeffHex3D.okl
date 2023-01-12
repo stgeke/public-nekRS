@@ -248,15 +248,55 @@
       }
     }
     @barrier();
-
+ 
+    // grad in r
     for (int s = 0; s < n_plane; ++s; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll p_Nq          
+          for (int m = 0; m < p_Nq; m++) {
+            dfloat Dim = s_Dt[m][i];
+#pragma unroll pts_per_thread            
+            for (int k = 0; k < pts_per_thread; k++) {
+              r_Ur[k] += Dim * s_tmp[0][s+k*n_plane][j][m];
+              r_Vr[k] += Dim * s_tmp[1][s+k*n_plane][j][m];
+              r_Wr[k] += Dim * s_tmp[2][s+k*n_plane][j][m];
+            }
+          }
+        }
+      }
+    }
+
+    // grad in s
+    for (int s = 0; s < n_plane; ++s; @inner(2)) {
+      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
+        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll p_Nq          
+          for (int m = 0; m < p_Nq; m++) {
+            dfloat Djm = s_D[j][m];
+#pragma unroll pts_per_thread            
+            for (int k = 0; k < pts_per_thread; k++) {
+              r_Us[k] += Djm * s_tmp[0][s+k*n_plane][m][i];
+              r_Vs[k] += Djm * s_tmp[1][s+k*n_plane][m][i];
+              r_Ws[k] += Djm * s_tmp[2][s+k*n_plane][m][i];
+            }
+          }
+        }
+      }
+    }    
+
+    // grad in t
+    for (int s = 0; s < n_plane; ++s; @inner(2)) {
+      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
+        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll pts_per_thread          
           for (int k2 = 0; k2 < pts_per_thread; k2++) {
+#pragma unroll n_plane            
             for (int s2 = 0; s2 < n_plane; s2++) {
               dfloat t_U = s_tmp[0][s2+k2*n_plane][j][i];
               dfloat t_V = s_tmp[1][s2+k2*n_plane][j][i];
               dfloat t_W = s_tmp[2][s2+k2*n_plane][j][i];
+#pragma unroll pts_per_thread              
               for (int k = 0; k < pts_per_thread; k++) {
                 dfloat t_D = s_D[s+k*n_plane][s2+k2*n_plane];
                 r_Ut[k] += t_D * t_U;
@@ -268,27 +308,7 @@
         }
       }
     }
-
-    for (int s = 0; s < n_plane; ++s; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-          for (int m = 0; m < p_Nq; m++) {
-            dfloat Dim = s_Dt[m][i];
-            dfloat Djm = s_D[j][m];
-            for (int k = 0; k < pts_per_thread; k++) {
-              r_Ur[k] += Dim * s_tmp[0][s+k*n_plane][j][m];
-              r_Vr[k] += Dim * s_tmp[1][s+k*n_plane][j][m];
-              r_Wr[k] += Dim * s_tmp[2][s+k*n_plane][j][m];
-
-              r_Us[k] += Djm * s_tmp[0][s+k*n_plane][m][i];
-              r_Vs[k] += Djm * s_tmp[1][s+k*n_plane][m][i];
-              r_Ws[k] += Djm * s_tmp[2][s+k*n_plane][m][i];
-            }
-          }
-        }
-      }
-    }
-
+    
     for (int s = 0; s < n_plane; ++s; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
@@ -302,10 +322,11 @@
 
             const dfloat w_lam0 = lambda[p_lambda*id + 0 * offset + 2 * loffset];
             const dfloat w_lam1 = lambda[p_lambda*id + 1 * offset + 2 * loffset];
-              
+
             dfloat GUr = u_lam0 * (r_G00[k] * r_Ur[k] + r_G01[k] * r_Us[k] + r_G02[k] * r_Ut[k]);
             dfloat GUs = u_lam0 * (r_G01[k] * r_Ur[k] + r_G11[k] * r_Us[k] + r_G12[k] * r_Ut[k]);
             dfloat GUt = u_lam0 * (r_G02[k] * r_Ur[k] + r_G12[k] * r_Us[k] + r_G22[k] * r_Ut[k]);
+            
             r_Ur[k] = GUr;
             r_Us[k] = GUs;
             r_Ut[k] = GUt;
@@ -314,6 +335,7 @@
             dfloat GVr = v_lam0 * (r_G00[k] * r_Vr[k] + r_G01[k] * r_Vs[k] + r_G02[k] * r_Vt[k]);
             dfloat GVs = v_lam0 * (r_G01[k] * r_Vr[k] + r_G11[k] * r_Vs[k] + r_G12[k] * r_Vt[k]);
             dfloat GVt = v_lam0 * (r_G02[k] * r_Vr[k] + r_G12[k] * r_Vs[k] + r_G22[k] * r_Vt[k]);
+            
             r_Vr[k] = GVr;
             r_Vs[k] = GVs;
             r_Vt[k] = GVt;
@@ -322,6 +344,7 @@
             dfloat GWr = w_lam0 * (r_G00[k] * r_Wr[k] + r_G01[k] * r_Ws[k] + r_G02[k] * r_Wt[k]);
             dfloat GWs = w_lam0 * (r_G01[k] * r_Wr[k] + r_G11[k] * r_Ws[k] + r_G12[k] * r_Wt[k]);
             dfloat GWt = w_lam0 * (r_G02[k] * r_Wr[k] + r_G12[k] * r_Ws[k] + r_G22[k] * r_Wt[k]);
+            
             r_Wr[k] = GWr;
             r_Ws[k] = GWs;
             r_Wt[k] = GWt;
@@ -336,6 +359,7 @@
     for (int s = 0; s < n_plane; ++s; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll pts_per_thread          
           for (int k = 0; k < pts_per_thread; k++) {
             s_tmp[0][s+k*n_plane][j][i] = r_Ur[k];
             s_tmp[1][s+k*n_plane][j][i] = r_Vr[k];
@@ -348,8 +372,10 @@
     for (int s = 0; s < n_plane; ++s; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll p_Nq          
           for (int m = 0; m < p_Nq; m++) {
             dfloat Dmi = s_D[m][i];
+#pragma unroll pts_per_thread            
             for (int k = 0; k < pts_per_thread; k++) {
               r_AU[k] += Dmi * s_tmp[0][s+k*n_plane][j][m];
               r_AV[k] += Dmi * s_tmp[1][s+k*n_plane][j][m];
@@ -364,6 +390,7 @@
     for (int s = 0; s < n_plane; ++s; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll pts_per_thread          
           for (int k = 0; k < pts_per_thread; k++) {
             s_tmp[0][s+k*n_plane][j][i] = r_Us[k];
             s_tmp[1][s+k*n_plane][j][i] = r_Vs[k];
@@ -378,6 +405,7 @@
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           for (int m = 0; m < p_Nq; m++) {
             dfloat Dmj = s_D[m][j];
+#pragma unroll pts_per_thread  
             for (int k = 0; k < pts_per_thread; k++) {
               r_AU[k] += Dmj * s_tmp[0][s+k*n_plane][m][i];
               r_AV[k] += Dmj * s_tmp[1][s+k*n_plane][m][i];
@@ -388,42 +416,64 @@
       }
     }
     // div in t
-    @barrier();
-    for (int s = 0; s < n_plane; ++s; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-          for (int k = 0; k < pts_per_thread; k++) {
-            s_tmp[0][s+k*n_plane][j][i] = r_Ut[k];
-            s_tmp[1][s+k*n_plane][j][i] = r_Vt[k];
-            s_tmp[2][s+k*n_plane][j][i] = r_Wt[k];              
+    if (n_plane > 1) {
+      @barrier();
+      for (int s = 0; s < n_plane; ++s; @inner(2)) {
+        for (int j = 0; j < p_Nq; ++j; @inner(1)) {
+          for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll pts_per_thread          
+            for (int k = 0; k < pts_per_thread; k++) {
+              s_tmp[0][s+k*n_plane][j][i] = r_Ut[k];
+              s_tmp[1][s+k*n_plane][j][i] = r_Vt[k];
+              s_tmp[2][s+k*n_plane][j][i] = r_Wt[k];              
+            }
           }
         }
       }
-    }
-    @barrier();
-    for (int s = 0; s < n_plane; ++s; @inner(2)) {
-      for (int j = 0; j < p_Nq; ++j; @inner(1)) {
-        for (int i = 0; i < p_Nq; ++i; @inner(0)) {
-          for (int k = 0; k < pts_per_thread; k++) {
-            for (int s2 = 0; s2 < n_plane; s2++) {
-              dfloat Utk = s_tmp[0][s2+k*n_plane][j][i];
-              dfloat Vtk = s_tmp[1][s2+k*n_plane][j][i];
-              dfloat Wtk = s_tmp[2][s2+k*n_plane][j][i];
-              for (int k2 = 0; k2 < pts_per_thread; k2++) {
-                double t_D = s_D[s2+k*n_plane][s+k2*n_plane];
-                r_AU[k2] += t_D * Utk;
-                r_AV[k2] += t_D * Vtk;
-                r_AW[k2] += t_D * Wtk;                  
+      @barrier();
+      for (int s = 0; s < n_plane; ++s; @inner(2)) {
+        for (int j = 0; j < p_Nq; ++j; @inner(1)) {
+          for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+            for (int k = 0; k < pts_per_thread; k++) {
+              for (int s2 = 0; s2 < n_plane; s2++) {
+                dfloat Utk = s_tmp[0][s2+k*n_plane][j][i];
+                dfloat Vtk = s_tmp[1][s2+k*n_plane][j][i];
+                dfloat Wtk = s_tmp[2][s2+k*n_plane][j][i];
+#pragma unroll pts_per_thread              
+                for (int k2 = 0; k2 < pts_per_thread; k2++) {
+                  double t_D = s_D[s2+k*n_plane][s+k2*n_plane];
+                  r_AU[k2] += t_D * Utk;
+                  r_AV[k2] += t_D * Vtk;
+                  r_AW[k2] += t_D * Wtk;                  
+                }
               }
             }
           }
         }
       }
-    }        
+    } else {
+      for (int s = 0; s < n_plane; ++s; @inner(2)) {
+        for (int j = 0; j < p_Nq; ++j; @inner(1)) {
+          for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll p_Nq
+            for (int m = 0; m < p_Nq; m++) {
+#pragma unroll p_Nq          
+              for (int k = 0; k < p_Nq; ++k) {
+                const dfloat Dkm = s_D[m][k]; 
+                r_AU[k] += Dkm * r_Ut[m];
+                r_AV[k] += Dkm * r_Vt[m];
+                r_AW[k] += Dkm * r_Wt[m];            
+              }
+            }
+          }
+        }
+      }
+    }      
 
     for (int s = 0; s < n_plane; ++s; @inner(2)) {
       for (int j = 0; j < p_Nq; ++j; @inner(1)) {
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
+#pragma unroll pts_per_thread          
           for (int k = 0; k < pts_per_thread; k++) {
             const dlong id = element * p_Np + (s+k*n_plane) * p_Nq * p_Nq + j * p_Nq + i;
             Aq[id + 0 * offset] = r_AU[k];
@@ -436,3 +486,4 @@
   }
 }
 #endif
+

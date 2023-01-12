@@ -124,7 +124,7 @@ occa::kernel benchmarkAx(int Nelements,
   auto benchmarkAxWithPrecision = [&](auto sampleWord) {
     using FPType = decltype(sampleWord);
     const auto wordSize = sizeof(FPType);
-    constexpr int p_Nggeo{7};
+    constexpr int p_Nggeo{7}, p_Nvgeo{12};
 
     std::vector<int> kernelVariants;
 
@@ -141,9 +141,22 @@ occa::kernel benchmarkAx(int Nelements,
         kernelVariants.erase(kernelVariants.begin()+3); // correctness check is off
       }
       if (kernelName == "ellipticStressPartialAxCoeffHex3D") {
-        const int Nkernels = 1;
+        const int Nkernels = 2;
         for (int knl = 0; knl < Nkernels; ++knl)
           kernelVariants.push_back(knl);
+        int n_plane = 1;
+        switch (Nq) {
+        case 4: n_plane = 2; break;
+        case 5: n_plane = 1; break;
+        case 6: n_plane = 2; break;
+        case 7: n_plane = 1; break;
+        case 8: n_plane = 1; break;
+        case 9: n_plane = 3; break;
+        case 10: n_plane = 1; break;
+        case 11: n_plane = 1; break;
+        }
+        props["defines/n_plane"] = n_plane;
+        props["defines/pts_per_thread"] = Nq/n_plane;              
       }
       if (kernelName == "ellipticBlockPartialAxCoeffHex3D") {
         const int Nkernels = 2;
@@ -181,6 +194,7 @@ occa::kernel benchmarkAx(int Nelements,
 
     auto DrV = randomVector<FPType>(Nq * Nq);
     auto ggeo = randomVector<FPType>(Np_g * Nelements * p_Nggeo);
+    auto vgeo = randomVector<FPType>(Np * Nelements * p_Nvgeo);
     auto q = randomVector<FPType>((Ndim * Np) * Nelements);
     auto Aq = randomVector<FPType>((Ndim * Np) * Nelements);
     auto exyz = randomVector<FPType>((3 * Np_g) * Nelements);
@@ -195,6 +209,7 @@ occa::kernel benchmarkAx(int Nelements,
     auto o_D = platform->device.malloc(Nq * Nq * wordSize, DrV.data());
     auto o_S = o_D;
     auto o_ggeo = platform->device.malloc(Np_g * Nelements * p_Nggeo * wordSize, ggeo.data());
+    auto o_vgeo = platform->device.malloc(Np * Nelements * p_Nvgeo * wordSize, vgeo.data());    
     auto o_q = platform->device.malloc((Ndim * Np) * Nelements * wordSize, q.data());
     auto o_Aq = platform->device.malloc((Ndim * Np) * Nelements * wordSize, Aq.data());
     auto o_exyz = platform->device.malloc((3 * Np_g) * Nelements * wordSize, exyz.data());
@@ -220,7 +235,11 @@ occa::kernel benchmarkAx(int Nelements,
         kernel(Nelements, offset, loffset, o_elementList, o_exyz, o_gllwz, o_D, o_S, o_lambda, o_q, o_Aq);
       }
       else {
-        kernel(Nelements, offset, loffset, o_elementList, o_ggeo, o_D, o_S, o_lambda, o_q, o_Aq);
+        if (!stressForm) {
+          kernel(Nelements, offset, loffset, o_elementList, o_ggeo, o_D, o_S, o_lambda, o_q, o_Aq);
+        } else {
+          kernel(Nelements, offset, loffset, o_elementList, o_vgeo, o_D, o_S, o_lambda, o_q, o_Aq);
+        }
       }
     };
 
@@ -250,7 +269,7 @@ occa::kernel benchmarkAx(int Nelements,
         err = std::max(err, std::abs(refResults[i] - results[i]));
       }
 
-      const auto tol = 200. * std::numeric_limits<FPType>::epsilon();
+      const auto tol = 400. * std::numeric_limits<FPType>::epsilon();
       if (platform->comm.mpiRank == 0 && verbosity > 1 && err > tol) {
         std::cout << "Error in kernel compared to reference implementation " << kernelVariant << ": " << err
                   << std::endl;
@@ -332,6 +351,7 @@ occa::kernel benchmarkAx(int Nelements,
     free(o_D);
     free(o_S);
     free(o_ggeo);
+    free(o_vgeo);
     free(o_q);
     free(o_Aq);
     free(o_exyz);

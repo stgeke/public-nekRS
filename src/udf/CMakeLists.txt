@@ -34,8 +34,10 @@ set(INCLUDE_DIRS
   ${NEKRS_INSTALL_DIR}/occa/include
 )
 
+add_compile_definitions(USE_AUTOLOADKERNEL)
+
 add_library(UDF SHARED udf.cpp)
-target_include_directories(UDF PRIVATE $ENV{NEKRS_UDF_INCLUDES} ${INCLUDE_DIRS})
+target_include_directories(UDF PRIVATE $ENV{NEKRS_UDF_INCLUDES} ${INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(APPLE)
     target_link_libraries(UDF "-Wl,-undefined -Wl,dynamic_lookup")

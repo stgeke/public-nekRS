@@ -93,7 +93,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
 
   setupAide& options = elliptic->options;
 
-  const int verbose = options.compareArgs("VERBOSE","TRUE") ? 1:0;
+  const int verbose = platform->options.compareArgs("VERBOSE","TRUE") ? 1:0;
 
   MPI_Barrier(platform->comm.mpiComm);
   const double tStart = MPI_Wtime();

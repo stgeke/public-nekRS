@@ -18,9 +18,6 @@ static dfloat P_D0;
 static dfloat P_OMEGA;
 static dfloat P_AMP;
 
-occa::kernel dpdxKernel; 
-occa::kernel exactUVWPKernel; 
-occa::kernel userMeshVelocityKernel;
 occa::memory o_x0, o_y0, o_z0;
 
 @oklBegin {
@@ -239,10 +236,6 @@ void UDF_LoadKernels(occa::properties& kernelInfo)
   kernelInfo["defines/p_amp"] = P_AMP;
   kernelInfo["defines/p_omega"] = P_OMEGA;
   kernelInfo["defines/p_pi"] = M_PI;
-
-  dpdxKernel = oudfBuildKernel(kernelInfo, "dpdx");
-  exactUVWPKernel = oudfBuildKernel(kernelInfo, "exactUVWP"); 
-  userMeshVelocityKernel = oudfBuildKernel(kernelInfo, "userMeshVelocity");
 }
 
 void UDF_Setup0(MPI_Comm comm, setupAide &options)

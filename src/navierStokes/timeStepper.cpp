@@ -343,11 +343,11 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     }
     mesh->move();
 
-    if (bcMap::unalignedRobinBoundary("velocity")) {
+    if (bcMap::unalignedMixedBoundary("velocity")) {
       createZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
     }
 
-    if (bcMap::unalignedRobinBoundary("mesh") && platform->options.compareArgs("MESH SOLVER", "ELASTICITY")){
+    if (bcMap::unalignedMixedBoundary("mesh") && platform->options.compareArgs("MESH SOLVER", "ELASTICITY")){
       createZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
     }
 

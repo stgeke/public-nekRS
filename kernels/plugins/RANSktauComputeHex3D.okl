@@ -2,7 +2,7 @@
                                   const dlong offset,
                                   const dfloat rho,
                                   const dfloat mue,
-				  const dfloat taumin,
+				  const dfloat sfac,
                                   @ restrict const dfloat *vgeo,
                                   @ restrict const dfloat *D,
                                   @ restrict const dfloat *K,
@@ -155,11 +155,8 @@
 	  S_taun = min(Scoefn * xt, 4.0 * p_beta0 / 3.0);
 	  const dfloat Scoeft = p_alpinf_str * kk * p_sigma_tau;
 	  const dfloat S_taut = 2.0 * Scoeft * xt;
-	  dfloat S_tau = S_taun + S_taut;
-	  if(taumin < 0.0){
-	    S_tau = 0.0;
-	  }
-	  
+	  const dfloat S_tau = (S_taun + S_taut)*sfac;
+	  	  
           dfloat tauSrc = 0.0;
           dfloat tauDiag = 0.0;
 

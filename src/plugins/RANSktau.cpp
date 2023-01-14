@@ -156,14 +156,19 @@ void RANSktau::updateSourceTerms()
   nrs->SijOijMag2Kernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, 1, o_SijOij, o_OiOjSk, o_SijMag2);
 
   const dfloat taumin = platform->linAlg->min(mesh->Nlocal, o_tau, platform->comm.mpiComm);
-  if(platform->comm.mpiRank == 0){
-    printf("Min Tau = %f\n",taumin);
+  const dfloat taumax = platform->linAlg->max(mesh->Nlocal, o_tau, platform->comm.mpiComm);
+
+  const dfloat fact = 0.01;
+  const dfloat sfac = 1.0;
+  if(taumin < -fact*taumax){
+    sfac = 0.0;
   }
+    
   computeKernel(mesh->Nelements,
                 nrs->cds->fieldOffset[kFieldIndex],
                 rho,
                 mueLam,
-		taumin,
+		sfac,
                 mesh->o_vgeo,
                 mesh->o_D,
                 o_k,

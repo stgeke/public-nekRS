@@ -20,7 +20,6 @@ static occa::memory o_tau;
 static occa::memory o_ywd;
   
 static occa::kernel computeKernel;
-static occa::kernel limitKernel;
 static occa::kernel mueKernel;
 
 static bool setupCalled = 0;
@@ -99,11 +98,7 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
     kernelName = "RANSktauComputeHex3D";
     fileName = path + kernelName + extension;
     computeKernel = platform->device.buildKernel(fileName, kernelInfo, true);
-
-    kernelName = "limit";
-    fileName = path + kernelName + extension;
-    limitKernel = platform->device.buildKernel(fileName, kernelInfo, true);
-
+    
     kernelName = "mue";
     fileName = path + kernelName + extension;
     mueKernel = platform->device.buildKernel(fileName, kernelInfo, true);
@@ -159,7 +154,7 @@ void RANSktau::updateSourceTerms()
   const dfloat taumax = platform->linAlg->max(mesh->Nlocal, o_tau, platform->comm.mpiComm);
 
   const dfloat fact = 0.01;
-  const dfloat sfac = 1.0;
+  dfloat sfac = 1.0;
   if(taumin < -fact*taumax){
     sfac = 0.0;
   }

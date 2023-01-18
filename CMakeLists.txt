@@ -196,12 +196,6 @@ include(config/hypre.cmake)
 ###############################################################################
 # Build OpenBLAS
 ###############################################################################
-set(BUILD_TESTING OFF CACHE BOOL "Build LAPACK testsuite when building LAPACK")
-#set(BUILD_SHARED_LIBS TRUE)
-set(BUILD_DOUBLE TRUE)
-#set(BUILD_SINGLE TRUE)
-set(USE_THREAD FALSE)
-set(NUM_THREADS 0)
 add_subdirectory(3rd_party/OpenBLAS)
 
 ###############################################################################

@@ -20,7 +20,7 @@ include(CMakePackageConfigHelpers)
 #######
 option(BUILD_WITHOUT_LAPACK "Do not build LAPACK and LAPACKE (Only BLAS or CBLAS)" OFF)
 
-option(BUILD_TESTING "Build LAPACK testsuite when building LAPACK" ON)
+option(BUILD_TESTING "Build LAPACK testsuite when building LAPACK" OFF)
 
 option(C_LAPACK "Build LAPACK from C sources instead of the original Fortran" OFF)
 
@@ -45,9 +45,10 @@ endif()
 option(CPP_THREAD_SAFETY_TEST "Run a massively parallel DGEMM test to confirm thread safety of the library (requires OpenMP and about 1.3GB of RAM)" OFF)
 
 option(CPP_THREAD_SAFETY_GEMV "Run a massively parallel DGEMV test to confirm thread safety of the library (requires OpenMP)" OFF)
-option(BUILD_STATIC_LIBS "Build static library" OFF)
+
 if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
   set(BUILD_STATIC_LIBS ON CACHE BOOL "Build static library" FORCE)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static library" FORCE)
 endif()
 if((BUILD_STATIC_LIBS AND BUILD_SHARED_LIBS) AND MSVC)
   message(WARNING "Could not enable both BUILD_STATIC_LIBS and BUILD_SHARED_LIBS with MSVC, Disable BUILD_SHARED_LIBS")
@@ -70,6 +71,8 @@ endif()
 if(BUILD_WITHOUT_CBLAS)
   set(NO_CBLAS 1)
 endif()
+
+set(NUM_THREADS 0)
 
 #######
 
@@ -113,15 +116,16 @@ endif ()
 if (NOT DEFINED BUILD_BFLOAT16)
  set (BUILD_BFLOAT16 false)
 endif ()
+
 # set which float types we want to build for
-if (NOT DEFINED BUILD_SINGLE AND NOT DEFINED BUILD_DOUBLE AND NOT DEFINED BUILD_COMPLEX AND NOT DEFINED BUILD_COMPLEX16)
+#if (NOT DEFINED BUILD_SINGLE AND NOT DEFINED BUILD_DOUBLE AND NOT DEFINED BUILD_COMPLEX AND NOT DEFINED BUILD_COMPLEX16)
   # if none are defined, build for all
   # set(BUILD_BFLOAT16 true)
-  set(BUILD_SINGLE true)
+  set(BUILD_SINGLE false)
   set(BUILD_DOUBLE true)
-  set(BUILD_COMPLEX true)
-  set(BUILD_COMPLEX16 true)
-endif ()
+  set(BUILD_COMPLEX false)
+  set(BUILD_COMPLEX16 false)
+#endif ()
 
 if (NOT DEFINED BUILD_MATGEN)
   set(BUILD_MATGEN true)

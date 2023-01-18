@@ -74,6 +74,10 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
 
   flopCounter = std::make_unique<flopCounter_t>();
 
+  // Disables the automatic insertion of barriers
+  // between separate OKL inner loop blocks.
+  kernelInfo["okl/add_barriers"] = false;
+
   kernelInfo["defines/"
              "p_NVec"] = 3;
   kernelInfo["defines/"

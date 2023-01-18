@@ -29,7 +29,7 @@ set_target_properties(nekrs-hypre PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 if(ENABLE_HYPRE_GPU)
 
-if(ENABLE_CUDA)
+if(OCCA_CUDA_ENABLED)
   find_package(CUDAToolkit 11.0 REQUIRED)
   set(HYPRE_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/HYPRE_BUILD_DEVICE-prefix)
   set(HYPRE_CUDA_SM 70)
@@ -80,9 +80,11 @@ if(ENABLE_CUDA)
   target_link_libraries(nekrs-hypre-device 
                         PUBLIC libocca MPI::MPI_C 
                         PRIVATE ${HYPRE_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}HYPRE.a 
-                        CUDA::curand CUDA::cublas CUDA::cusparse CUDA::cusolver) 
+                        CUDA::cudart CUDA::curand CUDA::cublas CUDA::cusparse CUDA::cusolver) 
   set_target_properties(nekrs-hypre-device PROPERTIES CXX_VISIBILITY_PRESET hidden)
-elseif(ENABLE_HIP)
+elseif(OCCA_HIP_ENABLED)
+  message(FATAL_ERROR "HYPRE wrapper build does not support HIP!")
+elseif(OCCA_DPCPP_ENABLED)
   message(FATAL_ERROR "HYPRE wrapper build does not support HIP!")
 endif()
 

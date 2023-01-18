@@ -1481,7 +1481,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
 
     // grad in r
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
@@ -1568,7 +1568,7 @@
     }
 
     // div in r
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 #pragma unroll p_Nq        
@@ -1577,7 +1577,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {    
         for (int m = 0; m < p_Nq; m++) {
@@ -1591,7 +1591,7 @@
     }
 
     // div in s
-    @barrier("local");    
+    @barrier();    
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 #pragma unroll p_Nq        
@@ -1600,7 +1600,7 @@
         }
       }
     }
-    @barrier("local");
+    @barrier();
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
         for (int m = 0; m < p_Nq; m++) {

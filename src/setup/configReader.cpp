@@ -103,6 +103,12 @@ void configRead(MPI_Comm comm)
   ini.extract("general", "occa_hip_compiler_flags", buf);
   if(!getenv("OCCA_HIP_COMPILER_FLAGS")) setenv("OCCA_HIP_COMPILER_FLAGS", buf.c_str(), 1);
 
+  ini.extract("general", "occa_dpcpp_compiler", buf);
+  if(!getenv("OCCA_DPCPP_COMPILER")) setenv("OCCA_DPCPP_COMPILER", buf.c_str(), 1);
+
+  ini.extract("general", "occa_dpcpp_compiler_flags", buf);
+  if(!getenv("OCCA_DPCPP_COMPILER_FLAGS")) setenv("OCCA_DPCPP_COMPILER_FLAGS", buf.c_str(), 1);
+  
   ini.extract("general", "occa_opencl_compiler_flags", buf);
   if(!getenv("OCCA_OPENCL_COMPILER_FLAGS")) setenv("OCCA_OPENCL_COMPILER_FLAGS", buf.c_str(), 1);
 

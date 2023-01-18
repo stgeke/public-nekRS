@@ -111,15 +111,26 @@ smootherType                Jacobi
                             +maxEigenvalueBoundFactor=<float> 
 
 boundaryTypeMap             <...>, <...>, ...                          boundary type for each boundary ID
-                            fixedValue                                 user specified Dirichlet
-                            zeroValue                                  zero Dirichlet
-                            fixedGradient                              user specified Neumann
-                            zeroGradient                               zero Neumann (do nothing)
+
+                            zeroValue                                  zero Dirichlet (wall)
+                            codedFixedValue                            user specified Dirichlet (inlet)
                             zeroXValue/zeroGradient                    symmetry x-normal plane
                             zeroYValue/zeroGradient                    symmetry y-normal plane
                             zeroZValue/zeroGradient                    symmetry z-normal plane
                             zeroNValue/zeroGradient                    unaligned symmetry
-                            zeroNValue/fixedGradient                   unaligned traction
+                            zeroXValue/codedFixedGradient              traction x-normal plane
+                            zeroYValue/codedFixedGradient              traction y-normal plane
+                            zeroZValue/codedFixedGradient              traction z-normal plane
+                            zeroNValue/codedFixedGradient              unaligned traction
+                            zeroXValue/codedFixedGradient              traction x-normal plane
+                            zeroYValue/codedFixedGradient              traction y-normal plane
+                            zeroZValue/codedFixedGradient              traction z-normal plane
+                            fixedGradient                              open boundary (outflow), pr*n
+                            zeroYZValue/fixedGradient             
+                            zeroXZValue/fixedGradient             
+                            zeroYYValue/fixedGradient          
+
+
 
 regularization                                                         
                             hpfrt                                      HPF stabilization
@@ -135,7 +146,7 @@ regularization
 ----------------------------------------------------------------------------------------------------------------------
 [MESH]
 
-solver                      elasticity                                 solver type 
+solver                      poisson                                    solver type 
                             user                                       user mesh velocity
 
 partitioner                 rbc, rsb, rbc+rsb [D]                      partitioning method

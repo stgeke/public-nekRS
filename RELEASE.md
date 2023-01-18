@@ -30,7 +30,6 @@
 
 ## Known Bugs / Restrictions
 
-* Mesh solver does not support unaligned sym/shl BCs nor CHT
 * Poor performance of Schwarz smoother on CPUs
 * Poor performance of OIFS (advSub kernel) on CPUs
 * [729](https://github.com/Nek5000/Nek5000/issues/759)

@@ -39,7 +39,8 @@ struct nrs_t {
 
   cds_t *cds = nullptr;
 
-  oogs_t *gsh;
+  oogs_t *gsh = nullptr;
+  oogs_t *gshMesh = nullptr;
 
   dlong ellipticWrkOffset;
 

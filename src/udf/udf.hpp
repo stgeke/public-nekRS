@@ -6,6 +6,7 @@
 #include "nrs.hpp"
 #include "nekInterfaceAdapter.hpp"
 #include "parReader.hpp"
+#include "bcMap.hpp"
 #include "constantFlowRate.hpp"
 #include "postProcessing.hpp"
 #include "plugins/velRecycling.hpp"

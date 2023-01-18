@@ -85,7 +85,7 @@ void compileKernels() {
   const std::vector<std::pair<std::string,int>> sections = {
       {"pressure", 1},
       {"velocity", 0},
-      {"mesh", 0},
+      {"mesh", 1},
   };
 
   std::string section;
@@ -95,7 +95,7 @@ void compileKernels() {
         && platform->options.compareArgs("VELOCITY SOLVER", "NONE"))
       continue;
 
-    if (entry.first == "mesh" && !platform->options.compareArgs("MESH SOLVER", "ELASTICITY"))
+    if (entry.first == "mesh" && !platform->options.compareArgs("MESH SOLVER", "POISSON"))
       continue;
 
     std::tie(section, poissonEquation) = entry;

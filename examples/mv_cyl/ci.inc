@@ -30,21 +30,26 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   }
   if(ciMode == 3){
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
-    options.setArgs("MESH SOLVER", "ELASTICITY");
+    options.setArgs("MESH INITIAL GUESS", "PROJECTION");
+    options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));
+    options.setArgs("MESH SOLVER", "POISSON");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }
   if(ciMode == 4){
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
-    options.setArgs("MESH INITIAL GUESS", "PROJECTION-ACONJ");
-    options.setArgs("MESH SOLVER", "ELASTICITY");
+    options.setArgs("MESH INITIAL GUESS", "PROJECTION");
+    options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));
+    options.setArgs("MESH SOLVER", "POISSON");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }
   if(ciMode == 5){
     platform->par->set("casedata", "p_rot", 0.5);
   }
   if(ciMode == 6){
-    options.setArgs("MESH SOLVER", "ELASTICITY");
-    options.setArgs("MESH SOLVER TOLERANCE", "1e-12");
+    options.setArgs("MESH SOLVER", "POISSON");
+    options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
+    options.setArgs("MESH INITIAL GUESS", "PROJECTION");
+    options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));
     platform->par->set("casedata", "p_rot", 0.5);
   }
 }
@@ -66,7 +71,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   expectedErr[0] = 0.2465620E-06;
   expectedErr[1] = 0.6938894E-16;
   expectedErr[2] = 0.2973762E-05;
-  expectedErr[3] = 0.5820565E-06;
+  expectedErr[3] = 0.6015192E-06;
   expectedErr[4] = 0.2465620E-05;
   expectedErr[5] = 0.2558128E-05;
 
@@ -94,7 +99,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   }
   if(ciMode == 6)
   {
-    //expectedVIter = 9; // no extrap
+    //expectedVIter = 8; // no extrap
   }
 
   const dfloat absTol = 1e-8; // values below this threshold are ignored
@@ -120,16 +125,6 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   if(rank == 0) printf("velIter=%d pIter=%d ", velIterErr, pIterErr);
   if(velIterErr >= 3) passed = false;
   if(pIterErr >= 2) passed = false;
-
-#if 0
-  if(ciMode == 3)
-  {
-    const int expectedMeshIter =  47;
-    const int meshIterErr = abs(nrs->meshSolver->Niter - expectedMeshIter);
-    if(rank == 0) printf("meshIter=%d ", meshIterErr);
-    if(meshIterErr >= 3) passed = false;
-  }
-#endif
 
   if(rank == 0) printf("\n"); 
   passed ? (PASS) : (FAIL);

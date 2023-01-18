@@ -21,6 +21,22 @@ void printICMinMax(nrs_t *nrs)
   if(platform->comm.mpiRank == 0) 
     printf("================= INITITAL CONDITION ====================\n");
 
+  if(platform->options.compareArgs("MOVING MESH", "TRUE")) {
+    auto mesh = nrs->meshV;
+    auto o_ux = mesh->o_U + 0*nrs->fieldOffset*sizeof(dfloat);
+    auto o_uy = mesh->o_U + 1*nrs->fieldOffset*sizeof(dfloat);
+    auto o_uz = mesh->o_U + 2*nrs->fieldOffset*sizeof(dfloat);
+    const auto uxMin = platform->linAlg->min(mesh->Nlocal, o_ux, platform->comm.mpiComm);
+    const auto uyMin = platform->linAlg->min(mesh->Nlocal, o_uy, platform->comm.mpiComm);
+    const auto uzMin = platform->linAlg->min(mesh->Nlocal, o_uz, platform->comm.mpiComm);
+    const auto uxMax = platform->linAlg->max(mesh->Nlocal, o_ux, platform->comm.mpiComm);
+    const auto uyMax = platform->linAlg->max(mesh->Nlocal, o_uy, platform->comm.mpiComm);
+    const auto uzMax = platform->linAlg->max(mesh->Nlocal, o_uz, platform->comm.mpiComm);
+    if(platform->comm.mpiRank == 0) 
+      printf("UM  min/max: %g %g %g %g %g %g\n", uxMin, uxMax, uyMin, uyMax, uzMin, uzMax);
+  }
+
+
   {
     auto mesh = nrs->meshV;
     auto o_ux = nrs->o_U + 0*nrs->fieldOffset*sizeof(dfloat);
@@ -33,7 +49,7 @@ void printICMinMax(nrs_t *nrs)
     const auto uyMax = platform->linAlg->max(mesh->Nlocal, o_uy, platform->comm.mpiComm);
     const auto uzMax = platform->linAlg->max(mesh->Nlocal, o_uz, platform->comm.mpiComm);
     if(platform->comm.mpiRank == 0) 
-      printf("U min/max: %g %g %g %g %g %g\n", uxMin, uxMax, uyMin, uyMax, uzMin, uzMax);
+      printf("U   min/max: %g %g %g %g %g %g\n", uxMin, uxMax, uyMin, uyMax, uzMin, uzMax);
   }
 
   {
@@ -41,13 +57,13 @@ void printICMinMax(nrs_t *nrs)
     const auto prMin = platform->linAlg->min(mesh->Nlocal, nrs->o_P, platform->comm.mpiComm);
     const auto prMax = platform->linAlg->max(mesh->Nlocal, nrs->o_P, platform->comm.mpiComm);
     if(platform->comm.mpiRank == 0) 
-      printf("P min/max: %g %g\n", prMin, prMax);
+      printf("P   min/max: %g %g\n", prMin, prMax);
   }
 
   if (nrs->Nscalar) {
     auto cds = nrs->cds;
     if(platform->comm.mpiRank == 0) 
-      printf("S min/max:");  
+      printf("S   min/max:");  
     for (int is = 0; is < cds->NSfields; is++) {
       if (!cds->compute[is])
         continue;
@@ -102,7 +118,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     platform->options.setArgs("GS OVERLAP", "FALSE");
 
   nrs->flow = 1;
-  if (platform->options.compareArgs("VELOCITY SOLVER", "NONE"))
+  if (platform->options.compareArgs("VELOCITY SOLVER", "FALSE"))
     nrs->flow = 0;
 
   if (nrs->flow) {
@@ -290,22 +306,26 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->o_ellipticCoeff = device.malloc((2 * sizeof(dfloat)) * nrs->fieldOffset);
 
   int nProperties = 2;
-  if (options.compareArgs("MESH SOLVER", "ELASTICITY"))
+  if (options.compareArgs("MESH SOLVER", "POISSON"))
     nProperties = 4;
   nrs->prop = (dfloat *)calloc(nProperties * nrs->fieldOffset, sizeof(dfloat));
   for (int e = 0; e < mesh->Nelements; e++)
     for (int n = 0; n < mesh->Np; n++) {
       nrs->prop[0 * nrs->fieldOffset + e * mesh->Np + n] = mue;
       nrs->prop[1 * nrs->fieldOffset + e * mesh->Np + n] = rho;
+      if (options.compareArgs("MESH SOLVER", "POISSON")) {
+        nrs->prop[2 * nrs->fieldOffset + e * mesh->Np + n] = 1.0;
+        nrs->prop[3 * nrs->fieldOffset + e * mesh->Np + n] = 0;
+      }
     }
 
   nrs->o_prop = device.malloc((nProperties * sizeof(dfloat)) * nrs->fieldOffset, nrs->prop);
   nrs->o_mue = nrs->o_prop.slice((0 * sizeof(dfloat)) * nrs->fieldOffset);
   nrs->o_rho = nrs->o_prop.slice((1 * sizeof(dfloat)) * nrs->fieldOffset);
-  if (options.compareArgs("MESH SOLVER", "ELASTICITY")) {
+  if (options.compareArgs("MESH SOLVER", "POISSON")) {
     nrs->o_meshMue = nrs->o_prop.slice((2 * sizeof(dfloat)) * nrs->fieldOffset);
     nrs->o_meshRho = nrs->o_prop.slice((3 * sizeof(dfloat)) * nrs->fieldOffset);
-  }
+ }
 
   if (platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")) {
     nrs->o_Uc = platform->device.malloc((nrs->NVfields * sizeof(dfloat)) * nrs->fieldOffset);
@@ -324,6 +344,11 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   // 0);
   nrs->gsh = oogs::setup(mesh->ogs, nrs->NVfields, nrs->fieldOffset, ogsDfloat, NULL, OOGS_AUTO);
 
+  if (options.compareArgs("MESH SOLVER", "POISSON")) { 
+    mesh_t *meshT = nrs->_mesh;
+    nrs->gshMesh = oogs::setup(meshT->ogs, nrs->NVfields, nrs->fieldOffset, ogsDfloat, NULL, OOGS_AUTO);
+  }
+
   nrs->EToB = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
   int cnt = 0;
   for (int e = 0; e < mesh->Nelements; e++) {
@@ -334,8 +359,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   }
   nrs->o_EToB = device.malloc(mesh->Nelements * mesh->Nfaces * sizeof(int), nrs->EToB);
 
-  if (platform->options.compareArgs("MESH SOLVER", "ELASTICITY")) {
-
+  if (platform->options.compareArgs("MESH SOLVER", "POISSON")) {
     nrs->EToBMeshVelocity = (int *)calloc(mesh->Nelements * mesh->Nfaces, sizeof(int));
     int cnt = 0;
     for (int e = 0; e < mesh->Nelements; e++) {
@@ -516,6 +540,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     printf("done\n");
   fflush(stdout);
 
+  nrs->p0the = nrs->p0th[0];
+
   nrs->o_U.copyFrom(nrs->U);
   nrs->o_P.copyFrom(nrs->P);
   nrs->o_prop.copyFrom(nrs->prop);
@@ -523,10 +549,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->cds->o_S.copyFrom(nrs->cds->S);
     nrs->cds->o_prop.copyFrom(nrs->cds->prop);
   }
-
-  nrs->p0the = nrs->p0th[0];
+  if (options.compareArgs("MOVING MESH", "TRUE")) {
+    mesh->o_U.copyFrom(mesh->U);
+  }
 
   evaluateProperties(nrs, startTime);
+
   nrs->o_prop.copyTo(nrs->prop);
   if (nrs->Nscalar)
     nrs->cds->o_prop.copyTo(nrs->cds->prop);
@@ -600,7 +628,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   }
 
   if (nrs->flow) {
-
     if (platform->comm.mpiRank == 0)
       printf("================ ELLIPTIC SETUP VELOCITY ================\n");
 
@@ -672,13 +699,13 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
         nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(int));
         createEToBV(nrs->meshV, nrs->uvwSolver->EToB, nrs->o_EToBVVelocity);
         auto o_EToB = 
-          platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->uvwSolver->Nfields * 
-                                  sizeof(int), nrs->uvwSolver->EToB);
-        createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
+          platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->uvwSolver->Nfields * sizeof(int), nrs->uvwSolver->EToB); 
+        createZeroNormalMask(nrs, mesh, o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
 
         nrs->uvwSolver->applyZeroNormalMask =
-            [nrs](dlong Nelements, occa::memory &o_elementList, occa::memory &o_x) {
+            [nrs, mesh](dlong Nelements, occa::memory &o_elementList, occa::memory &o_x) {
               applyZeroNormalMask(nrs,
+                                  mesh,
                                   Nelements,
                                   o_elementList,
                                   nrs->uvwSolver->o_EToB,
@@ -798,23 +825,18 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     ellipticSolveSetup(nrs->pSolver);
 
   } // flow
-  if (nrs->flow) {
 
-    if (options.compareArgs("MESH SOLVER", "ELASTICITY")) {
-
-      bool unalignedBoundary = bcMap::unalignedMixedBoundary("mesh");
-      if (unalignedBoundary) {
-        if (platform->comm.mpiRank == 0) {
-          printf("ERROR: unaligned SYM/SHL boundary condition are currently not supported with the mesh "
-                 "solver.\n");
-        }
-        ABORT(EXIT_FAILURE);
-      }
-
+  {
+    mesh_t *mesh = nrs->_mesh;
+    if (options.compareArgs("MESH SOLVER", "POISSON")) {
       if (platform->comm.mpiRank == 0)
         printf("================ ELLIPTIC SETUP MESH ================\n");
 
-      for (int bID = 1; bID <= bcMap::size(0); bID++) {
+      int nbrBIDs = bcMap::size(0);
+      if (nrs->cht)
+        nbrBIDs = bcMap::size(1);
+
+      for (int bID = 1; bID <= nbrBIDs; bID++) {
         std::string bcTypeText(bcMap::text(bID, "mesh"));
         if (platform->comm.mpiRank == 0)
           printf("bID %d -> bcType %s\n", bID, bcTypeText.c_str());
@@ -839,7 +861,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->meshSolver->coeffFieldPreco = meshCoeffField;
       nrs->meshSolver->o_lambda = nrs->o_ellipticCoeff;
       nrs->meshSolver->loffset = 0; // use same ellipticCoeff for u,v and w
-      nrs->meshSolver->poisson = 0;
+      nrs->meshSolver->poisson = 1;
 
       nrs->meshSolver->EToB =
           (int *)calloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields, sizeof(int));
@@ -860,19 +882,20 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
         }
       }
 
+      bool unalignedBoundary = bcMap::unalignedMixedBoundary("mesh");
       if (unalignedBoundary) {
         nrs->o_zeroNormalMaskMeshVelocity = 
           platform->device.malloc((nrs->meshSolver->Nfields * sizeof(dfloat)) * 
                                   nrs->meshSolver->fieldOffset);
         nrs->o_EToBVMeshVelocity = platform->device.malloc(mesh->Nlocal * sizeof(int));
         auto o_EToB =
-            platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields * sizeof(int),
-                                    nrs->meshSolver->EToB);
-        createEToBV(nrs->meshV, nrs->meshSolver->EToB, nrs->o_EToBVMeshVelocity);
-        createZeroNormalMask(nrs, o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
+            platform->device.malloc(mesh->Nelements * mesh->Nfaces * nrs->meshSolver->Nfields * sizeof(int), nrs->meshSolver->EToB);
+        createEToBV(mesh, nrs->meshSolver->EToB, nrs->o_EToBVMeshVelocity);
+        createZeroNormalMask(nrs, mesh, o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
         nrs->meshSolver->applyZeroNormalMask =
-            [nrs](dlong Nelements, occa::memory &o_elementList, occa::memory &o_x) {
+            [nrs, mesh](dlong Nelements, occa::memory &o_elementList, occa::memory &o_x) {
               applyZeroNormalMask(nrs,
+                                  mesh,
                                   Nelements,
                                   o_elementList,
                                   nrs->meshSolver->o_EToB,

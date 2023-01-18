@@ -343,6 +343,10 @@ void timer_t::printRunStat(int step)
       query("scalar proj pre", "DEVICE:MAX") + query("scalar proj post", "DEVICE:MAX"),
       count("scalar proj pre"));
 
+  set("mesh proj",
+      query("mesh proj pre", "DEVICE:MAX") + query("mesh proj post", "DEVICE:MAX"),
+      count("mesh proj pre"));
+
   double gsTime = ogsTime(/* reportHostTime */ true);
   MPI_Allreduce(MPI_IN_PLACE, &gsTime, 1, MPI_DOUBLE, MPI_MAX, comm_);
 
@@ -391,7 +395,7 @@ void timer_t::printRunStat(int step)
   printStatEntry("      udfUEqnSource     ", "udfUEqnSource", "DEVICE:MAX", tMakef);
 
   const double tMakeq = query("makeq", "DEVICE:MAX");
-  printStatEntry("    makeq               ", "makeq", "DEVICE:MAX", tElapsedTime);
+  printStatEntry("    makeq               ", "makeq", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      udfSEqnSource     ", "udfSEqnSource", "DEVICE:MAX", tMakeq);
 
   printStatEntry("    udfProperties       ", "udfProperties", "DEVICE:MAX", tElapsedTimeSolve);
@@ -399,6 +403,7 @@ void timer_t::printRunStat(int step)
   printStatEntry("    meshUpdate          ", "meshUpdate", "DEVICE:MAX", tElapsedTimeSolve);
   const double tMesh = query("meshSolve", "DEVICE:MAX");
   printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTimeSolve);
+  printStatEntry("      preconditioner    ", "mesh preconditioner", "DEVICE:MAX", tMesh);
   printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
 
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");

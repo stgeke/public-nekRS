@@ -176,6 +176,10 @@ static std::vector<std::string> commonKeys = {
 };
 
 static std::vector<std::string> meshKeys = {
+  {"solver"},
+  {"residualTol"},
+  {"initialGuess"},
+  {"boundaryTypeMap"},
   {"partitioner"},
   {"file"},
   {"connectivitytol"},
@@ -1648,37 +1652,34 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
 
     std::string meshSolver;
     if (par->extract("mesh", "solver", meshSolver)) {
-      options.setArgs("MESH KRYLOV SOLVER", "PCG");
-      options.setArgs("MESH PRECONDITIONER", "JACOBI");
-      options.setArgs("MESH DISCRETIZATION", "CONTINUOUS");
       options.setArgs("MOVING MESH", "TRUE");
-      if(meshSolver == "user") options.setArgs("MESH SOLVER", "USER");
-      else if(meshSolver == "elasticity") {
+      if(meshSolver == "user") {
+        options.setArgs("MESH SOLVER", "USER");
+      } else if(meshSolver == "poisson") {
+        options.setArgs("MESH KRYLOV SOLVER", "PCG");
+        options.setArgs("MESH BLOCK SOLVER", "TRUE");
+        options.setArgs("MESH PRECONDITIONER", "JACOBI");
+        options.setArgs("MESH DISCRETIZATION", "CONTINUOUS");
         options.setArgs("MESH ELLIPTIC COEFF FIELD", "TRUE");
-        options.setArgs("MESH STRESSFORMULATION", "TRUE");
-        options.setArgs("MESH SOLVER", "ELASTICITY");
-#if 0
-        options.setArgs("MESH INITIAL GUESS", "PROJECTION-ACONJ");
-        options.setArgs("MESH RESIDUAL PROJECTION VECTORS", "5");
-        options.setArgs("MESH RESIDUAL PROJECTION START", "5");
-#endif
+        options.setArgs("MESH SOLVER", "POISSON");
+        options.setArgs("MESH STRESSFORMULATION", "FALSE");
       }
-      else if(meshSolver == "none") options.setArgs("MOVING MESH", "FALSE"); 
-      else {
+      else if(meshSolver == "none") {
+        options.setArgs("MOVING MESH", "FALSE");
+      } else {
         std::ostringstream error;
         error << "Could not parse mesh::solver = " << meshSolver;
         append_error(error.str());
       }
     }
 
-
     std::string m_bcMap;
-    if(par->extract("mesh", "boundarytypemap", m_bcMap)) {
+    if (par->extract("mesh", "boundarytypemap", m_bcMap)) {
       std::vector<std::string> sList;
       sList = serializeString(m_bcMap,',');
       bcMap::setup(sList, "mesh");
     } else {
-      if(meshSolver == "elasticity"){
+      if(meshSolver == "poisson"){ 
         // use derived mapping based on fluid boundary conditions
         std::string v_bcMap;
         if(par->extract("velocity", "boundarytypemap", v_bcMap)) {
@@ -1936,7 +1937,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       }
 
       if (vsolver == "none") {
-        options.setArgs("VELOCITY SOLVER", "NONE");
+        options.setArgs("VELOCITY SOLVER", "FALSE");
         flow = 0;
       } else if (!vsolver.empty()) {
         options.setArgs("VELOCITY BLOCK SOLVER", "FALSE");

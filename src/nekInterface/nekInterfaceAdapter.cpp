@@ -660,7 +660,7 @@ int setup(nrs_t* nrs_in)
   nrs = nrs_in;
   MPI_Comm_rank(platform->comm.mpiComm, &rank);
 
-  bool meshSolver = options->compareArgs("MESH SOLVER", "ELASTICITY");
+  bool meshSolver = options->compareArgs("MESH SOLVER", "POISSON");
 
   std::string casename;
   options->getArgs("CASENAME", casename);

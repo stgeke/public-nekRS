@@ -1,10 +1,8 @@
 #include "nrs.hpp"
 #include "bcMap.hpp"
 
-void createZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory& o_EToBV, occa::memory &o_mask)
+void createZeroNormalMask(nrs_t *nrs, mesh_t *mesh, occa::memory &o_EToB, occa::memory& o_EToBV, occa::memory &o_mask)
 {
-  auto mesh = nrs->meshV;
-
   nrs->initializeZeroNormalMaskKernel(mesh->Nlocal, nrs->fieldOffset, o_EToBV, o_mask);
 
 #if 1
@@ -19,7 +17,7 @@ void createZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory& o_EToB
                                  o_EToB,
                                  o_avgNormal);
 
-  oogs::startFinish(o_avgNormal, 4, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
+  oogs::startFinish(o_avgNormal, nrs->NVfields+1, nrs->fieldOffset, ogsDfloat, ogsAdd, mesh->oogs);
 
   nrs->fixZeroNormalMaskKernel(mesh->Nelements,
                      nrs->fieldOffset,
@@ -30,10 +28,11 @@ void createZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory& o_EToB
                      o_mask);
 #endif
 
-  oogs::startFinish(o_mask, 3, nrs->fieldOffset, ogsDfloat, ogsMin, nrs->gsh);
+  oogs::startFinish(o_mask, nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsMin, mesh->oogs);
 }
 
 void applyZeroNormalMask(nrs_t *nrs,
+                         mesh_t *mesh,
                          dlong Nelements,
                          occa::memory &o_elementList,
                          occa::memory &o_EToB,
@@ -43,7 +42,6 @@ void applyZeroNormalMask(nrs_t *nrs,
   if (Nelements == 0)
     return;
 
-  auto *mesh = nrs->meshV;
   nrs->applyZeroNormalMaskKernel(Nelements,
                                  nrs->fieldOffset,
                                  o_elementList,
@@ -54,9 +52,8 @@ void applyZeroNormalMask(nrs_t *nrs,
                                  o_x);
 }
 
-void applyZeroNormalMask(nrs_t *nrs, occa::memory &o_EToB, occa::memory &o_mask, occa::memory &o_x)
+void applyZeroNormalMask(nrs_t *nrs, mesh_t *mesh, occa::memory &o_EToB, occa::memory &o_mask, occa::memory &o_x)
 {
-  auto *mesh = nrs->meshV;
   nrs->applyZeroNormalMaskKernel(mesh->Nelements,
                                  nrs->fieldOffset,
                                  mesh->o_elementList,
@@ -71,8 +68,8 @@ void applyDirichlet(nrs_t *nrs, double time)
 {
   if (nrs->flow) {
     if (bcMap::unalignedMixedBoundary("velocity")) {
-      applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
-      applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Ue);
+      applyZeroNormalMask(nrs, nrs->meshV, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_U);
+      applyZeroNormalMask(nrs, nrs->meshV, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Ue);
     }
   }
 
@@ -219,33 +216,34 @@ void applyDirichlet(nrs_t *nrs, double time)
     }
   }
 
-  if (platform->options.compareArgs("MESH SOLVER", "ELASTICITY")) {
-    mesh_t *mesh = nrs->meshV;
-    if (mesh->cht) mesh = nrs->cds->mesh[0]; 
+  if (platform->options.compareArgs("MESH SOLVER", "POISSON")) {
+    mesh_t *mesh = nrs->_mesh;
     if (bcMap::unalignedMixedBoundary("mesh")) {
-      applyZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_U);
+      applyZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_U);
+      applyZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_Ue);
     }
     platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset,
                            -1.0 * std::numeric_limits<dfloat>::max(),
                            platform->o_mempool.slice3);
+
     for (int sweep = 0; sweep < 2; sweep++) {
-      nrs->meshV->velocityDirichletKernel(mesh->Nelements,
-                                          nrs->fieldOffset,
-                                          time,
-                                          bcMap::useDerivedMeshBoundaryConditions(),
-                                          mesh->o_sgeo,
-                                          nrs->o_zeroNormalMaskMeshVelocity,
-                                          mesh->o_x,
-                                          mesh->o_y,
-                                          mesh->o_z,
-                                          mesh->o_vmapM,
-                                          mesh->o_EToB,
-                                          nrs->o_EToBMeshVelocity,
-                                          nrs->o_meshRho,
-                                          nrs->o_meshMue,
-                                          nrs->o_usrwrk,
-                                          nrs->o_U,
-                                          platform->o_mempool.slice3);
+      mesh->velocityDirichletKernel(mesh->Nelements,
+                                    nrs->fieldOffset,
+                                    time,
+                                    bcMap::useDerivedMeshBoundaryConditions(),
+                                    mesh->o_sgeo,
+                                    nrs->o_zeroNormalMaskMeshVelocity,
+                                    mesh->o_x,
+                                    mesh->o_y,
+                                    mesh->o_z,
+                                    mesh->o_vmapM,
+                                    mesh->o_EToB,
+                                    nrs->o_EToBMeshVelocity,
+                                    nrs->o_meshRho,
+                                    nrs->o_meshMue,
+                                    nrs->o_usrwrk,
+                                    nrs->o_U,
+                                    platform->o_mempool.slice3);
 
       if (sweep == 0)
         oogs::startFinish(platform->o_mempool.slice3,
@@ -253,14 +251,14 @@ void applyDirichlet(nrs_t *nrs, double time)
                           nrs->fieldOffset,
                           ogsDfloat,
                           ogsMax,
-                          nrs->gsh);
+                          nrs->gshMesh);
       if (sweep == 1)
         oogs::startFinish(platform->o_mempool.slice3,
                           nrs->NVfields,
                           nrs->fieldOffset,
                           ogsDfloat,
                           ogsMin,
-                          nrs->gsh);
+                          nrs->gshMesh);
     }
 
     if (nrs->meshSolver->Nmasked)

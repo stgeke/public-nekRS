@@ -327,9 +327,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
   }
 
   if (movingMesh) {
-    mesh_t *mesh = nrs->meshV;
-    if (nrs->cht)
-      mesh = nrs->cds->mesh[0];
+    mesh_t *mesh = nrs->_mesh;
     for (int s = std::max(nrs->nBDF, nrs->nEXT); s > 1; s--) {
       const auto NbyteScalar = nrs->fieldOffset * sizeof(dfloat);
       mesh->o_LMM.copyFrom(mesh->o_LMM,
@@ -341,14 +339,19 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
           (s - 1) * NbyteScalar,
           (s - 2) * NbyteScalar);
     }
+
     mesh->move();
 
-    if (bcMap::unalignedMixedBoundary("velocity")) {
-      createZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
+    if (nrs->flow) {
+      if (bcMap::unalignedMixedBoundary("velocity")) {
+        createZeroNormalMask(nrs, nrs->meshV, nrs->uvwSolver->o_EToB, nrs->o_EToBVVelocity, nrs->o_zeroNormalMaskVelocity);
+      }
     }
 
-    if (bcMap::unalignedMixedBoundary("mesh") && platform->options.compareArgs("MESH SOLVER", "ELASTICITY")){
-      createZeroNormalMask(nrs, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
+    if (platform->options.compareArgs("MESH SOLVER", "POISSON")) {
+      if (bcMap::unalignedMixedBoundary("mesh")) {
+        createZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
+      }
     }
 
     if (nrs->cht)
@@ -376,15 +379,14 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     evaluateProperties(nrs, timeNew);
 
     if (udf.div) {
-      linAlg_t *linAlg = platform->linAlg;
-      linAlg->fill(mesh->Nlocal, 0.0, nrs->o_div);
+      platform->linAlg->fill(mesh->Nlocal, 0.0, nrs->o_div);
       udf.div(nrs, timeNew, nrs->o_div);
     }
 
     if (nrs->flow)
       fluidSolve(nrs, timeNew, nrs->o_P, nrs->o_U, iter, tstep);
 
-    if(platform->options.compareArgs("MESH SOLVER", "ELASTICITY"))
+    if(platform->options.compareArgs("MESH SOLVER", "POISSON"))
       meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
@@ -461,8 +463,8 @@ void coeffs(nrs_t *nrs, double dt, int tstep) {
   }
 }
 
-void makeq(
-    nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o_BF) {
+void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o_BF) 
+{
   cds_t *cds = nrs->cds;
   mesh_t *mesh = cds->mesh[0];
 

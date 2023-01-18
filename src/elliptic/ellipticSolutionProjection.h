@@ -82,5 +82,6 @@ private:
   const dlong Nfields;
 
   std::function<void(occa::memory&,occa::memory&)> matvecOperator;
+  std::function<void(occa::memory&)> maskOperator;
 };
 #endif

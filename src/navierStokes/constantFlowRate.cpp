@@ -607,7 +607,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
             platform->o_mempool.slice3,
             nrs->o_Uc);
       if (bcMap::unalignedMixedBoundary("velocity")) {
-        applyZeroNormalMask(nrs, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Uc);
+        applyZeroNormalMask(nrs, mesh, nrs->uvwSolver->o_EToB, nrs->o_zeroNormalMaskVelocity, nrs->o_Uc);
       }
     } else {
       if (nrs->uSolver->Nmasked)

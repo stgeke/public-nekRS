@@ -9,7 +9,9 @@ writeInterval = 50
 
 [MESH]
 boundaryTypeMap = codedFixedValue, zeroValue, sym
-solver = elasticity
+residualTol = 1e-6
+solver = poisson 
+initialGuess = projection+nVector=1 
 
 [PRESSURE]
 residualTol = 1e-8

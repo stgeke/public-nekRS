@@ -241,6 +241,7 @@ set(SRC
     src/core/registerEllipticPreconditionerKernels.cpp
     src/core/registerCdsKernels.cpp
     src/core/registerLinAlgKernels.cpp
+    src/core/registerMeshKernels.cpp
     src/bdry/createEToBV.cpp
     src/navierStokes/applyDirichlet.cpp
     src/navierStokes/timeStepper.cpp

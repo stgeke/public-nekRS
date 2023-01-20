@@ -11,6 +11,7 @@
 * Unaligned `on` boundary condition
 * Extrapolation initialGuess method
 * Support for external nekRS plugins
+* DPCPP backend
 * Various bug fixes 
 
 ## Good to know

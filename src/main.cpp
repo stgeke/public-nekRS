@@ -76,6 +76,8 @@
 #include <sstream>
 #include <fcntl.h>
 #include <chrono>
+#include <csignal>
+#include "backtrace.hpp"
 #if 0
 #include <filesystem>
 #endif
@@ -364,9 +366,27 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
 
 }
 
+static void signalHandler( int signum ) {
+   int rank;
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+   if(rank == 0)
+     std::cout << "generating backtrace files ...\n";
+
+   std::ofstream file;
+   std::string fileName = "backtrace.";
+   fileName += std::to_string(rank);
+   file.open (fileName);
+   file << backtrace(1); 
+   file.close();
+  
+   MPI_Finalize();
+   exit(signum);  
+}
 
 int main(int argc, char** argv)
 {
+
   const auto timeStart = std::chrono::high_resolution_clock::now();
   {
     int request = MPI_THREAD_SINGLE;
@@ -380,6 +400,12 @@ int main(int argc, char** argv)
       std::cout << "FATAL ERROR: Cannot initialize MPI!" << "\n";
       exit(EXIT_FAILURE);
     }
+  }
+
+  {
+    const char* env_val = std::getenv ("NEKRS_SIGUSR2_BACKTRACE");
+    if (env_val)
+      signal(SIGUSR2, signalHandler);  
   }
 
   MPI_Barrier(MPI_COMM_WORLD);

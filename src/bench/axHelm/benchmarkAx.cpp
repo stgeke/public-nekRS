@@ -199,7 +199,8 @@ occa::kernel benchmarkAx(int Nelements,
     auto Aq = randomVector<FPType>((Ndim * Np) * Nelements);
     auto exyz = randomVector<FPType>((3 * Np_g) * Nelements);
     auto gllwz = randomVector<FPType>(2 * Nq_g);
-    auto lambda = randomVector<FPType>(2 * Np * Nelements);
+    auto lambda0 = randomVector<FPType>(Np * Nelements);
+    auto lambda1 = randomVector<FPType>(Np * Nelements);
 
     // elementList[e] = e
     std::vector<dlong> elementList(Nelements);
@@ -215,7 +216,8 @@ occa::kernel benchmarkAx(int Nelements,
     auto o_exyz = platform->device.malloc((3 * Np_g) * Nelements * wordSize, exyz.data());
     auto o_gllwz = platform->device.malloc(2 * Nq_g * wordSize, gllwz.data());
 
-    auto o_lambda = platform->device.malloc(2 * Np * Nelements * wordSize, lambda.data());
+    auto o_lambda0 = platform->device.malloc(Np * Nelements * wordSize, lambda0.data());
+    auto o_lambda1 = platform->device.malloc(Np * Nelements * wordSize, lambda1.data());
 
     occa::kernel referenceKernel;
     {
@@ -232,13 +234,13 @@ occa::kernel benchmarkAx(int Nelements,
       const int loffset = 0;
       const int offset = Nelements * Np;
       if (computeGeom) {
-        kernel(Nelements, offset, loffset, o_elementList, o_exyz, o_gllwz, o_D, o_S, o_lambda, o_q, o_Aq);
+        kernel(Nelements, offset, loffset, o_elementList, o_exyz, o_gllwz, o_D, o_S, o_lambda0, o_lambda1, o_q, o_Aq);
       }
       else {
         if (!stressForm) {
-          kernel(Nelements, offset, loffset, o_elementList, o_ggeo, o_D, o_S, o_lambda, o_q, o_Aq);
+          kernel(Nelements, offset, loffset, o_elementList, o_ggeo, o_D, o_S, o_lambda0, o_lambda1, o_q, o_Aq);
         } else {
-          kernel(Nelements, offset, loffset, o_elementList, o_vgeo, o_D, o_S, o_lambda, o_q, o_Aq);
+          kernel(Nelements, offset, loffset, o_elementList, o_vgeo, o_D, o_S, o_lambda0, o_lambda1, o_q, o_Aq);
         }
       }
     };
@@ -356,7 +358,8 @@ occa::kernel benchmarkAx(int Nelements,
     free(o_Aq);
     free(o_exyz);
     free(o_gllwz);
-    free(o_lambda);
+    free(o_lambda0);
+    free(o_lambda1);
     free(o_elementList);
 
     return kernelAndTime;

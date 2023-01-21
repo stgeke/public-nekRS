@@ -36,7 +36,7 @@ void uservp(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_S,
 
   userVpKernel(mesh->Nelements, nrs->fieldOffset, nrs->cds->fieldOffset[0], nrs->p0the,
                o_S, o_UProp, o_SProp);
-  if(platform->options.compareArgs("MESH SOLVER", "POISSON")){
+  if(!platform->options.compareArgs("MESH SOLVER", "NONE")){
     const dfloat nu = 1.0;
     auto o_mesh_diff = o_UProp + (2 * sizeof(dfloat))*nrs->fieldOffset;
     platform->linAlg->fill(nrs->meshV->Nlocal, nu, o_mesh_diff);
@@ -94,7 +94,10 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
   mesh_t* mesh = nrs->meshV;
   cds_t* cds = nrs->cds;
   linAlg_t* linAlg = platform->linAlg;
-  if(platform->options.compareArgs("MESH SOLVER", "USER")){
+
+  // user provided mesh velocity
+  if(platform->options.compareArgs("MOVING MESH", "TRUE") && 
+     platform->options.compareArgs("MESH SOLVER", "NONE")) {
 
     // rotate back into reference frame
     platform->linAlg->axpbyz(

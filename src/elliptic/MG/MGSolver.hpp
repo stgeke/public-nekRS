@@ -32,6 +32,9 @@ SOFTWARE.
 #include "nrssys.hpp"
 #include "defines.hpp"
 
+#include "parseMultigridSchedule.hpp"
+#include "determineMGLevels.hpp"
+
 #include "hypreWrapper.hpp"
 #include "hypreWrapperDevice.hpp"
 #include "AMGX.hpp"

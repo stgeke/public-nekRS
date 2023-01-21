@@ -28,16 +28,24 @@
 #define ELLIPTIC_BUILDCONT_HPP
 
 #include "elliptic.h"
-#include "MGSolver/MGSolver.hpp"
+#include "MG/MGSolver.hpp"
 #include <vector>
 
-void ellipticBuildContinuous(elliptic_t* elliptic, nonZero_t** A,
-                             dlong* nnz, hlong* globalStarts);
+struct nonZero_t
+{
+  hlong row;
+  hlong col;
+  int ownerRank;
+  dfloat val;
+};
 
-void ellipticBuildContinuousGalerkinHex3D(elliptic_t* elliptic,
-                                          elliptic_t* ellipticFine,
-                                          nonZero_t** A,
-                                          dlong* nnz,
-                                          hlong* globalStarts);
+void ellipticBuildFEM(elliptic_t* elliptic, nonZero_t** A,
+                      dlong* nnz, hlong* globalStarts);
+
+void ellipticBuildFEMGalerkinHex3D(elliptic_t* elliptic,
+                                   elliptic_t* ellipticFine,
+                                   nonZero_t** A,
+                                   dlong* nnz,
+                                   hlong* globalStarts);
 
 #endif

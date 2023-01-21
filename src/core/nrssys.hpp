@@ -68,9 +68,12 @@ using dlong = long long int;
 #include <limits>
 #include <string>
 #include <vector>
+#include <functional>
+
 #include "occa.hpp"
 #include "ogs.hpp"
 #include "setupAide.hpp"
+#include "timer.hpp"
 
 static occa::memory o_NULL;
 

@@ -82,7 +82,7 @@ void registerEllipticKernels(std::string section, int poissonEquation)
 
   const std::string sectionIdentifier = std::to_string(Nfields) + "-";
 
-  if (platform->options.compareArgs(optionsPrefix + "KRYLOV SOLVER", "PGMRES")) {
+  if (platform->options.compareArgs(optionsPrefix + "SOLVER", "PGMRES")) {
     registerGMRESKernels(section, Nfields);
   }
 

@@ -52,11 +52,12 @@ elliptic_t* ellipticBuildMultigridLevelFine(elliptic_t* baseElliptic)
   mesh_t* mesh = elliptic->mesh;
   ellipticBuildPreconditionerKernels(elliptic);
 
-  elliptic->coeffField = baseElliptic->coeffField;
-  elliptic->coeffFieldPreco = baseElliptic->coeffFieldPreco;
-
-  elliptic->o_lambda = platform->device.malloc(mesh->Nlocal, sizeof(pfloat));
-  platform->copyDfloatToPfloatKernel(mesh->Nlocal, baseElliptic->o_lambda, elliptic->o_lambda);
+  elliptic->o_lambda0 = platform->device.malloc(mesh->Nlocal, sizeof(pfloat));
+  platform->copyDfloatToPfloatKernel(mesh->Nlocal, baseElliptic->o_lambda0, elliptic->o_lambda0);
+  if(!baseElliptic->poisson) {
+    elliptic->o_lambda1 = platform->device.malloc(mesh->Nlocal, sizeof(pfloat));
+    platform->copyDfloatToPfloatKernel(mesh->Nlocal, baseElliptic->o_lambda1, elliptic->o_lambda1);
+  }
 
   pfloat *tmp = (pfloat*) calloc(mesh->Nlocal, sizeof(pfloat));
   for(int i = 0; i < mesh->Nlocal; i++) {

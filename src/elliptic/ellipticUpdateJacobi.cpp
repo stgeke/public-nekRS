@@ -25,16 +25,14 @@
  */
 
 #include "elliptic.h"
+#include "ellipticPrecon.h"
+#include "ellipticMultiGrid.h"
 #include "linAlg.hpp"
 
 void ellipticUpdateJacobi(elliptic_t *elliptic, occa::memory &o_invDiagA)
 {
+  auto mesh = elliptic->mesh;
   dfloat flopCount = 0.0;
-  mesh_t *mesh = elliptic->mesh;
-  setupAide& options = elliptic->options;
-
-  const dlong Nlocal = mesh->Np * mesh->Nelements;
-
   if (elliptic->mgLevel) {
     elliptic->ellipticBlockBuildDiagonalPfloatKernel(mesh->Nelements,
                                                      elliptic->Nfields,
@@ -43,7 +41,8 @@ void ellipticUpdateJacobi(elliptic_t *elliptic, occa::memory &o_invDiagA)
                                                      mesh->o_ggeoPfloat,
                                                      mesh->o_DPfloat,
                                                      mesh->o_DTPfloat,
-                                                     elliptic->o_lambda,
+                                                     elliptic->o_lambda0,
+                                                     elliptic->o_lambda1,
                                                      o_invDiagA);
     flopCount += 12 * mesh->Nq + 12;
     flopCount += (elliptic->poisson) ? 0.0 : 2.0;
@@ -58,9 +57,8 @@ void ellipticUpdateJacobi(elliptic_t *elliptic, occa::memory &o_invDiagA)
                       elliptic->oogs);
 
     const pfloat one = 1.0;
-    platform->linAlg->padyMany(Nlocal, elliptic->Nfields, elliptic->fieldOffset, one, o_invDiagA);
-  }
-  else {
+    platform->linAlg->padyMany(mesh->Nlocal, elliptic->Nfields, elliptic->fieldOffset, one, o_invDiagA);
+  } else {
     elliptic->ellipticBlockBuildDiagonalKernel(mesh->Nelements,
                                                elliptic->Nfields,
                                                elliptic->fieldOffset,
@@ -68,7 +66,8 @@ void ellipticUpdateJacobi(elliptic_t *elliptic, occa::memory &o_invDiagA)
                                                mesh->o_ggeo,
                                                mesh->o_D,
                                                mesh->o_DT,
-                                               elliptic->o_lambda,
+                                               elliptic->o_lambda0,
+                                               elliptic->o_lambda1,
                                                o_invDiagA);
 
     flopCount += 12 * mesh->Nq + 12;
@@ -83,8 +82,34 @@ void ellipticUpdateJacobi(elliptic_t *elliptic, occa::memory &o_invDiagA)
                       elliptic->oogs);
 
     const dfloat one = 1.0;
-    platform->linAlg->adyMany(Nlocal, elliptic->Nfields, elliptic->fieldOffset, one, o_invDiagA);
+    platform->linAlg->adyMany(mesh->Nlocal, elliptic->Nfields, elliptic->fieldOffset, one, o_invDiagA);
   }
 
   platform->flopCounter->add(elliptic->name + " ellipticUpdateJacobi", flopCount);
+}
+
+void ellipticUpdateJacobi(elliptic_t *ellipticBase)
+{
+  setupAide& options = ellipticBase->options;
+
+  if(options.compareArgs("PRECONDITIONER", "MULTIGRID") &&
+     options.compareArgs("MULTIGRID SMOOTHER", "DAMPEDJACOBI")) {
+    precon_t *precon = ellipticBase->precon;
+    MGSolver_t::multigridLevel** levels = precon->MGSolver->levels;
+
+    for(int levelIndex = 0; levelIndex < ellipticBase->nLevels; levelIndex++) {
+      auto mgLevel = dynamic_cast<pMGLevel*>(levels[levelIndex]);
+      auto elliptic = mgLevel->elliptic;
+      auto mesh = elliptic->mesh;
+  
+      const bool coarsestLevel = (levelIndex == ellipticBase->nLevels - 1);
+      if(coarsestLevel && elliptic->options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE"))
+        continue;
+
+      ellipticUpdateJacobi(elliptic, mgLevel->o_invDiagA); 
+    }
+  } else if(options.compareArgs("PRECONDITIONER", "JACOBI")) {
+    precon_t *precon = ellipticBase->precon;
+    ellipticUpdateJacobi(ellipticBase, precon->o_invDiagA); 
+  }
 }

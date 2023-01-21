@@ -93,8 +93,8 @@ void meshParallelGatherScatterSetup(mesh_t* mesh,
   localCount = 0;
 
   for(dlong e = 0; e < mesh->Nelements; ++e) {
-      int isHalo = 1;
-      if(overlap) {	  
+    int isHalo = 1;
+    if(overlap) {	  
       isHalo = 0;
       for(int n = 0; n < mesh->Np; ++n) {
         dlong id = e * mesh->Np + n;

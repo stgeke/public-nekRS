@@ -12,7 +12,7 @@
 
 struct cds_t
 {
-  static constexpr double targetTimeBenchmark {0.1};
+  static constexpr double targetTimeBenchmark {0.2};
   int dim, elementType;
 
   mesh_t* mesh[NSCALAR_MAX];

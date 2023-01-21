@@ -33,11 +33,7 @@
 void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
 {
   setupAide& options = elliptic->options;
-  precon_t* precon = (precon_t*) elliptic->precon;
-  if(elliptic->coeffFieldPreco && options.compareArgs("PRECONDITIONER", "JACOBI"))
-    ellipticUpdateJacobi(elliptic, precon->o_invDiagA);
-  else if(elliptic->coeffFieldPreco && options.compareArgs("PRECONDITIONER", "MULTIGRID"))
-    ellipticMultiGridUpdateLambda(elliptic);
+  precon_t *precon = elliptic->precon;
 
   mesh_t* mesh = elliptic->mesh;
 
@@ -77,6 +73,17 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
       )
       * sqrt(elliptic->resNormFactor); 
     if(platform->comm.mpiRank == 0) printf("%s x0 norm: %.15e\n", elliptic->name.c_str(), rhsNorm);
+  }
+
+  if(options.compareArgs("ELLIPTIC PRECO COEFF FIELD", "TRUE")) {
+    if(options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
+      ellipticMultiGridUpdateLambda(elliptic);
+    }
+
+    if(options.compareArgs("PRECONDITIONER", "JACOBI") ||
+       options.compareArgs("MULTIGRID SMOOTHER","DAMPEDJACOBI")) {
+      ellipticUpdateJacobi(elliptic);
+    }
   }
 
   // compute initial residual r = rhs - Ax0
@@ -140,15 +147,15 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
   if(options.compareArgs("LINEAR SOLVER STOPPING CRITERION", "RELATIVE")) 
     tol *= elliptic->res0Norm;
 
-  if(!options.compareArgs("KRYLOV SOLVER", "NONBLOCKING")) {
+  if(!options.compareArgs("SOLVER", "NONBLOCKING")) {
     elliptic->resNorm = elliptic->res0Norm;
-    if(options.compareArgs("KRYLOV SOLVER", "PCG"))
+    if(options.compareArgs("SOLVER", "PCG"))
       elliptic->Niter = pcg (elliptic, o_r, o_x, tol, maxIter, elliptic->resNorm);
-    else if(options.compareArgs("KRYLOV SOLVER", "PGMRES"))
+    else if(options.compareArgs("SOLVER", "PGMRES"))
       elliptic->Niter = pgmres (elliptic, o_r, o_x, tol, maxIter, elliptic->resNorm);
     else{
       if(platform->comm.mpiRank == 0) 
-        printf("Linear solver %s is not supported!\n", options.getArgs("KRYLOV SOLVER").c_str());
+        printf("Linear solver %s is not supported!\n", options.getArgs("SOLVER").c_str());
       ABORT(EXIT_FAILURE);
     }
 

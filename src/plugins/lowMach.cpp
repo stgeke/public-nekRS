@@ -58,7 +58,6 @@ void lowMach::buildKernel(occa::properties kernelInfo)
   }
 
   platform->options.setArgs("PRESSURE ELLIPTIC COEFF FIELD", "TRUE");
-  //platform->options.setArgs("PRESSURE PRECONDITIONER COEFF FIELD", "TRUE");
 }
 
 void lowMach::setup(nrs_t *nrs, dfloat gamma)

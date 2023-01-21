@@ -8,7 +8,8 @@
                                              @ restrict const dfloat *gllzw,
                                              @ restrict const dfloat *D,
                                              @ restrict const dfloat *S,
-                                             @ restrict const dfloat *lambda,
+                                             @ restrict const dfloat *lambda0,
+                                             @ restrict const dfloat *lambda1,
                                              @ restrict const dfloat *q,
                                              @ restrict dfloat *Aq)
 {
@@ -153,8 +154,8 @@
           s_Gqs[j][i] = (r_G01 * qr + r_G11 * qs + r_G12 * r_qt);
           s_Gqr[j][i] = (r_G00 * qr + r_G01 * qs + r_G02 * r_qt);
 
-          r_Gqt = lambda[0 * loffset] * (r_G02 * qr + r_G12 * qs + r_G22 * r_qt);
-          r_Auk = r_GwJ * lambda[1 * loffset] * r_q[k];
+          r_Gqt = lambda0[0] * (r_G02 * qr + r_G12 * qs + r_G22 * r_qt);
+          r_Auk = r_GwJ * lambda1[0] * r_q[k];
         }
 
       @barrier();

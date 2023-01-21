@@ -16,6 +16,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_INSTALL_MESSAGE NEVER)
 set(FETCHCONTENT_QUIET on)
 set(FETCHCONTENT_UPDATES_DISCONNECTED on)
+set(CMAKE_ENABLE_EXPORTS TRUE)
 
 if (NOT CMAKE_CONFIGURATION_TYPES AND 
     NOT CMAKE_NO_BUILD_TYPE AND
@@ -250,7 +251,6 @@ set(SRC
     src/cds/cdsSolve.cpp
     src/cds/subCycling.cpp
     src/setup/parReader.cpp
-    src/setup/parseMultigridSchedule.cpp
     src/io/re2Reader.cpp
     src/setup/configReader.cpp
     src/core/timer.cpp
@@ -326,6 +326,7 @@ target_include_directories(nekrs-lib
   PRIVATE
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/hypre
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/amgx
+  ${ELLIPTIC_SOURCE_DIR}/MG
   ${PARALMOND_SOURCE_DIR}
 )
 

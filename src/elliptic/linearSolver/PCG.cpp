@@ -30,6 +30,58 @@
 
 //#define DEBUG
 
+static dfloat update(elliptic_t* elliptic,
+                     occa::memory &o_p, occa::memory &o_Ap, const dfloat alpha,
+                     occa::memory &o_x, occa::memory &o_r)
+{
+  mesh_t* mesh = elliptic->mesh;
+
+  const bool serial = platform->serial;
+
+  // r <= r - alpha*A*p
+  // dot(r,r)
+  elliptic->updatePCGKernel(mesh->Nlocal,
+                            elliptic->fieldOffset,
+                            elliptic->o_invDegree,
+                            o_Ap,
+                            alpha,
+                            o_r,
+                            elliptic->o_tmpNormr);
+
+  dfloat rdotr1 = 0;
+#ifdef ELLIPTIC_ENABLE_TIMER
+    //platform->timer.tic("dotp",1);
+#endif
+  if(serial) {
+    rdotr1 = *((dfloat *) elliptic->o_tmpNormr.ptr());
+  } else {
+    const dlong Nblock = (mesh->Nlocal + BLOCKSIZE - 1) / BLOCKSIZE;
+    elliptic->o_tmpNormr.copyTo(elliptic->tmpNormr, Nblock*sizeof(dfloat));
+    for(int n = 0; n < Nblock; ++n)
+      rdotr1 += elliptic->tmpNormr[n];
+  }
+
+  // x <= x + alpha*p
+  platform->linAlg->axpbyMany(
+    mesh->Nlocal,
+    elliptic->Nfields,
+    elliptic->fieldOffset,
+    alpha,
+    o_p,
+    1.0,
+    o_x);
+
+  MPI_Allreduce(MPI_IN_PLACE, &rdotr1, 1, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
+#ifdef ELLIPTIC_ENABLE_TIMER
+    //platform->timer.toc("dotp");
+#endif
+
+  platform->flopCounter->add(elliptic->name + " ellipticUpdatePC",
+                             elliptic->Nfields * static_cast<double>(mesh->Nlocal) * 6 + mesh->Nlocal);
+
+  return rdotr1;
+}
+
 int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
         const dfloat tol, const int MAXIT, dfloat &rdotr)
 {
@@ -37,7 +89,7 @@ int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
   mesh_t* mesh = elliptic->mesh;
   setupAide& options = elliptic->options;
 
-  const int flexible = options.compareArgs("KRYLOV SOLVER", "FLEXIBLE");
+  const int flexible = options.compareArgs("SOLVER", "FLEXIBLE");
   const int verbose = platform->options.compareArgs("VERBOSE", "TRUE");
   const int fixedIteration = false;
 
@@ -134,7 +186,7 @@ int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
     //  x <= x + alpha*p
     //  r <= r - alpha*A*p
     //  dot(r,r)
-    rdotr = sqrt(ellipticUpdatePCG(elliptic, o_p, o_Ap, alpha, o_x, o_r) * elliptic->resNormFactor);
+    rdotr = sqrt(update(elliptic, o_p, o_Ap, alpha, o_x, o_r) * elliptic->resNormFactor);
 #ifdef DEBUG
     printf("rdotr: %.15e\n", rdotr);
 #endif

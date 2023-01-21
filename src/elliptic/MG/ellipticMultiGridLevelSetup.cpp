@@ -103,10 +103,7 @@ pMGLevel::pMGLevel(elliptic_t* ellipticBase, //finest level
   /* build coarsening and prologation operators to connect levels */
   this->buildCoarsenerQuadHex(meshLevels, Nf, Nc);
 
-#if 0
-  if(!isCoarse || options.compareArgs("MULTIGRID COARSE SOLVE", "FALSE"))
-#endif
-    this->setupSmoother(ellipticBase);
+  this->setupSmoother(ellipticBase);
 }
 
 void pMGLevel::setupSmoother(elliptic_t* ellipticBase)
@@ -127,13 +124,13 @@ void pMGLevel::setupSmoother(elliptic_t* ellipticBase)
   } else {
     if(!useJacobi){
       if(platform->comm.mpiRank == 0){
-        std::cout << "Invalid setup occurred in pMGLevel::setupSmoother\n";
+        std::cout << "Invalid pMGLevel smoother!\n";
       }
       ABORT(1);
     }
     smootherType = SmootherType::JACOBI;
     o_invDiagA = platform->device.malloc(mesh->Nlocal * sizeof(pfloat));
-    ellipticUpdateJacobi(elliptic,o_invDiagA);
+    ellipticUpdateJacobi(elliptic, o_invDiagA); // required to compute eigenvalues 
   }
 
   if (options.compareArgs("MULTIGRID SMOOTHER","CHEBYSHEV")) {
@@ -210,7 +207,9 @@ void pMGLevel::Report()
     if (smootherType == SmootherType::JACOBI || chebySmootherType == ChebyshevSmootherType::JACOBI){
       smootherString += "Jacobi";
     }
-    smootherString += "(" + std::to_string(UpLegChebyshevDegree) + "," + std::to_string(DownLegChebyshevDegree) + ")";
+    if (options.compareArgs("MULTIGRID SMOOTHER","CHEBYSHEV")) {
+      smootherString += "(" + std::to_string(UpLegChebyshevDegree) + "," + std::to_string(DownLegChebyshevDegree) + ")";
+    }
   }
 
   if (platform->comm.mpiRank == 0) {
@@ -263,7 +262,7 @@ void pMGLevel::buildCoarsenerQuadHex(mesh_t** meshLevels, int Nf, int Nc)
   free(cToFInterp);
 }
 
-static void eig(const int Nrows, double* A, double* WR, double* WI)
+static void eigenValue(const int Nrows, double* A, double* WR, double* WI)
 {
   int NB  = 256;
   char JOBVL  = 'V';
@@ -281,7 +280,7 @@ static void eig(const int Nrows, double* A, double* WR, double* WI)
     if(std::isnan(A[i]) || std::isinf(A[i])) invalid++;
   }
   if(invalid) {
-    if(platform->comm.mpiRank == 0) printf("invalid matrix entries!\n");
+    if(platform->comm.mpiRank == 0) printf("eigenValue: invalid matrix entries!\n");
     ABORT(1);
   }
 
@@ -450,7 +449,7 @@ dfloat pMGLevel::maxEigSmoothAx()
   double* WR = (double*) calloc(k,sizeof(double));
   double* WI = (double*) calloc(k,sizeof(double));
 
-  eig(k, H, WR, WI);
+  eigenValue(k, H, WR, WI);
 
   double rho = 0.;
 

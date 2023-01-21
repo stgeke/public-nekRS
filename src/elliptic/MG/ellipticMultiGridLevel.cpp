@@ -55,7 +55,7 @@ void pMGLevel::coarsen(occa::memory o_x, occa::memory o_Rx)
   const auto NqC = elliptic->mesh->Nq;
   const auto NqF = std::cbrt(NpF);
 
-  precon_t* precon = (precon_t*) elliptic->precon;
+  precon_t *precon = elliptic->precon;
 
   precon->coarsenKernel(mesh->Nelements, o_R, o_x, o_Rx);
   const auto workPerElem = 2 * (NqF * NqF * NqF * NqC + NqF * NqF * NqC * NqC + NqF * NqC * NqC * NqC);
@@ -73,7 +73,7 @@ void pMGLevel::coarsen(occa::memory o_x, occa::memory o_Rx)
 
 void pMGLevel::prolongate(occa::memory o_x, occa::memory o_Px)
 {
-  precon_t* precon = (precon_t*) elliptic->precon;
+  precon_t *precon = elliptic->precon;
 
   precon->prolongateKernel(mesh->Nelements, o_R, o_x, o_Px);
   const auto NqC = elliptic->mesh->Nq;

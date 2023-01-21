@@ -27,6 +27,7 @@
 * [par] Remove SEMFEM solver specification from key `preconditioner`, use `semfemSolver` instead
 * [par] Replace `stressFormulation = true` by `equation = navierStokes+variableViscosity` 
 * [par] Replace bcType `fixedValue` by `codedFixedValue`
+* [par] Replace `elasticity` by `pcg+block` for mesh solver
 * [oudf] Rename `bc->wrk` => `bc->usrwrk`
 
 ## Known Bugs / Restrictions

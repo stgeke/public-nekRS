@@ -111,8 +111,7 @@ void SolutionProjection::updateProjectionSpace()
     flopCount *= (type == ProjectionType::CLASSIC) ? 2 : 1;
   } else {
     if(platform->comm.mpiRank == 0) {
-      std::cout << "SolutionProjection: Detected rank deficiency " << test << "\n";
-      std::cout << "SolutionProjection: Removing column " << numVecsProjection << "\n";
+      std::cout << "solutionProjection " << solverName << ": Discard new solution it is linearly dependent!\n";
     }
     numVecsProjection--;
   }

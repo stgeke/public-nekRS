@@ -6,7 +6,8 @@
                                                     @ restrict const dfloat *ggeo,
                                                     @ restrict const dfloat *D,
                                                     @ restrict const dfloat *S,
-                                                    @ restrict const dfloat *lambda,
+                                                    @ restrict const dfloat *lambda0,
+                                                    @ restrict const dfloat *lambda1,
                                                     @ restrict const dfloat *q,
                                                     @ restrict dfloat *Aq)
 {
@@ -94,14 +95,14 @@
             Ws += Djm * s_W[m][i];
           }
           const dlong id = element * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
-          const dfloat u_lam0 = lambda[p_lambda*id + 0 * offset + 0 * loffset];
-          const dfloat u_lam1 = lambda[p_lambda*id + 1 * offset + 0 * loffset];
+          const dfloat u_lam0 = lambda0[p_lambda*id + 0 * loffset];
+          const dfloat u_lam1 = lambda1[p_lambda*id + 0 * loffset];
 
-          const dfloat v_lam0 = lambda[p_lambda*id + 0 * offset + 1 * loffset];
-          const dfloat v_lam1 = lambda[p_lambda*id + 1 * offset + 1 * loffset];
+          const dfloat v_lam0 = lambda0[p_lambda*id + 1 * loffset];
+          const dfloat v_lam1 = lambda1[p_lambda*id + 1 * loffset];
 
-          const dfloat w_lam0 = lambda[p_lambda*id + 0 * offset + 2 * loffset];
-          const dfloat w_lam1 = lambda[p_lambda*id + 1 * offset + 2 * loffset];
+          const dfloat w_lam0 = lambda0[p_lambda*id + 2 * loffset];
+          const dfloat w_lam1 = lambda1[p_lambda*id + 2 * loffset];
 
           const dlong gbase = element * p_Nggeo * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
           const dfloat G00 = ggeo[gbase + p_G00ID * p_Np];
@@ -188,7 +189,8 @@
                                                     @ restrict const dfloat *ggeo,
                                                     @ restrict const dfloat *D,
                                                     @ restrict const dfloat *S,
-                                                    @ restrict const dfloat *lambda,
+                                                    @ restrict const dfloat *lambda0,
+                                                    @ restrict const dfloat *lambda1,
                                                     @ restrict const dfloat *q,
                                                     @ restrict dfloat *Aq)
 {
@@ -314,15 +316,15 @@
         for (int i = 0; i < p_Nq; ++i; @inner(0)) {
           for (int k = 0; k < pts_per_thread; k++) {
             const dlong id = element * p_Np + (s+k*n_plane) * p_Nq * p_Nq + j * p_Nq + i;
-            const dfloat u_lam0 = lambda[p_lambda*id + 0 * offset + 0 * loffset];
-            const dfloat u_lam1 = lambda[p_lambda*id + 1 * offset + 0 * loffset];
+            const dfloat u_lam0 = lambda0[p_lambda*id + 0 * loffset];
+            const dfloat u_lam1 = lambda1[p_lambda*id + 0 * loffset];
 
-            const dfloat v_lam0 = lambda[p_lambda*id + 0 * offset + 1 * loffset];
-            const dfloat v_lam1 = lambda[p_lambda*id + 1 * offset + 1 * loffset];
+            const dfloat v_lam0 = lambda0[p_lambda*id + 1 * loffset];
+            const dfloat v_lam1 = lambda1[p_lambda*id + 1 * loffset];
 
-            const dfloat w_lam0 = lambda[p_lambda*id + 0 * offset + 2 * loffset];
-            const dfloat w_lam1 = lambda[p_lambda*id + 1 * offset + 2 * loffset];
-
+            const dfloat w_lam0 = lambda0[p_lambda*id + 2 * loffset];
+            const dfloat w_lam1 = lambda1[p_lambda*id + 2 * loffset];
+              
             dfloat GUr = u_lam0 * (r_G00[k] * r_Ur[k] + r_G01[k] * r_Us[k] + r_G02[k] * r_Ut[k]);
             dfloat GUs = u_lam0 * (r_G01[k] * r_Ur[k] + r_G11[k] * r_Us[k] + r_G12[k] * r_Ut[k]);
             dfloat GUt = u_lam0 * (r_G02[k] * r_Ur[k] + r_G12[k] * r_Us[k] + r_G22[k] * r_Ut[k]);

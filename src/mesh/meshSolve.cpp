@@ -13,7 +13,7 @@ void meshSolve(nrs_t* nrs, dfloat time, occa::memory o_U, int stage)
     nrs->fieldOffset,
     nrs->o_meshMue,
     nrs->o_meshRho,
-    nrs->meshSolver->o_lambda);
+    nrs->o_ellipticCoeff);
 
   occa::memory o_Unew = [&](nrs_t* nrs, dfloat time, int stage) {
     mesh_t *meshT = nrs->_mesh;

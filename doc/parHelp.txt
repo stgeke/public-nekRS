@@ -69,15 +69,17 @@ equation                    stokes, navierStokes [D]
 ----------------------------------------------------------------------------------------------------------------------
 COMMON field settings:
 
-solver                      PFCG [D], PFGMRES [D for PRESSURE], none   linear solver
-                            +block [D for VELOCITY]                    use block formulation 
-                            +nVector=<int> [for PFGMRES]               dimension of Krylov space
+
+solver                      none                                       linear solver
+                            user
+                            PCG [D]
+                            +block [D for VELOCITY]
+                            +flexible
+                            PFGMRES [D for PRESSURE] 
+                            +nVector=<int>                             dimension of Krylov space
 
 residualTol                 <float>                                    absolute residual tolerance  
                             +relative                                  use relative residual
-
-maxIterations               <int>                                      maximum number of iterations
-                            200 [D]
 
 initialGuess                previous [D] 
                             extrapolation 
@@ -87,6 +89,7 @@ initialGuess                previous [D]
 
 preconditioner              Jacobi [D]
                             multigrid [D for PRESSURE]                 polynomial multigrid + coarse grid correction
+                            +additive
                             SEMFEM
 
 coarseGridDiscretization    FEM [D]                                    linear finite elment discretization
@@ -98,6 +101,7 @@ coarseSolver/semfemSolver   smoother
                             AmgX                                       NVIDIA's AMG solver
                             +device [D for SEMFEM] 
                             +cpu [D for multigrid]
+                            +overlap                                   overlap coarse grid solve
 
 pMGSchedule                 p=<int>, degree=<int>, ...                 custom polynomial order and Chebyshev order for each pMG level
 
@@ -145,9 +149,6 @@ regularization
                                 +rampConstant=<float>                  controls ramp to maximum artificial viscosity
 ----------------------------------------------------------------------------------------------------------------------
 [MESH]
-
-solver                      poisson                                    solver type 
-                            user                                       user mesh velocity
 
 partitioner                 rbc, rsb, rbc+rsb [D]                      partitioning method
 

@@ -197,7 +197,7 @@ mesh_t *createMesh(MPI_Comm comm,
     mesh->o_coeffAB = platform->device.malloc(maxTemporalOrder * sizeof(dfloat), mesh->coeffAB);
   }
 
-  {
+  if(mesh->NlocalGatherElements) {
     double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
     MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
     if (platform->comm.mpiRank == 0)
@@ -415,7 +415,7 @@ mesh_t *createMeshV(
   MPI_Allreduce(MPI_IN_PLACE, &volume, 1, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
   mesh->volume = volume;
 
-  {
+  if(mesh->NlocalGatherElements) {
     double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
     MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
     if (platform->comm.mpiRank == 0)

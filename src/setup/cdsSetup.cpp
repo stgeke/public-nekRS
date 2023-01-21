@@ -15,6 +15,9 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   cds->NVfields = nrs->NVfields;
   cds->NSfields = nrs->Nscalar;
 
+  cds->g0 = nrs->g0;
+  cds->idt = nrs->idt;
+
   cds->coeffEXT = nrs->coeffEXT;
   cds->coeffBDF = nrs->coeffBDF;
   cds->coeffSubEXT = nrs->coeffSubEXT;

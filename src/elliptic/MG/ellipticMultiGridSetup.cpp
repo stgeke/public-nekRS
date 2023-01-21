@@ -28,7 +28,7 @@
 #include "elliptic.h"
 #include "ellipticPrecon.h"
 #include "ellipticMultiGrid.h"
-#include "ellipticBuildContinuous.hpp"
+#include "ellipticBuildFEM.hpp"
 
 void pMGLevelAllocateStorage(pMGLevel* level, int k)
 {
@@ -55,12 +55,12 @@ void pMGLevelAllocateStorage(pMGLevel* level, int k)
   }
 }
 
-void ellipticMultiGridSetup(elliptic_t* elliptic_, void* precon_)
+void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 {
   if(platform->comm.mpiRank == 0) 
     printf("building MG preconditioner ... \n"); fflush(stdout);
 
-  precon_t* precon = (precon_t*) precon_;
+  precon_t *precon = precon_;
   // setup new object from fine grid but with constant coeff
   elliptic_t* elliptic = ellipticBuildMultigridLevelFine(elliptic_);
   setupAide options = elliptic_->options;
@@ -175,9 +175,6 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, void* precon_)
     ellipticCoarse->oogsAx = ellipticCoarse->oogs;
 
     if(options.compareArgs("GS OVERLAP", "TRUE")) {
-#if 0
-      if(options.compareArgs("MULTIGRID COARSE SOLVE", "FALSE"))
-#endif
         ellipticCoarse->oogsAx = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, callback, oogsMode);
     }
 
@@ -212,20 +209,19 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, void* precon_)
             occa::memory o_res = baseLevel->o_res;
             baseLevel->smooth(o_rhs, o_x, true);
             baseLevel->residual(o_rhs, o_x, o_res);
-  
-            auto precon = (precon_t*) elliptic->precon;
+
+            auto precon = elliptic->precon;
             precon->SEMFEMSolver->run(o_res, o_tmp);
         
             platform->linAlg->paxpby(baseLevel->Nrows, 1.0, o_tmp, 1.0, o_x);
             baseLevel->smooth(o_rhs, o_x, false);
           };
       } else {
-        precon->MGSolver->coarseLevel->solvePtr = 
-          [elliptic](MGSolver_t::coarseLevel_t*, occa::memory& o_rhs, occa::memory& o_x)
-          {
-            auto precon = (precon_t*) elliptic->precon;
-            precon->SEMFEMSolver->run(o_rhs, o_x);
-          };
+        precon->MGSolver->coarseLevel->solvePtr =
+            [elliptic](MGSolver_t::coarseLevel_t *, occa::memory &o_rhs, occa::memory &o_x) {
+              auto precon = elliptic->precon;
+              precon->SEMFEMSolver->run(o_rhs, o_x);
+            };
       }
 
     } else {
@@ -236,10 +232,10 @@ void ellipticMultiGridSetup(elliptic_t* elliptic_, void* precon_)
       dlong nnzCoarseA;
 
       if(options.compareArgs("GALERKIN COARSE OPERATOR","TRUE"))
-        ellipticBuildContinuousGalerkinHex3D(ellipticCoarse,elliptic,
+        ellipticBuildFEMGalerkinHex3D(ellipticCoarse,elliptic,
                                              &coarseA,&nnzCoarseA,coarseGlobalStarts);
       else
-        ellipticBuildContinuous(ellipticCoarse, 
+        ellipticBuildFEM(ellipticCoarse, 
                                 &coarseA, &nnzCoarseA,coarseGlobalStarts);
 
       hlong* Rows = (hlong*) calloc(nnzCoarseA, sizeof(hlong));

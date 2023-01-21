@@ -348,7 +348,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       }
     }
 
-    if (platform->options.compareArgs("MESH SOLVER", "POISSON")) {
+    if (!platform->options.compareArgs("MESH SOLVER", "NONE")) {
       if (bcMap::unalignedMixedBoundary("mesh")) {
         createZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_EToBVMeshVelocity, nrs->o_zeroNormalMaskMeshVelocity);
       }
@@ -386,7 +386,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     if (nrs->flow)
       fluidSolve(nrs, timeNew, nrs->o_P, nrs->o_U, iter, tstep);
 
-    if(platform->options.compareArgs("MESH SOLVER", "POISSON"))
+    if(!platform->options.compareArgs("MESH SOLVER", "NONE"))
       meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
@@ -605,7 +605,7 @@ void scalarSolve(nrs_t *nrs, dfloat time, occa::memory o_S, int stage) {
     cds->setEllipticCoeffKernel(mesh->Nlocal,
         cds->g0 * cds->idt,
         cds->fieldOffsetScan[is],
-        cds->fieldOffset[is],
+        nrs->fieldOffset,
         cds->o_diff,
         cds->o_rho,
         cds->o_ellipticCoeff);
@@ -617,7 +617,7 @@ void scalarSolve(nrs_t *nrs, dfloat time, occa::memory o_S, int stage) {
           1.0,
           cds->o_ellipticCoeff,
           cds->fieldOffsetScan[is],
-          cds->fieldOffset[is]);
+          nrs->fieldOffset);
 
     occa::memory o_Snew = cdsSolve(is, cds, time, stage);
     o_Snew.copyTo(o_S,

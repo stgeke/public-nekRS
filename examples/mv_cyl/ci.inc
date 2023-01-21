@@ -21,7 +21,9 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-09"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-10"));
   options.setArgs("SCALAR00 SOLVER TOLERANCE", std::string("1e-12"));
-  options.setArgs("MESH SOLVER", "USER");
+
+  options.setArgs("MESH SOLVER", "NONE");
+  options.setArgs("MOVING MESH", "TRUE");
 
   platform->par->set("casedata", "p_rot", 0.0);
   
@@ -32,21 +34,24 @@ void ciSetup(MPI_Comm comm, setupAide &options)
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
     options.setArgs("MESH INITIAL GUESS", "PROJECTION");
     options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));
-    options.setArgs("MESH SOLVER", "POISSON");
+    options.setArgs("MESH SOLVER", "PCG");
+    options.setArgs("MESH BLOCK SOLVER", "TRUE");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }
   if(ciMode == 4){
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
     options.setArgs("MESH INITIAL GUESS", "PROJECTION");
     options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));
-    options.setArgs("MESH SOLVER", "POISSON");
+    options.setArgs("MESH SOLVER", "PCG");
+    options.setArgs("MESH BLOCK SOLVER", "TRUE");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }
   if(ciMode == 5){
     platform->par->set("casedata", "p_rot", 0.5);
   }
   if(ciMode == 6){
-    options.setArgs("MESH SOLVER", "POISSON");
+    options.setArgs("MESH SOLVER", "PCG");
+    options.setArgs("MESH BLOCK SOLVER", "TRUE");
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
     options.setArgs("MESH INITIAL GUESS", "PROJECTION");
     options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));

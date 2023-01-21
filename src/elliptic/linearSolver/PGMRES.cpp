@@ -38,7 +38,7 @@ GmresData::GmresData(elliptic_t* elliptic)
   ),
   flexible(
     [&](){
-      if(elliptic->options.compareArgs("KRYLOV SOLVER", "FLEXIBLE"))
+      if(elliptic->options.compareArgs("SOLVER", "FLEXIBLE"))
         return 1;
       return 0;
     }()
@@ -96,7 +96,7 @@ void gmresUpdate(elliptic_t* elliptic,
 
   o_y.copyFrom(y, gmresUpdateSize * sizeof(dfloat));
 
-  if(elliptic->options.compareArgs("KRYLOV SOLVER", "FLEXIBLE")){
+  if(elliptic->options.compareArgs("SOLVER", "FLEXIBLE")){
     elliptic->updatePGMRESSolutionKernel(
       mesh->Nlocal,
       elliptic->fieldOffset,
@@ -162,7 +162,7 @@ int pgmres(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
 
   const int nRestartVectors = elliptic->gmresData->nRestartVectors;
 
-  const int flexible = elliptic->options.compareArgs("KRYLOV SOLVER", "FLEXIBLE");
+  const int flexible = elliptic->options.compareArgs("SOLVER", "FLEXIBLE");
 
   const bool verbose = platform->options.compareArgs("VERBOSE", "TRUE");
   const bool serial = platform->device.mode() == "Serial" || platform->device.mode() == "OpenMP";

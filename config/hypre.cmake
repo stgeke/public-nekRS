@@ -10,6 +10,7 @@ ExternalProject_Add(
                 -DHYPRE_BUILD_TYPE=RelWithDebInfo
                 -DCMAKE_INSTALL_LIBDIR=${HYPRE_INSTALL_DIR}/lib
                 -DCMAKE_C_FLAGS_RELWITHDEBINFO=${CMAKE_C_FLAGS_RELWITHDEBINFO}
+                -DCMAKE_ENABLE_EXPORTS=TRUE
                 -DHYPRE_ENABLE_SHARED=OFF
                 -DHYPRE_ENABLE_MIXEDINT=ON
                 -DHYPRE_ENABLE_SINGLE=ON
@@ -68,6 +69,7 @@ if(OCCA_CUDA_ENABLED)
                   -DCMAKE_C_VISIBILITY_PRESET=hidden
                   -DCMAKE_CXX_VISIBILITY_PRESET=hidden
                   -DCMAKE_CUDA_VISIBILITY_PRESET=hidden
+                  -DCMAKE_ENABLE_EXPORTS=TRUE
                   -DCMAKE_CUDA_HOST_COMPILER=${CMAKE_CXX_COMPILER}
 
   )

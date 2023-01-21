@@ -42,7 +42,7 @@ void registerAxKernels(const std::string &section, int N, int poissonEquation)
   occa::properties AxKernelInfo = kernelInfo;
   const auto Nq = N + 1;
   for (auto &&coeffField : {true, false}) {
-    if (platform->options.compareArgs(optionsPrefix + "PRECONDITIONER COEFF FIELD","TRUE") != coeffField) {
+    if (platform->options.compareArgs(optionsPrefix + "ELLIPTIC PRECO COEFF FIELD","TRUE") != coeffField) {
       continue;
     }
     const auto floatString = std::string(pfloatString);

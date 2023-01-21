@@ -55,7 +55,7 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
   mesh_t* mesh = createMeshMG(baseElliptic->mesh, Nc);
   elliptic->mesh = mesh;
 
-  elliptic->fieldOffset = elliptic->mesh->Nlocal; // assumes elliptic->Nfields == 1
+  elliptic->fieldOffset = mesh->Nlocal; // assumes elliptic->Nfields == 1
 
   { // setup an unmasked gs handle
     ogs_t *ogs = NULL;
@@ -114,8 +114,8 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
       }
   }
 
-  elliptic->precon = (void*) new precon_t();
-  precon_t* precon = (precon_t*) elliptic->precon;
+  elliptic->precon = new precon_t();
+  precon_t *precon = elliptic->precon;
 
   {
     const std::string kernelSuffix =
@@ -128,8 +128,9 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
 
   }
 
-  // assumes preconditioner only uses first elliptic coeff field!
-  elliptic->o_lambda = platform->device.malloc(mesh->Nlocal, sizeof(pfloat));
+  elliptic->o_lambda0 = platform->device.malloc(mesh->Nlocal, sizeof(pfloat));
+  if(!baseElliptic->poisson)
+    elliptic->o_lambda1 = platform->device.malloc(mesh->Nlocal, sizeof(pfloat));
 
   const int Nfq = Nf+1;
   const int Ncq = Nc+1;
@@ -141,7 +142,10 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
   platform->copyDfloatToPfloatKernel(Nfq * Ncq, o_interp, elliptic->o_interp);
 
   precon->coarsenKernel(mesh->Nelements, elliptic->o_interp, 
-                        baseElliptic->o_lambda, elliptic->o_lambda);
+                        baseElliptic->o_lambda0, elliptic->o_lambda0);
+  if(!baseElliptic->poisson)
+    precon->coarsenKernel(mesh->Nelements, elliptic->o_interp, 
+                          baseElliptic->o_lambda1, elliptic->o_lambda1);
 
   free(fToCInterp);
 

@@ -36,8 +36,6 @@
 #include "mesh3D.h"
 #include "platform.hpp"
 
-#include "timer.hpp"
-#include <functional>
 #include "ellipticApplyMask.hpp"
 
 #define ELLIPTIC_ENABLE_TIMER
@@ -51,6 +49,7 @@
 #define NEUMANN 4
 
 class SolutionProjection;
+class precon_t;
 class elliptic_t;
 
 struct GmresData{
@@ -76,14 +75,13 @@ struct elliptic_t
   static constexpr double targetTimeBenchmark {0.2};
   static constexpr int NScratchFields {6};
   static constexpr int minFDMBytesOverlap{2<<22};
-  int dim = 1;
-  int elementType = 12; // number of edges (3=tri, 4=quad, 6=tet, 12=hex)
-  int coeffField = 1;        // flag for variable coefficient (solver)
-  int coeffFieldPreco = 1;   // flag for variable coefficient (preconditioner)
+
+  int elementType = 12;      // number of edges (3=tri, 4=quad, 6=tet, 12=hex)
   int blockSolver = 0;
   int Nfields = 1;
   int stressForm = 0;
-  int poisson; 
+  int poisson = 0; 
+  dlong loffset = 0;
 
   bool mgLevel = false;
 
@@ -96,7 +94,7 @@ struct elliptic_t
 
   mesh_t* mesh;
 
-  void* precon = nullptr;
+  precon_t *precon = nullptr;
 
   ogs_t* ogs;
   oogs_t* oogs;
@@ -167,8 +165,10 @@ struct elliptic_t
 
   occa::kernel ellipticBlockBuildDiagonalKernel;
   occa::kernel ellipticBlockBuildDiagonalPfloatKernel;
-  occa::memory o_lambda;
-  dlong loffset;
+
+  occa::memory o_lambda0;
+  occa::memory o_lambda1;
+
   int nLevels;
   int* levels;
 
@@ -193,24 +193,9 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x);
 
 void ellipticSolveSetup(elliptic_t* elliptic);
 
-void ellipticStartHaloExchange(elliptic_t* elliptic,
-                               occa::memory &o_q,
-                               int Nentries,
-                               dfloat* sendBuffer,
-                               dfloat* recvBuffer);
-void ellipticInterimHaloExchange(elliptic_t* elliptic,
-                                 occa::memory &o_q,
-                                 int Nentries,
-                                 dfloat* sendBuffer,
-                                 dfloat* recvBuffer);
-void ellipticEndHaloExchange(elliptic_t* elliptic,
-                             occa::memory &o_q,
-                             int Nentries,
-                             dfloat* recvBuffer);
-
-//Linear solvers
 int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
         const dfloat tol, const int MAXIT, dfloat &res);
+
 void initializeGmresData(elliptic_t*);
 int pgmres(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
         const dfloat tol, const int MAXIT, dfloat &res);
@@ -228,11 +213,11 @@ void ellipticAx(elliptic_t* elliptic,
                 occa::memory &o_Aq,
                 const char* precision);
 
-
 void ellipticMultiGridUpdateLambda(elliptic_t* elliptic);
-void ellipticUpdateJacobi(elliptic_t* elliptic, occa::memory& o_invDiagA);
+void ellipticUpdateJacobi(elliptic_t *ellipticBase, occa::memory &o_invDiagA);
+void ellipticUpdateJacobi(elliptic_t* elliptic);
 
-void ellipticMultiGridSetup(elliptic_t* elliptic, void* precon);
+void ellipticMultiGridSetup(elliptic_t *elliptic, precon_t *precon);
 elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf);
 
 dfloat ellipticUpdatePCG(elliptic_t* elliptic, occa::memory &o_p, occa::memory &o_Ap, dfloat alpha,

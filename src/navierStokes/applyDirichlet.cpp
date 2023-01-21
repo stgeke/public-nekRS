@@ -216,7 +216,7 @@ void applyDirichlet(nrs_t *nrs, double time)
     }
   }
 
-  if (platform->options.compareArgs("MESH SOLVER", "POISSON")) {
+  if (!platform->options.compareArgs("MESH SOLVER", "NONE")) {
     mesh_t *mesh = nrs->_mesh;
     if (bcMap::unalignedMixedBoundary("mesh")) {
       applyZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, mesh->o_U);

@@ -152,7 +152,7 @@ void MGSolver_t::coarseLevel_t::setupSolver(
     if(platform->comm.mpiRank == 0){
       std::string amgSolver;
       options.getArgs("COARSE SOLVER", amgSolver);
-      printf("COARSE SOLVER %s is not supported!\n", amgSolver.c_str());
+      printf("COARSE SOLVER <%s> is not supported!\n", amgSolver.c_str());
     }
     ABORT(EXIT_FAILURE);
   }

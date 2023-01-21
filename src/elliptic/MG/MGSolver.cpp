@@ -25,7 +25,6 @@ SOFTWARE.
 */
 
 #include "MGSolver.hpp"
-//#include "coarseLevel.hpp"
 #include "platform.hpp"
 #include "linAlg.hpp"
 

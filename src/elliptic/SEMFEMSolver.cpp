@@ -36,7 +36,7 @@ SEMFEMSolver_t::SEMFEMSolver_t(elliptic_t* elliptic_)
   // here we assume lambda0 is constant (in space and time)
   // use first entry of o_lambda as representative value
   pfloat lambda0;
-  elliptic->o_lambda.copyTo(&lambda0, sizeof(pfloat));
+  elliptic->o_lambda0.copyTo(&lambda0, sizeof(pfloat));
 
   auto hypreIJ = new hypreWrapper::IJ_t();
   matrix_t* matrix = build(

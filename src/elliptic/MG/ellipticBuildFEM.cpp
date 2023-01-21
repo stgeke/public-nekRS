@@ -26,6 +26,7 @@
 
 #include "elliptic.h"
 #include "ellipticPrecon.h"
+#include "ellipticBuildFEM.hpp"
 #include "platform.hpp"
 
 // compare on global indices
@@ -43,15 +44,15 @@ int parallelCompareRowColumn(const void* a, const void* b)
   return 0;
 }
 
-void ellipticBuildContinuousHex3D (elliptic_t* elliptic,
-                                   nonZero_t** A,
-                                   dlong* nnz,
-                                   hlong* globalStarts);
+void ellipticBuildFEMHex3D (elliptic_t* elliptic,
+                            nonZero_t** A,
+                            dlong* nnz,
+                            hlong* globalStarts);
 
-void ellipticBuildContinuous(elliptic_t* elliptic,
-                             nonZero_t** A,
-                             dlong* nnz,
-                             hlong* globalStarts)
+void ellipticBuildFEM(elliptic_t* elliptic,
+                      nonZero_t** A,
+                      dlong* nnz,
+                      hlong* globalStarts)
 {
   mesh_t *mesh = elliptic->mesh;
   MPI_Barrier(platform->comm.mpiComm);
@@ -61,7 +62,7 @@ void ellipticBuildContinuous(elliptic_t* elliptic,
 
   switch(elliptic->elementType) {
   case HEXAHEDRA:
-    ellipticBuildContinuousHex3D(elliptic, A, nnz, globalStarts);
+    ellipticBuildFEMHex3D(elliptic, A, nnz, globalStarts);
     break;
   }
 
@@ -69,10 +70,10 @@ void ellipticBuildContinuous(elliptic_t* elliptic,
   if(platform->comm.mpiRank == 0) printf("done (%gs)\n", MPI_Wtime() - tStart);
 }
 
-void ellipticBuildContinuousHex3D(elliptic_t* elliptic,
-                                  nonZero_t** A,
-                                  dlong* nnz,
-                                  hlong* globalStarts)
+void ellipticBuildFEMHex3D(elliptic_t* elliptic,
+                           nonZero_t** A,
+                           dlong* nnz,
+                           hlong* globalStarts)
 {
   
   mesh_t* mesh = elliptic->mesh;
@@ -81,8 +82,7 @@ void ellipticBuildContinuousHex3D(elliptic_t* elliptic,
   // here we assume lambda0 is constant (in space and time) 
   // use first entry of o_lambda as representative value 
   pfloat lambda0;
-  elliptic->o_lambda.copyTo(&lambda0, sizeof(pfloat));
-
+  elliptic->o_lambda0.copyTo(&lambda0, sizeof(pfloat));
   const dfloat lambda1 = 0.0;  // Poisson
 
   int rank = platform->comm.mpiRank;
@@ -303,17 +303,17 @@ void ellipticBuildContinuousHex3D(elliptic_t* elliptic,
   free(ArecvOffsets);
 }
 
-void ellipticBuildContinuousGalerkinHex3D (elliptic_t* elliptic,
-                                           elliptic_t* ellipticFine,
-                                           nonZero_t** A,
-                                           dlong* nnz,
-                                           hlong* globalStarts);
+void ellipticBuildFEMGalerkinHex3D (elliptic_t* elliptic,
+                                    elliptic_t* ellipticFine,
+                                    nonZero_t** A,
+                                    dlong* nnz,
+                                     hlong* globalStarts);
 
-void ellipticBuildContinuousGalerkin(elliptic_t* elliptic,
-                                     elliptic_t* ellipticFine,
-                                     nonZero_t** A,
-                                     dlong* nnz,
-                                     hlong* globalStarts)
+void ellipticBuildFEMGalerkin(elliptic_t* elliptic,
+                              elliptic_t* ellipticFine,
+                              nonZero_t** A,
+                              dlong* nnz,
+                              hlong* globalStarts)
 {
   if(elliptic->mesh->Nq != 2) {
     fprintf(stderr,"Coarse level order must equal 1 to use the Galerkin coarse system.");
@@ -325,11 +325,11 @@ void ellipticBuildContinuousGalerkin(elliptic_t* elliptic,
   case TRIANGLES:
   case TETRAHEDRA:
   case QUADRILATERALS:
-    printf("ellipticBuildContinuousGalerkin is only supported for HEX.\n");
+    printf("ellipticBuildFEMGalerkin is only supported for HEX.\n");
     exit(1);
     break;
   case HEXAHEDRA:
-    ellipticBuildContinuousGalerkinHex3D(elliptic,ellipticFine,
+    ellipticBuildFEMGalerkinHex3D(elliptic,ellipticFine,
                                          A,nnz,globalStarts);
     break;
   default:
@@ -377,11 +377,11 @@ void ellipticGenerateCoarseBasisHex3D(dfloat* b,int j_,elliptic_t* elliptic)
   free(z1);
 }
 
-void ellipticBuildContinuousGalerkinHex3D(elliptic_t* elliptic,
-                                          elliptic_t* ellipticFine,
-                                          nonZero_t** A,
-                                          dlong* nnz,
-                                          hlong* globalStarts)
+void ellipticBuildFEMGalerkinHex3D(elliptic_t* elliptic,
+                                   elliptic_t* ellipticFine,
+                                   nonZero_t** A,
+                                   dlong* nnz,
+                                   hlong* globalStarts)
 {
   mesh_t* mesh = elliptic->mesh;
   

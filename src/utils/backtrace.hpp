@@ -20,15 +20,15 @@ static std::string backtrace(int skip = 1)
     Dl_info info;
     if (dladdr(callstack[i], &info)) {
       char *demangled = NULL;
-      int status;
+      int status = -1;
       demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
-      snprintf(buf, sizeof(buf), "%-3d %*0p %s + %zd\n",
+      snprintf(buf, sizeof(buf), "%-3d %0*p %s + %zd\n",
            i, 2 + sizeof(void*) * 2, callstack[i],
            status == 0 ? demangled : info.dli_sname,
            (char *)callstack[i] - (char *)info.dli_saddr);
       free(demangled);
     } else {
-      snprintf(buf, sizeof(buf), "%-3d %*0p\n",
+      snprintf(buf, sizeof(buf), "%-3d %0*p\n",
            i, 2 + sizeof(void*) * 2, callstack[i]);
     }
     trace_buf << buf;

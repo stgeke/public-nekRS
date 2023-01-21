@@ -366,7 +366,8 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
 
 }
 
-static void signalHandler( int signum ) {
+static void signalHandler(int signum) 
+{
    int rank;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -405,7 +406,7 @@ int main(int argc, char** argv)
   {
     const char* env_val = std::getenv ("NEKRS_SIGUSR2_BACKTRACE");
     if (env_val)
-      signal(SIGUSR2, signalHandler);  
+      std::signal(SIGUSR2, signalHandler);  
   }
 
   MPI_Barrier(MPI_COMM_WORLD);

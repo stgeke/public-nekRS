@@ -342,7 +342,7 @@ target_link_libraries(nekrs-lib PRIVATE nekrs-hypre-device)
 add_executable(nekrs-bin src/main.cpp)
 target_include_directories(nekrs-bin PRIVATE src/lib)
 set_target_properties(nekrs-bin PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
-target_link_libraries(nekrs-bin PRIVATE nekrs-lib)
+target_link_libraries(nekrs-bin PRIVATE nekrs-lib ${CMAKE_DL_LIBS})
 
 ###############################################################################
 # Optional nekRS plugins

@@ -88,6 +88,8 @@
 
 namespace {
 
+int worldRank;
+
 std::vector<std::string> serializeString(const std::string sin, char dlim)
 {
   std::vector<std::string> slist;
@@ -368,20 +370,15 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
 
 static void signalHandler(int signum) 
 {
-   int rank;
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-   if(rank == 0)
-     std::cout << "generating backtrace files ...\n";
+   std::cout << "generating backtrace ...\n";
 
    std::ofstream file;
    std::string fileName = "backtrace.";
-   fileName += std::to_string(rank);
+   fileName += std::to_string(worldRank);
    file.open (fileName);
    file << backtrace(1); 
    file.close();
   
-   MPI_Finalize();
    exit(signum);  
 }
 
@@ -401,12 +398,13 @@ int main(int argc, char** argv)
       std::cout << "FATAL ERROR: Cannot initialize MPI!" << "\n";
       exit(EXIT_FAILURE);
     }
+    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
   }
 
   {
-    const char* env_val = std::getenv ("NEKRS_SIGUSR2_BACKTRACE");
+    const char* env_val = std::getenv("NEKRS_SIGNUM_BACKTRACE");
     if (env_val)
-      std::signal(SIGUSR2, signalHandler);  
+      std::signal(std::atoi(env_val), signalHandler);  
   }
 
   MPI_Barrier(MPI_COMM_WORLD);

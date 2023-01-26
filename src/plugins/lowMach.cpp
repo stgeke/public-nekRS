@@ -23,10 +23,8 @@ static occa::kernel surfaceFluxKernel;
 
 void lowMach::buildKernel(occa::properties kernelInfo)
 {
-  std::string path;
   int rank = platform->comm.mpiRank;
-  path.assign(getenv("NEKRS_INSTALL_DIR"));
-  path += "/kernels/plugins/";
+  const std::string path = getenv("NEKRS_KERNEL_DIR") + std::string("/plugins/");
   std::string kernelName, fileName;
   const std::string extension = ".okl";
   {

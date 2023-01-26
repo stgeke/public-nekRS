@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 
-static std::string backtrace(int skip = 1)
+static std::string nrsbacktrace(int skip = 1)
 {
   void *callstack[128];
   const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);

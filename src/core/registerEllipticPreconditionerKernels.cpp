@@ -26,9 +26,7 @@ void registerAxKernels(const std::string &section, int N, int poissonEquation)
 
   std::string fileName, kernelName;
 
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/elliptic/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
   const bool serial = platform->serial;
   const std::string fileNameExtension = (serial) ? ".c" : ".okl";
   const std::string optionsPrefix = createOptionsPrefix(section);
@@ -83,13 +81,11 @@ void registerJacobiKernels(const std::string &section, int poissonEquation)
   const bool serial = platform->serial;
   const std::string extension = serial ? ".c" : ".okl";
   const std::string optionsPrefix = createOptionsPrefix(section);
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
 
   // This kernel is needed as it used for mixed-precision Jacobi preconditioning
   std::string kernelName = "axmyzManyPfloat";
-  std::string fileName = oklpath + "elliptic/" + kernelName + extension;
+  std::string fileName = oklpath + kernelName + extension;
   platform->kernels.add(kernelName, fileName, platform->kernelInfo);
 }
 
@@ -106,16 +102,13 @@ void registerCommonMGPreconditionerKernels(int N, occa::properties kernelInfo, i
   pfloatKernelInfo["defines/dfloat"] = pfloatString;
   pfloatKernelInfo["defines/pfloat"] = pfloatString;
 
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-
   const std::string orderSuffix = std::string("_") + std::to_string(N);
 
   const bool serial = platform->serial;
   const std::string extension = serial ? ".c" : ".okl";
 
   {
-    const std::string oklpath = installDir + "/kernels/core/";
+    std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/core/");
     std::string fileName;
 
     fileName = oklpath + "mask.okl";
@@ -128,12 +121,15 @@ void registerCommonMGPreconditionerKernels(int N, occa::properties kernelInfo, i
                           pfloatKernelInfo,
                           orderSuffix + "pfloat");
 
+
+    oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
+
     kernelName = "updateChebyshev";
-    fileName = installDir + "/kernels/elliptic/" + kernelName + ".okl";
+    fileName = oklpath + kernelName + ".okl";
     platform->kernels.add(kernelName + orderSuffix, fileName, kernelInfo, orderSuffix);
 
     kernelName = "updateFourthKindChebyshev";
-    fileName = installDir + "/kernels/elliptic/" + kernelName + ".okl";
+    fileName = oklpath + kernelName + ".okl";
     platform->kernels.add(kernelName + orderSuffix, fileName, kernelInfo, orderSuffix);
 
     occa::properties buildDiagInfo = kernelInfo;
@@ -141,7 +137,7 @@ void registerCommonMGPreconditionerKernels(int N, occa::properties kernelInfo, i
       buildDiagInfo["defines/p_poisson"] = 1;
     const std::string poissonPrefix = poissonEquation ? "poisson-" : "";
     kernelName = "ellipticBlockBuildDiagonalHex3D";
-    fileName = installDir + "/kernels/elliptic/" + kernelName + ".okl";
+    fileName = oklpath + kernelName + ".okl";
     platform->kernels.add(poissonPrefix + kernelName + orderSuffix, fileName, buildDiagInfo, orderSuffix);
     {
       occa::properties props = buildDiagInfo;
@@ -161,10 +157,8 @@ void registerSchwarzKernels(const std::string &section, int N)
   const int Np_e = Nq_e * Nq_e * Nq_e;
 
   const bool serial = platform->serial;
-
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/elliptic/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
+ 
   std::string fileName, kernelName;
   const std::string extension = serial ? ".c" : ".okl";
 
@@ -242,9 +236,7 @@ void registerMultigridLevelKernels(const std::string &section, int Nf, int N, in
 
   std::string fileName, kernelName;
 
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/elliptic/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
   registerCommonMGPreconditionerKernels(N, kernelInfo, poissonEquation);
 
   const bool serial = platform->serial;
@@ -313,9 +305,7 @@ void registerMultiGridKernels(const std::string &section, int poissonEquation)
     }
     else {
       {
-        std::string installDir;
-        installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-        const std::string oklpath = installDir + "/kernels/";
+        const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
 
         std::string fileName = oklpath + "elliptic/vectorDotStar.okl";
         std::string kernelName = "vectorDotStar";
@@ -337,9 +327,7 @@ void registerSEMFEMKernels(const std::string &section, int N, int poissonEquatio
   else {
     SEMFEMKernelProps["defines/pfloat"] = "double";
   }
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/elliptic/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
   std::string fileName = oklpath + "gather.okl";
   platform->kernels.add("gather", fileName, SEMFEMKernelProps);
   fileName = oklpath + "scatter.okl";

@@ -10,12 +10,10 @@ void registerNrsKernels(occa::properties kernelInfoBC)
   const bool serial = platform->serial;
   const std::string extension = serial ? ".c" : ".okl";
   const device_t &device = platform->device;
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
   // build kernels
   std::string fileName, kernelName;
   const std::string suffix = "Hex3D";
-  const std::string oklpath = installDir + "/kernels/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
   int N, cubN;
   platform->options.getArgs("POLYNOMIAL DEGREE", N);
   platform->options.getArgs("CUBATURE POLYNOMIAL DEGREE", cubN);

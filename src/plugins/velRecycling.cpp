@@ -39,9 +39,7 @@ static int Nblock;
 
 void velRecycling::buildKernel(occa::properties kernelInfo)
 {
-  std::string path;
-  path.assign(getenv("NEKRS_INSTALL_DIR"));
-  path += "/kernels/plugins/";
+  const std::string path = getenv("NEKRS_KERNEL_DIR") + std::string("/plugins/");
 
   std::string fileName, kernelName;
   const std::string extension = ".okl";

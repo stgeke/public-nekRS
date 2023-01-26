@@ -18,9 +18,7 @@ void registerPostProcessingKernels()
 
   kernelInfo["includes"].asArray();
 
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  std::string oklpath = installDir + "/kernels/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
   std::string kernelName, fileName;
 
   kernelInfo["includes"] += oklpath + "postProcessing/planarAveraging.h";

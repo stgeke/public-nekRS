@@ -7,8 +7,6 @@ void registerCdsKernels(occa::properties kernelInfoBC)
 {
   const bool serial = platform->serial;
   const std::string extension = serial ? ".c" : ".okl";
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
   occa::properties kernelInfo = platform->kernelInfo;
   kernelInfo["defines"].asObject();
   kernelInfo["includes"].asArray();
@@ -48,7 +46,7 @@ void registerCdsKernels(occa::properties kernelInfoBC)
 
   std::string fileName, kernelName;
   const std::string suffix = "Hex3D";
-  const std::string oklpath = installDir + "/kernels/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
   const std::string section = "cds-";
   occa::properties meshProps = kernelInfo;
   meshProps += meshKernelProperties(N);

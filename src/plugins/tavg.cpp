@@ -66,10 +66,8 @@ static void E4(dlong N, dfloat a, dfloat b, int nflds, occa::memory o_1, occa::m
 void tavg::buildKernel(occa::properties kernelInfo)
 {
 
-  std::string path;
   int rank = platform->comm.mpiRank;
-  path.assign(getenv("NEKRS_INSTALL_DIR"));
-  path += "/kernels/plugins/";
+  const std::string path = getenv("NEKRS_KERNEL_DIR") + std::string("/plugins/");
   std::string kernelName, fileName;
   const std::string extension = ".okl";
   {

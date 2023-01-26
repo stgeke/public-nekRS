@@ -168,8 +168,8 @@ if(NOT Allowed_LD_Flag_BSYMBOLIC OR APPLE)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-    message(FATAL_ERROR "GNU compiler version must be at least 8.0!")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
+    message(FATAL_ERROR "GNU compiler version must be at least 9.1!")
   endif()
 endif()
 

@@ -6,7 +6,8 @@ extern "C" void FUNC(ellipticPartialAxCoeffHex3D_v0)(const dlong & Nelements,
                         const dfloat* __restrict__ ggeo,
                         const dfloat* __restrict__ D,
                         const dfloat* __restrict__ S,
-                        const dfloat* __restrict__ lambda,
+                        const dfloat* __restrict__ lambda0,
+                        const dfloat* __restrict__ lambda1,
                         const dfloat* __restrict__ q,
                         dfloat* __restrict__ Aq )
 {
@@ -41,7 +42,7 @@ extern "C" void FUNC(ellipticPartialAxCoeffHex3D_v0)(const dlong & Nelements,
           const dfloat r_G22 = ggeo[gbase + p_G22ID * p_Np];
 
           const dlong id = element * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
-          const dfloat r_lam0 = lambda[p_lambda*id + 0 * offset];
+          const dfloat r_lam0 = lambda0[p_lambda*id + 0 * loffset];
 
           dfloat qr = 0;
           dfloat qs = 0;
@@ -79,7 +80,7 @@ extern "C" void FUNC(ellipticPartialAxCoeffHex3D_v0)(const dlong & Nelements,
 
           dfloat r_Aq = 0;
 #ifndef p_poisson
-          const dfloat r_lam1 = lambda[p_lambda*id + 1 * offset];
+          const dfloat r_lam1 = lambda1[p_lambda*id + 0 * loffset];
           r_Aq = ggeo[gbase + p_GWJID * p_Np] * r_lam1 * s_q[k][j][i];
 #endif
           dfloat r_Aqr = 0, r_Aqs = 0, r_Aqt = 0;

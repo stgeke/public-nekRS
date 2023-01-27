@@ -31,8 +31,8 @@
 void ellipticPreconditionerSetup(elliptic_t* elliptic, ogs_t* ogs)
 {
   elliptic->precon = new precon_t();
-  precon_t* precon = (precon_t*) elliptic->precon;
-  const long long int pre = platform->device.occaDevice().memoryAllocated();
+  precon_t *precon = elliptic->precon;
+  const auto pre = platform->device.occaDevice().memoryAllocated();
   
   mesh_t* mesh = elliptic->mesh;
   setupAide& options = elliptic->options;
@@ -41,7 +41,13 @@ void ellipticPreconditionerSetup(elliptic_t* elliptic, ogs_t* ogs)
   const double tStart = MPI_Wtime();
 
   if(options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
-    ellipticMultiGridSetup(elliptic,precon);
+    const std::vector<int> levels = determineMGLevels(elliptic->name);
+    elliptic->nLevels = levels.size();
+    elliptic->levels = (int *)calloc(elliptic->nLevels, sizeof(int));
+    for (int i = 0; i < elliptic->nLevels; ++i)
+       elliptic->levels[i] = levels.at(i);
+
+    ellipticMultiGridSetup(elliptic, precon);
   } else if(options.compareArgs("PRECONDITIONER", "SEMFEM")) {
     if(platform->comm.mpiRank == 0) printf("building SEMFEM preconditioner ...\n"); fflush(stdout);
     precon->SEMFEMSolver = new SEMFEMSolver_t(elliptic);

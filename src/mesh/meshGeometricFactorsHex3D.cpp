@@ -300,7 +300,7 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
       //printf("J [%g,%g] and max Skew = %g\n", globalMinJ, globalMaxJ, globalMaxSkew);
 
     if(globalMinJ < 0 || globalMaxJ < 0) {
-      if (platform->comm.mpiRank == 0) printf("Jacobian < 0 !!! ");
+      if (platform->comm.mpiRank == 0) printf("Jacobian < 0!\n");
       //EXIT_AND_FINALIZE(EXIT_FAILURE);
     }
 

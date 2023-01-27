@@ -74,6 +74,10 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
 
   flopCounter = std::make_unique<flopCounter_t>();
 
+  // Disables the automatic insertion of barriers
+  // between separate OKL inner loop blocks.
+  kernelInfo["okl/add_barriers"] = false;
+
   kernelInfo["defines/"
              "p_NVec"] = 3;
   kernelInfo["defines/"
@@ -121,6 +125,9 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
 }
 void memPool_t::allocate(const dlong offset, const dlong fields)
 {
+  if (ptr)
+    free(ptr);
+
   ptr = (dfloat *)calloc(offset * fields, sizeof(dfloat));
   if (fields > 0)
     slice0 = ptr + 0 * offset;
@@ -151,6 +158,9 @@ void memPool_t::allocate(const dlong offset, const dlong fields)
 }
 void deviceMemPool_t::allocate(memPool_t &hostMemory, const dlong offset, const dlong fields)
 {
+  if (o_ptr.size())
+    o_ptr.free();
+
   bytesAllocated = (fields * sizeof(dfloat)) * offset;
   o_ptr = platform->device.malloc(bytesAllocated, hostMemory.slice0);
   if (fields > 0)

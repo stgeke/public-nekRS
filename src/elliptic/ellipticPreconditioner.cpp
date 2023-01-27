@@ -33,7 +33,7 @@
 void ellipticPreconditioner(elliptic_t *elliptic, occa::memory &o_r, occa::memory &o_z)
 {
   mesh_t *mesh = elliptic->mesh;
-  precon_t* precon = (precon_t*) elliptic->precon;
+  precon_t *precon = elliptic->precon;
   setupAide &options = elliptic->options;
 
   const dlong Nlocal = mesh->Np * mesh->Nelements;

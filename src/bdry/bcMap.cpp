@@ -52,7 +52,7 @@ static bool meshConditionsDerived = false;
 static std::set<std::string> fields;
 // stores for every (field, boundaryID) pair a bcID
 static std::map<std::pair<std::string, int>, int> bToBc;
-static int nbid[] = {0, 0};
+static int nbid[] = {-1, -1};
 static bool importFromNek = true;
 
 static std::map<std::string, int> vBcTextToID = {
@@ -67,10 +67,11 @@ static std::map<std::string, int> vBcTextToID = {
     {"zeroyvalue/codedfixedgradient", bcMap::bcTypeSHLY},
     {"zerozvalue/codedfixedgradient", bcMap::bcTypeSHLZ},
     {"zeronvalue/codedfixedgradient", bcMap::bcTypeSHL},
-    {"zeroyzvalue/zerogradient", bcMap::bcTypeONX},
-    {"zeroxzvalue/zerogradient", bcMap::bcTypeONY},
-    {"zeroxyvalue/zerogradient", bcMap::bcTypeONZ},
-    // {"zeroTValue/zerogradient", bcMap::bcTypeON},
+    {"zeroyzvalue/fixedgradient", bcMap::bcTypeONX},
+    {"zeroxzvalue/fixedgradient", bcMap::bcTypeONY},
+    {"zeroxyvalue/fixedgradient", bcMap::bcTypeONZ},
+    // {"zeroTValue/fixedgradient", bcMap::bcTypeON},
+    {"fixedgradient", bcMap::bcTypeO},
     {"zerogradient", bcMap::bcTypeO}
 };
 
@@ -86,11 +87,11 @@ static std::map<int, std::string> vBcIDToText = {
     {bcMap::bcTypeSHLY, "zeroYValue/codedFixedGradient"},
     {bcMap::bcTypeSHLZ, "zeroZValue/codedFixedGradient"},
     {bcMap::bcTypeSHL, "zeroNValue/codedFixedGradient"},
-    {bcMap::bcTypeONX, "zeroYZValue/zeroGradient"},
-    {bcMap::bcTypeONY, "zeroXZValue/zeroGradient"},
-    {bcMap::bcTypeONZ, "zeroXYValue/zeroGradient"},
-    // {bcMap::bcTypeON, "zeroTValue/zeroGradient"},
-    {bcMap::bcTypeO, "zeroGradient"}
+    {bcMap::bcTypeONX, "zeroYZValue/fixedGradient"},
+    {bcMap::bcTypeONY, "zeroXZValue/fixedGradient"},
+    {bcMap::bcTypeONZ, "zeroXYValue/fixedGradient"},
+    // {bcMap::bcTypeON, "zeroTValue/fixedGradient"},
+    {bcMap::bcTypeO, "fixedGradient"}
 };
 
 static std::map<std::string, int> sBcTextToID = {
@@ -113,6 +114,12 @@ static void s_setup(std::string s);
 
 static void v_setup(std::string field, std::vector<std::string> slist)
 {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank); // platform not available yet
+
+  int foundAligned = 0;
+  int foundUnaligned = 0;
+
   for (int bid = 0; bid < slist.size(); bid++) {
     std::string key = slist[bid];
     if (key.compare("p") == 0) key = "periodic";
@@ -122,41 +129,70 @@ static void v_setup(std::string field, std::vector<std::string> slist)
 
     if (key.compare("inlet") == 0) key = "codedfixedvalue";
     if (key.compare("v") == 0) key = "codedfixedvalue";
+
     if (key.compare("mv") == 0) key = "codedfixedvalue";
-    if (key.compare("fixedvalue+moving") == 0) key = "codedfixedvalue";
+    if (key.compare("codedfixedvalue+moving") == 0) key = "codedfixedvalue";
 
-    if (key.compare("slipx") == 0) key = "zeroxvalue/zerogradient";
-    if (key.compare("slipy") == 0) key = "zeroyvalue/zerogradient";
-    if (key.compare("slipz") == 0) key = "zerozvalue/zerogradient";
-    if (key.compare("symx") == 0) key = "zeroxvalue/zerogradient";
-    if (key.compare("symy") == 0) key = "zeroyvalue/zerogradient";
-    if (key.compare("symz") == 0) key = "zerozvalue/zerogradient";
-    if (key.compare("sym") == 0) key = "zeronvalue/zerogradient";
+    if (key.compare("slipx") == 0 ||
+        key.compare("slipy") == 0 ||
+        key.compare("slipz") == 0 ||
+        key.compare("slip")  == 0 ||
+        key.compare("symx")  == 0 ||
+        key.compare("symy")  == 0 ||
+        key.compare("symz")  == 0) { 
+      key = "zerozvalue/zerogradient";
+      foundAligned++;
+    }
+    if (key.compare("sym") == 0) {
+      key = "zeronvalue/zerogradient";
+      foundUnaligned++;
+    }
 
-    if (key.compare("shlx") == 0) key = "zeroxvalue/codedfixedgradient";
-    if (key.compare("shly") == 0) key = "zeroyvalue/codedfixedgradient";
-    if (key.compare("shlz") == 0) key = "zerozvalue/codedfixedgradient";
-    if (key.compare("shl") == 0) key = "zeronvalue/codedfixedgradient";
+    if (key.compare("tractionx") == 0 ||
+        key.compare("tractiony") == 0 ||
+        key.compare("tractionz") == 0 ||
+        key.compare("traction")  == 0 ||
+        key.compare("shlx")      == 0 ||
+        key.compare("shly")      == 0 ||
+        key.compare("shlz")      == 0) {
+      key = "zerozvalue/codedfixedgradient";
+      foundAligned++;
+    }
+    if (key.compare("shl") == 0) {
+      key = "zeronvalue/codedfixedgradient";
+      foundUnaligned++;
+    }
 
-    if (key.compare("outlet") == 0) key = "zerogradient";
-    if (key.compare("outflow") == 0) key = "zerogradient";
-    if (key.compare("o") == 0) key = "zerogradient";
+    if (key.compare("outlet") == 0) key = "fixedgradient";
+    if (key.compare("outflow") == 0) key = "fixedgradient";
+    if (key.compare("o") == 0) key = "fixedgradient";
 
-    if (key.compare("onx") == 0) key = "zeroyzvalue/zerogradient";
-    if (key.compare("ony") == 0) key = "zeroxzvalue/zerogradient";
-    if (key.compare("onz") == 0) key = "zeroxyvalue/zerogradient";
-    //if (key.compare("on") == 0) key = "zerotvalue/zerogradient";
-
+    if (key.compare("onx") == 0 ||
+        key.compare("ony") == 0 ||
+        key.compare("onz") == 0) {
+      key = "zeroxyvalue/fixedgradient";
+      foundUnaligned++;
+    }
+// not supported yet
+#if 0
+    if (key.compare("on") == 0) {
+      key = "zerotvalue/fixedgradient";
+      foundUnaligned++;
+    }
+#endif
 
     if (vBcTextToID.find(key) == vBcTextToID.end()) {
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if(rank == 0)
         std::cout << "Invalid velocity bcType " << "\'" << key << "\'" << "!\n";
       EXIT_AND_FINALIZE(EXIT_FAILURE);
     }
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
+  }
+  if(foundAligned && foundUnaligned) {
+    if(rank == 0)
+        std::cout << "Aligned together with unaligned mixed boundary types are not supported!\n";
+    EXIT_AND_FINALIZE(EXIT_FAILURE);
   }
 }
 
@@ -232,28 +268,18 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
   fields.insert(field);
 
   for (int bid = 0; bid < velocityBCs.size(); bid++) {
-    std::string key = velocityBCs[bid];
-    if (key.compare("p") == 0) key = "periodic";
+    const std::string keyIn = velocityBCs[bid];
+    std::string key = "zeronvalue/zerogradient";
 
-    if (key.compare("w") == 0) key = "zerovalue";
-    if (key.compare("wall") == 0) key = "zerovalue";
-    if (key.compare("inlet") == 0) key = "zerovalue";
-    if (key.compare("v") == 0) key = "zerovalue";
-    if (key.compare("mv") == 0) key = "codedfixedvalue";
-    if (key.compare("fixedvalue+moving") == 0) key = "codedfixedvalue";
+    if (keyIn.compare("p") == 0) key = "periodic";
 
-    // all other bounds map to SYM
-    if (key.compare("outlet") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("outflow") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("o") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("slipx") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("slipy") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("slipz") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("symx") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("symy") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("symz") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("sym") == 0) key = "zeronvalue/zerogradient";
-    if (key.compare("shl") == 0) key = "zeronvalue/zerogradient";
+    if (keyIn.compare("w") == 0) key = "zerovalue";
+    if (keyIn.compare("wall") == 0) key = "zerovalue";
+    if (keyIn.compare("inlet") == 0) key = "zerovalue";
+    if (keyIn.compare("v") == 0) key = "zerovalue";
+
+    if (keyIn.compare("mv") == 0) key = "codedfixedvalue";
+    if (keyIn.compare("codedfixedvalue+moving") == 0) key = "codedfixedvalue";
 
     if (vBcTextToID.find(key) == vBcTextToID.end()) {
       int rank;
@@ -277,7 +303,8 @@ int id(int bid, std::string field)
     return bToBc.at({field, bid - 1});
   }
   catch (const std::out_of_range &oor) {
-    return NO_OP;
+    printf("bcMap::id bid:%d field:%s lookup failed!\n", bid, field.c_str());
+    ABORT(1);
   }
 }
 
@@ -286,13 +313,11 @@ int ellipticType(int bid, std::string field)
   if (bid < 1)
     return NO_OP;
 
-  //printf("%d %s\n", bid, field.c_str());
-
   try {
-    int bcType;
+    int bcType = -1;
     if (field.compare("x-velocity") == 0 || field.compare("x-mesh") == 0) {
-      int bcID = bToBc.at({"velocity", bid - 1});
-      if(field.compare("x-mesh") == 0) bcID = bToBc.at({"mesh", bid - 1});
+      const std::string fld = (field.compare("x-velocity") == 0) ? "velocity" : "mesh";
+      const int bcID = bToBc.at({fld, bid - 1}); 
       
       bcType = DIRICHLET;
       if (bcID == bcTypeO)
@@ -309,8 +334,8 @@ int ellipticType(int bid, std::string field)
         bcType = ZERO_TANGENTIAL;
     }
     else if (field.compare("y-velocity") == 0 || field.compare("y-mesh") == 0) {
-      int bcID = bToBc.at({"velocity", bid - 1});
-      if(field.compare("y-mesh") == 0) bcID = bToBc.at({"mesh", bid - 1});
+      const std::string fld = (field.compare("y-velocity") == 0) ? "velocity" : "mesh";
+      const int bcID = bToBc.at({fld, bid - 1}); 
 
       bcType = DIRICHLET;
       if (bcID == bcTypeO)
@@ -327,8 +352,8 @@ int ellipticType(int bid, std::string field)
         bcType = ZERO_TANGENTIAL;
     }
     else if (field.compare("z-velocity") == 0 || field.compare("z-mesh") == 0) {
-      int bcID = bToBc.at({"velocity", bid - 1});
-      if(field.compare("z-mesh") == 0) bcID = bToBc.at({"mesh", bid - 1});
+      const std::string fld = (field.compare("z-velocity") == 0) ? "velocity" : "mesh";
+      const int bcID = bToBc.at({fld, bid - 1}); 
 
       bcType = DIRICHLET;
       if (bcID == bcTypeO)
@@ -359,10 +384,16 @@ int ellipticType(int bid, std::string field)
       if (bcID == bcTypeS)
         bcType = DIRICHLET;
     }
+
+    if(bcType == -1) {
+      printf("ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
+      ABORT(1);
+    }
     return bcType;
   }
   catch (const std::out_of_range &oor) {
-    return NO_OP;
+    printf("ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
+    ABORT(1);
   }
 }
 
@@ -402,7 +433,10 @@ std::string text(int bid, std::string field)
 
 int size(int isTmesh)
 {
-  return isTmesh ? nbid[1] : nbid[0];
+  if(nbid[1] > -1)
+    return isTmesh ? nbid[1] : nbid[0];
+  else
+    return nbid[0];
 }
 
 bool useDerivedMeshBoundaryConditions()
@@ -470,6 +504,7 @@ void checkBoundaryAlignment(mesh_t *mesh)
   int nid = nbid[0];
   if (mesh->cht)
     nid = nbid[1];
+
   bool bail = false;
   for (auto &&field : fields) {
     if (field != std::string("velocity") && field != std::string("mesh"))
@@ -672,25 +707,17 @@ void remapUnalignedBoundaries(mesh_t *mesh)
 bool unalignedMixedBoundary(std::string field)
 {
   int nid = nbid[0];
-
-  {
-    const int is = 0; // temperature
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
- 
-    if(field.find("scalar" + sid) != std::string::npos) {
-      nid = nbid[1];
-    }
-  }
+  if (field.compare("mesh") == 0)
+    nid = (nbid[1] > -1) ? nbid[1] : nbid[0]; 
 
   for (int bid = 1; bid <= nid; bid++) {
     int bcType = id(bid, field);
-    if (bcType == bcTypeSYM) // bcType will be automatically adjusted
+    if (bcType == bcTypeSYM)
       return true;
     if (bcType == bcTypeSHL)
-      return true; // always treat as unaligned
+      return true;
+    if (bcType == bcTypeON) 
+      return true;
   }
 
   return false;

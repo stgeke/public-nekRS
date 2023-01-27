@@ -39,7 +39,8 @@ struct nrs_t {
 
   cds_t *cds = nullptr;
 
-  oogs_t *gsh;
+  oogs_t *gsh = nullptr;
+  oogs_t *gshMesh = nullptr;
 
   dlong ellipticWrkOffset;
 
@@ -211,8 +212,6 @@ static std::vector<std::string> serializeString(const std::string sin, char dlim
 void evaluateProperties(nrs_t *nrs, const double timeNew);
 
 void compileKernels();
-
-std::vector<int> determineMGLevels(std::string section);
 
 int numberActiveFields(nrs_t *nrs);
 

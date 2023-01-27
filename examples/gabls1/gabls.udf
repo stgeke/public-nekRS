@@ -307,6 +307,7 @@ void UDF_Setup(nrs_t *nrs)
     tavgFields.push_back({o_dtempdy});
     tavgFields.push_back({o_u, o_temp});
     tavgFields.push_back({o_w, o_temp});
+    tavgFields.push_back({o_w, o_w, o_temp});
     nAvgFields = tavgFields.size();
 
     tavg::setup(nrs, tavgFields); 

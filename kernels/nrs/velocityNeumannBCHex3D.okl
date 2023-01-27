@@ -99,7 +99,6 @@
     @exclusive dfloat r_rhsU[p_Nq], r_rhsV[p_Nq], r_rhsW[p_Nq];
 
     // for all face nodes of all elements
-    // face 0
     for (int j = 0; j < p_Nq; ++j; @inner(1)) {
       for (int i = 0; i < p_Nq; ++i; @inner(0)) {
 #pragma unroll p_Nq

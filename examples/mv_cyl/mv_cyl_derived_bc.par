@@ -12,7 +12,7 @@ oudf = "mv_cyl_derived_bc.oudf"
 udf = "mv_cyl.udf"
 
 [MESH]
-solver = elasticity
+solver = pcg+block 
 file = "mv_cyl.re2"
 
 [PRESSURE]

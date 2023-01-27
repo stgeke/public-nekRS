@@ -11,6 +11,7 @@
 * Unaligned `on` boundary condition
 * Extrapolation initialGuess method
 * Support for external nekRS plugins
+* DPCPP backend
 * Various bug fixes 
 
 ## Good to know
@@ -25,11 +26,12 @@
 * [par] Remove multigrid qualifier `coarse`
 * [par] Remove SEMFEM solver specification from key `preconditioner`, use `semfemSolver` instead
 * [par] Replace `stressFormulation = true` by `equation = navierStokes+variableViscosity` 
-# [par] Replace bcType `fixedValue` by `codedFixedValue`
+* [par] Replace bcType `fixedValue` by `codedFixedValue`
+* [par] Replace `elasticity` by `pcg+block` for mesh solver
+* [oudf] Rename `bc->wrk` => `bc->usrwrk`
 
 ## Known Bugs / Restrictions
 
-* Mesh solver does not support unaligned sym/shl BCs nor CHT
 * Poor performance of Schwarz smoother on CPUs
 * Poor performance of OIFS (advSub kernel) on CPUs
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
@@ -37,7 +39,7 @@
 
 ## Thanks to our Contributors
 
-@pwang234, @kris-rowe
+@kris-rowe, @pwang234, @nandu90
 
 We are grateful to all who added new features, filed issues or helped resolve them, 
 asked and answered questions, and were part of inspiring discussions.
@@ -68,7 +70,6 @@ asked and answered questions, and were part of inspiring discussions.
 * [udf] Rename plug-in name `avg`  => `tavg`
 * [udf] Rename `udf.converged` => `udf.timeStepConverged`
 * [nrsconfig] Rename env-var `AMGX_ENABLE` => `ENABLE_AMGX`
-* [oudf] Rename `bc->wrk` => `bc->usrwrk`
 
 ## Known Bugs / Restrictions
 

@@ -55,17 +55,51 @@ void checkConfig(elliptic_t* elliptic)
     err++;
   }
 
-  if (options.compareArgs("PRECONDITIONER","MULTIGRID")) {
+  if (!elliptic->poisson && 
+      options.compareArgs("PRECONDITIONER","MULTIGRID") &&
+      !options.compareArgs("MULTIGRID SMOOTHER","DAMPEDJACOBI")) { 
+    if(platform->comm.mpiRank == 0)
+      printf("ERROR: Non-Poisson type equations require Jacobi multigrid smoother\n");
+    err++;
+  }
+
+  if (options.compareArgs("PRECONDITIONER","MULTIGRID") &&
+      options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE")) {
     if (elliptic->poisson == 0) {
       if(platform->comm.mpiRank == 0)
-        printf("ERROR: Multigrid preconditioner only supports Poisson type equations\n");
+        printf("ERROR: Multigrid + coarse solve only supported for Poisson type equations\n");
       err++;
+    }
+  }
+
+  if(elliptic->mesh->ogs == NULL) {
+    if(platform->comm.mpiRank == 0) 
+      printf("ERROR: mesh->ogs == NULL!");
+    err++;
+  }
+
+  { 
+    int found = 0;
+    for (int fld = 0; fld < elliptic->Nfields; fld++) {
+      for (dlong e = 0; e < mesh->Nelements; e++) {
+        for (int f = 0; f < mesh->Nfaces; f++) {
+          const int offset = fld * mesh->Nelements * mesh->Nfaces;
+          const int bc = elliptic->EToB[f + e * mesh->Nfaces + offset];
+          if (bc == ZERO_NORMAL || bc == ZERO_TANGENTIAL)
+            found = 1;
+        }
+      }
+    }
+    MPI_Allreduce(MPI_IN_PLACE, &found, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
+    if(found && options.compareArgs("BLOCK SOLVER", "FALSE")) {
+      if(platform->comm.mpiRank == 0) 
+        printf("Unaligned BCs require block solver!\n");
+    err++;
     }
   }
 
   if (err) 
     ABORT(EXIT_FAILURE);
-
 }
 
 
@@ -73,10 +107,15 @@ void checkConfig(elliptic_t* elliptic)
 
 void ellipticSolveSetup(elliptic_t* elliptic)
 {
+  MPI_Barrier(platform->comm.mpiComm);
+  const double tStart = MPI_Wtime();
+
   if(elliptic->name.size() == 0) {
     if(platform->comm.mpiRank == 0) printf("ERROR: empty elliptic solver name!");
     ABORT(EXIT_FAILURE);
   }
+
+  elliptic->options.setArgs("DISCRETIZATION", "CONTINUOUS");
 
   // create private options based on platform
   for(auto& entry : platform->options.keyWordToDataMap) {
@@ -88,22 +127,39 @@ void ellipticSolveSetup(elliptic_t* elliptic)
       elliptic->options.setArgs(key, entry.second); 
     }
   }
+
   if (platform->device.mode() == "Serial")
     elliptic->options.setArgs("COARSE SOLVER LOCATION","CPU");
 
   setupAide& options = elliptic->options;
-
   const int verbose = platform->options.compareArgs("VERBOSE","TRUE") ? 1:0;
+  const size_t offsetBytes = elliptic->fieldOffset * elliptic->Nfields * sizeof(dfloat);
 
-  MPI_Barrier(platform->comm.mpiComm);
-  const double tStart = MPI_Wtime();
+  if(elliptic->o_wrk.size() < elliptic_t::NScratchFields * offsetBytes) {
+    if(platform->comm.mpiRank == 0) printf("ERROR: mempool assigned for elliptic too small!");
+    ABORT(EXIT_FAILURE);
+  }
 
   mesh_t* mesh = elliptic->mesh;
   const dlong Nlocal = mesh->Np * mesh->Nelements;
 
+  const dlong Nblocks = (Nlocal + BLOCKSIZE - 1) / BLOCKSIZE;
+
+  elliptic->type = strdup(dfloatString);
+
+  hlong NelementsLocal = mesh->Nelements;
+  hlong NelementsGlobal = 0;
+  MPI_Allreduce(&NelementsLocal, &NelementsGlobal, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
+  elliptic->NelementsGlobal = NelementsGlobal;
+
+  elliptic->o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * elliptic->Nfields * sizeof(int),
+                                             elliptic->EToB);
+
+  elliptic->allNeumann = 0;
+
   checkConfig(elliptic);
 
-  if(options.compareArgs("KRYLOV SOLVER", "PGMRES")){
+  if(options.compareArgs("SOLVER", "PGMRES")){
     initializeGmresData(elliptic);
     const std::string sectionIdentifier = std::to_string(elliptic->Nfields) + "-";
     elliptic->gramSchmidtOrthogonalizationKernel =
@@ -114,12 +170,8 @@ void ellipticSolveSetup(elliptic_t* elliptic)
       platform->kernels.get(sectionIdentifier + "fusedResidualAndNorm");
   }
 
-  const size_t offsetBytes = elliptic->fieldOffset * elliptic->Nfields * sizeof(dfloat);
-
-  if(elliptic->o_wrk.size() < elliptic_t::NScratchFields * offsetBytes) {
-    if(platform->comm.mpiRank == 0) printf("ERROR: mempool assigned for elliptic too small!");
-    ABORT(EXIT_FAILURE);
-  }
+  mesh->maskKernel = platform->kernels.get("mask");
+  mesh->maskPfloatKernel = platform->kernels.get("maskPfloat");
 
   elliptic->o_p       = elliptic->o_wrk + 0*offsetBytes;
   elliptic->o_z       = elliptic->o_wrk + 1*offsetBytes; 
@@ -128,79 +180,30 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   elliptic->o_rPfloat = elliptic->o_wrk + 4*offsetBytes;
   elliptic->o_zPfloat = elliptic->o_wrk + 5*offsetBytes; 
 
-  const dlong Nblocks = (Nlocal + BLOCKSIZE - 1) / BLOCKSIZE;
   elliptic->tmpNormr = (dfloat*) calloc(Nblocks,sizeof(dfloat));
   elliptic->o_tmpNormr = platform->device.malloc(Nblocks * sizeof(dfloat),
                                                  elliptic->tmpNormr);
 
-  int useFlexible = options.compareArgs("KRYLOV SOLVER", "FLEXIBLE");
+  if(elliptic->poisson) { 
+    int allNeumann = 1;
 
-  elliptic->type = strdup(dfloatString);
-
-  // count total number of elements
-  hlong NelementsLocal = mesh->Nelements;
-  hlong NelementsGlobal = 0;
-
-  MPI_Allreduce(&NelementsLocal, &NelementsGlobal, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
-
-  elliptic->NelementsGlobal = NelementsGlobal;
-
-  dfloat* lambda = (dfloat*) calloc(2*elliptic->fieldOffset, sizeof(dfloat));
-  elliptic->o_lambda.copyTo(lambda, 2*elliptic->fieldOffset*sizeof(dfloat));
-
-  int *allNeumann = (int *)calloc(elliptic->Nfields, sizeof(int));
-  // check based on the coefficient
-  for(int fld = 0; fld < elliptic->Nfields; fld++) {
-    if(elliptic->coeffField) {
-      int allzero = 1;
-      for(int n = 0; n < Nlocal; n++) { // check any non-zero value for each field
-        if(lambda[n + elliptic->fieldOffset + fld * elliptic->loffset]) {
-          allzero = 0;
-          break;
+    // check based on BC
+    for (int fld = 0; fld < elliptic->Nfields; fld++) {
+      for (dlong e = 0; e < mesh->Nelements; e++) {
+        for (int f = 0; f < mesh->Nfaces; f++) {
+          const int offset = fld * mesh->Nelements * mesh->Nfaces;
+          const int bc = elliptic->EToB[f + e * mesh->Nfaces + offset];
+          if (bc == DIRICHLET || bc == ZERO_NORMAL || bc == ZERO_TANGENTIAL)
+            allNeumann = 0;
         }
       }
-      allNeumann[fld] = allzero;
-    }else{
-      allNeumann[fld] = (lambda[elliptic->fieldOffset + fld * elliptic->loffset] == 0) ? 1 : 0;
     }
+    MPI_Allreduce(MPI_IN_PLACE, &allNeumann, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
+    elliptic->allNeumann = allNeumann;
+    if (platform->comm.mpiRank == 0 && elliptic->allNeumann)
+      printf("non-trivial nullSpace detected\n");
   }
 
-  free(lambda);
-
-  elliptic->o_EToB = platform->device.malloc(mesh->Nelements * mesh->Nfaces * elliptic->Nfields * sizeof(int),
-                                             elliptic->EToB);
-
-  // check based on BC
-  for (int fld = 0; fld < elliptic->Nfields; fld++) {
-    for (dlong e = 0; e < mesh->Nelements; e++) {
-      for (int f = 0; f < mesh->Nfaces; f++) {
-        const int offset = fld * mesh->Nelements * mesh->Nfaces;
-        const int bc = elliptic->EToB[f + e * mesh->Nfaces + offset];
-        bool isDirichlet = (bc != NO_OP && bc != NEUMANN);
-        if (isDirichlet)
-          allNeumann[fld] = 0;
-      }
-    }
-  }
-  elliptic->allNeumann = 0;
-  int* allBlockNeumann = (int*)calloc(elliptic->Nfields, sizeof(int));
-  for(int fld = 0; fld < elliptic->Nfields; fld++) {
-    int lallNeumann, gallNeumann;
-    lallNeumann = allNeumann[fld] ? 0:1;
-    MPI_Allreduce(&lallNeumann, &gallNeumann, 1, MPI_INT, MPI_SUM, platform->comm.mpiComm);
-    allBlockNeumann[fld] = (gallNeumann > 0) ? 0: 1;
-    if (allBlockNeumann[fld])
-      elliptic->allNeumann = 1;
-  }
-  free(allBlockNeumann);
-
-  if (platform->comm.mpiRank == 0 && elliptic->allNeumann)
-    printf("allNeumann = %d \n", elliptic->allNeumann);
-
-  if(mesh->ogs == NULL) {
-    if(platform->comm.mpiRank == 0) printf("ERROR: mesh->ogs == NULL!");
-    ABORT(EXIT_FAILURE);
-  }
 
   { //setup an masked gs handle
     ogs_t *ogs = NULL;
@@ -222,39 +225,36 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   }
 
 
-  std::string suffix = "Hex3D";
-  std::string kernelName;
+  const std::string suffix = "Hex3D";
 
   {
-    mesh->maskKernel = platform->kernels.get("mask");
-    mesh->maskPfloatKernel = platform->kernels.get("maskPfloat");
-  }
+    std::string kernelName;
+    const std::string suffix = "Hex3D";
 
-  {
-      const std::string sectionIdentifier = std::to_string(elliptic->Nfields) + "-";
-      kernelName = "ellipticBlockBuildDiagonal" + suffix;
-      elliptic->ellipticBlockBuildDiagonalKernel = platform->kernels.get(sectionIdentifier + kernelName);
+    const std::string sectionIdentifier = std::to_string(elliptic->Nfields) + "-";
+    kernelName = "ellipticBlockBuildDiagonal" + suffix;
+    elliptic->ellipticBlockBuildDiagonalKernel = platform->kernels.get(sectionIdentifier + kernelName);
 
-      kernelName = "fusedCopyDfloatToPfloat";
-      elliptic->fusedCopyDfloatToPfloatKernel =
-        platform->kernels.get(kernelName);
-  
-      std::string kernelNamePrefix = "";
-      if(elliptic->poisson) kernelNamePrefix += "poisson-";
-      kernelNamePrefix += "elliptic";
-      if (elliptic->blockSolver)
-        kernelNamePrefix += (elliptic->stressForm) ? "Stress" : "Block";
- 
-      kernelName = "Ax";
-      kernelName += "Coeff";
-      if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR")) kernelName += "Trilinear";
-      kernelName += suffix; 
+    kernelName = "fusedCopyDfloatToPfloat";
+    elliptic->fusedCopyDfloatToPfloatKernel =
+      platform->kernels.get(kernelName);
 
-      elliptic->AxKernel = 
-        platform->kernels.get(kernelNamePrefix + "Partial" + kernelName);
+    std::string kernelNamePrefix = "";
+    if(elliptic->poisson) kernelNamePrefix += "poisson-";
+    kernelNamePrefix += "elliptic";
+    if (elliptic->blockSolver)
+      kernelNamePrefix += (elliptic->stressForm) ? "Stress" : "Block";
 
-      elliptic->updatePCGKernel =
-        platform->kernels.get(sectionIdentifier + "ellipticBlockUpdatePCG");
+    kernelName = "Ax";
+    kernelName += "Coeff";
+    if (platform->options.compareArgs("ELEMENT MAP", "TRILINEAR")) kernelName += "Trilinear";
+    kernelName += suffix; 
+
+    elliptic->AxKernel = 
+      platform->kernels.get(kernelNamePrefix + "Partial" + kernelName);
+
+    elliptic->updatePCGKernel =
+      platform->kernels.get(sectionIdentifier + "ellipticBlockUpdatePCG");
   }
 
   oogs_mode oogsMode = OOGS_AUTO;
@@ -295,9 +295,9 @@ void ellipticSolveSetup(elliptic_t* elliptic)
 
 elliptic_t::~elliptic_t()
 {
-  if(precon) delete (precon_t*) this->precon;
+  if (precon)
+    delete this->precon;
   free(this->tmpNormr);
   this->o_tmpNormr.free();
-  this->o_lambda.free(); 
   this->o_EToB.free();
 }

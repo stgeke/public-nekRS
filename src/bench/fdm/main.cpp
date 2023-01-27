@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 
   if(err || cmdCheck != 3) {
     if(rank == 0)
-      printf("Usage: ./nekrs-fdm  --p-order <n> --elements <n> --backend <CPU|CUDA|HIP|OPENCL>\n"
+      printf("Usage: ./nekrs-fdm  --p-order <n> --elements <n> --backend <CPU|CUDA|HIP|DPCPP|OPENCL>\n"
              "                    [--fp32] [--iterations <n>]\n"); 
     exit(1); 
   }

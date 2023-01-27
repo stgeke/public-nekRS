@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 
   if(err || cmdCheck != 3) {
     if(rank == 0)
-      printf("Usage: ./nekrs-bench-advsub  --p-order <n> --elements <n> --backend <CPU|CUDA|HIP|OPENCL>\n"
+      printf("Usage: ./nekrs-bench-advsub  --p-order <n> --elements <n> --backend <CPU|CUDA|HIP|DPCPP|OPENCL>\n"
              "                    [--block-dim <n>] [--c-order <n>] [--no-cubature] [--ext-order <n>] [--iterations <n>]\n"); 
     exit(1); 
   }

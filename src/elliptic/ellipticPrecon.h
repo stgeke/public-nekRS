@@ -24,33 +24,23 @@
 
  */
 
-#include "MGSolver/MGSolver.hpp"
+#include "nrssys.hpp"
+#include "MG/MGSolver.hpp"
 #include "SEMFEMSolver.hpp"
-
-struct nonZero_t
-{
-  hlong row;
-  hlong col;
-  int ownerRank;
-  dfloat val;
-};
-
-class precon_t;
 
 struct precon_t
 {
   long long int preconBytes;
 
-  occa::kernel coarsenKernel;
-  occa::kernel prolongateKernel;
-
   occa::memory o_diagA;
   occa::memory o_invDiagA;
 
   MGSolver_t* MGSolver = nullptr;
+  occa::kernel coarsenKernel;
+  occa::kernel prolongateKernel;
+  bool additive;
+
   SEMFEMSolver_t* SEMFEMSolver = nullptr;
 
   ~precon_t();
-
-  bool additive;
 };

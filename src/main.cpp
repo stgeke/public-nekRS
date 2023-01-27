@@ -76,6 +76,8 @@
 #include <sstream>
 #include <fcntl.h>
 #include <chrono>
+#include <csignal>
+#include "backtrace.hpp"
 #if 0
 #include <filesystem>
 #endif
@@ -85,6 +87,8 @@
 #define DEBUG
 
 namespace {
+
+int worldRank;
 
 std::vector<std::string> serializeString(const std::string sin, char dlim)
 {
@@ -250,7 +254,7 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         std::cout << "usage: ./nekrs [--help <par>] "
                   << "--setup <par|sess file> "
                   << "[ --build-only <#procs> ] [ --cimode <id> ] [ --debug ] "
-                  << "[ --backend <CPU|CUDA|HIP|OPENCL> ] [ --device-id <id|LOCAL-RANK> ]"
+                  << "[ --backend <CPU|CUDA|HIP|DPCPP|OPENCL> ] [ --device-id <id|LOCAL-RANK> ]"
                   << "\n";
       }
     }
@@ -364,9 +368,23 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
 
 }
 
+static void signalHandler(int signum) 
+{
+   std::cout << "generating backtrace ...\n";
+
+   std::ofstream file;
+   std::string fileName = "backtrace.";
+   fileName += std::to_string(worldRank);
+   file.open (fileName);
+   file << backtrace(1); 
+   file.close();
+  
+   exit(signum);  
+}
 
 int main(int argc, char** argv)
 {
+
   const auto timeStart = std::chrono::high_resolution_clock::now();
   {
     int request = MPI_THREAD_SINGLE;
@@ -380,6 +398,13 @@ int main(int argc, char** argv)
       std::cout << "FATAL ERROR: Cannot initialize MPI!" << "\n";
       exit(EXIT_FAILURE);
     }
+    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+  }
+
+  {
+    const char* env_val = std::getenv("NEKRS_SIGNUM_BACKTRACE");
+    if (env_val)
+      std::signal(std::atoi(env_val), signalHandler);  
   }
 
   MPI_Barrier(MPI_COMM_WORLD);

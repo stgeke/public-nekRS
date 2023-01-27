@@ -83,31 +83,35 @@ void SolutionProjection::updateProjectionSpace()
 #endif
 
   const dfloat norm_orig = alpha[numVecsProjection - 1];
-  dfloat norm_new = norm_orig;
   const dfloat one = 1.0;
   multiScaledAddwOffsetKernel(Nlocal, numVecsProjection, Nfields * (numVecsProjection - 1) * fieldOffset, fieldOffset, o_alpha, one, o_xx);
-  if(type == ProjectionType::CLASSIC) multiScaledAddwOffsetKernel(Nlocal, numVecsProjection, Nfields * (numVecsProjection - 1) * fieldOffset, fieldOffset, o_alpha, one, o_bb);
+  if(type == ProjectionType::CLASSIC) 
+    multiScaledAddwOffsetKernel(Nlocal, numVecsProjection, Nfields * (numVecsProjection - 1) * fieldOffset, fieldOffset, o_alpha, one, o_bb);
 
   flopCount += 3 * static_cast<double>(Nlocal) * Nfields * (numVecsProjection - 1);
   flopCount *= (type == ProjectionType::CLASSIC) ? 2 : 1;
 
+  dfloat sumAlpha = 0;
   for(int k = 0; k < numVecsProjection - 1; ++k)
-    norm_new = norm_new - alpha[k] * alpha[k];
+    sumAlpha += alpha[k] * alpha[k];
 
+  dfloat norm_new = norm_orig - sumAlpha;
+  //printf("norm_new:%g norm_orig:%g sumAlpha:%g\n", norm_new, norm_orig, sumAlpha);
   norm_new = sqrt(norm_new);
+
   dfloat tol = 1e-7;
   const dfloat test = norm_new / norm_orig;
   if(test > tol) {
     const dfloat scale = 1.0 / norm_new;
     platform->linAlg->scaleMany(Nlocal, Nfields, fieldOffset, scale, o_xx, 
                                 fieldOffset * Nfields * (numVecsProjection - 1));
-    if(type == ProjectionType::CLASSIC) platform->linAlg->scaleMany(Nlocal, Nfields, fieldOffset, scale, o_bb, fieldOffset * Nfields * (numVecsProjection - 1));
+    if(type == ProjectionType::CLASSIC) 
+      platform->linAlg->scaleMany(Nlocal, Nfields, fieldOffset, scale, o_bb, fieldOffset * Nfields * (numVecsProjection - 1));
     flopCount += static_cast<double>(Nlocal) * Nfields;
     flopCount *= (type == ProjectionType::CLASSIC) ? 2 : 1;
   } else {
-    if(verbose && platform->comm.mpiRank == 0) {
-      std::cout << "Detected rank deficiency: " << test << ".\n";
-      std::cout << "Removing column : " << numVecsProjection << ".\n";
+    if(platform->comm.mpiRank == 0) {
+      std::cout << "solutionProjection " << solverName << ": Discard new solution it is linearly dependent!\n";
     }
     numVecsProjection--;
   }
@@ -154,6 +158,7 @@ void SolutionProjection::computePreProjection(occa::memory& o_r)
   o_alpha.copyFrom(alpha,sizeof(dfloat) * numVecsProjection);
 #endif
 
+  // o_xbar = sum_i alpha_i * o_xx_i
   accumulateKernel(Nlocal, numVecsProjection, fieldOffset, o_alpha, o_xx, o_xbar);
 
   flopCount += Nfields * (1 + 2 * (numVecsProjection - 1)) * static_cast<double>(Nlocal);
@@ -238,6 +243,11 @@ SolutionProjection::SolutionProjection(elliptic_t &elliptic,
   matvecOperator = [&](occa::memory& o_x, occa::memory & o_Ax)
                    {
                      ellipticOperator(&elliptic, o_x, o_Ax, dfloatString);
+                   };
+
+  maskOperator = [&](occa::memory& o_x)
+                   {
+                     ellipticApplyMask(&elliptic, o_x, dfloatString);
                    };
 }
 

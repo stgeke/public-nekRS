@@ -33,12 +33,16 @@
 {
   for (dlong n = 0; n < N; ++n; @tile(p_blockSize, @outer, @inner))
     if (n < N) {
-      // y = alpha[0] * o_xx[:,0]
+      const dfloat alpha0 = alpha[0];
+#pragma unroll p_Nfields 
       for (dlong fld = 0; fld < p_Nfields; ++fld)
-        y[n + fld * fieldOffset] = alpha[0] * x[n + fld * fieldOffset];
-      for (dlong k = 1; k < m; ++k)
+        y[n + fld * fieldOffset] = alpha0 * x[n + fld * fieldOffset];
+
+      for (dlong k = 1; k < m; ++k) {
+        const dfloat alphak = alpha[k];
+#pragma unroll p_Nfields 
         for (dlong fld = 0; fld < p_Nfields; ++fld)
-          // y += alpha[k] * o_xx[:,k]
-          y[n + fld * fieldOffset] += alpha[k] * x[n + p_Nfields * k * fieldOffset + fld * fieldOffset];
+          y[n + fld * fieldOffset] += alphak * x[n + p_Nfields * k * fieldOffset + fld * fieldOffset];
+       }
     }
 }

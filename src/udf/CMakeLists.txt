@@ -24,6 +24,7 @@ set(INCLUDE_DIRS
   ${NEKRS_INSTALL_DIR}/include/utils
   ${NEKRS_INSTALL_DIR}/include/setup
   ${NEKRS_INSTALL_DIR}/include/udf
+  ${NEKRS_INSTALL_DIR}/include/bdry
   ${NEKRS_INSTALL_DIR}/include/setup
   ${NEKRS_INSTALL_DIR}/include/navierStokes
   ${NEKRS_INSTALL_DIR}/include/elliptic

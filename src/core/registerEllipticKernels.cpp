@@ -57,11 +57,14 @@ void registerEllipticKernels(std::string section, int poissonEquation)
         platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
       return true;
     if (section == "mesh" && 
-        platform->options.compareArgs("MESH STRESSFORMULATION", "TRUE"))
+        platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
       return true;
+
     return false;
   }();
+
   const int Nfields = (blockSolver) ? 3 : 1;
+
   const bool stressForm = [&section]() {
 
     if (section == "velocity" && 
@@ -79,7 +82,7 @@ void registerEllipticKernels(std::string section, int poissonEquation)
 
   const std::string sectionIdentifier = std::to_string(Nfields) + "-";
 
-  if (platform->options.compareArgs(optionsPrefix + "KRYLOV SOLVER", "PGMRES")) {
+  if (platform->options.compareArgs(optionsPrefix + "SOLVER", "PGMRES")) {
     registerGMRESKernels(section, Nfields);
   }
 
@@ -181,7 +184,6 @@ void registerEllipticKernels(std::string section, int poissonEquation)
                                 elliptic_t::targetTimeBenchmark,
                                 false,
                                 "");
-
     platform->kernels.add(prefix + _kernelName, axKernel);
   }
 

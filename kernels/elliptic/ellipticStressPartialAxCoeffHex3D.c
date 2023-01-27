@@ -6,7 +6,8 @@ extern "C" void FUNC(ellipticStressPartialAxCoeffHex3D_v0)(const dlong &Nelement
                               const dfloat* __restrict__ vgeo,
                               const dfloat* __restrict__ D,
                               const dfloat* __restrict__ S,
-                              const dfloat* __restrict__ lambda,
+                              const dfloat* __restrict__ lambda0,
+                              const dfloat* __restrict__ lambda1,
                               const dfloat* __restrict__ q,
                               dfloat* __restrict__ Aq)
 {
@@ -88,9 +89,9 @@ extern "C" void FUNC(ellipticStressPartialAxCoeffHex3D_v0)(const dlong &Nelement
           }
 
           const dlong id = e * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
-          const dfloat u_lam0 = lambda[p_lambda*id + 0 * offset + 0 * loffset];
-          const dfloat v_lam0 = lambda[p_lambda*id + 0 * offset + 1 * loffset];
-          const dfloat w_lam0 = lambda[p_lambda*id + 0 * offset + 2 * loffset];
+          const dfloat u_lam0 = lambda0[p_lambda*id + 0 * loffset];
+          const dfloat v_lam0 = lambda0[p_lambda*id + 1 * loffset];
+          const dfloat w_lam0 = lambda0[p_lambda*id + 2 * loffset];
 
           const dfloat dudx = rx * ur + sx * us + tx * ut;
           const dfloat dudy = ry * ur + sy * us + ty * ut;
@@ -152,9 +153,9 @@ extern "C" void FUNC(ellipticStressPartialAxCoeffHex3D_v0)(const dlong &Nelement
             r_Aw += Dkm * s_SWt[m][j][i];
           }
           const dlong id      = e * p_Np + k * p_Nq * p_Nq + j * p_Nq + i;
-          const dfloat u_lam1 = lambda[p_lambda*id + 1 * offset + 0 * loffset];
-          const dfloat v_lam1 = lambda[p_lambda*id + 1 * offset + 1 * loffset];
-          const dfloat w_lam1 = lambda[p_lambda*id + 1 * offset + 2 * loffset];
+          const dfloat u_lam1 = lambda1[p_lambda*id + 0 * loffset];
+          const dfloat v_lam1 = lambda1[p_lambda*id + 1 * loffset];
+          const dfloat w_lam1 = lambda1[p_lambda*id + 2 * loffset];
 
           const dlong gid = i + j * p_Nq + k * p_Nq * p_Nq + e * p_Np * p_Nvgeo;
           const dfloat JW = vgeo[gid + p_JWID * p_Np];

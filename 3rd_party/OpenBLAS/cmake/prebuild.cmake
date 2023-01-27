@@ -1354,7 +1354,7 @@ else(NOT CMAKE_CROSSCOMPILING)
 execute_process(COMMAND "${PROJECT_BINARY_DIR}/${GETARCH_BIN}" 0 OUTPUT_VARIABLE GETARCH_MAKE_OUT)
 execute_process(COMMAND "${PROJECT_BINARY_DIR}/${GETARCH_BIN}" 1 OUTPUT_VARIABLE GETARCH_CONF_OUT)
 
-  message(STATUS "GETARCH results:\n${GETARCH_MAKE_OUT}")
+  #message(STATUS "GETARCH results:\n${GETARCH_MAKE_OUT}")
 
   # append config data from getarch to the TARGET file and read in CMake vars
   file(APPEND ${TARGET_CONF_TEMP} ${GETARCH_CONF_OUT})

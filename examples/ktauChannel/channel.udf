@@ -5,20 +5,12 @@
 #include "udf.hpp"
 #include "plugins/RANSktau.hpp"
 
+#include "ci.inc"
+
 /* User Functions */
 
 static dfloat rho, mueLam;
-occa::kernel userfKernel; 
 static occa::kernel scalarScaledAddKernel;
-
-void userf(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_FU)
-{
-  mesh_t* mesh = nrs->meshV;
-  const dfloat Re_tau = 2000.0; 
-  const dfloat Re_b   = rho/mueLam; 
-  const dfloat DPDX   = (Re_tau/Re_b)*(Re_tau/Re_b);
-  userfKernel(mesh->Nlocal, 0*nrs->fieldOffset, DPDX, o_FU);
-}
 
 void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
 {
@@ -46,9 +38,14 @@ void uservp(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_S,
 
 void UDF_LoadKernels(occa::properties& kernelInfo)
 {
-  userfKernel = oudfBuildKernel(kernelInfo, "cfill");
   scalarScaledAddKernel = oudfBuildKernel(kernelInfo, "scalarScaledAdd");
   RANSktau::buildKernel(kernelInfo);
+}
+
+void UDF_Setup0(MPI_Comm comm, setupAide &options)
+{
+  //options.getArgs("CI-MODE", ciMode);
+  if (ciMode) ciSetup(comm, options);
 }
 
 void UDF_Setup(nrs_t *nrs)
@@ -57,7 +54,6 @@ void UDF_Setup(nrs_t *nrs)
   cds_t *cds = nrs->cds;
 
   udf.properties = &uservp;
-  udf.uEqnSource = &userf;
   udf.sEqnSource = &userq;
 
   const int scalarFieldStart = 1;
@@ -68,4 +64,5 @@ void UDF_Setup(nrs_t *nrs)
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 {
+  if (ciMode) ciTestErrors(nrs, time, tstep);
 }

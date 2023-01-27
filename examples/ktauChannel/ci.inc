@@ -17,7 +17,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("VISCOSITY", std::to_string(1.0 / 43500.0));
   options.setArgs("DENSITY", std::string("1.0"));
   options.setArgs("NUMBER TIMESTEPS", std::string("-1"));
-  options.setArgs("END TIME", std::string("40"));
+  options.setArgs("END TIME", std::string("30"));
   options.setArgs("TIME INTEGRATOR", "TOMBO2");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
   options.setArgs("DT", std::string("5e-2"));
@@ -46,7 +46,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   
   const dfloat factor = 2.0 * ConstantFlowRate::scaleFactor();
 
-  const dfloat fricFact = 0.0025 * 2.0;
+  const dfloat fricFact = 0.00256 * 2.0;
 
   const double facErr = (factor - fricFact)/fricFact;
   

@@ -117,6 +117,8 @@ void configRead(MPI_Comm comm)
 
   buf = installDir;
   setenv("NEKRS_INSTALL_DIR", buf.c_str(), 1);
+  buf = installDir + "/kernels/";
+  if(!getenv("NEKRS_KERNEL_DIR")) setenv("NEKRS_KERNEL_DIR", buf.c_str(), 1);
 
   ini.extract("general", "occa_mode_default", buf);
   if(!getenv("NEKRS_OCCA_MODE_DEFAULT")) setenv("NEKRS_OCCA_MODE_DEFAULT", buf.c_str(), 1);

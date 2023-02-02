@@ -133,13 +133,15 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     if (key.compare("mv") == 0) key = "codedfixedvalue";
     if (key.compare("codedfixedvalue+moving") == 0) key = "codedfixedvalue";
 
-    if (key.compare("slipx") == 0 ||
-        key.compare("slipy") == 0 ||
-        key.compare("slipz") == 0 ||
-        key.compare("slip")  == 0 ||
-        key.compare("symx")  == 0 ||
-        key.compare("symy")  == 0 ||
-        key.compare("symz")  == 0) { 
+    if (key.compare("slipx") == 0 || key.compare("symx")  == 0) {
+      key = "zeroxvalue/zerogradient";
+      foundAligned++;
+    }
+    if (key.compare("slipy") == 0 || key.compare("symy")  == 0) {
+      key = "zeroyvalue/zerogradient";
+      foundAligned++;
+    }
+    if (key.compare("slipz") == 0 || key.compare("symz")  == 0) {
       key = "zerozvalue/zerogradient";
       foundAligned++;
     }
@@ -148,13 +150,15 @@ static void v_setup(std::string field, std::vector<std::string> slist)
       foundUnaligned++;
     }
 
-    if (key.compare("tractionx") == 0 ||
-        key.compare("tractiony") == 0 ||
-        key.compare("tractionz") == 0 ||
-        key.compare("traction")  == 0 ||
-        key.compare("shlx")      == 0 ||
-        key.compare("shly")      == 0 ||
-        key.compare("shlz")      == 0) {
+    if (key.compare("tractionx") == 0 || key.compare("shlx") == 0) {
+      key = "zeroxvalue/codedfixedgradient";
+      foundAligned++;
+    }
+    if (key.compare("tractiony") == 0 || key.compare("shly") == 0) {
+      key = "zeroyvalue/codedfixedgradient";
+      foundAligned++;
+    }
+    if (key.compare("tractionz") == 0 || key.compare("shlz") == 0) {
       key = "zerozvalue/codedfixedgradient";
       foundAligned++;
     }
@@ -167,11 +171,17 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     if (key.compare("outflow") == 0) key = "fixedgradient";
     if (key.compare("o") == 0) key = "fixedgradient";
 
-    if (key.compare("onx") == 0 ||
-        key.compare("ony") == 0 ||
-        key.compare("onz") == 0) {
+    if (key.compare("onx") == 0) {
+      key = "zeroyzvalue/fixedgradient";
+      foundAligned++;
+    }
+    if (key.compare("ony") == 0) {
+      key = "zeroxzvalue/fixedgradient";
+      foundAligned++;
+    }
+    if (key.compare("onz") == 0) {
       key = "zeroxyvalue/fixedgradient";
-      foundUnaligned++;
+      foundAligned++;
     }
 // not supported yet
 #if 0

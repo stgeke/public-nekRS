@@ -6,9 +6,7 @@ namespace {
 
 void registerGMRESKernels(const std::string &section, int Nfields)
 {
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/elliptic/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
   std::string fileName;
   const bool serial = platform->serial;
 
@@ -39,8 +37,6 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   platform->options.getArgs("POLYNOMIAL DEGREE", N);
   const std::string optionsPrefix = createOptionsPrefix(section);
 
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
   occa::properties kernelInfo = platform->kernelInfo;
   kernelInfo["defines"].asObject();
   kernelInfo["includes"].asArray();
@@ -87,7 +83,7 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   }
 
   {
-    const std::string oklpath = installDir + "/kernels/elliptic/";
+    const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
     std::string fileName, kernelName;
 
     {
@@ -109,7 +105,7 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   }
 
   {
-    const std::string oklpath = installDir + "/kernels/core/";
+    const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/core/");
     std::string fileName;
 
     fileName = oklpath + "mask.okl";
@@ -132,7 +128,7 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   const std::string suffix = "Hex3D";
 
   occa::properties AxKernelInfo = dfloatKernelInfo;
-  const std::string oklpath = installDir + "/kernels/elliptic/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR") + std::string("/elliptic/");
   std::string fileName;
   std::string kernelName;
 

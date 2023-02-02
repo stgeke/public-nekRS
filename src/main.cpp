@@ -376,7 +376,7 @@ static void signalHandler(int signum)
    std::string fileName = "backtrace.";
    fileName += std::to_string(worldRank);
    file.open (fileName);
-   file << backtrace(1); 
+   file << nrsbacktrace(1); 
    file.close();
   
    exit(signum);  

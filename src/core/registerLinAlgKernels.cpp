@@ -6,9 +6,7 @@ void registerLinAlgKernels()
 {
   occa::properties kernelInfo = platform->kernelInfo;
 
-  std::string oklDir;
-  oklDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  oklDir += "/kernels/linAlg/";
+  const std::string oklDir = getenv("NEKRS_KERNEL_DIR") + std::string("/linAlg/");
   const bool serial = platform->serial;
 
   const std::string extension = serial ? ".c" : ".okl";

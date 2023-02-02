@@ -17,8 +17,8 @@
 
 void printICMinMax(nrs_t *nrs)
 {
-  if(platform->comm.mpiRank == 0) 
-    printf("================= INITITAL CONDITION ====================\n");
+  if(platform->comm.mpiRank == 0)
+    printf("================= INITIAL CONDITION ====================\n");
 
   if(platform->options.compareArgs("MOVING MESH", "TRUE")) {
     auto mesh = nrs->meshV;
@@ -74,7 +74,7 @@ void printICMinMax(nrs_t *nrs)
       mesh_t *mesh;
       (is) ? mesh = cds->meshV : mesh = cds->mesh[0]; // only first scalar can be a CHT mesh
 
-      auto o_si = nrs->cds->o_S + nrs->cds->fieldOffset[is]; 
+      auto o_si = nrs->cds->o_S + nrs->cds->fieldOffsetScan[is] * sizeof(dfloat);
       const auto siMin = platform->linAlg->min(mesh->Nlocal, o_si, platform->comm.mpiComm);
       const auto siMax = platform->linAlg->max(mesh->Nlocal, o_si, platform->comm.mpiComm);
       if (platform->comm.mpiRank == 0) { 

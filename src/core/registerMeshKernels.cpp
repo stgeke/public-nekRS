@@ -16,9 +16,7 @@ void registerMeshKernels(occa::properties kernelInfoBC)
   platform->options.getArgs("MESH INTEGRATION ORDER", nAB);
 
   auto kernelInfo = platform->kernelInfo + meshKernelProperties(N);
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  std::string oklpath = installDir + "/kernels/";
+  std::string oklpath = getenv("NEKRS_KERNEL_DIR");
   std::string kernelName;
 
   const std::string meshPrefix = "mesh-";

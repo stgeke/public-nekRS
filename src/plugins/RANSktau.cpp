@@ -90,8 +90,8 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
   kernelInfo += _kernelInfo;
 
   int rank = platform->comm.mpiRank;
-  const std::string install_dir(getenv("NEKRS_INSTALL_DIR"));
-  const std::string path = install_dir + "/kernels/plugins/";
+  const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
+  const std::string path = oklpath + "/plugins/";
   std::string fileName, kernelName;
   const std::string extension = ".okl";
   {

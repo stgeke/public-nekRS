@@ -95,10 +95,7 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
     o_logRelativeMassHighestMode
   );
 
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << scalarIndex;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(scalarIndex);
 
   const int useHPFResidual = platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "HPF_RESIDUAL");
 

@@ -4,10 +4,7 @@
 
 occa::memory cdsSolve(const int is, cds_t* cds, dfloat time, int stage)
 {
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << is;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(is);
 
   platform->timer.tic("scalar rhs", 1);  
   mesh_t* mesh = cds->mesh[0];

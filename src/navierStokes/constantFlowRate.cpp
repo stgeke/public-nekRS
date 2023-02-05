@@ -487,6 +487,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
         nrs->fieldOffset,
         nrs->o_mue,
         nrs->o_rho,
+        o_NULL,
         nrs->o_ellipticCoeff);
     occa::memory &o_RhsVel = platform->o_mempool.slice0;
     occa::memory &o_BF = platform->o_mempool.slice3;

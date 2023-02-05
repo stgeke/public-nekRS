@@ -439,10 +439,7 @@ void timer_t::printRunStat(int step)
   auto precoTimeScalars = 0.0;
   auto precoCallsScalars = 0.0;
   for (int is = 0; is < nScalar; is++) {
-    std::stringstream ss;
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
     precoTimeScalars += query("scalar" + sid + " preconditioner", "DEVICE:MAX"); 
     precoCallsScalars += count("scalar" + sid + " preconditioner");
   }  

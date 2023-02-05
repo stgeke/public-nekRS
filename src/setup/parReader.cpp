@@ -25,10 +25,7 @@ static std::ostringstream valueErrorLogger;
 
 static std::string mapTemperatureToScalarString()
 {
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << 0;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(0);
   return "scalar" + sid;
 }
 std::optional<int> parseScalarIntegerFromString(const std::string &scalarString)
@@ -63,13 +60,10 @@ std::string parPrefixFromParSection(const std::string &parSection)
     return mapTemperatureToScalarString() + " ";
   }
   if (parSection.find("scalar") != std::string::npos) {
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
     const auto is = parseScalarIntegerFromString(parSection);
 
     if (is) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is.value();
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is.value());
       return "scalar" + sid + " ";
     }
     else {
@@ -1936,12 +1930,8 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   int nscal = optionalNscalar ? optionalNscalar.value() : 0;
   int isStart = 0;
 
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-
   if (par->sections.count("temperature")) {
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << 0;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(0);
     nscal++;
     isStart++;
 
@@ -2034,14 +2024,10 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         }
       }
 
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is.value();
-      sid = ss.str();
+      sid = scalarDigitStr(is.value());
       sidPar = sid;
       if (isStart == 0) {
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(scalarWidth) << is.value() + 1;
-        sidPar = ss.str();
+        sidPar = scalarDigitStr(is.value()+1);
       }
     }
     else {
@@ -2119,9 +2105,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   // All SCALAR_DEFAULT <...> options are transferred to SCALAR{is} <...>
   const std::string defaultSettingStr = "SCALAR DEFAULT ";
   for (int is = 1; is < nscal; ++is) {
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
     const auto options_ = options;
     for (auto [keyWord, value] : options_) {
       auto delPos = keyWord.find(defaultSettingStr);
@@ -2147,9 +2131,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         sList = serializeString(s_bcMap, ',');
       }
       for (int is = 1; is < nscal; ++is) {
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(scalarWidth) << is;
-        std::string sid = ss.str();
+        std::string sid = scalarDigitStr(is);
         std::string dummy;
         if (!par->extract("scalar" + sid, "boundarytypemap", dummy)) {
           if (sList.size() > 0) {

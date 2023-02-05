@@ -56,10 +56,7 @@ void evaluateProperties(nrs_t *nrs, const double timeNew) {
   if(nrs->Nscalar){
     cds_t* cds = nrs->cds;
     for(int is = 0 ; is < cds->NSfields; ++is){
-      const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
 
       std::string regularizationMethod;
       platform->options.getArgs("SCALAR" + sid + " REGULARIZATION METHOD", regularizationMethod);
@@ -478,10 +475,7 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
     if (!cds->compute[is])
       continue;
 
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
 
     mesh_t *mesh;
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0];
@@ -608,16 +602,8 @@ void scalarSolve(nrs_t *nrs, dfloat time, occa::memory o_S, int stage) {
         nrs->fieldOffset,
         cds->o_diff,
         cds->o_rho,
+        cds->o_BFDiag,
         cds->o_ellipticCoeff);
-
-    if (cds->o_BFDiag.ptr())
-      platform->linAlg->axpby(mesh->Nlocal,
-          1.0,
-          cds->o_BFDiag,
-          1.0,
-          cds->o_ellipticCoeff,
-          cds->fieldOffsetScan[is],
-          nrs->fieldOffset);
 
     occa::memory o_Snew = cdsSolve(is, cds, time, stage);
     o_Snew.copyTo(o_S,
@@ -767,6 +753,7 @@ void fluidSolve(
       nrs->fieldOffset,
       nrs->o_mue,
       nrs->o_rho,
+      o_NULL,
       nrs->o_ellipticCoeff);
 
   occa::memory o_Unew = tombo::velocitySolve(nrs, time, stage);

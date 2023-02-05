@@ -62,14 +62,11 @@ void compileKernels() {
 
   int Nscalars;
   platform->options.getArgs("NUMBER OF SCALARS", Nscalars);
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
 
   if (Nscalars) {
     registerCdsKernels(kernelInfoBC);
     for(int is = 0; is < Nscalars; is++){
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
       const std::string section = "scalar" + sid;
       const int poisson = 0;
 

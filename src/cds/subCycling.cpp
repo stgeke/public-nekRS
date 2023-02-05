@@ -35,10 +35,7 @@ occa::memory scalarSubCycleMovingMesh(cds_t *cds,
     occa::memory o_U,
     occa::memory o_S) 
 {
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << is;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(is);
 
   linAlg_t *linAlg = platform->linAlg;
 
@@ -227,10 +224,7 @@ occa::memory scalarSubCycle(cds_t *cds,
     occa::memory o_U,
     occa::memory o_S) 
 {
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << is;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(is);
 
   linAlg_t *linAlg = platform->linAlg;
 

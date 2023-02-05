@@ -672,10 +672,7 @@ int setup(nrs_t* nrs_in)
   {
     int cnt = 0;
     for(int is = 0; is < nscal; is++) {
-      std::stringstream ss;
-      static const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
       if (options->compareArgs("SCALAR" + sid + " SOLVER", "NONE")) {
         scalarCompute[is] = -1;     
         nscalSolve--;
@@ -800,9 +797,7 @@ int setup(nrs_t* nrs_in)
       free(map);
     }
     for(int is = 0; is < nscal; is++) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(getDigitsRepresentation(NSCALAR_MAX - 1)) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
 
       if (options->compareArgs("SCALAR" + sid + " SOLVER", "NONE"))
         continue;

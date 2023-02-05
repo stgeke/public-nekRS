@@ -83,6 +83,13 @@ extern platform_t* platform;
 bool useNodeLocalCache();
 
 #define NSCALAR_MAX 100
+static auto scalarDigitStr = [](int i)
+{
+  static const int scalarWidth = std::to_string(NSCALAR_MAX - 1).length();
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(scalarWidth) << i;
+  return ss.str();
+};
 
 #define EXIT_AND_FINALIZE(a)  { fflush(stdout); MPI_Finalize(); exit(a); }
 #define ABORT(a)  { fflush(stdout); MPI_Abort(MPI_COMM_WORLD, a); }

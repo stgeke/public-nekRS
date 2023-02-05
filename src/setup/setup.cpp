@@ -150,8 +150,14 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   }
 
   nrs->cht = 0;
-  if (nekData.nelv != nekData.nelt && nrs->Nscalar)
-    nrs->cht = 1;
+  {
+    hlong NelementsV = nekData.nelv; 
+    hlong NelementsT = nekData.nelt;
+    MPI_Allreduce(MPI_IN_PLACE, &NelementsV, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
+    MPI_Allreduce(MPI_IN_PLACE, &NelementsT, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
+    if ((NelementsT > NelementsV) && nrs->Nscalar) nrs->cht = 1;
+  }
+
   if (nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE")) {
     if (platform->comm.mpiRank == 0)
       std::cout << "Conjugate heat transfer requires solving for temperature!\n";
@@ -584,12 +590,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   if (nrs->Nscalar) {
     cds_t *cds = nrs->cds;
 
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-
     for (int is = 0; is < cds->NSfields; is++) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
 
       if (!cds->compute[is])
         continue;
@@ -626,6 +628,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           nrs->fieldOffset,
           cds->o_diff,
           cds->o_rho,
+          o_NULL,
           cds->o_ellipticCoeff);
 
       cds->solver[is]->o_lambda0 = cds->o_ellipticCoeff.slice(0*nrs->fieldOffset*sizeof(dfloat));
@@ -674,6 +677,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->fieldOffset,
       nrs->o_mue,
       nrs->o_rho,
+      o_NULL,
       nrs->o_ellipticCoeff);
 
     if (nrs->uvwSolver) {
@@ -858,6 +862,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->fieldOffset,
       nrs->o_meshMue,
       nrs->o_meshRho,
+      o_NULL,
       nrs->o_ellipticCoeff);
 
     nrs->meshSolver = new elliptic_t();

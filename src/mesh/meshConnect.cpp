@@ -141,15 +141,10 @@ void meshConnect(mesh_t* mesh)
     for(int f = 0; f < mesh->Nfaces; ++f) {
       mesh->EToE[cnt] = faces[cnt].elementNeighbor;
       mesh->EToF[cnt] = faces[cnt].faceNeighbor;
-      if(mesh->EToE[cnt] >= mesh->Nelements) {
-        printf("Invalid EToE(%d,%d) = %d \n", e,f, mesh->EToE[cnt]);
-        ABORT(EXIT_FAILURE);
-      }
-      if(mesh->EToF[cnt] >= mesh->Nfaces) {
-        printf("Invalid EToF(%d,%d) = %d \n", e,f, mesh->EToF[cnt]);
-        ABORT(EXIT_FAILURE);
-      }
-
+      nrsCheck(mesh->EToE[cnt] >= mesh->Nelements, MPI_COMM_SELF, EXIT_FAILURE,
+               "Invalid EToE(%d,%d) = %d \n", e,f, mesh->EToE[cnt]);
+      nrsCheck(mesh->EToF[cnt] >= mesh->Nfaces, MPI_COMM_SELF, EXIT_FAILURE,
+               "Invalid EToF(%d,%d) = %d \n", e,f, mesh->EToF[cnt]);
       ++cnt;
     }
   }

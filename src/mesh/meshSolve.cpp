@@ -11,6 +11,7 @@ void meshSolve(nrs_t* nrs, dfloat time, occa::memory o_U, int stage)
     1.0,
     0 * nrs->fieldOffset,
     nrs->fieldOffset,
+    0,
     nrs->o_meshMue,
     nrs->o_meshRho,
     o_NULL,

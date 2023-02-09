@@ -178,7 +178,7 @@ occa::kernel benchmarkAx(int Nelements,
         props["defines/pts_per_thread"] = Nq/n_plane;      
       }
     }
-    const std::string installDir(getenv("NEKRS_HOME"));
+    const std::string oklpath(getenv("NEKRS_KERNEL_DIR"));
 
     // only a single choice, no need to run benchmark
     if (kernelVariants.size() == 1 && !requiresBenchmark) {
@@ -187,7 +187,7 @@ occa::kernel benchmarkAx(int Nelements,
       newProps["defines/p_knl"] = kernelVariants.back();
 
       const std::string ext = platform->serial ? ".c" : ".okl";
-      const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
+      const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
       return std::make_pair(platform->device.buildKernel(fileName, newProps, suffix, true), -1.0);
     }
@@ -225,7 +225,7 @@ occa::kernel benchmarkAx(int Nelements,
       newProps["defines/p_knl"] = kernelVariants.front();
       
       const std::string ext = platform->serial ? ".c" : ".okl";
-      const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
+      const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
       referenceKernel = platform->device.buildKernel(fileName, newProps, suffix, true);
     }
@@ -250,7 +250,7 @@ occa::kernel benchmarkAx(int Nelements,
       newProps["defines/p_knl"] = kernelVariant;
 
       const std::string ext = platform->serial ? ".c" : ".okl";
-      const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
+      const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
       auto kernel = platform->device.buildKernel(fileName, newProps, suffix, true);
       

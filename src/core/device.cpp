@@ -1,14 +1,32 @@
-#include "device.hpp"
-#include "platform.hpp"
 #include <unistd.h>
 #include <regex>
-#include <limits>
+#include "nrssys.hpp"
+#include "device.hpp"
+#include "platform.hpp"
+#include "fileUtils.hpp"
 
 namespace {
 
+void setOccaVars()
+{
+  std::string cache_dir;
+  if(getenv("NEKRS_CACHE_DIR"))
+    cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
+
+  if (!getenv("OCCA_CACHE_DIR")) {
+    const std::string path= cache_dir + "/occa/";
+    occa::env::OCCA_CACHE_DIR = path;
+    setenv("OCCA_CACHE_DIR", path.c_str(), 1);
+  }
+
+  if (!getenv("OCCA_DIR"))
+    occa::env::OCCA_DIR = std::string(getenv("NEKRS_HOME")) + "/";
+
+  occa::env::OCCA_INSTALL_DIR = occa::env::OCCA_DIR;
+}
+
 int compileDummyAtomicKernel(device_t &device)
 {
-  const bool buildNodeLocal = useNodeLocalCache();
   const std::string dummyKernelName = "simpleAtomicAdd";
   const std::string dummyKernelStr = std::string("@kernel void simpleAtomicAdd(int N, double * result) {"
                                                  "  for (int i = 0; i < N; ++i; @tile(64, @outer, @inner)) {"
@@ -161,19 +179,32 @@ occa::kernel device_t::buildKernel(const std::string &fileName,
                                    const std::string &kernelName,
                                    const occa::properties &props) const
 {
-
   const std::string suffix("");
-  const bool buildNodeLocal = useNodeLocalCache();
-  const int rank = buildNodeLocal ? _comm.localRank : _comm.mpiRank;
-  MPI_Comm localCommunicator = buildNodeLocal ? _comm.mpiCommLocal : _comm.mpiComm;
+  const int rank = platform->cacheLocal ? _comm.localRank : _comm.mpiRank;
+  MPI_Comm localCommunicator = platform->cacheLocal ? _comm.mpiCommLocal : _comm.mpiComm;
+
+  const auto OCCA_CACHE_DIR0 = std::string(occa::env::OCCA_CACHE_DIR);
 
   occa::kernel constructedKernel;
+
+  // rank0 compiles, than all load
   for (int pass = 0; pass < 2; ++pass) {
+    occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 :  
+                                 std::string(platform->tmpDir / fs::path("occa/"));
     if ((pass == 0 && rank == 0) || (pass == 1 && rank != 0)) {
       constructedKernel = this->buildKernel(fileName, kernelName, props, suffix);
     }
-    MPI_Barrier(localCommunicator);
+
+    if(platform->cacheBcast && pass == 0) {
+      const auto srcPath = (fs::path(constructedKernel.sourceFilename()).parent_path());
+      const auto dstPath = platform->tmpDir / fs::path("occa/cache/");
+      fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
+    } else {
+      MPI_Barrier(localCommunicator);
+    }
+    occa::env::OCCA_CACHE_DIR = OCCA_CACHE_DIR0;
   }
+
   return constructedKernel;
 }
 
@@ -182,23 +213,36 @@ occa::kernel device_t::buildKernel(const std::string &fullPath,
                                    const std::string &suffix,
                                    bool buildRank0) const
 {
+  occa::kernel constructedKernel;
 
   if (buildRank0) {
+    const auto OCCA_CACHE_DIR0 = std::string(occa::env::OCCA_CACHE_DIR);
 
-    const bool buildNodeLocal = useNodeLocalCache();
-    const int rank = buildNodeLocal ? _comm.localRank : _comm.mpiRank;
-    MPI_Comm localCommunicator = buildNodeLocal ? _comm.mpiCommLocal : _comm.mpiComm;
-    occa::kernel constructedKernel;
+    const int rank = platform->cacheLocal ? _comm.localRank : _comm.mpiRank;
+    MPI_Comm localCommunicator = platform->cacheLocal ? _comm.mpiCommLocal : _comm.mpiComm;
+
+    // rank0 compiles, than all load
     for (int pass = 0; pass < 2; ++pass) {
+      occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 :  
+                                  std::string(platform->tmpDir / fs::path("occa/"));
       if ((pass == 0 && rank == 0) || (pass == 1 && rank != 0)) {
         constructedKernel = this->buildKernel(fullPath, props, suffix);
       }
-      MPI_Barrier(localCommunicator);
+
+      if(platform->cacheBcast && pass == 0) {
+        const auto srcPath = fs::path(constructedKernel.sourceFilename()).parent_path();
+        const auto dstPath = platform->tmpDir / fs::path("occa/cache/");
+        fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
+      } else {
+        MPI_Barrier(localCommunicator);
+      }
+      occa::env::OCCA_CACHE_DIR = OCCA_CACHE_DIR0;
     }
-    return constructedKernel;
+  } else {
+    constructedKernel = this->buildKernel(fullPath, props, suffix);
   }
 
-  return this->buildKernel(fullPath, props, suffix);
+  return constructedKernel;
 }
 
 occa::kernel
@@ -256,7 +300,7 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
   _verbose = options.compareArgs("BUILD ONLY", "TRUE");
 
   // OCCA build stuff
-  char deviceConfig[BUFSIZ];
+  char deviceConfig[4096];
   int worldRank = _comm.mpiRank;
 
   int device_id = 0;
@@ -290,9 +334,8 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
     sprintf(deviceConfig, "{mode: 'OpenCL', device_id: %d, platform_id: %d}", device_id, plat);
   }
   else if (strcasecmp(requestedOccaMode.c_str(), "OPENMP") == 0) {
-    if (worldRank == 0)
-      printf("OpenMP backend currently not supported!\n");
-    ABORT(EXIT_FAILURE);
+    nrsCheck(true, _comm.mpiComm, EXIT_FAILURE,
+             "OpenMP backend currently not supported!\n", ""); 
     sprintf(deviceConfig, "{mode: 'OpenMP'}");
   }
   else if (strcasecmp(requestedOccaMode.c_str(), "CPU") == 0 ||
@@ -302,10 +345,11 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
     options.getArgs("THREAD MODEL", requestedOccaMode);
   }
   else {
-    if (worldRank == 0)
-      printf("Invalid requested backend!\n");
-    ABORT(EXIT_FAILURE);
+    nrsCheck(true, _comm.mpiComm, EXIT_FAILURE,
+             "Invalid requested backend!\n", ""); 
   }
+
+  setOccaVars();
 
   if (worldRank == 0)
     printf("Initializing device \n");
@@ -314,11 +358,9 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
   if (worldRank == 0)
     std::cout << "active occa mode: " << this->mode() << "\n\n";
 
-  if (strcasecmp(requestedOccaMode.c_str(), this->mode().c_str()) != 0) {
-    if (worldRank == 0)
-      printf("active occa mode does not match selected backend!\n");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(strcasecmp(requestedOccaMode.c_str(), this->mode().c_str()) != 0, 
+           _comm.mpiComm, EXIT_FAILURE,
+           "Active occa mode does not match selected backend!\n", ""); 
 
   // overwrite compiler settings to ensure
   // compatability of libocca and kernelLauchner

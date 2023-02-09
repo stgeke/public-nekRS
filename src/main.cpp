@@ -215,22 +215,14 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
 
   }
 
-  char buf[FILENAME_MAX];
-  strcpy(buf, cmdOpt->multiSessionFile.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->multiSessionFile.assign(buf);
-
-  strcpy(buf, cmdOpt->setupFile.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->setupFile.assign(buf);
-
-  strcpy(buf, cmdOpt->deviceID.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->deviceID.assign(buf);
-
-  strcpy(buf, cmdOpt->backend.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->backend.assign(buf);
+  for(auto opt: {&cmdOpt->multiSessionFile, &cmdOpt->setupFile, &cmdOpt->deviceID, &cmdOpt->backend})
+  {
+    auto buf = (char*) calloc(opt->size() + 1, sizeof(char));
+    strcpy(buf, opt->c_str());
+    MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
+    opt->assign(buf);
+    free(buf);
+  }
 
   MPI_Bcast(&cmdOpt->buildOnly, sizeof(cmdOpt->buildOnly), MPI_BYTE, 0, comm);
   MPI_Bcast(&cmdOpt->sizeTarget, sizeof(cmdOpt->sizeTarget), MPI_BYTE, 0, comm);

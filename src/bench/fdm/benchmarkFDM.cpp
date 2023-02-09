@@ -92,7 +92,8 @@ occa::kernel benchmarkFDM(int Nelements,
       }
     }
 
-    const std::string installDir(getenv("NEKRS_HOME"));
+    const std::string oklpath(getenv("NEKRS_KERNEL_DIR"));
+
     // only a single choice, no need to run benchmark
     if (kernelVariants.size() == 1 && !requiresBenchmark) {
       auto newProps = props;
@@ -101,7 +102,7 @@ occa::kernel benchmarkFDM(int Nelements,
 
       const std::string kernelName = "fusedFDM";
       const std::string ext = platform->serial ? ".c" : ".okl";
-      const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
+      const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
       return std::make_pair(platform->device.buildKernel(fileName, newProps, suffix, true), -1.0);
     }
@@ -135,7 +136,7 @@ occa::kernel benchmarkFDM(int Nelements,
 
       const std::string kernelName = "fusedFDM";
       const std::string ext = platform->serial ? ".c" : ".okl";
-      const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
+      const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
       referenceKernel = platform->device.buildKernel(fileName, newProps, suffix, true);
     }
@@ -154,7 +155,7 @@ occa::kernel benchmarkFDM(int Nelements,
 
       const std::string kernelName = "fusedFDM";
       const std::string ext = platform->serial ? ".c" : ".okl";
-      const std::string fileName = installDir + "/kernels/elliptic/" + kernelName + ext;
+      const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
       auto kernel = platform->device.buildKernel(fileName, newProps, suffix, true);
       if (platform->options.compareArgs("BUILD ONLY", "TRUE"))

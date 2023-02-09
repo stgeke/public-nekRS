@@ -110,11 +110,9 @@ mesh_t *createMesh(MPI_Comm comm,
   // get mesh from nek
   meshNekReaderHex3D(N, mesh);
 
-  if ((hlong) mesh->Nelements * (mesh->Nvgeo * cubN) > std::numeric_limits<int>::max()) {
-    if (platform->comm.mpiRank == 0) 
-      printf("ERROR: mesh->Nelements * mesh->Nvgeo * cubN exceeds <int> limit!");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck((hlong) mesh->Nelements * (mesh->Nvgeo * cubN) > std::numeric_limits<int>::max(),
+           platform->comm.mpiComm, EXIT_FAILURE, 
+           "mesh->Nelements * mesh->Nvgeo * cubN exceeds int limit!", "");
 
   mesh->Nfields = 1; // TW: note this is a temporary patch (halo exchange depends on nfields)
 
@@ -180,7 +178,7 @@ mesh_t *createMesh(MPI_Comm comm,
     }
     free(tmp);
   }
-  if(err) ABORT(1);
+  if(err) EXIT_AND_FINALIZE(EXIT_FAILURE);
 
   mesh->oogs = oogs::setup(mesh->ogs, 1, mesh->Nelements * mesh->Np, ogsDfloat, NULL, OOGS_AUTO);
 
@@ -396,7 +394,7 @@ mesh_t *createMeshV(
     }
     free(tmp);
   }
-  if(err) ABORT(1);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
 
   mesh->oogs = oogs::setup(mesh->ogs, 1, mesh->Nelements * mesh->Np, ogsDfloat, NULL, OOGS_AUTO);
 

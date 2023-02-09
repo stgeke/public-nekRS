@@ -24,7 +24,7 @@ void registerMeshKernels(occa::properties kernelInfoBC)
   {
 
     kernelName = "velocityDirichletBCHex3D";
-    fileName = oklpath + "mesh/" + kernelName + ".okl";
+    fileName = oklpath + "/mesh/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, kernelInfoBC);
 
     {
@@ -42,7 +42,7 @@ void registerMeshKernels(occa::properties kernelInfoBC)
     }
 
     kernelName = "avgBIDValue";
-    fileName = oklpath + "mesh/" + kernelName + ".okl";
+    fileName = oklpath + "/mesh/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, kernelInfo);
 
     occa::properties meshKernelInfo = kernelInfo;
@@ -50,20 +50,20 @@ void registerMeshKernels(occa::properties kernelInfoBC)
     meshKernelInfo["defines/p_cubNp"] = cubNp;
 
     kernelName = "geometricFactorsHex3D";
-    fileName = oklpath + "mesh/" + kernelName + ".okl";
+    fileName = oklpath + "/mesh/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, meshKernelInfo);
     kernelName = "surfaceGeometricFactorsHex3D";
-    fileName = oklpath + "mesh/" + kernelName + ".okl";
+    fileName = oklpath + "/mesh/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, meshKernelInfo);
 
     kernelName = "cubatureGeometricFactorsHex3D";
-    fileName = oklpath + "mesh/" + kernelName + ".okl";
+    fileName = oklpath + "/mesh/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, meshKernelInfo);
 
     meshKernelInfo = kernelInfo;
     meshKernelInfo["defines/p_nAB"] = nAB;
     kernelName = "nStagesSumVector";
-    fileName = oklpath + "core/" + kernelName + ".okl";
+    fileName = oklpath + "/core/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, meshKernelInfo);
   }
 }

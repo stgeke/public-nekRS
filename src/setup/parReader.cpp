@@ -1330,21 +1330,15 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("AMG DROP TOLERANCE", to_string_f(dropTol));
 }
 
-void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &options) {
+void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &options) {
   int rank;
   MPI_Comm_rank(comm, &rank);
 
-  int foundPar = 0;
   if (rank == 0) {
-    foundPar = 1;
     const char *ptr = realpath(setupFile.c_str(), NULL);
-    if (!ptr) {
-      std::cout << "ERROR: cannot find setup file " << setupFile << "!\n";
-      foundPar = 0;
-    }
+    nrsCheck(!ptr, MPI_COMM_SELF, EXIT_FAILURE,
+             "Cannot find setup file %s\n", setupFile.c_str());
   }
-  MPI_Bcast(&foundPar, sizeof(foundPar), MPI_BYTE, 0, comm);
-  if (!foundPar) ABORT(EXIT_FAILURE);
 
   std::string casename = setupFile.substr(0, setupFile.find(".par"));
   setDefaultSettings(options, casename, rank);
@@ -1367,7 +1361,6 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   std::stringstream is;
   is.write(rbuf, fsize);
 
-  inipp::Ini *par = (inipp::Ini *)ppar;
   par->parse(is);
   par->interpolate();
 
@@ -2177,9 +2170,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       std::cout << errorMessage;
       std::cout << "\nrun with `--help par` for more details\n";
     }
-    fflush(stdout);
-
-    if(length > 0) ABORT(EXIT_FAILURE);
+    if(length > 0) EXIT_AND_FINALIZE(EXIT_FAILURE);
   }
 
 #if 0

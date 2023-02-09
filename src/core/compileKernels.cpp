@@ -7,6 +7,8 @@
 #include "udf.hpp"
 #include <vector>
 #include <tuple>
+#include "fileUtils.hpp"
+
 
 std::string createOptionsPrefix(std::string section) {
   std::string prefix = section + std::string(" ");
@@ -43,7 +45,6 @@ void compileKernels() {
   platform->kernelInfo["defines/p_bcTypeS"] = bcMap::bcTypeS;
   platform->kernelInfo["defines/p_bcTypeF0"] = bcMap::bcTypeF0;
   platform->kernelInfo["defines/p_bcTypeF"] = bcMap::bcTypeF;
-
 
   occa::properties kernelInfoBC = compileUDFKernels();
 
@@ -101,13 +102,17 @@ void compileKernels() {
     registerEllipticPreconditionerKernels(section, poissonEquation);
   }
 
-
   {
-    const bool buildNodeLocal = useNodeLocalCache();
+    const bool buildNodeLocal = platform->cacheLocal;
     const bool buildOnly = platform->options.compareArgs("BUILD ONLY", "TRUE");
     auto communicator = buildNodeLocal ? platform->comm.mpiCommLocal : platform->comm.mpiComm;
-    oogs::compile(
-        platform->device.occaDevice(), platform->device.mode(), communicator, buildOnly);
+    auto &plat = platform;
+    ogsBuildKernel_t buildKernel = 
+      [plat](const std::string &fileName, const std::string &kernelName, const occa::properties &props) 
+      {
+        return plat->device.buildKernel(fileName, kernelName, props);
+      };
+    oogs::compile(platform->device.occaDevice(), buildKernel, platform->device.mode(), communicator, buildOnly);
   }
 
   platform->kernels.compile();

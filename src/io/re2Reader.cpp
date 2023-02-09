@@ -6,9 +6,11 @@ void re2::nelg(const std::string& meshFile, int& nelgt, int& nelgv, MPI_Comm com
   int rank = 0;
   if(comm != MPI_COMM_NULL) MPI_Comm_rank(comm, &rank);
 
+  const int re2HeaderBytes = 80;
+
   int err = 0;
   if(rank == 0) {
-    char buf[FILENAME_MAX];
+    char *buf = (char*) calloc(std::max(re2HeaderBytes, (int)meshFile.length()+1), sizeof(char));
     strcpy(buf, meshFile.c_str());
     FILE *fp = fopen(buf, "r");
     if (!fp) {
@@ -39,6 +41,8 @@ void re2::nelg(const std::string& meshFile, int& nelgt, int& nelgv, MPI_Comm com
       if(rank == 0) printf("\nERROR: Invalid nelgt=%d / nelgv=%d read from re2 header!\n", nelgt, nelgv);
       err++;
     }
+
+    free(buf);
   }
   if(comm != MPI_COMM_NULL) MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_MAX, comm); 
   if(err) ABORT(EXIT_FAILURE);

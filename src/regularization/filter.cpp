@@ -89,8 +89,8 @@ double* filterSetup(mesh_t* mesh, const dlong filterNc)
   if(filterNc < 1)
   {
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: filterNc must be at least 1, but is set to %d\n"
-        , filterNc);
+      printf("ERROR: filterNc must be at least 1, but is set to %d\n", filterNc);
+
     ABORT(EXIT_FAILURE);
   }
 

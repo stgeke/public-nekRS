@@ -63,24 +63,48 @@ using dlong = long long int;
 
 #include <mpi.h>
 #include <math.h>
-#include "omp.h"
+#include <omp.h>
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <string>
 #include <vector>
 #include <functional>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <getopt.h>
+
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include "occa.hpp"
 #include "ogs.hpp"
 #include "setupAide.hpp"
 #include "timer.hpp"
 
+#define nrsCheck(cond, comm, ierr, message, ...) \
+  do { \
+    int err = 0; \
+    if(cond) err = 1; \
+    MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, comm); \
+    if(err) { \
+      int rank = 0; \
+      MPI_Comm_rank(comm, &rank); \
+      if(rank == 0) { \
+        printf("Error in %s: ", __func__);\
+        printf(message, __VA_ARGS__); \
+      } \
+      fflush(stdout); \
+      MPI_Barrier(comm); \
+      MPI_Abort(MPI_COMM_WORLD, ierr); \
+    } \
+  } while (0)
+
 static occa::memory o_NULL;
 
 struct platform_t;
 extern platform_t* platform;
-
-bool useNodeLocalCache();
 
 #define NSCALAR_MAX 100
 static auto scalarDigitStr = [](int i)

@@ -293,10 +293,6 @@ add_library(nekrs-lib SHARED ${SRC})
 set_target_properties(nekrs-lib PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
 target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB} openblas)
 
-target_compile_definitions(nekrs-lib PUBLIC
-    -DDOGS="${CMAKE_INSTALL_PREFIX}/gatherScatter"
-)
-
 target_include_directories(nekrs-lib 
   PUBLIC 
   ${CMAKE_CURRENT_BINARY_DIR}

@@ -596,10 +596,14 @@ void scalarSolve(nrs_t *nrs, dfloat time, occa::memory o_S, int stage) {
     mesh_t *mesh;
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0];
 
+    int BFDiag = 0;
+    if(cds->o_BFDiag.size()) BFDiag = 1;
+
     cds->setEllipticCoeffKernel(mesh->Nlocal,
         cds->g0 * cds->idt,
         cds->fieldOffsetScan[is],
         nrs->fieldOffset,
+        BFDiag,
         cds->o_diff,
         cds->o_rho,
         cds->o_BFDiag,
@@ -751,6 +755,7 @@ void fluidSolve(
       nrs->g0 * nrs->idt,
       0 * nrs->fieldOffset,
       nrs->fieldOffset,
+      0,
       nrs->o_mue,
       nrs->o_rho,
       o_NULL,

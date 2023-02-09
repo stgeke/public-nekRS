@@ -141,9 +141,8 @@ void linAlg_t::setup()
 
   reallocScratch(blocksize * sizeof(dfloat));
 
-  std::string oklDir;
-  oklDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  oklDir += "/kernels/linAlg/";
+  std::string oklDir(getenv("NEKRS_KERNEL_DIR"));
+  oklDir += "/linAlg/";
 
   MPI_Barrier(platform->comm.mpiComm);
   double tStartLoadKernel = MPI_Wtime();

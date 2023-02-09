@@ -98,8 +98,7 @@ void checkConfig(elliptic_t* elliptic)
     }
   }
 
-  if (err) 
-    ABORT(EXIT_FAILURE);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
 }
 
 
@@ -110,10 +109,8 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   MPI_Barrier(platform->comm.mpiComm);
   const double tStart = MPI_Wtime();
 
-  if(elliptic->name.size() == 0) {
-    if(platform->comm.mpiRank == 0) printf("ERROR: empty elliptic solver name!");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(elliptic->name.size() == 0, platform->comm.mpiComm, EXIT_FAILURE,
+           "Empty elliptic solver name!", "");
 
   elliptic->options.setArgs("DISCRETIZATION", "CONTINUOUS");
 
@@ -135,10 +132,11 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   const int verbose = platform->options.compareArgs("VERBOSE","TRUE") ? 1:0;
   const size_t offsetBytes = elliptic->fieldOffset * elliptic->Nfields * sizeof(dfloat);
 
-  if(elliptic->o_wrk.size() < elliptic_t::NScratchFields * offsetBytes) {
-    if(platform->comm.mpiRank == 0) printf("ERROR: mempool assigned for elliptic too small!");
-    ABORT(EXIT_FAILURE);
-  }
+
+  nrsCheck(elliptic->o_wrk.size() < elliptic_t::NScratchFields * offsetBytes,
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "mempool assigned for elliptic too small!", "");
 
   mesh_t* mesh = elliptic->mesh;
   const dlong Nlocal = mesh->Np * mesh->Nelements;

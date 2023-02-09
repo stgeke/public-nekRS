@@ -92,19 +92,6 @@ void printICMinMax(nrs_t *nrs)
 
 void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 {
-  {
-    int N;
-    platform->options.getArgs("POLYNOMIAL DEGREE", N);
-    const int Nq = N + 1;
-    if (BLOCKSIZE < Nq * Nq) {
-      if (platform->comm.mpiRank == 0)
-        printf("ERROR: several kernels requires BLOCKSIZE >= Nq * Nq."
-               "BLOCKSIZE = %d, Nq*Nq = %d\n",
-               BLOCKSIZE,
-               Nq * Nq);
-      ABORT(EXIT_FAILURE);
-    }
-  }
   platform_t *platform = platform_t::getInstance();
   device_t &device = platform->device;
   nrs->kernelInfo = new occa::properties();
@@ -158,18 +145,15 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     if ((NelementsT > NelementsV) && nrs->Nscalar) nrs->cht = 1;
   }
 
-  if (nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE")) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Conjugate heat transfer requires solving for temperature!\n";
-    ABORT(EXIT_FAILURE);
-    ;
-  }
-  if (nrs->cht && options.compareArgs("MOVING MESH", "TRUE")) {
-    if (platform->comm.mpiRank == 0){
-      std::cout << "Conjugate heat transfer + moving mesh is not supported\n";
-    }
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE"),
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Conjugate heat transfer requires solving for temperature!\n", "");
+
+  nrsCheck(nrs->cht && options.compareArgs("MOVING MESH", "TRUE"),
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Conjugate heat transfer + moving mesh is not supported\n", "");
 
   nrs->_mesh = createMesh(comm, N, cubN, nrs->cht, kernelInfo);
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
@@ -249,9 +233,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       memcpy(nrs->nodesRK, rkc, nrs->nRK * sizeof(dfloat));
     }
     else {
-      if (platform->comm.mpiRank == 0)
-        std::cout << "Unsupported subcycling scheme!\n";
-      ABORT(1);
+      nrsCheck(true, platform->comm.mpiComm, EXIT_FAILURE, "Unsupported subcycling scheme!\n", "");
     }
     nrs->o_coeffsfRK = device.malloc(nrs->nRK * sizeof(dfloat), nrs->coeffsfRK);
     nrs->o_weightsRK = device.malloc(nrs->nRK * sizeof(dfloat), nrs->weightsRK);
@@ -626,6 +608,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           cds->g0 * cds->idt,
           cds->fieldOffsetScan[is],
           nrs->fieldOffset,
+          0,
           cds->o_diff,
           cds->o_rho,
           o_NULL,
@@ -654,13 +637,11 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->uvwSolver = NULL;
 
     bool unalignedBoundary = bcMap::unalignedMixedBoundary("velocity");
-    if (unalignedBoundary) {
-      if (!options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
-        if (platform->comm.mpiRank == 0)
-          printf("ERROR: SHL or unaligned SYM boundaries require solver = pcg+block\n");
-        ABORT(EXIT_FAILURE);
-      }
-    }
+
+    nrsCheck(unalignedBoundary && !options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"),
+             platform->comm.mpiComm, 
+             EXIT_FAILURE, 
+             "SHL or unaligned SYM boundaries require solver = pcg+block\n", "");
 
     if (platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
       nrs->uvwSolver = new elliptic_t();
@@ -675,6 +656,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->g0 * nrs->idt,
       0 * nrs->fieldOffset,
       nrs->fieldOffset,
+      0,
       nrs->o_mue,
       nrs->o_rho,
       o_NULL,
@@ -860,6 +842,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       1.0,
       0 * nrs->fieldOffset,
       nrs->fieldOffset,
+      0,
       nrs->o_meshMue,
       nrs->o_meshRho,
       o_NULL,

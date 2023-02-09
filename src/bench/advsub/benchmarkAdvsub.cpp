@@ -130,22 +130,21 @@ occa::kernel benchmarkAdvsub(int Nfields,
   props["defines/p_NVfields"] = NVfields;
   props["defines/p_MovingMesh"] = platform->options.compareArgs("MOVING MESH", "TRUE");
 
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
+  const std::string oklpath(getenv("NEKRS_KERNEL_DIR"));
 
-  std::string diffDataFile = installDir + "/kernels/mesh/constantDifferentiationMatrices.h";
-  std::string interpDataFile = installDir + "/kernels/mesh/constantInterpolationMatrices.h";
+  std::string diffDataFile = oklpath + "/mesh/constantDifferentiationMatrices.h";
+  std::string interpDataFile = oklpath + "/mesh/constantInterpolationMatrices.h";
   std::string diffInterpDataFile =
-      installDir + "/kernels/mesh/constantDifferentiationInterpolationMatrices.h";
+      oklpath + "/mesh/constantDifferentiationInterpolationMatrices.h";
 
   props["includes"] += diffDataFile.c_str();
   props["includes"] += interpDataFile.c_str();
   props["includes"] += diffInterpDataFile.c_str();
 
-  std::string fileName = installDir + "/kernels/bench/advsub/readCubDMatrix.okl";
+  std::string fileName = oklpath + "/bench/advsub/readCubDMatrix.okl";
   auto readCubDMatrixKernel = platform->device.buildKernel(fileName, props, true);
 
-  fileName = installDir + "/kernels/bench/advsub/readIMatrix.okl";
+  fileName = oklpath + "/bench/advsub/readIMatrix.okl";
   auto readIMatrixKernel = platform->device.buildKernel(fileName, props, true);
 
   std::string kernelName;
@@ -157,17 +156,17 @@ occa::kernel benchmarkAdvsub(int Nfields,
   }
 
   const std::string ext = (platform->device.mode() == "Serial") ? ".c" : ".okl";
-  fileName = installDir + "/kernels/nrs/" + kernelName + ext;
+  fileName = oklpath + "/nrs/" + kernelName + ext;
 
   if (isScalar) {
-    fileName = installDir + "/kernels/cds/" + kernelName + ext;
+    fileName = oklpath + "/cds/" + kernelName + ext;
   }
 
   // currently lacking a native implementation of the non-dealiased kernel
   if (!dealias) {
-    fileName = installDir + "/kernels/nrs/" + kernelName + ".okl";
+    fileName = oklpath + "/nrs/" + kernelName + ".okl";
     if (isScalar) {
-      fileName = installDir + "/kernels/cds/" + kernelName + ".okl";
+      fileName = oklpath + "/cds/" + kernelName + ".okl";
     }
   }
 

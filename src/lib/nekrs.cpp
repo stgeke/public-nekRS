@@ -11,7 +11,6 @@
 #include "re2Reader.hpp"
 #include "timeStepper.hpp"
 #include "platform.hpp"
-#include "nrssys.hpp"
 #include "linAlg.hpp"
 #include "cfl.hpp"
 #include "AMGX.hpp"
@@ -29,15 +28,6 @@ static dfloat lastOutputTime = 0;
 static int firstOutfld = 1;
 static int enforceLastStep = 0;
 static int enforceOutputStep = 0;
-
-static void setOccaVars();
-
-bool useNodeLocalCache(){
-  int buildNodeLocal = 0;
-  if (getenv("NEKRS_CACHE_LOCAL"))
-    buildNodeLocal = std::stoi(getenv("NEKRS_CACHE_LOCAL"));
-  return (buildNodeLocal > 0);
-}
 
 namespace nekrs
 {
@@ -66,28 +56,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
 
   configRead(comm);
 
-  {
-    char buf[FILENAME_MAX];
-    char * ret = getcwd(buf, sizeof(buf));
-    std::string dir = std::string(buf) + "/.cache";
-    if(getenv("NEKRS_CACHE_DIR")) dir.assign(getenv("NEKRS_CACHE_DIR"));
-    setenv("NEKRS_CACHE_DIR", dir.c_str(), 1);
-  }
-
-  setOccaVars();
-
-  if (rank == 0) {
-    std::string installDir;
-    installDir.assign(getenv("NEKRS_HOME"));
-    std::cout << std::endl;
-    std::cout << "using NEKRS_HOME: " << installDir << std::endl;
-
-    std:: string cache_dir;
-    cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
-    std::cout << "using NEKRS_CACHE_DIR: " << cache_dir << std::endl;
-
-    std::cout << "using OCCA_CACHE_DIR: " << occa::env::OCCA_CACHE_DIR << std::endl << std::endl;
-  }
+  if(debug) platform->options.setArgs("VERBOSE","TRUE");
 
   options.setArgs("BUILD ONLY", "FALSE");
   if(buildOnly) {
@@ -101,19 +70,9 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     fflush(stdout);	
   }
 
+  auto par = new inipp::Ini();	 
   if (rank == 0) std::cout << "reading par file ...\n"; 
-  auto par = new inipp::Ini();	  
-  parRead((void*) par, _setupFile + ".par", comm, options);
-
-  int nelgt, nelgv;
-  const std::string meshFile = options.getArgs("MESH FILE");
-  re2::nelg(meshFile, nelgt, nelgv, comm);
-  if (size > nelgv) {
-    if (rank == 0) {
-      std::cout << "ERROR: MPI tasks > number of elements!" << std::endl;
-    }
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+  parRead(par, _setupFile + ".par", comm, options);
 
   // precedence: cmd arg, par, env-var
   if(options.getArgs("THREAD MODEL").length() == 0) 
@@ -126,19 +85,21 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   platform = _platform;
   platform->par = par;
 
-
-  if(debug) platform->options.setArgs("VERBOSE","TRUE");
-
   int buildRank = rank;
-  const bool buildNodeLocal = useNodeLocalCache();
-  if(buildNodeLocal)
+  if(platform->cacheLocal)
     MPI_Comm_rank(platform->comm.mpiCommLocal, &buildRank);    
 
-  if(buildRank == 0) {
-    std::string cache_dir;
-    cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
-    mkdir(cache_dir.c_str(), S_IRWXU);
+  if (rank == 0) {
+    std::cout << "using NEKRS_HOME: " << getenv("NEKRS_HOME") << std::endl;
+    std::cout << "using NEKRS_CACHE_DIR: " << getenv("NEKRS_CACHE_DIR") << std::endl;
+    std::cout << "using OCCA_CACHE_DIR: " << occa::env::OCCA_CACHE_DIR << std::endl << std::endl;
   }
+
+  int nelgt, nelgv;
+  const std::string meshFile = options.getArgs("MESH FILE");
+  re2::nelg(meshFile, nelgt, nelgv, comm);
+  nrsCheck(size > nelgv, platform->comm.mpiComm, EXIT_FAILURE, 
+           "MPI tasks > number of elements!", "");
 
   // jit compile udf
   std::string udfFile;
@@ -201,6 +162,18 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   fflush(stdout);
 
   platform->flopCounter->clear();
+
+  if(platform->cacheBcast) { 
+    MPI_Barrier(platform->comm.mpiComm); 
+
+    int rankLocal;
+    MPI_Comm_rank(platform->comm.mpiCommLocal, &rankLocal);
+    if(rankLocal == 0) {
+      for(auto& entry : std::filesystem::directory_iterator(platform->tmpDir))
+        fs::remove_all(entry.path());
+    }
+  }
+
 }
 
 void runStep(double time, double dt, int tstep)
@@ -251,11 +224,11 @@ double dt(int tstep)
     platform->options.getArgs("MAX DT", maxDt);
     if(maxDt > 0) nrs->dt[0] = std::min(nrs->dt[0], maxDt);
   }
-  
-  if(nrs->dt[0] < 1e-10 || std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0])) {
-    if(platform->comm.mpiRank == 0) printf("Invalid time step size %.2e\n", nrs->dt[0]);
-    ABORT(EXIT_FAILURE);
-  }
+ 
+  nrsCheck(nrs->dt[0] < 1e-10 || std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0]),
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Invalid time step size %.2e\n", nrs->dt[0]);
 
   return nrs->dt[0];
 }
@@ -482,23 +455,3 @@ int exitValue() { return platform->exitValue; }
 
 
 } // namespace
-
-static void setOccaVars()
-{
-  std::string cache_dir;
-  cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
-
-  if (!getenv("OCCA_CACHE_DIR")) {
-    const std::string path= cache_dir + "/occa/";
-    occa::env::OCCA_CACHE_DIR = path;
-    setenv("OCCA_CACHE_DIR", path.c_str(), 1);
-  }
-
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_HOME"));
-
-  if (!getenv("OCCA_DIR"))
-    occa::env::OCCA_DIR = installDir + "/";
-
-  occa::env::OCCA_INSTALL_DIR = occa::env::OCCA_DIR;
-}

@@ -1,5 +1,8 @@
-#include <kernelRequestManager.hpp>
-#include <platform.hpp>
+#include "nrssys.hpp"
+#include "kernelRequestManager.hpp"
+#include "platform.hpp"
+#include "fileUtils.hpp"
+
 kernelRequestManager_t::kernelRequestManager_t(const platform_t& m_platform)
 : kernelsProcessed(false),
   platformRef(m_platform)
@@ -73,22 +76,21 @@ kernelRequestManager_t::get(const std::string& request, bool checkValid) const
 void
 kernelRequestManager_t::compile()
 {
-
   if(kernelsProcessed) return;
+
   kernelsProcessed = true;
 
   constexpr int maxCompilingRanks {100};
 
-  const bool buildNodeLocal = useNodeLocalCache();
-
-  const int rank = buildNodeLocal ? platformRef.comm.localRank : platformRef.comm.mpiRank;
+  const int rank = platform->cacheLocal ? platformRef.comm.localRank : platformRef.comm.mpiRank;
   const int ranksCompiling =
     std::min(
       maxCompilingRanks,
-      buildNodeLocal ?
+      platform->cacheLocal ?
         platformRef.comm.mpiCommLocalSize :
         platformRef.comm.mpiCommSize
     );
+
 
   std::vector<std::string> kernelFiles(fileNameToRequestMap.size());
   
@@ -142,6 +144,17 @@ kernelRequestManager_t::compile()
 
   MPI_Barrier(platform->comm.mpiComm);
   compileKernels();
+
+  const auto OCCA_CACHE_DIR0 = occa::env::OCCA_CACHE_DIR;
+  if(platform->cacheBcast) {
+    const auto OCCA_CACHE_DIR_LOCAL = platform->tmpDir / fs::path("occa/");
+    const auto srcPath = fs::path(std::string(getenv("OCCA_CACHE_DIR")));
+    fileBcast(srcPath, OCCA_CACHE_DIR_LOCAL, platform->comm.mpiComm, platform->verbose); 
+    occa::env::OCCA_CACHE_DIR = std::string(OCCA_CACHE_DIR_LOCAL);
+  }
+
   MPI_Barrier(platform->comm.mpiComm);
   loadKernels();
+
+  occa::env::OCCA_CACHE_DIR = OCCA_CACHE_DIR0;
 }

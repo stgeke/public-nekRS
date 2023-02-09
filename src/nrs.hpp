@@ -1,15 +1,6 @@
 #if !defined(nekrs_nekrs_hpp_)
 #define nekrs_nekrs_hpp_
 
-#include <cstdio>
-#include <cstdlib>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include <getopt.h>
-#include <vector>
-
 #include "nrssys.hpp"
 #include "mesh3D.h"
 #include "elliptic.h"

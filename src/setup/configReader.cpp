@@ -28,8 +28,9 @@ void configRead(MPI_Comm comm)
     EXIT_AND_FINALIZE(1);
   }
   std::string installDir{nekrs_home};
-  std::string configFile = installDir + "/nekrs.conf";
 
+  // read config file
+  std::string configFile = installDir + "/nekrs.conf";
   const char* ptr = realpath(configFile.c_str(), NULL);
   if (!ptr) {
     if (rank == 0) 
@@ -37,28 +38,45 @@ void configRead(MPI_Comm comm)
     EXIT_AND_FINALIZE(1);
   }
 
-  char* rbuf;
-  long fsize;
-  if(rank == 0) {
-    FILE* f = fopen(configFile.c_str(), "rb");
-    fseek(f, 0, SEEK_END);
-    fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    rbuf = new char[fsize];
-    fread(rbuf, 1, fsize, f);
-    fclose(f);
-  }
-  MPI_Bcast(&fsize, sizeof(fsize), MPI_BYTE, 0, comm);
-  if(rank != 0) rbuf = new char[fsize];
-  MPI_Bcast(rbuf, fsize, MPI_CHAR, 0, comm);
   std::stringstream is;
-  is.write(rbuf, fsize);
-
+  {
+    char* rbuf;
+    long fsize;
+    if(rank == 0) {
+      FILE* f = fopen(configFile.c_str(), "rb");
+      fseek(f, 0, SEEK_END);
+      fsize = ftell(f);
+      fseek(f, 0, SEEK_SET);
+      rbuf = new char[fsize];
+      fread(rbuf, 1, fsize, f);
+      fclose(f);
+    }
+    MPI_Bcast(&fsize, sizeof(fsize), MPI_BYTE, 0, comm);
+    if(rank != 0) rbuf = new char[fsize];
+    MPI_Bcast(rbuf, fsize, MPI_CHAR, 0, comm);
+    is.write(rbuf, fsize);
+    free(rbuf);
+  }
   inipp::Ini ini;
   ini.parse(is, false);
   ini.interpolate();
 
   std::string buf;
+
+  if(!getenv("NEKRS_CACHE_DIR")) {
+    std::string dir = std::string(fs::current_path()) + "/.cache";
+    setenv("NEKRS_CACHE_DIR", dir.c_str(), 1);
+  }
+
+  buf = installDir + "/kernels";
+  if(!getenv("NEKRS_KERNEL_DIR")) setenv("NEKRS_KERNEL_DIR", buf.c_str(), 1); 
+
+  buf = installDir + "/gatherScatter";
+  if(!getenv("OGS_HOME")) setenv("OGS_HOME", buf.c_str(), 1); 
+
+  ini.extract("general", "nekrs_gpu_mpi", buf);
+  if(!getenv("NEKRS_GPU_MPI")) setenv("NEKRS_GPU_MPI", buf.c_str(), 1);
+
   ini.extract("general", "cxx", buf);
   setenv("NEKRS_CXX", buf.c_str(), 1);
 
@@ -112,16 +130,6 @@ void configRead(MPI_Comm comm)
   ini.extract("general", "occa_opencl_compiler_flags", buf);
   if(!getenv("OCCA_OPENCL_COMPILER_FLAGS")) setenv("OCCA_OPENCL_COMPILER_FLAGS", buf.c_str(), 1);
 
-  ini.extract("general", "nekrs_gpu_mpi", buf);
-  if(!getenv("NEKRS_GPU_MPI")) setenv("NEKRS_GPU_MPI", buf.c_str(), 1);
-
-  buf = installDir;
-  setenv("NEKRS_INSTALL_DIR", buf.c_str(), 1);
-  buf = installDir + "/kernels/";
-  if(!getenv("NEKRS_KERNEL_DIR")) setenv("NEKRS_KERNEL_DIR", buf.c_str(), 1);
-
   ini.extract("general", "occa_mode_default", buf);
   if(!getenv("NEKRS_OCCA_MODE_DEFAULT")) setenv("NEKRS_OCCA_MODE_DEFAULT", buf.c_str(), 1);
-
-  setenv("OCCA_MEM_BYTE_ALIGN", "1024", 1);
 }

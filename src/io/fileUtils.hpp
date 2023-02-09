@@ -2,6 +2,8 @@
 #define nekrs_ioutils_hpp_
 
 #include "nrs.hpp"
+#include <filesystem>
+namespace fs = std::filesystem;
 
 void fileSync(const char *file);
 void copyFile(const char *srcName, const char* destName);

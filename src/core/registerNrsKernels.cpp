@@ -52,6 +52,10 @@ void registerNrsKernels(occa::properties kernelInfoBC)
     nEXT = nBDF;
 
   {
+    kernelName = "nStagesSumMany";
+    fileName = oklpath + "/core/" + kernelName + ".okl";
+    platform->kernels.add(kernelName, fileName, platform->kernelInfo);
+
     kernelName = "nStagesSum3";
     fileName = oklpath + "/core/" + kernelName + ".okl";
     const std::string section = "nrs-";

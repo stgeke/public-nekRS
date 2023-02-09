@@ -28,12 +28,8 @@ static void flops(mesh_t *mesh, int Nfields)
   platform->flopCounter->add("subcycling", flopCount);
 }
 
-occa::memory scalarSubCycleMovingMesh(cds_t *cds,
-    int nEXT,
-    dfloat time,
-    int is,
-    occa::memory o_U,
-    occa::memory o_S) 
+occa::memory
+scalarSubCycleMovingMesh(cds_t *cds, int nEXT, dfloat time, int is, occa::memory o_U, occa::memory o_S)
 {
   std::string sid = scalarDigitStr(is);
 
@@ -217,12 +213,7 @@ occa::memory scalarSubCycleMovingMesh(cds_t *cds,
   return o_p0;
 }
 
-occa::memory scalarSubCycle(cds_t *cds,
-    int nEXT,
-    dfloat time,
-    int is,
-    occa::memory o_U,
-    occa::memory o_S) 
+occa::memory scalarSubCycle(cds_t *cds, int nEXT, dfloat time, int is, occa::memory o_U, occa::memory o_S)
 {
   std::string sid = scalarDigitStr(is);
 
@@ -388,4 +379,3 @@ occa::memory scalarSubCycle(cds_t *cds,
       platform->o_mempool.slice0);
   return platform->o_mempool.slice0;
 }
-

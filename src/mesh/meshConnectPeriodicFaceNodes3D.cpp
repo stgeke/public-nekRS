@@ -68,7 +68,7 @@ int findBestPeriodicMatch(dfloat xper, dfloat yper, dfloat zper,
 void meshConnectPeriodicFaceNodes3D(mesh_t *mesh, dfloat xper, dfloat yper, dfloat zper)
 {
   /* volume indices of the interior and exterior face nodes for each element */
-  mesh->vmapM = (dlong*) calloc(mesh->Nfp * mesh->Nfaces * mesh->Nelements, sizeof(dlong));
+  mesh->vmapM = (dlong *)calloc(mesh->Nfp * mesh->Nfaces * mesh->Nelements, sizeof(dlong));
 
   /* assume elements already connected */
   for(dlong e = 0; e < mesh->Nelements; ++e)

@@ -97,7 +97,8 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
 
   std::string sid = scalarDigitStr(scalarIndex);
 
-  const int useHPFResidual = platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "HPF_RESIDUAL");
+  const int useHPFResidual =
+      platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "HPF_RESIDUAL");
 
   dfloat Uinf = 1.0;
   if(useHPFResidual){
@@ -160,7 +161,6 @@ occa::memory computeEps(nrs_t* nrs, const dfloat time, const dlong scalarIndex, 
 
   dfloat rampParameter = 1.0;
   platform->options.getArgs("SCALAR" + sid + " REGULARIZATION RAMP CONSTANT", rampParameter);
-
 
   dfloat scalingCoeff = 1.0;
   platform->options.getArgs("SCALAR" + sid + " REGULARIZATION SCALING COEFF", scalingCoeff);
@@ -274,4 +274,4 @@ void apply(nrs_t* nrs, const dfloat time, const dlong scalarIndex, occa::memory 
 
 }
 
-} // namespace
+} // namespace avm

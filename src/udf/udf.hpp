@@ -12,6 +12,7 @@
 #include "plugins/velRecycling.hpp"
 #include "plugins/tavg.hpp"
 #include "plugins/lowMach.hpp"
+#include "plugins/lpm.hpp"
 #include "plugins/RANSktau.hpp"
 
 #define PASS                                                                                                 \

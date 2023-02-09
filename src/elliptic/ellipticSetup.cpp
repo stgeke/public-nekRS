@@ -47,9 +47,9 @@ void checkConfig(elliptic_t* elliptic)
     if(platform->comm.mpiRank == 0)
       printf("ERROR: Elliptic solver only supports HEX elements\n");
     err++;
-  } 
+  }
 
-  if (elliptic->blockSolver && options.compareArgs("PRECONDITIONER","MULTIGRID")) { 
+  if (elliptic->blockSolver && options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
     if(platform->comm.mpiRank == 0)
       printf("ERROR: Block solver does not support multigrid preconditioner\n");
     err++;
@@ -101,8 +101,7 @@ void checkConfig(elliptic_t* elliptic)
   nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
 }
 
-
-#define UPPER(a) transform(a.begin(), a.end(), a.begin(), [](int c){return std::toupper(c);});                                                              \
+#define UPPER(a) transform(a.begin(), a.end(), a.begin(), [](int c) { return std::toupper(c); });
 
 void ellipticSolveSetup(elliptic_t* elliptic)
 {
@@ -115,18 +114,18 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   elliptic->options.setArgs("DISCRETIZATION", "CONTINUOUS");
 
   // create private options based on platform
-  for(auto& entry : platform->options.keyWordToDataMap) {
+  for (auto &entry : platform->options.keyWordToDataMap) {
     std::string prefix = elliptic->name;
     UPPER(prefix);
-    if(entry.first.find(prefix) != std::string::npos) {
+    if (entry.first.find(prefix) != std::string::npos) {
       std::string key = entry.first;
-      key.erase(0,prefix.size()+1);
-      elliptic->options.setArgs(key, entry.second); 
+      key.erase(0, prefix.size() + 1);
+      elliptic->options.setArgs(key, entry.second);
     }
   }
 
   if (platform->device.mode() == "Serial")
-    elliptic->options.setArgs("COARSE SOLVER LOCATION","CPU");
+    elliptic->options.setArgs("COARSE SOLVER LOCATION", "CPU");
 
   setupAide& options = elliptic->options;
   const int verbose = platform->options.compareArgs("VERBOSE","TRUE") ? 1:0;
@@ -138,7 +137,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
            EXIT_FAILURE,
            "mempool assigned for elliptic too small!", "");
 
-  mesh_t* mesh = elliptic->mesh;
+  mesh_t *mesh = elliptic->mesh;
   const dlong Nlocal = mesh->Np * mesh->Nelements;
 
   const dlong Nblocks = (Nlocal + BLOCKSIZE - 1) / BLOCKSIZE;

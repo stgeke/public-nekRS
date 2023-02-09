@@ -40,6 +40,9 @@
                          @ restrict const dfloat *U,
                          @ restrict const dfloat *diff,
                          @ restrict const dfloat *rho,
+                         @ restrict const dlong*  neknekPoints,
+                         @ restrict const dfloat* neknekU,
+                         @ restrict const dfloat* neknekS,
                          @ restrict const dfloat *W,
                          @ restrict dfloat *S)
 {
@@ -52,8 +55,9 @@
         const dlong sk = e * p_Nfp * p_Nfaces + n;
         const dlong idM = vmapM[sk];
         const dlong bcType = EToB[f + p_Nfaces * e];
+        const dlong neknekOffset = neknekPoints[offset];
 
-        if (bcType == p_bcTypeS) {
+        if (bcType == p_bcTypeS || bcType == p_bcTypeINTS) {
           bc.id = EToBM[f + p_Nfaces * e];
           bc.idM = idM;
           bc.time = time;
@@ -82,6 +86,19 @@
           bc.t2x = sgeo[sk * p_Nsgeo + p_T2XID];
           bc.t2y = sgeo[sk * p_Nsgeo + p_T2YID];
           bc.t2z = sgeo[sk * p_Nsgeo + p_T2ZID];
+
+          bc.sinterp = 0.0;
+          bc.uinterp = 0.0;
+          bc.vinterp = 0.0;
+          bc.winterp = 0.0;
+
+          if (bcType == p_bcTypeINTS) {
+            const int neknekId = neknekPoints[idM];
+            bc.sinterp = neknekS[neknekId + scalarId * neknekOffset];
+            bc.uinterp = neknekU[neknekId + 0 * neknekOffset];
+            bc.vinterp = neknekU[neknekId + 1 * neknekOffset];
+            bc.winterp = neknekU[neknekId + 2 * neknekOffset];
+          }
           scalarDirichletConditions(&bc);
           S[idM] = bc.s;
         }

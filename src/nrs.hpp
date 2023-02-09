@@ -8,6 +8,7 @@
 #include "linAlg.hpp"
 #include "timer.hpp"
 #include "platform.hpp"
+#include "neknek.hpp"
 #include "fldFile.hpp"
 
 struct nrs_t {
@@ -29,6 +30,8 @@ struct nrs_t {
   elliptic_t *meshSolver = nullptr;
 
   cds_t *cds = nullptr;
+
+  neknek_t *neknek = nullptr;
 
   oogs_t *gsh = nullptr;
   oogs_t *gshMesh = nullptr;

@@ -42,7 +42,6 @@ SOFTWARE.
 
 class setupAide {
 private:
-
 public:
   setupAide(){};
   ~setupAide() = default;

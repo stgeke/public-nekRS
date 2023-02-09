@@ -128,17 +128,18 @@ occa::kernel benchmarkAx(int Nelements,
 
     std::vector<int> kernelVariants;
 
-    if(platform->serial) {
+    if (platform->serial) {
       const int Nkernels = 1;
       for (int knl = 0; knl < Nkernels; ++knl)
         kernelVariants.push_back(knl);
-    } else {
+    }
+    else {
       if (kernelName == "ellipticPartialAxCoeffHex3D") {
         const int Nkernels = 8;
         for (int knl = 0; knl < Nkernels; ++knl)
           kernelVariants.push_back(knl);
 
-        kernelVariants.erase(kernelVariants.begin()+3); // correctness check is off
+        kernelVariants.erase(kernelVariants.begin() + 3); // correctness check is off
       }
       if (kernelName == "ellipticStressPartialAxCoeffHex3D") {
         const int Nkernels = 2;
@@ -165,17 +166,33 @@ occa::kernel benchmarkAx(int Nelements,
 
         int n_plane = 1;
         switch (Nq) {
-        case 4: n_plane = 2; break;
-        case 5: n_plane = 1; break;
-        case 6: n_plane = 3; break;
-        case 7: n_plane = 1; break;
-        case 8: n_plane = 2; break;
-        case 9: n_plane = 3; break;
-        case 10: n_plane = 2; break;
-        case 11: n_plane = 1; break;
+        case 4:
+          n_plane = 2;
+          break;
+        case 5:
+          n_plane = 1;
+          break;
+        case 6:
+          n_plane = 3;
+          break;
+        case 7:
+          n_plane = 1;
+          break;
+        case 8:
+          n_plane = 2;
+          break;
+        case 9:
+          n_plane = 3;
+          break;
+        case 10:
+          n_plane = 2;
+          break;
+        case 11:
+          n_plane = 1;
+          break;
         }
         props["defines/n_plane"] = n_plane;
-        props["defines/pts_per_thread"] = Nq/n_plane;      
+        props["defines/pts_per_thread"] = Nq / n_plane;
       }
     }
     const std::string oklpath(getenv("NEKRS_KERNEL_DIR"));
@@ -223,7 +240,7 @@ occa::kernel benchmarkAx(int Nelements,
     {
       auto newProps = props;
       newProps["defines/p_knl"] = kernelVariants.front();
-      
+
       const std::string ext = platform->serial ? ".c" : ".okl";
       const std::string fileName = oklpath + "/elliptic/" + kernelName + ext;
 
@@ -287,7 +304,6 @@ occa::kernel benchmarkAx(int Nelements,
     };
 
     auto printPerformanceInfo = [&](int kernelVariant, double elapsed, int Ntests, bool skipPrint) {
-
       // print statistics
       const dfloat GDOFPerSecond = (Nelements * Ndim * (N * N * N) / elapsed) / 1.e9;
 
@@ -326,9 +342,8 @@ occa::kernel benchmarkAx(int Nelements,
             std::cout << " elapsed time=" << elapsed;
 
           std::cout << " wordSize=" << 8 * wordSize << " GDOF/s=" << GDOFPerSecond << " GB/s=" << bw
-                    << " GFLOPS/s=" << gflops 
-                    << " constCoeff=" << constCoeff << " poisson=" << poisson << " kernelVer=" << kernelVariant
-                    << "\n";
+                    << " GFLOPS/s=" << gflops << " constCoeff=" << constCoeff << " poisson=" << poisson
+                    << " kernelVer=" << kernelVariant << "\n";
         }
       }
     };

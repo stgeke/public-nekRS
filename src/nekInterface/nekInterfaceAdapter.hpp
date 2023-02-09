@@ -17,6 +17,7 @@ void nek_##a(void)                                                              
 }
 
 struct setupAide;
+struct session_data_t;
 
 struct nekdata_private {
   double *param;

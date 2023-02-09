@@ -24,7 +24,7 @@
 
  */
 
-@kernel void extrapolate(const dlong Nelements,
+@kernel void extrapolate(const dlong N,
                          const int Nfields,
                          const int Nstages,
                          const dlong fieldOffset,
@@ -32,8 +32,8 @@
                          @ restrict const dfloat *U,
                          @ restrict dfloat *Ue)
 {
-  for (dlong id = 0; id < Nelements * p_Np; ++id; @tile(p_blockSize, @outer, @inner)) {
-    if (id < Nelements * p_Np) {
+  for (dlong id = 0; id < N; ++id; @tile(p_blockSize, @outer, @inner)) {
+    if (id < N) {
       for (int i = 0; i < Nfields; i++) {
         dfloat Un = 0.;
 

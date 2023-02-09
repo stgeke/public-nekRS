@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "neknek.hpp"
 #include "nrs.hpp"
 #include "avm.hpp"
 #include "cfl.hpp"
@@ -193,13 +194,13 @@ void extrapolate(nrs_t *nrs)
   cds_t *cds = nrs->cds;
 
   if (nrs->flow) {
-    nrs->extrapolateKernel(mesh->Nelements,
-        nrs->NVfields,
-        nrs->nEXT,
-        nrs->fieldOffset,
-        nrs->o_coeffEXT,
-        nrs->o_U,
-        nrs->o_Ue);
+    nrs->extrapolateKernel(mesh->Nlocal,
+                           nrs->NVfields,
+                           nrs->nEXT,
+                           nrs->fieldOffset,
+                           nrs->o_coeffEXT,
+                           nrs->o_U,
+                           nrs->o_Ue);
 
     if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
       nrs->p0the = 0.0;
@@ -210,23 +211,23 @@ void extrapolate(nrs_t *nrs)
   }
 
   if (nrs->Nscalar)
-    nrs->extrapolateKernel(cds->mesh[0]->Nelements,
-        cds->NSfields,
-        cds->nEXT,
-        cds->fieldOffset[0],
-        cds->o_coeffEXT,
-        cds->o_S,
-        cds->o_Se);
+    nrs->extrapolateKernel(cds->mesh[0]->Nlocal,
+                           cds->NSfields,
+                           cds->nEXT,
+                           cds->fieldOffset[0],
+                           cds->o_coeffEXT,
+                           cds->o_S,
+                           cds->o_Se);
 
   if (platform->options.compareArgs("MOVING MESH", "TRUE")) {
-    if(nrs->cht) mesh = nrs->cds->mesh[0]; 
-    nrs->extrapolateKernel(mesh->Nelements,
-        nrs->NVfields,
-        nrs->nEXT,
-        nrs->fieldOffset,
-        nrs->o_coeffEXT,
-        mesh->o_U,
-        mesh->o_Ue);
+    if(nrs->cht) mesh = nrs->cds->mesh[0];
+    nrs->extrapolateKernel(mesh->Nlocal,
+                           nrs->NVfields,
+                           nrs->nEXT,
+                           nrs->fieldOffset,
+                           nrs->o_coeffEXT,
+                           mesh->o_U,
+                           mesh->o_Ue);
   }
 }
 
@@ -368,6 +369,10 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     const dfloat timeNew = time + nrs->dt[0];
 
     //////////////////////////////////////////////
+
+    if (nrs->neknek)
+      nrs->neknek->updateBoundary(nrs, tstep, iter);
+
     applyDirichlet(nrs, timeNew);
     
     if (nrs->Nscalar)
@@ -387,7 +392,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
-    nrs->timeStepConverged = (udf.timeStepConverged) ? udf.timeStepConverged(nrs, iter) : true; 
+    nrs->timeStepConverged = (udf.timeStepConverged) ? udf.timeStepConverged(nrs, iter) : true;
 
     platform->timer.tic("udfExecuteStep", 1);
     nek::ifoutfld(0);
@@ -481,7 +486,7 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0];
     const dlong isOffset = cds->fieldOffsetScan[is];
 
-    if(platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "RELAXATION")){
+    if (platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "RELAXATION")) {
       cds->filterRTKernel(
         cds->meshV->Nelements,
         is,
@@ -555,7 +560,8 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
 
         advectionFlops(cds->mesh[0], 1);
       }
-    } else {
+    }
+    else {
       platform->linAlg->fill(cds->fieldOffsetSum, 0.0, o_Usubcycling);
     }
 
@@ -787,7 +793,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
   }
   if (platform->comm.mpiRank == 0) {
     if (verboseInfo && printVerboseInfo){
-      for(int is = 0; is < nrs->Nscalar; is++) {
+      for (int is = 0; is < nrs->Nscalar; is++) {
         if (cds->compute[is]) {
           elliptic_t *solver = cds->solver[is];
           if (solver->solutionProjection) {
@@ -804,11 +810,15 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
           }
           printf("S%02d      : iter %03d  resNorm0 %.2e  "
                  "resNorm %.2e\n",
-              is,
-              solver->Niter,
-              solver->res0Norm,
-              solver->resNorm);
+                 is,
+                 solver->Niter,
+                 solver->res0Norm,
+                 solver->resNorm);
         }
+      }
+
+      if (nrs->neknek->coupled) {
+        printf("neknek   : sync %.2e  exchange %.2e\n", nrs->neknek->tSync, nrs->neknek->tExch);
       }
 
       if (nrs->flow) {
@@ -923,7 +933,6 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
         printf("MSH      : iter %03d  resNorm0 %.2e  resNorm %.2e\n",
                solver->Niter, solver->res0Norm, solver->resNorm);
       }
- 
     }
 
     if(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")){
@@ -934,18 +943,16 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
       printf("step= %d  t= %.8e  dt=%.1e  C= %.2f", tstep, time, nrs->dt[0], cfl);
 
     if (!verboseInfo) {
-      for(int is = 0; is < nrs->Nscalar; is++)
-        if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
+      for (int is = 0; is < nrs->Nscalar; is++)
+        if (cds->compute[is])
+          printf("  S: %d", cds->solver[is]->Niter);
 
       if (nrs->flow) {
         printf("  P: %d", nrs->pSolver->Niter);
         if (nrs->uvwSolver)
           printf("  UVW: %d", nrs->uvwSolver->Niter);
         else
-          printf("  U: %d  V: %d  W: %d",
-              nrs->uSolver->Niter,
-              nrs->vSolver->Niter,
-              nrs->wSolver->Niter);
+          printf("  U: %d  V: %d  W: %d", nrs->uSolver->Niter, nrs->vSolver->Niter, nrs->wSolver->Niter);
       }
       if(nrs->meshSolver)
         printf("  MSH: %d", nrs->meshSolver->Niter);

@@ -7,6 +7,7 @@
 #include "udf.hpp"
 #include <vector>
 #include <tuple>
+#include "findpts.hpp"
 #include "fileUtils.hpp"
 
 
@@ -27,6 +28,7 @@ void compileKernels() {
   MPI_Barrier(platform->comm.mpiComm);
 
   platform->kernelInfo["defines/p_bcTypeW"] = bcMap::bcTypeW;
+  platform->kernelInfo["defines/p_bcTypeINT"] = bcMap::bcTypeINT;
   platform->kernelInfo["defines/p_bcTypeV"] = bcMap::bcTypeV;
   platform->kernelInfo["defines/p_bcTypeSYMX"] = bcMap::bcTypeSYMX;
   platform->kernelInfo["defines/p_bcTypeSYMY"] = bcMap::bcTypeSYMY;
@@ -42,6 +44,7 @@ void compileKernels() {
   platform->kernelInfo["defines/p_bcTypeON"] = bcMap::bcTypeON;
   platform->kernelInfo["defines/p_bcTypeO"] = bcMap::bcTypeO;
 
+  platform->kernelInfo["defines/p_bcTypeINTS"] = bcMap::bcTypeINTS;
   platform->kernelInfo["defines/p_bcTypeS"] = bcMap::bcTypeS;
   platform->kernelInfo["defines/p_bcTypeF0"] = bcMap::bcTypeF0;
   platform->kernelInfo["defines/p_bcTypeF"] = bcMap::bcTypeF;
@@ -54,6 +57,8 @@ void compileKernels() {
   fflush(stdout);
 
   registerLinAlgKernels();
+
+  registerNekNekKernels();
 
   registerPostProcessingKernels();
 

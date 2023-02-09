@@ -696,9 +696,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       }
 
       if (unalignedBoundary) {
-        nrs->o_zeroNormalMaskVelocity = 
-          platform->device.malloc((nrs->uvwSolver->Nfields * sizeof(dfloat)) * 
-                                  nrs->uvwSolver->fieldOffset);
+        nrs->o_zeroNormalMaskVelocity =
+            platform->device.malloc((nrs->uvwSolver->Nfields * sizeof(dfloat)) * nrs->uvwSolver->fieldOffset);
         nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(int));
         createEToBV(nrs->meshV, nrs->uvwSolver->EToB, nrs->o_EToBVVelocity);
         auto o_EToB = 

@@ -10,6 +10,8 @@
 
 #include "inipp.hpp"
 #include "nrs.hpp"
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #define UPPER(a)  { transform(a.begin(), a.end(), a.begin(), std::ptr_fun<int, int>(std::toupper)); \
 }
@@ -73,6 +75,9 @@ void configRead(MPI_Comm comm)
 
   buf = installDir + "/gatherScatter";
   if(!getenv("OGS_HOME")) setenv("OGS_HOME", buf.c_str(), 1); 
+
+  buf = installDir + "/findpts";
+  if(!getenv("FINDPTS_HOME")) setenv("FINDPTS_HOME", buf.c_str(), 1); 
 
   ini.extract("general", "nekrs_gpu_mpi", buf);
   if(!getenv("NEKRS_GPU_MPI")) setenv("NEKRS_GPU_MPI", buf.c_str(), 1);

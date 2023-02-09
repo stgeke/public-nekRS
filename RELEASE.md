@@ -2,6 +2,7 @@
 
 ## What is new? 
 
+* Nek-nek, point interpolation, and particle tracking tools
 * Single source udf+oudf (see ethier example) 
 * BoomerAMG on device
 * Improved runtime statistics
@@ -39,7 +40,7 @@
 
 ## Thanks to our Contributors
 
-@kris-rowe, @pwang234, @nandu90
+@neil-lindquist, @kris-rowe, @pwang234, @nandu90
 
 We are grateful to all who added new features, filed issues or helped resolve them, 
 asked and answered questions, and were part of inspiring discussions.

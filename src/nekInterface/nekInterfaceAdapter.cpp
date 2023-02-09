@@ -3,6 +3,7 @@
 #include "nrs.hpp"
 #include "nekInterfaceAdapter.hpp"
 #include "bcMap.hpp"
+#include "neknek.hpp"
 #include "fileUtils.hpp"
 #include "re2Reader.hpp"
 #include "fileUtils.hpp"
@@ -400,7 +401,7 @@ void mkSIZE(int lx1,
   }
 
   int lx1m = lx1;
-
+  constexpr int nsessmax = 2;
   constexpr int nMaxObj = 20;
 
   int count = 0;
@@ -431,7 +432,9 @@ void mkSIZE(int lx1,
       sprintf(line, "      parameter (lelr=%d)\n", 128 * lelt);
     else if (strstr(line, "parameter (lx1m=") != NULL)
       sprintf(line, "      parameter (lx1m=%d)\n", lx1m);
-    else if (strstr(line, "parameter (maxobj=") != NULL)
+    else if(strstr(line, "parameter (nsessmax=") != NULL)
+      sprintf(line, "      parameter (nsessmax=%d)\n", nsessmax);
+    else if(strstr(line, "parameter (maxobj=") != NULL)
       sprintf(line, "      parameter (maxobj=%d)\n", nMaxObj);
 
     strcpy(sizeFile + count, line);

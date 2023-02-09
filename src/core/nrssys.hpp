@@ -75,9 +75,6 @@ using dlong = long long int;
 #include <unistd.h>
 #include <getopt.h>
 
-#include <filesystem>
-namespace fs = std::filesystem;
-
 #include "occa.hpp"
 #include "ogs.hpp"
 #include "setupAide.hpp"

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <filesystem>
 #include "nrs.hpp"
 #include "meshSetup.hpp"
 #include "setup.hpp"
@@ -16,6 +17,8 @@
 #include "AMGX.hpp"
 #include "hypreWrapper.hpp"
 #include "hypreWrapperDevice.hpp"
+
+namespace fs = std::filesystem;
 
 // extern variable from nrssys.hpp
 platform_t* platform;
@@ -42,6 +45,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
     	   int buildOnly, int commSizeTarget,
            int ciMode, std::string _setupFile,
            std::string _backend, std::string _deviceID,
+           const session_data_t &session,
            int debug)
 {
   MPI_Comm_dup(commg_in, &commg);
@@ -152,6 +156,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   }
 
   nrsSetup(comm, options, nrs);
+  new neknek_t(nrs, session);
 
   const double setupTime = platform->timer.query("setup", "DEVICE:MAX");
   if(rank == 0) {
@@ -229,6 +234,11 @@ double dt(int tstep)
            platform->comm.mpiComm,
            EXIT_FAILURE,
            "Invalid time step size %.2e\n", nrs->dt[0]);
+
+  // during a neknek simulation, sync dt across all ranks
+  if (nrs->neknek->coupled) {
+    MPI_Allreduce(MPI_IN_PLACE, &nrs->dt[0], 1, MPI_DFLOAT, MPI_MIN, platform->comm.mpiCommParent);
+  }
 
   return nrs->dt[0];
 }
@@ -377,10 +387,11 @@ void processUpdFile()
 
   if (rank == 0) {
     const std::string updFile = "nekrs.upd";
-    const char* ptr = realpath(updFile.c_str(), NULL);
+    const char *ptr = realpath(updFile.c_str(), NULL);
     if (ptr) {
-      if(rank == 0) std::cout << "processing " << updFile << " ...\n";
-      FILE* f = fopen(updFile.c_str(), "rb");
+      if (rank == 0)
+        std::cout << "processing " << updFile << " ...\n";
+      FILE *f = fopen(updFile.c_str(), "rb");
       fseek(f, 0, SEEK_END);
       fsize = ftell(f);
       fseek(f, 0, SEEK_SET);

@@ -12,9 +12,7 @@
 
 #include "device.hpp"
 #include "platform.hpp"
-
-namespace fs = std::filesystem;
-
+#include "fileUtils.hpp"
 
 void fileSync(const char * file)
 {

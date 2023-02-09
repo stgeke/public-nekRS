@@ -18,10 +18,7 @@ void createEToBV(const mesh_t* mesh, const int* EToB, occa::memory& o_EToBV)
     }
   }
 
-  ogsGatherScatter(EToBV.data(),
-                   ogsInt,
-                   ogsMin,
-                   mesh->ogs);
+  ogsGatherScatter(EToBV.data(), ogsInt, ogsMin, mesh->ogs);
 
   for (dlong n = 0; n < mesh->Nlocal; n++) {
     if (EToBV[n] == largeNumber) {

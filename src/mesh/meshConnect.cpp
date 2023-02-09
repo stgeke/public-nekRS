@@ -86,7 +86,7 @@ void meshConnect(mesh_t* mesh)
     (face_t*) calloc(mesh->Nelements * mesh->Nfaces, sizeof(face_t));
 
   dlong cnt = 0;
-  for(dlong e = 0; e < mesh->Nelements; ++e) {
+  for (dlong e = 0; e < mesh->Nelements; ++e) {
     for(int f = 0; f < mesh->Nfaces; ++f) {
       for(int n = 0; n < mesh->NfaceVertices; ++n) {
         dlong vid = e * mesh->Nverts + mesh->faceVertices[f * mesh->NfaceVertices + n];
@@ -115,9 +115,9 @@ void meshConnect(mesh_t* mesh)
 
   /* scan through sorted face lists looking for adjacent
      faces that have the same vertex ids */
-  for(cnt = 0; cnt < mesh->Nelements * mesh->Nfaces - 1; ++cnt) {
+  for (cnt = 0; cnt < mesh->Nelements * mesh->Nfaces - 1; ++cnt) {
 
-    if(!compareVertices(faces + cnt, faces + cnt + 1)) { // match
+    if (!compareVertices(faces + cnt, faces + cnt + 1)) { // match
       faces[cnt].elementNeighbor = faces[cnt + 1].element;
       faces[cnt].faceNeighbor = faces[cnt + 1].face;
 
@@ -137,7 +137,7 @@ void meshConnect(mesh_t* mesh)
   mesh->EToF = (int*)   calloc(mesh->Nelements * mesh->Nfaces, sizeof(int  ));
 
   cnt = 0;
-  for(dlong e = 0; e < mesh->Nelements; ++e) {
+  for (dlong e = 0; e < mesh->Nelements; ++e) {
     for(int f = 0; f < mesh->Nfaces; ++f) {
       mesh->EToE[cnt] = faces[cnt].elementNeighbor;
       mesh->EToF[cnt] = faces[cnt].faceNeighbor;

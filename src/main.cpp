@@ -1,3 +1,4 @@
+
 /*---------------------------------------------------------------------------*\
    Copyright (c) 2019-2022, UCHICAGO ARGONNE, LLC.
 
@@ -65,6 +66,7 @@
 #include <fstream>
 #include <cstdio>
 #include <string>
+#include <sstream>
 #include <cstring>
 #include <getopt.h>
 #include <cfenv>
@@ -115,10 +117,10 @@ struct cmdOptions
   std::string setupFile;
   std::string deviceID;
   std::string backend;
+  bool redirectOutput;
 };
 
-struct session
-{
+struct session_t {
   int size;
   std::string setupFile;
 };
@@ -172,8 +174,8 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         break;
       case 'c':
         cmdOpt->ciMode = atoi(optarg);
-        if (cmdOpt->ciMode < 1) {
-          std::cout << "ERROR: ci test id has to be >0!\n";
+        if (cmdOpt->ciMode < 0) {
+          std::cout << "ERROR: ci test id has to be >= 0!\n";
           printHelp = 1;
         }
         break;
@@ -212,7 +214,6 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
       }
     }
 #endif
-
   }
 
   for(auto opt: {&cmdOpt->multiSessionFile, &cmdOpt->setupFile, &cmdOpt->deviceID, &cmdOpt->backend})
@@ -257,7 +258,7 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
   return cmdOpt;
 }
 
-MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
+MPI_Comm setupSession(cmdOptions *cmdOpt, const MPI_Comm &comm, session_data_t &session)
 {
   int rank, size;
   MPI_Comm_rank(comm, &rank);
@@ -289,7 +290,7 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
     free(buf);
 
     auto list = serializeString(multiSessionFileContent, ';');
-    auto sessionList = new session[list.size()];
+    auto sessionList = new session_t[list.size()];
 
     int nSessions = 0;
     int rankSum = 0;
@@ -305,6 +306,8 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
       rankSum += sessionList[nSessions].size;
       nSessions++;
     }
+
+    session.nsessions = nSessions;
 
     int err = 0;
     if(rankSum != size) err = 1;
@@ -334,15 +337,16 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
     MPI_Comm_rank(newComm, &rank);
     MPI_Comm_size(newComm, &size);
 
+    session.sessionID = color;
+    session.globalComm = comm;
+    session.localComm = newComm;
+
     cmdOpt->setupFile = sessionList[color].setupFile;
     cmdOpt->sizeTarget = size;
 
     if(cmdOpt->debug) {
-      std::cout << "globalRank:" << rankGlobal
-                << " localRank: " << rank
-                << " commSize: " << size
-                << " setupFile:" << cmdOpt->setupFile
-                << "\n";
+      std::cout << "globalRank:" << rankGlobal << " localRank: " << rank << " pid: " << ::getpid()
+                << " commSize: " << size << " setupFile:" << cmdOpt->setupFile << "\n";
     }
     fflush(stdout);
     MPI_Barrier(comm);
@@ -423,7 +427,14 @@ int main(int argc, char** argv)
   }
 
   cmdOptions* cmdOpt = processCmdLineOptions(argc, argv, commGlobal);
-  MPI_Comm comm = setupSession(cmdOpt, commGlobal);
+  session_data_t session;
+  session.globalComm = commGlobal;
+  session.sessionID = 0;
+  session.localComm = commGlobal;
+  session.nsessions = 1;
+  session.coupled = false;
+
+  MPI_Comm comm = setupSession(cmdOpt, commGlobal, session);
 
   int rank, size;
   MPI_Comm_rank(comm, &rank);
@@ -463,6 +474,7 @@ int main(int argc, char** argv)
     	       cmdOpt->buildOnly, cmdOpt->sizeTarget,
                cmdOpt->ciMode, cmdOpt->setupFile,
                cmdOpt->backend, cmdOpt->deviceID,
+               session,
                cmdOpt->debug);
 
   if (cmdOpt->buildOnly) {

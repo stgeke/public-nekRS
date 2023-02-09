@@ -39,7 +39,7 @@
     const dfloat WSJ = sgeo[sk * p_Nsgeo + p_WSJID];                                                         \
     const dlong bcType = EToB[face + p_Nfaces * e];                                                          \
     dfloat flux = 0;                                                                                         \
-    if (bcType == p_bcTypeV) {                                                      \
+    if (bcType == p_bcTypeV || bcType == p_bcTypeINT) {                                                      \
       flux = coef * (bc.nx * bc.u + bc.ny * bc.v + bc.nz * bc.w);                                            \
     }                                                                                                        \
     else if (bcType == p_bcTypeSYMX || bcType == p_bcTypeSYMY ||                                             \

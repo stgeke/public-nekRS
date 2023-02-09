@@ -63,6 +63,11 @@ nScalars                    <int>                                      number of
                                                                        by default, the scalars will have the settings
                                                                        as outlined by the default [SCALAR] section
 ----------------------------------------------------------------------------------------------------------------------
+[NEKNEK]
+boundaryEXTOrder            <int>                                      boundary extrapolation order of coupled sessions
+                            1 [D]                                      order unity extrapolation is unconditionally stable
+                                                                       higher orders, however, may require additional corrector steps
+----------------------------------------------------------------------------------------------------------------------
 [PROBLEMTYPE]
 equation                    stokes
                             navierStokes [D]

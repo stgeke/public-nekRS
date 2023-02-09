@@ -148,6 +148,7 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
     setenv("NEKRS_HOME", std::string(NEKRS_HOME_NEW).c_str(), 1);
     setenv("NEKRS_KERNEL_DIR", std::string(NEKRS_HOME_NEW / "kernels").c_str(), 1);
     setenv("OGS_HOME", std::string(NEKRS_HOME_NEW / "gatherScatter").c_str(), 1);
+    setenv("FINDPTS_HOME", std::string(NEKRS_HOME_NEW / "findpts").c_str(), 1);
   }
 
   {

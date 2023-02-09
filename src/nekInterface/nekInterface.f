@@ -183,6 +183,7 @@ c-----------------------------------------------------------------------
       ls = lp + len(mesh_in)
       call blank(re2fle1(ls+1),len(re2fle)-ls)
 
+
       return
       end
 c-----------------------------------------------------------------------
@@ -270,6 +271,7 @@ c-----------------------------------------------------------------------
         enddo
         enddo
       endif
+
 
       call setvar          ! Initialize most variables
 
@@ -588,6 +590,11 @@ c-----------------------------------------------------------------------
           if(ismesh.eq.1) then
             ibc = p_bcTypeW 
           endif
+        else if (c.eq.'int') then 
+          ibc = p_bcTypeINT
+          if(ismesh.eq.1) then
+            ibc = p_bcTypeW 
+          endif
         else if (c.eq.'o  ' .or. c.eq.'O  ') then 
           ibc = p_bcTypeO 
           if(ismesh.eq.1) then
@@ -644,6 +651,8 @@ c-----------------------------------------------------------------------
       else if(ifld.gt.1) then
         if (c.eq.'t  ') then 
           ibc = p_bcTypeS 
+        else if (c.eq.'int') then 
+          ibc = p_bcTypeINTS 
         else if (c.eq.'o  ' .or. c.eq.'O  ' .or. c.eq.'I  ') then 
           ibc = p_bcTypeF0 
         else if (c.eq.'f  ') then 
@@ -780,6 +789,7 @@ c
            call chknord(ifalg,ifnorx,ifnory,ifnorz,ifc,iel)
 
            if(cb.eq.'W  ') map(p_bcTypeW) = 1
+           if(cb.eq.'int') map(p_bcTypeINT) = 1
            if(cb.eq.'v  ') map(p_bcTypeV) = 1
            if(cb.eq.'mv ') map(p_bcTypeMV) = 1
 
@@ -810,6 +820,7 @@ c
         do iel = 1,nelv
         do ifc = 1,2*ndim
            cb = cbc(ifc,iel,1)
+           if(cb.eq.'int') map(p_bcTypeINTS) = 1
            if(cb.eq.'t  ') map(p_bcTypeS) = 1
            if(cb.eq.'I  ' .or. cb.eq.'O  ') map(p_bcTypeF0) = 1
            if(cb.eq.'f  ') map(p_bcTypeF) = 1
@@ -836,6 +847,8 @@ c
  
          if(cb.eq.'W  ') then
            boundaryID(ifc,iel) = map(p_bcTypeW) 
+         else if(cb.eq.'int') then
+           boundaryID(ifc,iel) = map(p_bcTypeINT) 
          else if(cb.eq.'v  ') then
            boundaryID(ifc,iel) = map(p_bcTypeV) 
          else if(cb.eq.'mv ') then
@@ -860,6 +873,7 @@ c
          else
            if(cb.ne.'E  ' .and. cb.ne.'P  ') then
              ierr = 1
+             write(6,*) 'b/c(1) of type ', cb
              goto 99
            endif
          endif
@@ -869,6 +883,8 @@ c
 
       if(map(p_bcTypeW).gt.0)
      $  cbc_bmap(map(p_bcTypeW), ifld) = 'W  '
+      if(map(p_bcTypeINT).gt.0)
+     $  cbc_bmap(map(p_bcTypeINT), ifld) = 'int'
       if(map(p_bcTypeV).gt.0)
      $  cbc_bmap(map(p_bcTypeV), ifld) = 'v  '
       if(map(p_bcTypeMV).gt.0)
@@ -913,12 +929,17 @@ c      write(6,*) 'vel cbc_bmap: ', (cbc_bmap(i,1), i=1,p_velNBcType)
             cb = cbc(ifc,iel,ifld) 
             if(cb.eq.'t  ') then
               bcID = p_bcTypeS 
+            else if(cb.eq.'int') then
+              bcID = p_bcTypeINTS
             else if(cb.eq.'I  ' .or. cb.eq.'O  ') then
               bcID = p_bcTypeF0 
             else if(cb.eq.'f  ') then
               bcID = p_bcTypeF 
             else
-              if(cb.ne.'E  ' .and. cb.ne.'P  ') ierr = 1
+              if(cb.ne.'E  ' .and. cb.ne.'P  ') then
+                ierr = 1
+                write(6,*) 'b/c(2) of type ', cb
+              endif
             endif 
             ibc_bmap(bID, ifld) = bcID 
           endif          
@@ -928,6 +949,7 @@ c      write(6,*) 'vel cbc_bmap: ', (cbc_bmap(i,1), i=1,p_velNBcType)
 
         do bID = 1,p_scalNBcType
            bcID = iglmax(ibc_bmap(bID, ifld),1)
+           if(bcID.eq.p_bcTypeINTS) cbc_bmap(bID, ifld) = 'int' 
            if(bcID.eq.p_bcTypeS) cbc_bmap(bID, ifld) = 't  ' 
            if(bcID.eq.p_bcTypeF0) cbc_bmap(bID, ifld) = 'I  ' 
            if(bcID.eq.p_bcTypeF) cbc_bmap(bID, ifld) = 'f  ' 
@@ -948,12 +970,17 @@ c        write(6,*) ifld, 't cbc_bmap: ', (cbc_bmap(i,ifld), i=1,6)
            cb = cbc(ifc,iel,ifld) 
            if(cb.eq.'t  ') then
              map(p_bcTypeS) = 1
+           else if(cb.eq.'int') then 
+             map(p_bcTypeINTS) = 1
            else if(cb.eq.'I  ' .or. cb.eq.'O  ') then 
              map(p_bcTypeF0) = 1
            else if(cb.eq.'f  ') then
              map(p_bcTypeF) = 1
            else 
-             if(cb.ne.'E  ' .and. cb.ne.'P  ') ierr = 1
+             if(cb.ne.'E  ' .and. cb.ne.'P  ') then
+               ierr = 1
+               write(6,*) 'b/c(3) of type ', cb
+             endif
            endif
         enddo
         enddo
@@ -971,6 +998,7 @@ c        write(6,*) ifld, 't cbc_bmap: ', (cbc_bmap(i,ifld), i=1,6)
         do iel = 1,nelt
         do ifc = 1,2*ndim
            cb = cbc(ifc,iel,ifld) 
+           if(cb.eq.'int')  boundaryIDt(ifc,iel) = map(p_bcTypeINTS) 
            if(cb.eq.'t  ')  boundaryIDt(ifc,iel) = map(p_bcTypeS) 
            if(cb.eq.'I  ' .or. cb.eq.'O  ') 
      $       boundaryIDt(ifc,iel) = map(p_bcTypeF0) 
@@ -978,6 +1006,7 @@ c        write(6,*) ifld, 't cbc_bmap: ', (cbc_bmap(i,ifld), i=1,6)
         enddo
         enddo
 
+        if(map(p_bcTypeINTS).gt.0) cbc_bmap(map(1), ifld) = 'int'
         if(map(p_bcTypeS).gt.0) cbc_bmap(map(1), ifld) = 't  '
         if(map(p_bcTypeF0).gt.0) cbc_bmap(map(2), ifld) = 'I  '
         if(map(3).gt.p_bcTypeF) cbc_bmap(map(3), ifld) = 'f  '

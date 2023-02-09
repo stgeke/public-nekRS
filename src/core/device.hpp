@@ -41,8 +41,6 @@ class device_t {
     bool deviceAtomic;
 
   private:
-    void distributeToNode(const fs::path& srcPath, 
-                          const fs::path& dstPath) const;
 
     // non-collective
     occa::kernel buildKernel(const std::string &fullPath,

@@ -107,6 +107,9 @@ void applyDirichlet(nrs_t *nrs, double time)
                                cds->o_Ue,
                                o_diff_i,
                                o_rho_i,
+                               cds->neknek->o_pointMap,
+                               cds->neknek->o_U,
+                               cds->neknek->o_S,
                                *(cds->o_usrwrk),
                                platform->o_mempool.slice2);
 
@@ -166,6 +169,8 @@ void applyDirichlet(nrs_t *nrs, double time)
                                      nrs->o_EToB,
                                      nrs->o_rho,
                                      nrs->o_mue,
+                                     nrs->neknek->o_pointMap,
+                                     nrs->neknek->o_U,
                                      nrs->o_usrwrk,
                                      nrs->o_U,
                                      platform->o_mempool.slice7);
@@ -192,7 +197,6 @@ void applyDirichlet(nrs_t *nrs, double time)
                             nrs->uvwSolver->o_maskIds,
                             platform->o_mempool.slice7,
                             nrs->o_U, nrs->o_Ue);
-
     }
     else {
       if (nrs->uSolver->Nmasked)

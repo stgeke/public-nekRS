@@ -110,8 +110,7 @@ void meshOccaPopulateDeviceHex3D(mesh_t *mesh, setupAide &newOptions, occa::prop
   }
 
   mesh->o_vmapM =
-    platform->device.malloc(mesh->Nelements * mesh->Nfp * mesh->Nfaces * sizeof(dlong),
-                        mesh->vmapM);
+      platform->device.malloc(mesh->Nelements * mesh->Nfp * mesh->Nfaces * sizeof(dlong), mesh->vmapM);
   mesh->o_EToB =
     platform->device.malloc(mesh->Nelements * mesh->Nfaces * sizeof(int),
                         mesh->EToB);

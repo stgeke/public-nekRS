@@ -139,7 +139,10 @@ static std::vector<std::string> generalKeys = {
     {"oudf"},
     {"udf"},
     {"usr"},
+};
 
+static std::vector<std::string> neknekKeys = {
+    {"boundaryextorder"},
 };
 
 static std::vector<std::string> problemTypeKeys = {
@@ -230,6 +233,7 @@ static std::vector<std::string> deprecatedKeys = {
 
 static std::vector<std::string> validSections = {
     {"general"},
+    {"neknek"},
     {"temperature"},
     {"pressure"},
     {"velocity"},
@@ -253,6 +257,7 @@ void convertToLowerCase(std::vector<std::string>& stringVec)
 void makeStringsLowerCase()
 {
   convertToLowerCase(generalKeys);
+  convertToLowerCase(neknekKeys);
   convertToLowerCase(problemTypeKeys);
   convertToLowerCase(commonKeys);
   convertToLowerCase(meshKeys);
@@ -276,6 +281,8 @@ const std::vector<std::string>& getValidKeys(const std::string& section)
 
   if(section == "general")
     return generalKeys;
+  if (section == "neknek")
+    return neknekKeys;
   if(section == "problemtype")
     return problemTypeKeys;
   if(section == "mesh")
@@ -1309,6 +1316,8 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PLATFORM NUMBER", "0");
   options.setArgs("VERBOSE", "FALSE");
 
+  options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "1");
+
   options.setArgs("ADVECTION", "TRUE");
   options.setArgs("ADVECTION TYPE", "CUBATURE+CONVECTIVE");
 
@@ -1707,6 +1716,12 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     parseRegularization(rank, options, par, "general");
   }
 
+  // NEKNEK
+  dlong boundaryEXTOrder;
+  if (par->extract("neknek", "boundaryextorder", boundaryEXTOrder)) {
+    options.setArgs("BOUNDARY EXTRAPOLATION ORDER", std::to_string(boundaryEXTOrder));
+  }
+
   // PROBLEMTYPE
   bool stressFormulation;
   if (par->extract("problemtype", "stressformulation", stressFormulation)){
@@ -1733,7 +1748,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
 
     options.setArgs("ADVECTION", "TRUE");
-    if (eqn == "stokes"){
+    if (eqn == "stokes") {
       options.setArgs("ADVECTION", "FALSE");
     }
   }

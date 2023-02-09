@@ -216,6 +216,7 @@ include(config/bench.cmake)
 include(config/mesh.cmake)
 include(config/elliptic.cmake)
 include(config/gslib.cmake)
+include(config/findpts.cmake)
 
 set(SRC 
     src/lib/nekrs.cpp
@@ -236,6 +237,7 @@ set(SRC
     src/setup/setup.cpp
     src/bdry/alignment.cpp
     src/core/registerNrsKernels.cpp
+    src/core/registerNekNekKernels.cpp
     src/core/registerPostProcessingKernels.cpp
     src/core/registerEllipticKernels.cpp
     src/core/registerEllipticPreconditionerKernels.cpp
@@ -269,6 +271,9 @@ set(SRC
     src/plugins/velRecycling.cpp
     src/plugins/RANSktau.cpp
     src/plugins/lowMach.cpp
+    src/plugins/lpm.cpp
+    src/pointInterpolation/pointInterpolation.cpp
+    src/neknek/neknek.cpp
     src/udf/udf.cpp
     src/udf/compileUDFKernels.cpp
     src/nekInterface/nekInterfaceAdapter.cpp
@@ -277,6 +282,7 @@ set(SRC
     ${MESH_SOURCES}
     ${ELLIPTIC_SOURCES}
     ${OGS_SOURCES}
+    ${FINDPTS_SOURCES}
 )
 
 set_property(
@@ -307,8 +313,11 @@ target_include_directories(nekrs-lib
   src/regularization
   src/linAlg
   src/navierStokes
+  src/neknek
   src/cds
   src/postProcessing
+  src/pointInterpolation
+  src/lns
   ${BENCH_SOURCE_DIR}
   ${BENCH_SOURCE_DIR}/core
   ${BENCH_SOURCE_DIR}/fdm
@@ -318,6 +327,7 @@ target_include_directories(nekrs-lib
   ${NEKINTERFACEDIR}
   ${OGS_SOURCE_DIR}/include
   ${OGS_SOURCE_DIR}
+  ${FINDPTS_SOURCE_DIR}
   ${ELLIPTIC_SOURCE_DIR}
   PRIVATE
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/hypre
@@ -410,7 +420,7 @@ install(
 # Trailing slash prevents parent directory from being copied
 install(DIRECTORY scripts/ DESTINATION bin
   FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-install(DIRECTORY kernels/ DESTINATION kernels FILES_MATCHING REGEX "\.okl$|\.c|\.h$")
+install(DIRECTORY kernels/ DESTINATION kernels FILES_MATCHING REGEX "\.okl$|\.c|\.h$|\.hpp$|")
 install(DIRECTORY src/ DESTINATION include FILES_MATCHING REGEX "\.hpp$|\.h$|\.tpp$")
 install(FILES src/udf/CMakeLists.txt DESTINATION udf)
 install(DIRECTORY src/nekInterface/ DESTINATION nekInterface REGEX "\.hpp$|\.cpp$" EXCLUDE)

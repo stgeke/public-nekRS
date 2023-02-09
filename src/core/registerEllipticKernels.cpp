@@ -46,11 +46,9 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   kernelInfo += meshKernelProperties(N);
 
   const bool blockSolver = [&section]() {
-    if (section == "velocity" && 
-        platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
+    if (section == "velocity" && platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
       return true;
-    if (section == "velocity" && 
-        platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
+    if (section == "velocity" && platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
       return true;
     if (section == "mesh" && 
         platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
@@ -62,12 +60,9 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   const int Nfields = (blockSolver) ? 3 : 1;
 
   const bool stressForm = [&section]() {
-
-    if (section == "velocity" && 
-        platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
+    if (section == "velocity" && platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE"))
       return true;
-    if (section == "mesh" && 
-        platform->options.compareArgs("MESH STRESSFORMULATION", "TRUE"))
+    if (section == "mesh" && platform->options.compareArgs("MESH STRESSFORMULATION", "TRUE"))
       return true;
     return false;
   }();
@@ -150,7 +145,7 @@ void registerEllipticKernels(std::string section, int poissonEquation)
   const int verbosity = verbose ? 2 : 1;
 
   for (auto &&coeffField : {true, false}) {
-    if (platform->options.compareArgs(optionsPrefix + "ELLIPTIC COEFF FIELD","TRUE") != coeffField)
+    if (platform->options.compareArgs(optionsPrefix + "ELLIPTIC COEFF FIELD", "TRUE") != coeffField)
       continue;
 
     std::string kernelNamePrefix = "elliptic";

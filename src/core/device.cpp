@@ -184,20 +184,22 @@ occa::kernel device_t::buildKernel(const std::string &fileName,
   MPI_Comm localCommunicator = platform->cacheLocal ? _comm.mpiCommLocal : _comm.mpiComm;
 
   const auto OCCA_CACHE_DIR0 = std::string(occa::env::OCCA_CACHE_DIR);
+  const auto OCCA_CACHE_DIR = platform->cacheBcast ? 
+                              std::string(platform->tmpDir / fs::path("occa/")) :
+                              OCCA_CACHE_DIR0;
 
   occa::kernel constructedKernel;
 
   // rank0 compiles, than all load
   for (int pass = 0; pass < 2; ++pass) {
-    occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 :  
-                                 std::string(platform->tmpDir / fs::path("occa/"));
+    occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 : OCCA_CACHE_DIR; 
     if ((pass == 0 && rank == 0) || (pass == 1 && rank != 0)) {
       constructedKernel = this->buildKernel(fileName, kernelName, props, suffix);
     }
 
     if(platform->cacheBcast && pass == 0) {
       const auto srcPath = (fs::path(constructedKernel.sourceFilename()).parent_path());
-      const auto dstPath = platform->tmpDir / fs::path("occa/cache/");
+      const auto dstPath = OCCA_CACHE_DIR / fs::path("cache/");
       fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
     } else {
       MPI_Barrier(localCommunicator);
@@ -217,21 +219,23 @@ occa::kernel device_t::buildKernel(const std::string &fullPath,
 
   if (buildRank0) {
     const auto OCCA_CACHE_DIR0 = std::string(occa::env::OCCA_CACHE_DIR);
+    const auto OCCA_CACHE_DIR = platform->cacheBcast ? 
+                                std::string(platform->tmpDir / fs::path("occa/")) :
+                                OCCA_CACHE_DIR0;
 
     const int rank = platform->cacheLocal ? _comm.localRank : _comm.mpiRank;
     MPI_Comm localCommunicator = platform->cacheLocal ? _comm.mpiCommLocal : _comm.mpiComm;
 
     // rank0 compiles, than all load
     for (int pass = 0; pass < 2; ++pass) {
-      occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 :  
-                                  std::string(platform->tmpDir / fs::path("occa/"));
+      occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 : OCCA_CACHE_DIR ;
       if ((pass == 0 && rank == 0) || (pass == 1 && rank != 0)) {
         constructedKernel = this->buildKernel(fullPath, props, suffix);
       }
 
       if(platform->cacheBcast && pass == 0) {
         const auto srcPath = fs::path(constructedKernel.sourceFilename()).parent_path();
-        const auto dstPath = platform->tmpDir / fs::path("occa/cache/");
+        const auto dstPath = OCCA_CACHE_DIR / fs::path("cache/");
         fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
       } else {
         MPI_Barrier(localCommunicator);

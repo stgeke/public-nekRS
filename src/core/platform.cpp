@@ -194,9 +194,6 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
 
   serial = device.mode() == "Serial" || device.mode() == "OpenMP";
 
-  if (serial) {
-  }
-
   const std::string extension = serial ? ".c" : ".okl";
 
   compileDummyKernel(*this);

@@ -34,9 +34,6 @@ SOFTWARE.
 #include <string>
 #include <vector>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-
 #include "nrssys.hpp"
 #include <map>
 

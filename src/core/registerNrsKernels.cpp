@@ -38,16 +38,9 @@ void registerNrsKernels(occa::properties kernelInfoBC)
   int nEXT = 0;
   platform->options.getArgs("SUBCYCLING STEPS", Nsubsteps);
 
-  if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO1")) {
-    nBDF = 1;
-  }
-  else if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO2")) {
-    nBDF = 2;
-  }
-  else if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO3")) {
-    nBDF = 3;
-  }
-  nEXT = 3;
+  platform->options.getArgs("BDF ORDER", nBDF);
+  platform->options.getArgs("EXT ORDER", nEXT);
+
   if (Nsubsteps)
     nEXT = nBDF;
 

@@ -74,6 +74,7 @@ using dlong = long long int;
 #include <cstdlib>
 #include <unistd.h>
 #include <getopt.h>
+#include <sys/stat.h>
 
 #include "occa.hpp"
 #include "ogs.hpp"

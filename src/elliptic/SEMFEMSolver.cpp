@@ -1,6 +1,5 @@
 #include "nrssys.hpp"
 #include "platform.hpp"
-#include "gslib.h"
 #include "elliptic.h"
 #include "SEMFEMSolver.hpp"
 

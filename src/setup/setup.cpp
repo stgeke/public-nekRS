@@ -169,16 +169,9 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->idt = 1 / nrs->dt[0];
   nrs->g0 = 1;
 
-  if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO1")) {
-    nrs->nBDF = 1;
-  }
-  else if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO2")) {
-    nrs->nBDF = 2;
-  }
-  else if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO3")) {
-    nrs->nBDF = 3;
-  }
-  nrs->nEXT = 3;
+  platform->options.getArgs("BDF ORDER", nrs->nBDF);
+  platform->options.getArgs("EXT ORDER", nrs->nEXT);
+
   if (nrs->Nsubsteps)
     nrs->nEXT = nrs->nBDF;
   nrs->coeffEXT = (dfloat *)calloc(nrs->nEXT, sizeof(dfloat));

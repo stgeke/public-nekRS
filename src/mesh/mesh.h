@@ -306,25 +306,6 @@ void occaTimerToc(occa::device device,std::string name);
 
 extern "C"
 {
-void* xxtSetup(uint num_local_rows,
-               void* row_ids,
-               uint nnz,
-               void*   A_i,
-               void*   A_j,
-               void* A_vals,
-               int null_space,
-               const char* inttype,
-               const char* floattype);
-
-void xxtSolve(void* x,
-              void* A,
-              void* rhs);
-
-void xxtFree(void* A);
-}
-
-extern "C"
-{
 void dgesv_ ( int* N, int* NRHS, double* A,
               int* LDA,
               int* IPIV,

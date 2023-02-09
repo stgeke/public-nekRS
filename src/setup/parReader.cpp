@@ -1301,7 +1301,9 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
 
   options.setArgs("NUMBER OF SCALARS", "0");
 
-  options.setArgs("TIME INTEGRATOR", "TOMBO2");
+  options.setArgs("BDF ORDER", "2");
+  options.setArgs("EXT ORDER", "3");
+
   options.setArgs("SUBCYCLING STEPS", "0");
   options.setArgs("SUBCYCLING TIME ORDER", "4");
   options.setArgs("SUBCYCLING TIME STAGE NUMBER", "4");
@@ -1634,13 +1636,13 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
   std::string timeStepper;
   if(par->extract("general", "timestepper", timeStepper)){
     if (timeStepper == "bdf3" || timeStepper == "tombo3") {
-      options.setArgs("TIME INTEGRATOR", "TOMBO3");
+      options.setArgs("BDF ORDER", "3");
     }
     else if (timeStepper == "bdf2" || timeStepper == "tombo2") {
-      options.setArgs("TIME INTEGRATOR", "TOMBO2");
+      options.setArgs("BDF ORDER", "2");
     }
     else if (timeStepper == "bdf1" || timeStepper == "tombo1") {
-      options.setArgs("TIME INTEGRATOR", "TOMBO1");
+      options.setArgs("BDF ORDER", "1");
     }
     else {
       std::ostringstream error;

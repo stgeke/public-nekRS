@@ -856,15 +856,14 @@ void lpm_t::writeFld(dfloat time)
 
 void lpm_t::registerKernels(occa::properties &kernelInfo)
 {
-  std::string installDir;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
+  std::string installDir(getenv("NEKRS_HOME"));
   // build kernels
   std::string fileName, kernelName;
   const std::string suffix = "Hex3D";
-  const std::string oklpath = installDir + "/kernels/";
+  const std::string oklpath(getenv("NEKRS_KERNEL_DIR"));
 
   kernelName = "remapParticles";
-  fileName = oklpath + "plugins/" + kernelName + ".okl";
+  fileName = oklpath + "/plugins/" + kernelName + ".okl";
   platform->kernels.add(kernelName, fileName, kernelInfo);
 }
 

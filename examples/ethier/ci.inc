@@ -406,12 +406,14 @@ void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKer
     o_xRand[n] = platform->device.malloc(pointsX[n].size() * sizeof(dfloat), pointsX[n].data());
     o_yRand[n] = platform->device.malloc(pointsX[n].size() * sizeof(dfloat), pointsY[n].data());
     o_zRand[n] = platform->device.malloc(pointsX[n].size() * sizeof(dfloat), pointsZ[n].data());
-    exactUVWPKernel(pointsX[n].size(),
+
+    const dlong nPoints = pointsX[n].size();
+    exactUVWPKernel(nPoints,
                     time,
                     o_xRand[n],
                     o_yRand[n],
                     o_zRand[n],
-                    pointsX[n].size(),
+                    nPoints,
                     o_PeRand[n],
                     o_UeRand[n]);
   }

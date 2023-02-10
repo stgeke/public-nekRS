@@ -178,7 +178,7 @@ mesh_t *createMesh(MPI_Comm comm,
     }
     free(tmp);
   }
-  if(err) EXIT_AND_FINALIZE(EXIT_FAILURE);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 
   mesh->oogs = oogs::setup(mesh->ogs, 1, mesh->Nelements * mesh->Np, ogsDfloat, NULL, OOGS_AUTO);
 

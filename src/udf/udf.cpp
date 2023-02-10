@@ -34,41 +34,31 @@ uint32_t fchecksum(std::ifstream &file)
 
 void oudfFindDirichlet(std::string &field)
 {
-  if (field.find("velocity") != std::string::npos && !velocityDirichletConditions) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Cannot find oudf function: velocityDirichletConditions!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
-  if (field.find("scalar") != std::string::npos && !scalarDirichletConditions) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Cannot find oudf function: scalarDirichletConditions!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+  nrsCheck(field.find("velocity") != std::string::npos && !velocityDirichletConditions,
+           platform->comm.mpiComm, EXIT_FAILURE,
+           "Cannot find oudf function: velocityDirichletConditions!\n", "");
+
+  nrsCheck(field.find("scalar") != std::string::npos && !scalarDirichletConditions,
+           platform->comm.mpiComm, EXIT_FAILURE,
+           "Cannot find oudf function: scalarDirichletConditions!\n", "");
+
   if (field == "pressure" && !pressureDirichletConditions) {
     if (platform->comm.mpiRank == 0)
       std::cout << "WARNING: Cannot find oudf function: pressureDirichletConditions!\n";
-    // EXIT_AND_FINALIZE(EXIT_FAILURE); this bc is optional
   }
-  if (field.find("mesh") != std::string::npos && !meshVelocityDirichletConditions &&
-      !bcMap::useDerivedMeshBoundaryConditions()) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Cannot find oudf function: meshVelocityDirichletConditions!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+  nrsCheck(field.find("mesh") != std::string::npos && !meshVelocityDirichletConditions &&
+           !bcMap::useDerivedMeshBoundaryConditions(), platform->comm.mpiComm, EXIT_FAILURE,
+           "Cannot find oudf function: meshVelocityDirichletConditions!\n", "");
 }
 
 void oudfFindNeumann(std::string &field)
 {
-  if (field.find("velocity") != std::string::npos && !velocityNeumannConditions) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Cannot find oudf function: velocityNeumannConditions!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
-  if (field.find("scalar") != std::string::npos && !scalarNeumannConditions) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Cannot find oudf function: scalarNeumannConditions!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+  nrsCheck(field.find("velocity") != std::string::npos && !velocityNeumannConditions,
+           platform->comm.mpiComm, EXIT_FAILURE,
+           "Cannot find oudf function: velocityNeumannConditions!\n", "");
+  nrsCheck(field.find("scalar") != std::string::npos && !scalarNeumannConditions,
+           platform->comm.mpiComm, EXIT_FAILURE,
+           "Cannot find oudf function: scalarNeumannConditions!\n", "");
 }
 
 void convertSingleSourceUdf(const std::string &udfFileCache, const std::string &oudfFileCache)

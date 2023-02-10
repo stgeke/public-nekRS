@@ -31,11 +31,8 @@ deviceVector_t::deviceVector_t(const size_t _offset,
                                const std::string _vectorName)
     : nVectors(_nVectors), wordSize(_wordSize), vectorName(_vectorName), offset(_offset)
 {
-  if (offset <= 0 || nVectors <= 0 || wordSize <= 0) {
-    if (platform->comm.mpiRank == 0)
-      printf("ERROR: deviceVector_t invalid input!\n");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(offset <= 0 || nVectors <= 0 || wordSize <= 0, MPI_COMM_SELF, EXIT_FAILURE,
+           "deviceVector_t invalid input!\n", "");
 
   o_vector = platform->device.malloc(nVectors * offset * wordSize);
   for (int s = 0; s < nVectors; ++s) {
@@ -45,16 +42,10 @@ deviceVector_t::deviceVector_t(const size_t _offset,
 
 occa::memory &deviceVector_t::at(const int i)
 {
-  if (i >= nVectors) {
-    if (platform->comm.mpiRank == 0) {
-      printf("ERROR: deviceVector_t(%s) has %zu size, but an attempt to access entry %i was made!\n",
-             vectorName.c_str(),
-             nVectors,
-             i);
-    }
-    ABORT(EXIT_FAILURE);
-    return o_vector;
-  }
+  nrsCheck(i >= nVectors, MPI_COMM_SELF, EXIT_FAILURE,
+           "deviceVector_t(%s) has %zu size, but an attempt to access entry %i was made!\n",
+           vectorName.c_str(), nVectors, i);
+
   return slices[i];
 }
 
@@ -98,14 +89,9 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
     int N;
     options.getArgs("POLYNOMIAL DEGREE", N);
     const int Nq = N + 1;
-    if (BLOCKSIZE < Nq * Nq) {
-      if (comm.mpiRank == 0)
-        printf("ERROR: several kernels requires BLOCKSIZE >= Nq * Nq."
-               "BLOCKSIZE = %d, Nq*Nq = %d\n",
-               BLOCKSIZE,
-               Nq * Nq);
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(BLOCKSIZE < Nq * Nq, comm.mpiComm, EXIT_FAILURE,
+             "Some kernels require BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+             BLOCKSIZE, Nq * Nq);
   }
 
   // create tmp dir

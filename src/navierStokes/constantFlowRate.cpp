@@ -106,14 +106,8 @@ bool apply(nrs_t *nrs, int tstep, dfloat time) {
       platform->options.compareArgs("CONSTANT FLOW DIRECTION", "Z");
   const bool directionAligned = X_aligned || Y_aligned || Z_aligned;
 
-  if (!directionAligned) {
-    if (platform->comm.mpiRank == 0)
-      printf("Flow direction is not aligned in (X,Y,Z).\n"
-             "Currently, only (X,Y,Z) aligned flow directions are supported in "
-             "the "
-             "constant flow rate driver.\n");
-    ABORT(1);
-  }
+  nrsCheck(!directionAligned, platform->comm.mpiComm, EXIT_FAILURE,
+           "Flow direction is not aligned in (X,Y,Z)\n", "");
 
   const bool recomputeBaseFlowRate =
       ConstantFlowRate::checkIfRecompute(nrs, tstep);

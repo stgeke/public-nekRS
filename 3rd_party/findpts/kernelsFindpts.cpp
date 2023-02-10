@@ -1,11 +1,12 @@
+// for platform
+#include "nrssys.hpp"
+#include "nrs.hpp"
+
 #include "ogstypes.h"
 #include "findpts.hpp"
 #include <cfloat>
 #include <tuple>
 #include <limits>
-// for platform
-#include "nrssys.hpp"
-#include "nrs.hpp"
 
 namespace findpts {
 

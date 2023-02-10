@@ -92,21 +92,6 @@ namespace {
 
 int worldRank;
 
-std::vector<std::string> serializeString(const std::string sin, char dlim)
-{
-  std::vector<std::string> slist;
-  std::string s(sin);
-  s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
-  std::stringstream ss;
-  ss.str(s);
-  while( ss.good() ) {
-    std::string substr;
-    std::getline(ss, substr, dlim);
-    if(!substr.empty()) slist.push_back(substr);
-  }
-  return slist;
-}
-
 struct cmdOptions
 {
   int buildOnly = 0;

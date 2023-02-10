@@ -1,3 +1,4 @@
+#include "nrssys.hpp"
 #include "compileKernels.hpp"
 #include "bcMap.hpp"
 #include "elliptic.h"

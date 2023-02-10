@@ -104,9 +104,7 @@ void checkValidBoundaryConditions(nrs_t *nrs)
     issueError |= invalid;
   }
 
-  if (issueError) {
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(issueError, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 }
 
 void updateInterpPoints(nrs_t *nrs)
@@ -313,12 +311,8 @@ void neknekSetup(nrs_t *nrs)
 
   neknek->coupled = minPointsAcrossSessions > 0;
 
-  if ((minPointsAcrossSessions == 0) && (maxPointsAcrossSessions > 0)) {
-    if (platform->comm.mpiRank == 0) {
-      std::cout << "Error: one session has no interpolation points, but another session does!\n";
-    }
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck((minPointsAcrossSessions == 0) && (maxPointsAcrossSessions > 0), platform->comm.mpiCommParent, EXIT_FAILURE, 
+          "One session has no interpolation points, but another session does!\n", "");
 
   if (!neknek->coupled) {
     neknek->Nscalar = nrs->Nscalar;
@@ -328,12 +322,8 @@ void neknekSetup(nrs_t *nrs)
     return;
   }
 
-  if (platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")) {
-    if (platform->comm.mpiRank == 0) {
-      std::cout << "Neknek + constant flow rate is not currently implemented!\n";
-    }
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE"), platform->comm.mpiComm, EXIT_FAILURE,
+           "constant flow rate support not supported\n", "");
 
   const dlong nsessions = neknek->nsessions;
 
@@ -389,13 +379,8 @@ neknek_t::neknek_t(nrs_t *nrs, const session_data_t &session)
       issueError = 1;
     }
 
-    MPI_Allreduce(MPI_IN_PLACE, &issueError, 1, MPI_DLONG, MPI_MAX, platform->comm.mpiCommParent);
-    if (issueError) {
-      if (platform->comm.mpiRank == 0) {
-        printf("ERROR: neknek + variable p0th is not supported!\n");
-      }
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(issueError, platform->comm.mpiCommParent, EXIT_FAILURE,
+             "variable p0th is not supported!\n", "");
   }
 
   this->copyNekNekPointsKernel = platform->kernels.get("copyNekNekPoints");

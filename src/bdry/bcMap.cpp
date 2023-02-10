@@ -196,19 +196,14 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     }
 #endif
 
-    if (vBcTextToID.find(key) == vBcTextToID.end()) {
-      if(rank == 0)
-        std::cout << "Invalid velocity bcType " << "\'" << key << "\'" << "!\n";
-      EXIT_AND_FINALIZE(EXIT_FAILURE);
-    }
+    nrsCheck(vBcTextToID.find(key) == vBcTextToID.end(), MPI_COMM_WORLD, EXIT_FAILURE,
+             "Invalid velocity bcType (%s)\n", key.c_str());
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
-  if(foundAligned && foundUnaligned) {
-    if(rank == 0)
-        std::cout << "Aligned together with unaligned mixed boundary types are not supported!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+
+  nrsCheck(foundAligned && foundUnaligned, MPI_COMM_WORLD, EXIT_FAILURE,
+           "Aligned together with unaligned mixed boundary types are not supported!\n", "");
 }
 
 static void s_setup(std::string field, std::vector<std::string> slist)
@@ -247,15 +242,8 @@ static void s_setup(std::string field, std::vector<std::string> slist)
     if (key.compare("o") == 0)
       key = "zerogradient";
 
-    if (sBcTextToID.find(key) == sBcTextToID.end()) {
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if (rank == 0)
-        std::cout << "Invalid scalar bcType "
-                  << "\'" << key << "\'"
-                  << "!\n";
-      EXIT_AND_FINALIZE(EXIT_FAILURE);
-    }
+    nrsCheck(sBcTextToID.find(key) == sBcTextToID.end(), MPI_COMM_WORLD, EXIT_FAILURE,
+             "Invalid scalar bcType (%s)\n", key.c_str());
 
     bToBc[make_pair(field, bid)] = sBcTextToID.at(key);
   }
@@ -319,15 +307,8 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
     if (keyIn.compare("mv") == 0) key = "codedfixedvalue";
     if (keyIn.compare("codedfixedvalue+moving") == 0) key = "codedfixedvalue";
 
-    if (vBcTextToID.find(key) == vBcTextToID.end()) {
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if (rank == 0)
-        std::cout << "Invalid bcType "
-                  << "\'" << key << "\'"
-                  << "!\n";
-      EXIT_AND_FINALIZE(EXIT_FAILURE);
-    }
+    nrsCheck(vBcTextToID.find(key) == vBcTextToID.end(), MPI_COMM_WORLD, EXIT_FAILURE,
+             "Invalid bcType (%s)\n", key.c_str());
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
@@ -434,6 +415,8 @@ int ellipticType(int bid, std::string field)
     nrsAbort(MPI_COMM_SELF, EXIT_FAILURE,
              "ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
   }
+
+  return 0;
 }
 
 std::string text(int bid, std::string field)
@@ -512,7 +495,7 @@ void check(mesh_t* mesh)
     if (err && platform->comm.mpiRank == 0) 
       printf("Cannot find boundary ID %d in mesh!\n", id);
   }
-  if (err) EXIT_AND_FINALIZE(EXIT_FAILURE);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 
   found = 0;
   for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {
@@ -657,9 +640,7 @@ void checkBoundaryAlignment(mesh_t *mesh)
     }
   }
 
-  if (bail) {
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+  nrsCheck(bail, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 }
 
 void remapUnalignedBoundaries(mesh_t *mesh)

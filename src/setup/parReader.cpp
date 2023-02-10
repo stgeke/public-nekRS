@@ -42,12 +42,12 @@ std::optional<int> parseScalarIntegerFromString(const std::string &scalarString)
     catch (std::invalid_argument &e) {
       std::cout << "Hit an invalid_argument error for scalarString=\"" << scalarString << "\". It said\n"
                 << e.what() << "\n";
-      ABORT(EXIT_FAILURE);
+      nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, "\n", "");
       return {};
     }
   }
   else {
-    ABORT(EXIT_FAILURE);
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, "\n", "");
     return {};
   }
 }
@@ -2181,13 +2181,16 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     int length = errorMessage.size();
     MPI_Bcast(&length, 1, MPI_INT, 0, comm);
 
-    if(rank == 0 && length > 0)
+    auto errTxt = [&]()
     {
-      std::cout << "detected par file errors:\n";
-      std::cout << errorMessage;
-      std::cout << "\nrun with `--help par` for more details\n";
-    }
-    if(length > 0) EXIT_AND_FINALIZE(EXIT_FAILURE);
+      std::stringstream txt;
+      txt << "detected par file errors:\n";
+      txt << errorMessage;
+      txt << "\nrun with `--help par` for more details\n";
+      return txt.str().c_str();
+    };
+
+    nrsCheck(length > 0, comm, EXIT_FAILURE, errTxt(), ""); 
   }
 
 #if 0

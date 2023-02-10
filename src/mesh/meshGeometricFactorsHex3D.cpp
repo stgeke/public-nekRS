@@ -281,12 +281,8 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
   }
 
   MPI_Allreduce(MPI_IN_PLACE, &invalidJ, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
-  if (invalidJ) {
-    if (platform->comm.mpiRank == 0) {
-      std::cout << "Error: encountered nan or inf Jacobian!\n";
-    }
-    ABORT(1);
-  }
+  nrsCheck(invalidJ, platform->comm.mpiComm, EXIT_FAILURE,
+          "encountered nan or inf Jacobian!\n", "");
 
   {
     dfloat globalMinJ = 0, globalMaxJ = 0, globalMaxSkew = 0;
@@ -301,7 +297,6 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
 
     if(globalMinJ < 0 || globalMaxJ < 0) {
       if (platform->comm.mpiRank == 0) printf("Jacobian < 0!\n");
-      //EXIT_AND_FINALIZE(EXIT_FAILURE);
     }
 
     dfloat globalVolume;

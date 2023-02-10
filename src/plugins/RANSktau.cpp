@@ -107,11 +107,8 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
   int Nscalar;
   platform->options.getArgs("NUMBER OF SCALARS", Nscalar);
 
-  if (Nscalar < 2) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "RANSktau: Nscalar needs to be >= 2!\n";
-    ABORT(1);
-  }
+  nrsCheck(Nscalar < 2, platform->comm.mpiComm, EXIT_FAILURE,
+           "Nscalar needs to be >= 2!\n", "");
   platform->options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
 }
 

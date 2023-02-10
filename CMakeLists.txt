@@ -333,7 +333,6 @@ target_include_directories(nekrs-lib
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/hypre
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/amgx
   ${ELLIPTIC_SOURCE_DIR}/MG
-  ${PARALMOND_SOURCE_DIR}
 )
 
 if(ENABLE_AMGX AND OCCA_CUDA_ENABLED)

@@ -24,6 +24,10 @@ SOFTWARE.
 
 */
 
+// for platform
+#include "nrssys.hpp"
+#include "nrs.hpp"
+
 #include <cassert>
 #include <cstdlib>
 #include <vector>
@@ -31,9 +35,6 @@ SOFTWARE.
 #include "findpts.hpp"
 #include "gslib.h"
 
-// for platform
-#include "nrssys.hpp"
-#include "nrs.hpp"
 
 // local data structures to switch between run-time/compile-time sizes
 struct evalSrcPt_t {

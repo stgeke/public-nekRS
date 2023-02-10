@@ -1,6 +1,8 @@
 #if !defined(ogstypes_h)
 #define ogstypes_h
 
+#ifndef nekrs_nrssys_hpp_
+
 #define BLOCKSIZE 256
 
 // float data type
@@ -55,6 +57,8 @@ typedef long long int dlong;
 #define MPI_DLONG MPI_LONG_LONG_INT;
 #define dlongFormat "%lld"
 #define dlongString "long long int"
+#endif
+
 #endif
 
 #endif

@@ -41,12 +41,8 @@ std::vector<int> determineMGLevels(std::string section)
         const auto usesSEMFEM =
             platform->options.compareArgs(optionsPrefix + "MULTIGRID SEMFEM", "TRUE");
 
-        if (!usesSEMFEM) {
-          if (platform->comm.mpiRank == 0) {
-            printf("Error! FEM coarse discretization only supports p=1 for the coarsest level!\n");
-          }
-          ABORT(1);
-        }
+        nrsCheck(!usesSEMFEM, platform->comm.mpiComm, EXIT_FAILURE, 
+                 "FEM coarse discretization only supports p=1 for the coarsest level!\n", "");
       }
     }
 

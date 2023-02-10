@@ -38,17 +38,8 @@ dfloat flopCounter_t::get(MPI_Comm comm) const
   err = errAndTotal[0];
   total = errAndTotal[1];
 
-  if (err > 0.0) {
-    int rank = 0;
-    if (comm != MPI_COMM_NULL) {
-      MPI_Comm_rank(comm, &rank);
-    }
-
-    if (rank == 0) {
-      std::cout << "Encountered error in flopCounter_t::get" << std::endl;
-    }
-    ABORT(1)
-  }
+  if (comm != MPI_COMM_NULL && err > 0)
+    nrsAbort(comm, EXIT_FAILURE, "Encountered error in flopCounter_t::get", "");
 
   return total;
 }

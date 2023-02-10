@@ -149,12 +149,10 @@ void MGSolver_t::coarseLevel_t::setupSolver(
       std::stoi(getenv("NEKRS_GPU_MPI")),
       cfg);
   } else {
-    if(platform->comm.mpiRank == 0){
-      std::string amgSolver;
-      options.getArgs("COARSE SOLVER", amgSolver);
-      printf("COARSE SOLVER <%s> is not supported!\n", amgSolver.c_str());
-    }
-    ABORT(EXIT_FAILURE);
+    std::string amgSolver;
+    options.getArgs("COARSE SOLVER", amgSolver);
+    nrsAbort(platform->comm.mpiComm, EXIT_FAILURE,
+             "COARSE SOLVER <%s> is not supported!\n", amgSolver.c_str());
   }
 
   MPI_Barrier(comm);

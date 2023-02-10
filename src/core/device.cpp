@@ -379,10 +379,4 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
   _device_id = device_id;
 
   deviceAtomic = atomicsAvailable(*this, _comm.mpiComm);
-#if 0
-  if(!deviceAtomic) {
-    if(worldRank == 0) printf("device does not support FP32 atomics!\n");
-    ABORT(EXIT_FAILURE);
-  }
-#endif
 }

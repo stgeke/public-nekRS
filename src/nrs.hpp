@@ -179,29 +179,6 @@ struct nrs_t {
   occa::kernel applyZeroNormalMaskKernel;
 };
 
-// std::to_string might be not accurate enough
-static std::string to_string_f(double a)
-{
-  std::stringstream s;
-  constexpr auto maxPrecision{std::numeric_limits<double>::digits10 + 1};
-  s << std::setprecision(maxPrecision) << std::scientific << a;
-  return s.str();
-}
-
-static std::vector<std::string> serializeString(const std::string sin, char dlim)
-{
-  std::vector<std::string> slist;
-  std::string s(sin);
-  s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
-  std::stringstream ss;
-  ss.str(s);
-  while (ss.good()) {
-    std::string substr;
-    std::getline(ss, substr, dlim);
-    slist.push_back(substr);
-  }
-  return slist;
-}
 
 void evaluateProperties(nrs_t *nrs, const double timeNew);
 

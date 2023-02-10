@@ -394,10 +394,6 @@ void mkSIZE(int lx1,
     const long length = ftell(fp);
     rewind(fp);
     sizeFile = (char *)calloc(4096 + length, sizeof(char));
-    if (!sizeFile) {
-      fprintf(stderr, "Error allocating space for SIZE file.\n");
-      ABORT(EXIT_FAILURE);
-    }
   }
 
   int lx1m = lx1;

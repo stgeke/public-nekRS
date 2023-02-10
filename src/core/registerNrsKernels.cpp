@@ -65,14 +65,9 @@ void registerNrsKernels(occa::properties kernelInfoBC)
       int N;
       platform->options.getArgs("POLYNOMIAL DEGREE", N);
       const int Nq = N + 1;
-      if (BLOCKSIZE < Nq * Nq) {
-        if (platform->comm.mpiRank == 0)
-          printf("ERROR: computeFaceCentroid kernel requires BLOCKSIZE >= Nq * Nq."
-                 "BLOCKSIZE = %d, Nq*Nq = %d\n",
-                 BLOCKSIZE,
-                 Nq * Nq);
-        ABORT(EXIT_FAILURE);
-      }
+      nrsCheck(BLOCKSIZE < Nq * Nq, platform->comm.mpiComm, EXIT_FAILURE,
+               "computeFaceCentroid kernel requires BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+               BLOCKSIZE, Nq * Nq);
     }
     kernelName = "computeFaceCentroid";
     fileName = oklpath + "/nrs/" + kernelName + ".okl";
@@ -281,14 +276,9 @@ void registerNrsKernels(occa::properties kernelInfoBC)
       int N;
       platform->options.getArgs("POLYNOMIAL DEGREE", N);
       const int Nq = N + 1;
-      if (BLOCKSIZE < Nq * Nq) {
-        if (platform->comm.mpiRank == 0)
-          printf("ERROR: cfl kernel requires BLOCKSIZE >= Nq * Nq."
-                 "BLOCKSIZE = %d, Nq*Nq = %d\n",
-                 BLOCKSIZE,
-                 Nq * Nq);
-        ABORT(EXIT_FAILURE);
-      }
+      nrsCheck(BLOCKSIZE < Nq * Nq, platform->comm.mpiComm, EXIT_FAILURE,
+               "CFL kernel requires BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+               BLOCKSIZE, Nq * Nq);
     }
 
     occa::properties cflProps = meshProps;

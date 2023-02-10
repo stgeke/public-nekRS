@@ -83,21 +83,14 @@ occa::kernel benchmarkAdvsub(int Nfields,
     return cachedResults.at(params);
   }
 
-  if (Nq > 14) {
-    if (platform->comm.mpiRank == 0) {
-      std::cout << "Error: maximum Nq of 14 has been exceed with Nq=" << Nq << ".\n";
-    }
-    ABORT(1);
-  }
+  nrsCheck(Nq > 14, platform->comm.mpiComm, EXIT_FAILURE, 
+           "Error: maximum Nq of 14 has been exceed with Nq=%d\n", Nq);
 
   const auto largestCubNq = maximumCubaturePoints.at(Nq);
-  if (cubNq > largestCubNq) {
-    if (platform->comm.mpiRank == 0) {
-      std::cout << "Error: maximum cubNq for Nq = " << Nq << " is " << largestCubNq << ".\n";
-      std::cout << "cubNq as specified is " << cubNq << ".\n";
-    }
-    ABORT(1);
-  }
+
+  nrsCheck(cubNq > largestCubNq, platform->comm.mpiComm, EXIT_FAILURE, 
+           "Error: maximum cubNq for Nq = %d is %d\ncubNq as specified is %d\n", 
+           Nq, largestCubNq, cubNq);
 
   if (!dealias || cubNq < Nq) {
     cubNq = Nq;

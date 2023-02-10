@@ -131,12 +131,9 @@ void adjustDt(nrs_t* nrs, int tstep)
           {
             nrs->dt[0] = sqrt(targetCFL * lengthScale / maxU);
           } else {
-            if(platform->comm.mpiRank == 0){
-              printf("CFL: Zero velocity and body force! Please specify an initial timestep!\n");
-            }
-            ABORT(1);
+            nrsAbort(platform->comm.mpiComm, EXIT_FAILURE,
+                     "Zero velocity and body force! Please specify an initial timestep!\n", "");
           }
-
         }
       }
       nrs->CFL = CFL;
@@ -422,11 +419,8 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
 void coeffs(nrs_t *nrs, double dt, int tstep) {
   nrs->dt[0] = dt;
-  if (std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0])) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Unreasonable dt! Dying ...\n" << std::endl;
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0]), platform->comm.mpiComm, EXIT_FAILURE,
+           "Unreasonable dt! Dying ...\n", ""); 
 
   nrs->idt = 1 / nrs->dt[0];
 
@@ -965,11 +959,8 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
 
   bool largeCFLCheck = (cfl > 30) && numberActiveFields(nrs);
 
-  if (largeCFLCheck || std::isnan(cfl) || std::isinf(cfl)) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Unreasonable CFL! Dying ...\n" << std::endl;
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(largeCFLCheck || std::isnan(cfl) || std::isinf(cfl), platform->comm.mpiComm, EXIT_FAILURE,
+           "Unreasonable CFL! Dying ...\n", "");
 }
 
 void computeDivUErr(nrs_t* nrs, dfloat& divUErrVolAvg, dfloat& divUErrL2)

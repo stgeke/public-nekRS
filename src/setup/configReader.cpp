@@ -24,21 +24,16 @@ void configRead(MPI_Comm comm)
   MPI_Comm_rank(comm, &rank);
   
   char* nekrs_home = getenv("NEKRS_HOME");
-  if (nekrs_home == nullptr) {
-    if (rank == 0)
-      std::cout << "\nERROR: The environment variable NEKRS_HOME is not defined!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(nekrs_home == nullptr, comm, EXIT_FAILURE, 
+           "\nERROR: The environment variable NEKRS_HOME is not defined!\n", "");
+
   std::string installDir{nekrs_home};
 
   // read config file
   std::string configFile = installDir + "/nekrs.conf";
   const char* ptr = realpath(configFile.c_str(), NULL);
-  if (!ptr) {
-    if (rank == 0) 
-      std::cout << "\nERROR: Cannot find " << configFile << "!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(!ptr, comm, EXIT_FAILURE,
+           "\nCannot find %s\n", configFile.c_str());
 
   std::stringstream is;
   {

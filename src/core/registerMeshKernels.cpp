@@ -31,14 +31,9 @@ void registerMeshKernels(occa::properties kernelInfoBC)
       int N;
       platform->options.getArgs("POLYNOMIAL DEGREE", N);
       const int Nq = N + 1;
-      if (BLOCKSIZE < Nq * Nq) {
-        if (platform->comm.mpiRank == 0)
-          printf("ERROR: avgBIDValue kernel requires BLOCKSIZE >= Nq * Nq."
-                 "BLOCKSIZE = %d, Nq*Nq = %d\n",
-                 BLOCKSIZE,
-                 Nq * Nq);
-        ABORT(EXIT_FAILURE);
-      }
+      nrsCheck(BLOCKSIZE < Nq * Nq, platform->comm.mpiComm, EXIT_FAILURE,
+               "avgBIDValue kernel requires BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+               BLOCKSIZE, Nq * Nq);
     }
 
     kernelName = "avgBIDValue";

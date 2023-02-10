@@ -21,7 +21,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("PRESSURE INITIAL GUESS", "PREVIOUS");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
 
-  options.setArgs("TIME INTEGRATOR", "TOMBO3");
+  options.setArgs("BDF ORDER", "3");
   if (ciMode == 1) {
     options.setArgs("NEKNEK CORRECTOR STEPS", "1");
     options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "3");

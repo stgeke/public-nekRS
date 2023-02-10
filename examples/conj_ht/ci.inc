@@ -13,7 +13,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("DT", std::string("2e-2"));
   options.setArgs("SUBCYCLING STEPS", std::string("0"));
   if (ciMode == 2) options.setArgs("SUBCYCLING STEPS", std::string("1"));
-  options.setArgs("TIME INTEGRATOR", "TOMBO2");
+  options.setArgs("BDF ORDER", "2");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-06"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-04"));

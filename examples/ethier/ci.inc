@@ -194,7 +194,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
     }
   }
 
-  options.setArgs("TIME INTEGRATOR", "TOMBO3");
+  options.setArgs("BDF ORDER", "3");
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-12"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-10"));
   options.setArgs("SCALAR00 SOLVER TOLERANCE", std::string("1e-12"));

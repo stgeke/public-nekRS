@@ -16,7 +16,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("DENSITY", std::string("1.0"));
   options.setArgs("NUMBER TIMESTEPS", std::string("200"));
   options.setArgs("END TIME", std::string("-1"));
-  options.setArgs("TIME INTEGRATOR", "TOMBO2");
+  options.setArgs("BDF ORDER", "2");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
   options.setArgs("DT", std::string("6e-3"));
   options.setArgs("SUBCYCLING STEPS", std::string("2"));

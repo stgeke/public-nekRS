@@ -310,6 +310,11 @@ void lpm_t::integrate(dfloat t0, dfloat tf, int step)
     platform->timer.tic(timerName + "integrate", 1);
   }
 
+  if (platform->options.compareArgs("MOVING MESH", "TRUE")) {
+    interp.reset();
+    interp = std::make_unique<pointInterpolation_t>(nrs, newton_tol);
+  }
+
   if (!constructed_) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: cannot integrate before construction!\n";
@@ -333,7 +338,7 @@ void lpm_t::integrate(dfloat t0, dfloat tf, int step)
   interp->addPoints(size(), o_xcoord, o_ycoord, o_zcoord);
 
   platform->timer.tic("lpm_t::find", 1);
-  interp->find(false);
+  interp->find(issueWarnings_);
   platform->timer.toc("lpm_t::find");
 
   deleteParticles();

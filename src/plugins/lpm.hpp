@@ -225,6 +225,9 @@ public:
   // this is used to prefix the timer names
   void setTimerName(std::string name);
 
+  // enables verbose warnings from findpts
+  void setVerbose(bool verbose) { issueWarnings_ = verbose; };
+
 private:
   // delete particles that have left the domain
   void deleteParticles();
@@ -240,6 +243,7 @@ private:
   int nAB;
   dfloat newton_tol;
   std::unique_ptr<pointInterpolation_t> interp;
+  bool issueWarnings_ = false;
 
   int nParticles_ = 0;
   int nDOFs_ = 0;

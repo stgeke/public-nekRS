@@ -202,12 +202,8 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("VARIABLEPROPERTIES", "FALSE");
 }
 
-auto generatePoints(int maxNumPoints)
+auto generatePoints(int nPoints, double R)
 {
-  std::random_device r;
-  std::default_random_engine e1(r());
-  std::uniform_int_distribution<int> uniform_dist(1, maxNumPoints);
-  auto nPoints = uniform_dist(e1);
   auto pointsX = randomVector<dfloat>(nPoints);
   auto pointsY = randomVector<dfloat>(nPoints);
   auto pointsZ = randomVector<dfloat>(nPoints);
@@ -230,9 +226,10 @@ auto generatePoints(int maxNumPoints)
     const auto sy = y * std::sqrt(1.0 - 0.5 * z * z - 0.5 * x * x + third * z * z * x * x);
     const auto sz = z * std::sqrt(1.0 - 0.5 * x * x - 0.5 * y * y + third * x * x * y * y);
 
-    // rescale such that radius is <= 0.95 (to avoid warnings about point being on boundary of mesh)
+    // rescale to desired radius
+    auto Rp = randomVector<dfloat>(1)[0] * R;
     const auto r = std::sqrt(sx * sx + sy * sy + sz * sz);
-    const auto scale = 0.95 / r;
+    const auto scale = Rp / r;
     pointsX[i] = sx * scale;
     pointsY[i] = sy * scale;
     pointsZ[i] = sz * scale;
@@ -275,6 +272,11 @@ void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel,
   }
 
   auto relTol = 5e-7;
+
+  if(platform->options.compareArgs("MOVING MESH", "TRUE")){
+    relTol = 1e-5;
+  }
+
   auto floorTol = 1e-12;
 
   auto LinfErrX = 0.0;
@@ -347,6 +349,8 @@ void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKer
 {
   constexpr int nRandomInterp = 3;
 
+  const double R = 0.25; // max radius of points to distribute
+
   auto mesh = nrs->meshV;
   mesh->o_x.copyTo(mesh->x, mesh->Nlocal * sizeof(dfloat));
   mesh->o_y.copyTo(mesh->y, mesh->Nlocal * sizeof(dfloat));
@@ -376,8 +380,12 @@ void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKer
   std::array<std::vector<dfloat>, nRandomInterp> pointsZ;
   std::array<std::shared_ptr<pointInterpolation_t>, nRandomInterp> interpRand;
 
+  std::random_device r;
+  std::default_random_engine e1(r());
+  std::uniform_int_distribution<int> uniform_dist(1, 10 * mesh->Nlocal);
   for (int n = 0; n < nRandomInterp; ++n) {
-    std::tie(pointsX[n], pointsY[n], pointsZ[n]) = generatePoints(10 * mesh->Nlocal);
+    auto nPoints = uniform_dist(e1);
+    std::tie(pointsX[n], pointsY[n], pointsZ[n]) = generatePoints(nPoints, R);
     interpRand[n] = std::make_shared<pointInterpolation_t>(nrs);
     interpRand[n]->addPoints(pointsX[n].size(), pointsX[n].data(), pointsY[n].data(), pointsZ[n].data());
     interpRand[n]->find();

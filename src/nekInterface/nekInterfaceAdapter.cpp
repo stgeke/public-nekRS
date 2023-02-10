@@ -516,7 +516,8 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
 
   const std::string casename = options.getArgs("CASENAME");
   std::string usrFile = fs::absolute(fs::path(options.getArgs("NEK USR FILE")));
-  const std::string usrFileCache = cache_dir / fs::path(usrFile).filename();
+  const std::string usrCaseName = casename + ".usr";
+  const std::string usrFileCache = cache_dir / fs::path(usrCaseName).filename();
   const std::string libFile = cache_dir + "/lib" + casename + ".so";
 
   int usrFileExists;

@@ -52,7 +52,7 @@ dfloat computeCFL(nrs_t *nrs)
   // finish reduction
   dfloat cfl = 0.f;
   for (dlong n = 0; n < mesh->Nelements; ++n)
-    cfl = mymax(cfl, platform->mempool.slice0[n]);
+    cfl = std::max(cfl, platform->mempool.slice0[n]);
 
   dfloat gcfl = 0.f;
   MPI_Allreduce(&cfl, &gcfl, 1, MPI_DFLOAT, MPI_MAX, platform->comm.mpiComm);

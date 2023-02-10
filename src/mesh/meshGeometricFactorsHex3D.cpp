@@ -155,14 +155,14 @@ void meshGeometricFactorsHex3D(mesh_t *mesh)
           dfloat hr = sqrt(xr * xr + yr * yr + zr * zr);
           dfloat hs = sqrt(xs * xs + ys * ys + zs * zs);
           dfloat ht = sqrt(xt * xt + yt * yt + zt * zt);
-          minJ = mymin(J, minJ);
-          maxJ = mymax(J, maxJ);
-          maxSkew = mymax(maxSkew, hr / hs);
-          maxSkew = mymax(maxSkew, hr / ht);
-          maxSkew = mymax(maxSkew, hs / hr);
-          maxSkew = mymax(maxSkew, hs / ht);
-          maxSkew = mymax(maxSkew, ht / hr);
-          maxSkew = mymax(maxSkew, ht / hs);
+          minJ = std::min(J, minJ);
+          maxJ = std::max(J, maxJ);
+          maxSkew = std::max(maxSkew, hr / hs);
+          maxSkew = std::max(maxSkew, hr / ht);
+          maxSkew = std::max(maxSkew, hs / hr);
+          maxSkew = std::max(maxSkew, hs / ht);
+          maxSkew = std::max(maxSkew, ht / hr);
+          maxSkew = std::max(maxSkew, ht / hs);
 
           //if(J<1e-12) printf("J = %g !!!!!!!!!!!!!\n", J);
 

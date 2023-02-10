@@ -424,8 +424,8 @@ void coeffs(nrs_t *nrs, double dt, int tstep) {
 
   nrs->idt = 1 / nrs->dt[0];
 
-  const int bdfOrder = mymin(tstep, nrs->nBDF);
-  const int extOrder = mymin(tstep, nrs->nEXT);
+  const int bdfOrder = std::min(tstep, nrs->nBDF);
+  const int extOrder = std::min(tstep, nrs->nEXT);
 
   nek::bdfCoeff(&nrs->g0, nrs->coeffBDF, nrs->dt, bdfOrder);
   nek::extCoeff(nrs->coeffEXT, nrs->dt, extOrder, bdfOrder);
@@ -439,7 +439,7 @@ void coeffs(nrs_t *nrs, double dt, int tstep) {
     mesh_t *mesh = nrs->meshV;
     if (nrs->cht)
       mesh = nrs->cds->mesh[0];
-    const int meshOrder = mymin(tstep, mesh->nAB);
+    const int meshOrder = std::min(tstep, mesh->nAB);
     nek::coeffAB(mesh->coeffAB, nrs->dt, meshOrder);
     for (int i = 0; i < meshOrder; ++i)
       mesh->coeffAB[i] *= nrs->dt[0];
@@ -515,11 +515,10 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
     if (platform->options.compareArgs("ADVECTION", "TRUE")) {
       if (cds->Nsubsteps) {
         if (movingMesh)
-          o_Usubcycling = scalarSubCycleMovingMesh(
-              cds, mymin(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
+          o_Usubcycling =
+              scalarSubCycleMovingMesh(cds, std::min(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
         else
-          o_Usubcycling = scalarSubCycle(
-              cds, mymin(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
+          o_Usubcycling = scalarSubCycle(cds, std::min(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
       } else {
         if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
           cds->strongAdvectionCubatureVolumeKernel(cds->meshV->Nelements,
@@ -659,11 +658,9 @@ void makef(
   if (platform->options.compareArgs("ADVECTION", "TRUE")) {
     if (nrs->Nsubsteps) {
       if (movingMesh)
-        o_Usubcycling = velocitySubCycleMovingMesh(
-            nrs, mymin(tstep, nrs->nEXT), time, nrs->o_U);
+        o_Usubcycling = velocitySubCycleMovingMesh(nrs, std::min(tstep, nrs->nEXT), time, nrs->o_U);
       else
-        o_Usubcycling = velocitySubCycle(
-            nrs, mymin(tstep, nrs->nEXT), time, nrs->o_U);
+        o_Usubcycling = velocitySubCycle(nrs, std::min(tstep, nrs->nEXT), time, nrs->o_U);
     } else {
       if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
         nrs->strongAdvectionCubatureVolumeKernel(mesh->Nelements,

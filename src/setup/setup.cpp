@@ -193,7 +193,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   { // setup fieldOffset
     nrs->fieldOffset = mesh->Np * (mesh->Nelements + mesh->totalHaloPairs);
     mesh_t *meshT = nrs->_mesh;
-    nrs->fieldOffset = mymax(nrs->fieldOffset, meshT->Np * (meshT->Nelements + meshT->totalHaloPairs));
+    nrs->fieldOffset = std::max(nrs->fieldOffset, meshT->Np * (meshT->Nelements + meshT->totalHaloPairs));
 
     const int pageW = ALIGN_SIZE / sizeof(dfloat);
     if (nrs->fieldOffset % pageW)

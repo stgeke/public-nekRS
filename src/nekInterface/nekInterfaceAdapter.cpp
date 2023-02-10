@@ -646,7 +646,7 @@ void bootstrap()
   int npTarget = size;
   options->getArgs("NP TARGET", npTarget);
 
-  buildNekInterface(mymax(5, Nscalar), N, npTarget, *options);
+  buildNekInterface(std::max(5, Nscalar), N, npTarget, *options);
 
   if (platform->options.compareArgs("BUILD ONLY", "FALSE")) {
     if (rank == 0) {

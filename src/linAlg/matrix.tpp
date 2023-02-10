@@ -405,7 +405,7 @@ T matrix<T>::maxentry() const{
   for(int c=1;c<=Ncolumns;++c){
     for(int r=1;r<=Nrows;++r){
       T val = (*this)(r,c);
-      maxval = mymax(maxval, val);
+      maxval = std::max(maxval, val);
     }
   }
 
@@ -420,7 +420,7 @@ T matrix<T>::minentry() const{
   for(int c=1;c<=Ncolumns;++c){
     for(int r=1;r<=Nrows;++r){
       T val = (*this)(r,c);
-      minval = mymin(minval, val);
+      minval = std::min(minval, val);
     }
   }
 

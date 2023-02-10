@@ -701,7 +701,7 @@ mesh_t *create_extended_mesh(elliptic_t *elliptic, hlong *maskedGlobalIds)
       if (bc > 0) {
         for (int n = 0; n < mesh->Nfp; n++) {
           const int fid = mesh->faceNodes[n + f * mesh->Nfp];
-          mapB[fid + e * mesh->Np] = mymin(bc, mapB[fid + e * mesh->Np]);
+          mapB[fid + e * mesh->Np] = std::min(bc, mapB[fid + e * mesh->Np]);
         }
       }
     }

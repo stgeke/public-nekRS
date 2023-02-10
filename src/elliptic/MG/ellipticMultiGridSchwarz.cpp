@@ -200,14 +200,14 @@ void compute_element_lengths(ElementLengths *lengths, elliptic_t *elliptic)
   if (!errorLogger.str().empty()) {
     auto errTxt = [&]()
     {
-      std::stringstream txt(std::ios_base::in);
-      txt << "Encountered errors in Schwarz setup for N = " << N << ":" << std::endl;
+      std::stringstream txt;
+      txt << "failed for N = " << N << ":" << std::endl;
       txt << "{\n";
       txt << errorLogger.str();
       txt << "}\n";
-      return txt.str().c_str();
+      return txt.str();
     };
-    nrsAbort(platform->comm.mpiComm, EXIT_FAILURE, errTxt(), "");
+    nrsAbort(platform->comm.mpiComm, EXIT_FAILURE, errTxt().c_str(), "");
   }
 
   // In Nq == 2 case, there are no interior points to use for obtaining
@@ -536,7 +536,7 @@ void compute_1d_matrices(dfloat *S,
   catch (std::exception &failure) {
     auto errTxt = [&]()
     {
-      std::stringstream txt(std::ios_base::in);
+      std::stringstream txt;
       txt << "Encountered error:\n";
       txt << failure.what();
       txt << "Direction " << direction << "\n";
@@ -545,9 +545,9 @@ void compute_1d_matrices(dfloat *S,
       for (int iface = 0; iface < 6; ++iface)
         txt << "EToB[iface] = " << elliptic->EToB[6 * e + iface] << "\n";
 
-      return txt.str().c_str();
+      return txt.str();
     };
-    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, errTxt(), "");
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, errTxt().c_str(), "");
   }
   if (lbc > 0)
     row_zero(S, nl, 0);

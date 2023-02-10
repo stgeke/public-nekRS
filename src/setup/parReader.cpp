@@ -2187,10 +2187,11 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       txt << "detected par file errors:\n";
       txt << errorMessage;
       txt << "\nrun with `--help par` for more details\n";
-      return txt.str().c_str();
+
+      return txt.str();
     };
 
-    nrsCheck(length > 0, comm, EXIT_FAILURE, errTxt(), ""); 
+    nrsCheck(length > 0, comm, EXIT_FAILURE, errTxt().c_str(), ""); 
   }
 
 #if 0

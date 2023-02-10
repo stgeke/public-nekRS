@@ -56,16 +56,16 @@ void ellipticAx(elliptic_t* elliptic,
 
   auto errTxt = [&]()
   {
-    std::stringstream txt(std::ios_base::in);
+    std::stringstream txt;
     txt << "Encountered invalid configuration inside ellipticAx!\n";
     if(elliptic->blockSolver)
       txt << "Precision level (" << precision << ") does not support block solver\n";
     if(mapType != 0)
       txt << "Precision level (" << precision << ") does not support mapType " << mapType << "\n";
 
-    return txt.str().c_str();
+    return txt.str();
   };
-  nrsCheck(!valid, platform->comm.mpiComm, EXIT_FAILURE, errTxt(), "");
+  nrsCheck(!valid, platform->comm.mpiComm, EXIT_FAILURE, errTxt().c_str(), "");
 
   occa::memory & o_geom_factors =
     (precisionStr != dFloatStr) ? mesh->o_ggeoPfloat :

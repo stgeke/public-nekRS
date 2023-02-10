@@ -45,7 +45,7 @@ kernelRequestManager_t::get(const std::string& request, bool checkValid) const
 
     auto errTxt = [&]()
     { 
-        std::stringstream txt(std::ios_base::in);
+        std::stringstream txt;
         txt << "\n";
         txt << "Error in kernelRequestManager_t::getKernel():\n";
         txt << "Cannot find requested kernel " << request << "!\n";
@@ -54,10 +54,10 @@ kernelRequestManager_t::get(const std::string& request, bool checkValid) const
           txt << "\t" << keyAndValue.first << "\n";
 
         txt << "===========================================================\n";
-        return txt.str().c_str();
+        return txt.str();
     };
 
-    nrsCheck(errorFlag, platformRef.comm.mpiComm, EXIT_FAILURE, errTxt(), "");
+    nrsCheck(errorFlag, platformRef.comm.mpiComm, EXIT_FAILURE, errTxt().c_str(), "");
   }
 
   return requestToKernelMap.at(request);

@@ -117,10 +117,9 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
         platform->comm.mpiComm
       )
       * sqrt(elliptic->resNormFactor); 
-    if(std::isnan(elliptic->res00Norm)) {
-      if(platform->comm.mpiRank == 0) printf("%s unreasonable res00Norm!\n", name.c_str());
-      ABORT(EXIT_FAILURE);
-    }
+
+    nrsCheck(std::isnan(elliptic->res00Norm), platform->comm.mpiComm, EXIT_FAILURE,
+             "%s unreasonable res00Norm!\n", name.c_str());
 
     elliptic->solutionProjection->pre(o_r);
 
@@ -137,10 +136,9 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
       platform->comm.mpiComm
     )
     * sqrt(elliptic->resNormFactor); 
-  if(std::isnan(elliptic->res0Norm)) {
-    if(platform->comm.mpiRank == 0) printf("%s unreasonable res0Norm!\n", name.c_str());
-    ABORT(EXIT_FAILURE);
-  }
+
+  nrsCheck(std::isnan(elliptic->res0Norm), platform->comm.mpiComm, EXIT_FAILURE,
+           "%s unreasonable res00Norm!\n", name.c_str());
 
   dfloat tol = 1e-6;
   options.getArgs("SOLVER TOLERANCE", tol);
@@ -149,24 +147,23 @@ void ellipticSolve(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x)
 
   if(!options.compareArgs("SOLVER", "NONBLOCKING")) {
     elliptic->resNorm = elliptic->res0Norm;
-    if(options.compareArgs("SOLVER", "PCG"))
+
+    if(options.compareArgs("SOLVER", "PCG")) {
       elliptic->Niter = pcg (elliptic, o_r, o_x, tol, maxIter, elliptic->resNorm);
-    else if(options.compareArgs("SOLVER", "PGMRES"))
+    } else if(options.compareArgs("SOLVER", "PGMRES")) {
       elliptic->Niter = pgmres (elliptic, o_r, o_x, tol, maxIter, elliptic->resNorm);
-    else{
-      if(platform->comm.mpiRank == 0) 
-        printf("Linear solver %s is not supported!\n", options.getArgs("SOLVER").c_str());
-      ABORT(EXIT_FAILURE);
+    } else{
+      nrsAbort(platform->comm.mpiComm, EXIT_FAILURE,
+               "Linear solver %s is not supported!\n", options.getArgs("SOLVER").c_str());
     }
 
     if(elliptic->Niter == maxIter && platform->comm.mpiRank == 0)
       printf("iteration limit of %s linear solver reached!\n", name.c_str());
 
   }else{
-    if(platform->comm.mpiRank == 0) printf("NONBLOCKING Krylov solvers currently not supported!");
-    ABORT(EXIT_FAILURE);
+    nrsAbort(platform->comm.mpiComm, EXIT_FAILURE,
+             "NONBLOCKING Krylov solvers currently not supported!", "");
   }
-
 
   if(options.compareArgs("INITIAL GUESS","PROJECTION") ||
      options.compareArgs("INITIAL GUESS","PROJECTION-ACONJ")) { 

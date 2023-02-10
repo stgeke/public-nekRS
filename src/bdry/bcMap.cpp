@@ -343,9 +343,11 @@ int id(int bid, std::string field)
     return bToBc.at({field, bid - 1});
   }
   catch (const std::out_of_range &oor) {
-    printf("bcMap::id bid:%d field:%s lookup failed!\n", bid, field.c_str());
-    ABORT(1);
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, 
+             "bcMap::id bid:%d field:%s lookup failed!\n", bid, field.c_str());
   }
+
+  return -1;
 }
 
 int ellipticType(int bid, std::string field)
@@ -423,15 +425,14 @@ int ellipticType(int bid, std::string field)
         bcType = DIRICHLET;
     }
 
-    if(bcType == -1) {
-      printf("ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
-      ABORT(1);
-    }
+    nrsCheck(bcType == -1, MPI_COMM_SELF, EXIT_FAILURE,
+             "ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
+
     return bcType;
   }
   catch (const std::out_of_range &oor) {
-    printf("ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
-    ABORT(1);
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE,
+             "ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
   }
 }
 
@@ -464,8 +465,9 @@ std::string text(int bid, std::string field)
   else if (field.compare(0, 6, "scalar") == 0)
     return sBcIDToText.at(bcID);
 
-  std::cout << __func__ << "(): Unexpected error occured!" << std::endl;
-  ABORT(1);
+  nrsAbort(MPI_COMM_SELF, EXIT_FAILURE,
+           "Unexpected error occured!", "");
+
   return 0;
 }
 

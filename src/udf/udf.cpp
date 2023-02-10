@@ -338,7 +338,7 @@ void udfBuild(const char *_udfFile, setupAide &options)
 
   MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, platform->comm.mpiComm);
 
-  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 }
 
 void *udfLoadFunction(const char *fname, int errchk)

@@ -81,12 +81,12 @@ using dlong = long long int;
 #include "setupAide.hpp"
 #include "timer.hpp"
 
-#define nrsCheck(cond, comm, ierr, message, ...) \
+#define nrsCheck(cond, comm, exitCode, message, ...) \
   do { \
-    int err = 0; \
-    if(cond) err = 1; \
-    MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, comm); \
-    if(err) { \
+    int _nrsCheckErr = 0; \
+    if(cond) _nrsCheckErr = 1; \
+    MPI_Allreduce(MPI_IN_PLACE, &_nrsCheckErr, 1, MPI_INT, MPI_SUM, comm); \
+    if(_nrsCheckErr) { \
       int rank = 0; \
       MPI_Comm_rank(comm, &rank); \
       if(rank == 0) { \
@@ -95,8 +95,13 @@ using dlong = long long int;
       } \
       fflush(stdout); \
       MPI_Barrier(comm); \
-      MPI_Abort(MPI_COMM_WORLD, ierr); \
+      MPI_Abort(MPI_COMM_WORLD, exitCode); \
     } \
+  } while (0)
+
+#define nrsAbort(...) \
+  do { \
+    nrsCheck(true, __VA_ARGS__); \
   } while (0)
 
 static occa::memory o_NULL;
@@ -105,7 +110,7 @@ struct platform_t;
 extern platform_t* platform;
 
 #define NSCALAR_MAX 100
-static auto scalarDigitStr = [](int i)
+static const std::string scalarDigitStr(int i)
 {
   static const int scalarWidth = std::to_string(NSCALAR_MAX - 1).length();
   std::stringstream ss;

@@ -9,9 +9,9 @@ set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
 
 #set(CMAKE_VERBOSE_MAKEFILE on)
 
-set(OGSDIR      ${NEKRS_INSTALL_DIR}/gatherScatter)
-set(FINDPTSDIR      ${NEKRS_INSTALL_DIR}/findpts)
-set(GSDIR       ${NEKRS_INSTALL_DIR}/gslib)
+set(OGSDIR ${NEKRS_INSTALL_DIR}/gatherScatter)
+set(FINDPTSDIR ${NEKRS_INSTALL_DIR}/findpts)
+set(GSDIR ${NEKRS_INSTALL_DIR}/gslib)
 set(INCLUDE_DIRS
   ${CASE_DIR}
   ${OGSDIR}

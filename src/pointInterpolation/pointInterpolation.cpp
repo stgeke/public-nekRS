@@ -59,7 +59,7 @@ void pointInterpolation_t::find(bool printWarnings)
     }
   }
   
-  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+  nrsCheck(iErr, platform->comm.mpiComm, EXIT_FAILURE, "", "");
 
   const auto n = nPoints;
 

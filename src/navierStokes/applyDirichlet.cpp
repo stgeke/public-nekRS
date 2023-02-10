@@ -79,7 +79,6 @@ void applyDirichlet(nrs_t *nrs, double time)
       if (!cds->compute[is])
         continue;
       mesh_t *mesh = cds->mesh[0];
-      ;
       oogs_t *gsh = cds->gshT;
       if (is) {
         mesh = cds->meshV;

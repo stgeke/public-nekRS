@@ -8,15 +8,11 @@ void re2::nelg(const std::string& meshFile, int& nelgt, int& nelgv, MPI_Comm com
 
   const int re2HeaderBytes = 80;
 
-  int err = 0;
   if(rank == 0) {
     char *buf = (char*) calloc(std::max(re2HeaderBytes, (int)meshFile.length()+1), sizeof(char));
     strcpy(buf, meshFile.c_str());
     FILE *fp = fopen(buf, "r");
-    if (!fp) {
-      if(rank == 0) printf("\nERROR: Cannot find %s!\n", buf);
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(!fp, MPI_COMM_SELF, EXIT_FAILURE, "Cannot find %s!\n", buf);
     fgets(buf, 80, fp);
     fclose(fp);
  
@@ -29,23 +25,17 @@ void re2::nelg(const std::string& meshFile, int& nelgt, int& nelgv, MPI_Comm com
     } else if(strcmp(ver, "#v002") == 0 || strcmp(ver, "#v003") == 0) { 
       sscanf(buf, "%5s %9d %1d %9d", ver, &nelgt, &ndim, &nelgv); 
     } else {
-      if(rank == 0) printf("\nERROR: Unsupported re2 version %5s!\n", ver);
-        ABORT(EXIT_FAILURE);;
+      nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, "Unsupported re2 version %5s!\n", ver);
     }
 
-    if(ndim != 3) {
-      if(rank == 0) printf("\nERROR: Unsupported ndim=%d read from re2 header!\n", ndim);
-      err++;
-    }
-    if(nelgt <= 0 || nelgv <=0 || nelgv > nelgt) {
-      if(rank == 0) printf("\nERROR: Invalid nelgt=%d / nelgv=%d read from re2 header!\n", nelgt, nelgv);
-      err++;
-    }
+    nrsCheck(ndim != 3, MPI_COMM_SELF, EXIT_FAILURE,
+             "\nUnsupported ndim=%d read from re2 header!\n", ndim);
+    
+    nrsCheck(nelgt <= 0 || nelgv <=0 || nelgv > nelgt, MPI_COMM_SELF, EXIT_FAILURE,
+             "\nInvalid nelgt=%d / nelgv=%d read from re2 header!\n", nelgt, nelgv);
 
     free(buf);
   }
-  if(comm != MPI_COMM_NULL) MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_MAX, comm); 
-  if(err) ABORT(EXIT_FAILURE);
 
   if(comm != MPI_COMM_NULL) MPI_Bcast(&nelgt, 1, MPI_INT, 0, comm);
   if(comm != MPI_COMM_NULL) MPI_Bcast(&nelgv, 1, MPI_INT, 0, comm);

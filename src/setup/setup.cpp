@@ -171,9 +171,12 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 
   platform->options.getArgs("BDF ORDER", nrs->nBDF);
   platform->options.getArgs("EXT ORDER", nrs->nEXT);
-
   if (nrs->Nsubsteps)
     nrs->nEXT = nrs->nBDF;
+
+  nrsCheck(nrs->nEXT < nrs->nBDF, platform->comm.mpiComm, EXIT_FAILURE,
+           "EXT order needs to be >= BDF order!\n", ""); 
+
   nrs->coeffEXT = (dfloat *)calloc(nrs->nEXT, sizeof(dfloat));
   nrs->coeffBDF = (dfloat *)calloc(nrs->nBDF, sizeof(dfloat));
 

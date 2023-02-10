@@ -25,15 +25,8 @@ kernelRequestManager_t::add(kernelRequest_t request, bool checkUnique)
   {
     int unique = (iterAndBoolPair.second) ? 1 : 0;
     MPI_Allreduce(MPI_IN_PLACE, &unique, 1, MPI_INT, MPI_MIN, platformRef.comm.mpiComm);
-    if(!unique){
-      if(platformRef.comm.mpiRank == 0)
-      {
-        std::cout << "Error in kernelRequestManager_t::add\n";
-        std::cout << "Request details:\n";
-        std::cout << request.to_string();
-      }
-      ABORT(1);
-    }
+    nrsCheck(!unique, platformRef.comm.mpiComm, EXIT_FAILURE, 
+             "Error in kernelRequestManager_t::add\nRequest details: %s\n", request.to_string().c_str());
   }
 
   const std::string fileName = request.fileName;
@@ -50,28 +43,25 @@ kernelRequestManager_t::get(const std::string& request, bool checkValid) const
     int errorFlag = issueError ? 1 : 0;
     MPI_Allreduce(MPI_IN_PLACE, &errorFlag, 1, MPI_INT, MPI_MAX, platformRef.comm.mpiComm);
 
-    if(errorFlag){
-      if(platformRef.comm.mpiRank == 0)
-      {
-        std::cout << "\n";
-        std::cout << "Error in kernelRequestManager_t::getKernel():\n";
-        std::cout << "Cannot find requested kernel " << request << "!\n";
-
-        std::cout << "Available:\n";
+    auto errTxt = [&]()
+    { 
+        std::stringstream txt(std::ios_base::in);
+        txt << "\n";
+        txt << "Error in kernelRequestManager_t::getKernel():\n";
+        txt << "Cannot find requested kernel " << request << "!\n";
+        txt << "Available:\n";
         for(auto&& keyAndValue : requestToKernelMap)
-        {
-          std::cout << "\t" << keyAndValue.first << "\n";
-        }
-        std::cout << "===========================================================\n";
-      }
-      ABORT(1);
-    }
+          txt << "\t" << keyAndValue.first << "\n";
+
+        txt << "===========================================================\n";
+        return txt.str().c_str();
+    };
+
+    nrsCheck(errorFlag, platformRef.comm.mpiComm, EXIT_FAILURE, errTxt(), "");
   }
 
   return requestToKernelMap.at(request);
 }
-
-
 
 void
 kernelRequestManager_t::compile()
@@ -80,7 +70,7 @@ kernelRequestManager_t::compile()
 
   kernelsProcessed = true;
 
-  constexpr int maxCompilingRanks {100};
+  constexpr int maxCompilingRanks {20};
 
   const int rank = platform->cacheLocal ? platformRef.comm.localRank : platformRef.comm.mpiRank;
   const int ranksCompiling =

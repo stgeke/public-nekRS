@@ -20,19 +20,6 @@ typedef double dfloat;
 #define dfloatString "double"
 #endif
 
-// smoother float data type
-#if 1
-typedef float pfloat;
-#define MPI_PFLOAT MPI_FLOAT
-#define pfloatFormat "%f"
-#define pfloatString "float"
-#else
-typedef double pfloat;
-#define MPI_PFLOAT MPI_DOUBLE
-#define pfloatFormat "%lf"
-#define pfloatString "double"
-#endif
-
 // host index data type
 #if 0
 typedef int hlong;

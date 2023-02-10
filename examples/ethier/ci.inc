@@ -127,24 +127,14 @@ void ciSetup(MPI_Comm comm, setupAide &options)
     options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
     options.setArgs("SUBCYCLING STEPS", std::string("0"));
     std::string casename = platform->options.getArgs("CASENAME");
-    if (casename != "mv_ethier") {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Unexpected input file for CI mode" << std::endl;
-      }
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(casename != "mv_ethier", platform->comm.mpiComm, EXIT_FAILURE, "Unexpected input file for CI mode %d\n", ciMode);
   }
   if (ciMode == 6) {
     options.setArgs("END TIME", std::string("0.2"));
     options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
     options.setArgs("SUBCYCLING STEPS", std::string("1"));
     std::string casename = platform->options.getArgs("CASENAME");
-    if (casename != "mv_ethier") {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Unexpected input file for CI mode" << std::endl;
-      }
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(casename != "mv_ethier", platform->comm.mpiComm, EXIT_FAILURE, "Unexpected input file for CI mode %d\n", ciMode);
   }
   if (ciMode == 7) {
     options.setArgs("PRESSURE INITIAL GUESS", "PROJECTION-ACONJ");
@@ -186,12 +176,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
     options.setArgs("VELOCITY SOLVER", "NONE");
 
     std::string casename = platform->options.getArgs("CASENAME");
-    if (casename != "ethierScalar") {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Unexpected input file for CI" << std::endl;
-      }
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(casename != "ethierScalar", platform->comm.mpiComm, EXIT_FAILURE, "Unexpected input file for CI mode %d\n", ciMode);
   }
 
   options.setArgs("BDF ORDER", "3");
@@ -812,12 +797,7 @@ void ciTestErrors(nrs_t *nrs,
     correct &= (nrs->uSolver != nullptr || nrs->uvwSolver != nullptr);
     correct &= (nrs->cds->solver[0] == nullptr);
     correct &= (nrs->cds->solver[1] != nullptr);
-    if (!correct) {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Unexpected solver configuration for CI mode 12" << std::endl;
-      }
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(!correct, platform->comm.mpiComm, EXIT_FAILURE, "Unexpected solver configuration for CI mode %d\n", ciMode);
   }
   if (ciMode == 13) {
     bool correct = true;
@@ -825,19 +805,8 @@ void ciTestErrors(nrs_t *nrs,
     correct &= (nrs->uSolver == nullptr && nrs->uvwSolver == nullptr);
     correct &= (nrs->cds->solver[0] == nullptr);
     correct &= (nrs->cds->solver[1] != nullptr);
-    if (!correct) {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "Unexpected solver configuration for CI mode 13" << std::endl;
-      }
-      ABORT(EXIT_FAILURE);
-    }
-
-    if (nrs->flow) {
-      if (platform->comm.mpiRank == 0) {
-        std::cout << "nrs->flow = true for CI mode 13" << std::endl;
-      }
-      FAIL;
-    }
+    nrsCheck(!correct, platform->comm.mpiComm, EXIT_FAILURE, "Unexpected solver configuration for CI mode %d\n", ciMode);
+    nrsCheck(nrs->flow, platform->comm.mpiComm, EXIT_FAILURE, "nrs->flow == true for CI mode %d\n", ciMode);
   }
 
   if (ciMode == 4) {

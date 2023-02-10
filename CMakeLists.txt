@@ -216,7 +216,6 @@ include(config/bench.cmake)
 include(config/mesh.cmake)
 include(config/elliptic.cmake)
 include(config/gslib.cmake)
-include(config/findpts.cmake)
 
 set(SRC 
     src/lib/nekrs.cpp
@@ -272,6 +271,7 @@ set(SRC
     src/plugins/RANSktau.cpp
     src/plugins/lowMach.cpp
     src/plugins/lpm.cpp
+    src/findpts/findpts.cpp
     src/pointInterpolation/pointInterpolation.cpp
     src/neknek/neknek.cpp
     src/udf/udf.cpp
@@ -315,6 +315,7 @@ target_include_directories(nekrs-lib
   src/navierStokes
   src/neknek
   src/cds
+  src/findpts
   src/postProcessing
   src/pointInterpolation
   src/lns

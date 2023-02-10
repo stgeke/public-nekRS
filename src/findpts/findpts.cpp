@@ -35,7 +35,6 @@ SOFTWARE.
 #include "findpts.hpp"
 #include "gslib.h"
 
-
 // local data structures to switch between run-time/compile-time sizes
 struct evalSrcPt_t {
   double r[findpts::dim];
@@ -117,11 +116,11 @@ static void manageBuffers(dlong pn, dlong outputOffset, dlong nOutputFields)
     return;
 
   dlong Nbytes = 0;
-  Nbytes += pn * sizeof(dlong);                  // code
-  Nbytes += pn * sizeof(dlong);                  // element
-  Nbytes += pn * sizeof(dfloat);                 // dist2
-  Nbytes += dim * pn * sizeof(dfloat);           // r,s,t data
-  Nbytes += dim * pn * sizeof(dfloat);           // x,y,z coordinates
+  Nbytes += pn * sizeof(dlong);                            // code
+  Nbytes += pn * sizeof(dlong);                            // element
+  Nbytes += pn * sizeof(dfloat);                           // dist2
+  Nbytes += dim * pn * sizeof(dfloat);                     // r,s,t data
+  Nbytes += dim * pn * sizeof(dfloat);                     // x,y,z coordinates
   Nbytes += nOutputFields * outputOffset * sizeof(dfloat); // output buffer
 
   if (Nbytes > pool::o_scratch.size()) {
@@ -662,9 +661,9 @@ void findpts_t::findptsEvalImpl(dfloat *out,
 
 extern "C" {
 uint hash_opt_size_3(struct findpts_local_hash_data_3 *p,
-                                   const struct obbox_3 *const obb,
-                                   const uint nel,
-                                   const uint max_size);
+                     const struct obbox_3 *const obb,
+                     const uint nel,
+                     const uint max_size);
 }
 
 dlong getHashSize(const struct findpts_data_3 *fd, dlong nel, dlong max_hash_size)
@@ -773,9 +772,8 @@ findpts_t::findpts_t(MPI_Comm comm,
   this->o_hashMin.copyFrom(hashMin, dim * sizeof(dfloat));
   this->o_hashFac.copyFrom(hashFac, dim * sizeof(dfloat));
 
-  auto kernels = findpts_t::initFindptsKernels(Nq);
-  this->localEvalKernel = kernels.at(0);
-  this->localKernel = kernels.at(1);
+  this->localEvalKernel = platform->kernels.get("findptsLocalEval");
+  this->localKernel = platform->kernels.get("findptsLocal");
 
   this->o_wtend_x = platform->device.malloc(6 * Nq * sizeof(dfloat));
   this->o_wtend_y = platform->device.malloc(6 * Nq * sizeof(dfloat));

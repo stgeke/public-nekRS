@@ -3,11 +3,10 @@
 
 #include "occa.hpp"
 #include <mpi.h>
-#include "ogstypes.h" // for dfloat, dlong
 #include <limits>
 #include <tuple>
 #include <vector>
-#include <functional>
+#include "nrssys.hpp"
 
 struct crystal;
 struct hash_data_3;
@@ -119,8 +118,6 @@ public:
   void setTimerName(std::string name) { timerName = name; }
 
   crystal *crystalRouter();
-
-  static std::vector<occa::kernel> initFindptsKernels(dlong Nq);
 
 private:
   MPI_Comm comm;

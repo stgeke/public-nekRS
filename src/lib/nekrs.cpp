@@ -23,10 +23,12 @@ namespace fs = std::filesystem;
 // extern variable from nrssys.hpp
 platform_t* platform;
 
-static int rank, size;
-static MPI_Comm commg, comm;
 static nrs_t* nrs;
 static setupAide options;
+
+static int rank, size;
+static MPI_Comm commg, comm;
+
 static dfloat lastOutputTime = 0;
 static int firstOutfld = 1;
 static int enforceLastStep = 0;
@@ -343,15 +345,9 @@ void* nrsPtr(void)
   return nrs;
 }
 
-void finalize(void)
+int finalize(void)
 {
-  if(options.compareArgs("BUILD ONLY", "FALSE")) {
-    nek::end();
-    if(nrs->pSolver) delete nrs->pSolver;
-    hypreWrapper::finalize();
-    hypreWrapperDevice::finalize();
-    AMGXfinalize();
-  }
+  return nrsFinalize(nrs);
 }
 
 int runTimeStatFreq()
@@ -466,3 +462,26 @@ int exitValue() { return platform->exitValue; }
 
 
 } // namespace
+
+int nrsFinalize(nrs_t *nrs)
+{
+  auto exitValue = nekrs::exitValue();
+  if(platform->options.compareArgs("BUILD ONLY", "FALSE")) {
+    nek::finalize();
+    if(nrs->pSolver) delete nrs->pSolver;
+    hypreWrapper::finalize();
+    hypreWrapperDevice::finalize();
+    AMGXfinalize();
+  }
+
+  if (platform->comm.mpiRank == 0) {
+    if(exitValue)
+      std::cout << "End with exitValue=" << exitValue << std::endl;
+    else
+      std::cout << "End\n";
+  }
+
+  return exitValue;
+}
+
+

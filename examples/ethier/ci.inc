@@ -253,7 +253,7 @@ void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel,
     if (platform->comm.mpiRank == 0) {
       std::cout << "Unexpected number of particles" << std::endl;
     }
-    FAIL;
+    CIFAIL;
   }
 
   auto relTol = 5e-7;
@@ -321,9 +321,7 @@ void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel,
     if (platform->comm.mpiRank == 0) {
       std::cout << "Particle integration error too large!\n";
     }
-    FAIL;
-    MPI_Finalize();
-    exit(platform->exitValue);
+    CIFAIL;
   }
 }
 
@@ -435,7 +433,7 @@ void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKer
   const auto threshold = 5e5 * std::numeric_limits<dfloat>::epsilon();
   for (auto &&err : {linfErrUx, linfErrUy, linfErrUz}) {
     if (err > threshold) {
-      FAIL;
+      CIFAIL;
     }
   }
 
@@ -447,7 +445,7 @@ void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKer
     }
     for (auto &&err : {linfErrUxRand, linfErrUyRand, linfErrUzRand}) {
       if (err > threshold) {
-        FAIL;
+        CIFAIL;
       }
     }
   }
@@ -509,7 +507,7 @@ void ciTestAvgBoundary(nrs_t *nrs)
       std::cout << "ciTestAvgBoundary: surface area of unit sphere is " << SAref << " instead of " << SA
                 << std::endl;
     }
-    FAIL;
+    CIFAIL;
   }
 
   occa::memory o_fld = platform->device.malloc((N * sizeof(dfloat)) * nrs->fieldOffset);
@@ -523,7 +521,7 @@ void ciTestAvgBoundary(nrs_t *nrs)
       if (rank == 0) {
         std::cout << "ciTestAvgBoundary: FAILED" << std::endl;
       }
-      FAIL;
+      CIFAIL;
     }
   }
 }
@@ -596,7 +594,7 @@ void ciTestLinAlg(const int N)
     if (rank == 0)
       printf("linAlg errs (N=%d): %s=%g\n", N, id.c_str(), err);
     if (err > testTol)
-      FAIL;
+      CIFAIL;
   };
 
   evaluate_method([&](auto N, auto o_x, auto comm) { return linAlg->sum(N, o_x, comm); }, sum, "sum");
@@ -627,7 +625,7 @@ void ciTestErrors(nrs_t *nrs,
       if (rank == 0) {
         printf("Expected %d P iteration in first step, but got %d!\n", expectedNiterP, NiterP);
       }
-      FAIL;
+      CIFAIL;
     }
   }
   if (!nrs->lastStep)
@@ -821,7 +819,7 @@ void ciTestErrors(nrs_t *nrs,
                memoryUsage);
         fflush(stdout);
       }
-      FAIL;
+      CIFAIL;
     }
   }
   if (ciMode == 8) {
@@ -830,14 +828,14 @@ void ciTestErrors(nrs_t *nrs,
     if (rank == 0)
       printf("nSteps err variable dt:  %d\n", errSteps);
     if (errSteps > 2)
-      FAIL;
+      CIFAIL;
   }
 
   if (ciMode == 5 || ciMode == 6) {
     if (platform->options.compareArgs("MOVING MESH", "FALSE")) {
       if (rank == 0)
         printf("Unable to test moving mesh in ethier. Please re-run the case with mv_ethier!\n");
-      (FAIL);
+      (CIFAIL);
     }
   }
 
@@ -870,5 +868,5 @@ void ciTestErrors(nrs_t *nrs,
   passTest &= s01IterErr <= 1;
   passTest &= s02IterErr <= 1;
 
-  passTest ? (PASS) : (FAIL);
+  passTest ? (CIPASS) : (CIFAIL);
 }

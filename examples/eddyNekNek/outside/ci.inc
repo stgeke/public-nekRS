@@ -38,7 +38,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
 
     MPI_Allreduce(MPI_IN_PLACE, &fail, 1, MPI_INT, MPI_MAX, platform->comm.mpiCommParent);
     if (fail) {
-      FAIL;
+      CIFAIL;
     }
   }
 }
@@ -93,7 +93,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   MPI_Allreduce(MPI_IN_PLACE, &flag, 1, MPI_INT, MPI_MAX, platform->comm.mpiCommParent);
 
   if (flag) {
-    (PASS);
+    (CIPASS);
   }
   else {
     if (platform->comm.mpiRank == 0) {
@@ -106,6 +106,6 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
              errVzGlobal,
              expectedErrVz);
     }
-    (FAIL);
+    (CIFAIL);
   }
 }

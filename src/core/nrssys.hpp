@@ -140,7 +140,7 @@ std::vector<std::string> serializeString(const std::string sin, char dlim)
   while (ss.good()) {
     std::string substr;
     std::getline(ss, substr, dlim);
-    slist.push_back(substr);
+    if(!substr.empty()) slist.push_back(substr);
   }
   return slist;
 }

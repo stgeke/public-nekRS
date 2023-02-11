@@ -24,6 +24,9 @@
 
  */
 
+#ifndef ELLIPTIC_PRECON_H
+#define ELLIPTIC_PRECON_H 1
+
 #include "nrssys.hpp"
 #include "MG/MGSolver.hpp"
 #include "SEMFEMSolver.hpp"
@@ -44,3 +47,5 @@ struct precon_t
 
   ~precon_t();
 };
+
+#endif

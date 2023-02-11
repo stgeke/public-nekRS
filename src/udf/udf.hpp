@@ -15,13 +15,13 @@
 #include "plugins/lpm.hpp"
 #include "plugins/RANSktau.hpp"
 
-#define PASS                                                                                                 \
+#define CIPASS                                                                                               \
 {                                                                                                            \
 if (platform->comm.mpiRank == 0)                                                                             \
 printf("TESTS passed \n");                                                                                   \
 platform->exitValue = 0;                                                                                     \
 }
-#define FAIL                                                                                                 \
+#define CIFAIL                                                                                               \
 {                                                                                                            \
 if (platform->comm.mpiRank == 0)                                                                             \
 printf("TESTS failed!\n");                                                                                   \

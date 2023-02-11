@@ -181,7 +181,7 @@ void outfld(const char *filename,
 
 void uic(int ifield) { (*nek_uic_ptr)(&ifield); }
 
-void end() { (*nek_end_ptr)(); }
+void finalize() { (*nek_end_ptr)(); }
 
 void setic(void)
 {

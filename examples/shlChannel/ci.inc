@@ -85,5 +85,5 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     std::cout << "LInfError in Vy: " << LInfError_y << "\n";
   }
  
-  (LInfError_x < tol && LInfError_y < tol) ? (PASS) : (FAIL); 
+  (LInfError_x < tol && LInfError_y < tol) ? (CIPASS) : (CIFAIL); 
 }

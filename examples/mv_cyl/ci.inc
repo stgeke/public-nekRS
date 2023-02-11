@@ -132,5 +132,5 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   if(pIterErr >= 2) passed = false;
 
   if(rank == 0) printf("\n"); 
-  passed ? (PASS) : (FAIL);
+  passed ? (CIPASS) : (CIFAIL);
 }

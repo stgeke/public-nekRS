@@ -566,18 +566,11 @@ int main(int argc, char** argv)
   }
   MPI_Pcontrol(0);
 
-  auto exitValue = nekrs::exitValue();
-  nekrs::finalize();
+  const int exitValue = nekrs::finalize();
 
   MPI_Barrier(commGlobal);
-  if (rank == 0) {
-    if(exitValue)
-      std::cout << "End with exitValue=" << exitValue << std::endl;
-    else
-      std::cout << "End\n";
-  }
-
   MPI_Finalize();
+
   if(exitValue)
     return EXIT_FAILURE;
   else

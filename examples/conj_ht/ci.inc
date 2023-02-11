@@ -38,5 +38,5 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   if (rank == 0)
     printf("relative error to target: vx=%g s=%g\n", vxErr, sErr);
 
-  (vxErr < EPS && sErr < EPS) ? (PASS) : (FAIL); 
+  (vxErr < EPS && sErr < EPS) ? (CIPASS) : (CIFAIL); 
 }

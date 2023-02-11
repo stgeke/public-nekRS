@@ -179,6 +179,7 @@ struct nrs_t {
   occa::kernel applyZeroNormalMaskKernel;
 };
 
+int nrsFinalize(nrs_t *nrs);
 
 void evaluateProperties(nrs_t *nrs, const double timeNew);
 

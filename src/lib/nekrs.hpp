@@ -20,7 +20,7 @@ void outfld(double time, int step);
 void outfld(double time, int step, std::string suffix);
 int outputStep(double time, int tStep);
 void outputStep(int val);
-void finalize();
+int finalize();
 void nekUserchk(void);
 int runTimeStatFreq();
 int printInfoFreq();

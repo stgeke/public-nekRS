@@ -118,7 +118,7 @@ void outfld(const char *filename,
             void *o_s,
             int NSfields);
 void uic(int ifield);
-void end(void);
+void finalize(void);
 void map_m_to_n(double *a, int na, double *b, int nb);
 void outpost(double *v1, double *v2, double *v3, double *vp, double *vt, char *name);
 int lglel(int e);

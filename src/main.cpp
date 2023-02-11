@@ -203,9 +203,11 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
 
   for(auto opt: {&cmdOpt->multiSessionFile, &cmdOpt->setupFile, &cmdOpt->deviceID, &cmdOpt->backend})
   {
-    auto buf = (char*) calloc(opt->size() + 1, sizeof(char));
-    strcpy(buf, opt->c_str());
-    MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
+    int bufSize = opt->size() + 1;
+    MPI_Bcast(&bufSize, 1, MPI_INT, 0, comm);
+    auto buf = (char*) std::calloc(bufSize, sizeof(char));
+    if(rank == 0) std::strcpy(buf, opt->c_str());
+    MPI_Bcast(buf, bufSize, MPI_BYTE, 0, comm);
     opt->assign(buf);
     free(buf);
   }

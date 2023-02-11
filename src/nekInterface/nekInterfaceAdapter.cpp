@@ -68,7 +68,7 @@ void noop_func(void) {}
 
 void check_error(const char *error)
 {
-  nrsCheck(error != NULL, platform->comm.mpiComm, EXIT_FAILURE,
+  nrsCheck(error != NULL, MPI_COMM_SELF, EXIT_FAILURE,
            "%s\n", error);
 }
 
@@ -255,7 +255,8 @@ void set_usr_handles(const char *session_in, int verbose)
   if(platform->comm.mpiRank == 0 && platform->verbose)
     std::cout << "loading " << lib << std::endl;
   void *handle = dlopen(lib.c_str(), RTLD_NOW | RTLD_LOCAL);
-  nrsCheck(!handle, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", dlerror());
+  nrsCheck(!handle, MPI_COMM_SELF, EXIT_FAILURE, 
+           "%s\n", lib.c_str(), dlerror());
 
   // check if we need to append an underscore
   char us[2] = "";

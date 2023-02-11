@@ -1351,7 +1351,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
              "Cannot find setup file %s\n", setupFile.c_str());
   }
 
-  std::string casename = setupFile.substr(0, setupFile.find(".par"));
+  const std::string casename = setupFile.substr(0, setupFile.find(".par"));
   setDefaultSettings(options, casename, rank);
 
   char *rbuf;

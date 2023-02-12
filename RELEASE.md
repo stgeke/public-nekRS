@@ -2,25 +2,26 @@
 
 ## What is new? 
 
-* Nek-nek, point interpolation, and particle tracking tools
+* Point interpolation
+* Coupled multi-session (neknek)
+* Particle tracking 
 * Single source udf+oudf (see ethier example) 
-* BoomerAMG on device
+* Device support BoomerAMG
 * Improved runtime statistics
 * Improved Chebyshev smoother
-* User defined tavg fields
-* turbulent Channel and periodicHill example
-* Unaligned `on` boundary condition
+* Flexible time averaging 
+* `on` boundary condition (aligned)
 * Extrapolation initialGuess method
-* Support for external nekRS plugins
 * DPCPP backend
+* Scaleable JIT compilation
+* More examples
 * Various bug fixes 
 
 ## Good to know
 
-* n/a 
+* [nrsconfig] Optional build settings have to be passed as a command line arg e.g. `-DENABLE_AMGX=ON`
 
 ## Breaking Changes
-* [nrsconfig] Optional build settings have to be passed as a command line arg e.g. `-DENABLE_AMGX=ON`
 * Time step was added to `nekRS::outfld(..., int step, ...)`
 * [par] Use `pMGSchedule` instead of `pMultigridCoarsening` (see help for more details)
 * [par] Rename writeControl value `runTime` => `simulationTime`

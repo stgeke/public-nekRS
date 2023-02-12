@@ -57,7 +57,7 @@ To build and install the code run:
 cmake --build ./build --target install -j8
 ```
 Please delete instead of overwriting your old build and install directory before updating. 
-Build settings can be customized by environment variables. 
+Build settings can be customized by modifying the config script or through CMake options passed to `nrsconfig`. 
 After installation you may want to adjust `$NEKRS_HOME/nekrs.conf` to your environment.
 
 ## Setting the Enviroment

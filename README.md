@@ -1,9 +1,11 @@
+```
                  __    ____  _____
    ____   ___   / /__ / __ \/ ___/
   / __ \ / _ \ / //_// /_/ /\__ \ 
  / / / //  __// ,<  / _, _/___/ / 
 /_/ /_/ \___//_/|_|/_/ |_|/____/  
 COPYRIGHT (c) 2019-2023 UCHICAGO ARGONNE, LLC
+```
 
 [![Build Status](https://travis-ci.com/Nek5000/nekRS.svg?branch=master)](https://travis-ci.com/Nek5000/nekRS)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg)](https://opensource.org/licenses/BSD-3-Clause)
@@ -15,11 +17,13 @@ Capabilities:
 * Incompressible and low Mach-number Navier-Stokes + scalar transport 
 * CG-SEM using curvilinear conformal hexaheadral elements 
 * Variable time step 2nd/3rd order semi-implicit time integration
-* MPI+X hybrid parallelism supporting CPU, CUDA, HIP, and OPENCL
+* MPI+X hybrid parallelism supporting CPU, CUDA, HIP, DPC++ and OPENCL
 * Various boundary conditions
 * Conjugate fluid-solid heat transfer
 * LES and RANS turbulence models
 * Arbitrary-Lagrangian-Eulerian moving mesh
+* Lagrangian phase model
+* Overlapping overset grids
 * VisIt & Paraview support for data analysis and visualization
 * Interface to [Nek5000](https://github.com/Nek5000/Nek5000) 
 
@@ -93,11 +97,13 @@ All bugs are reported and tracked through [Issues](https://github.com/Nek5000/ne
 nekRS is released under the BSD 3-clause license (see `LICENSE` file). 
 All new contributions must be made under the BSD 3-clause license.
 
+## Citing nekRS
+[NekRS, a GPU-Accelerated Spectral Element Navier-Stokes Solver](https://www.sciencedirect.com/science/article/abs/pii/S0167819122000710) 
+
 ## Acknowledgment
 This research was supported by the Exascale Computing Project (17-SC-20-SC), 
 a joint project of the U.S. Department of Energy's Office of Science and National Nuclear Security 
 Administration, responsible for delivering a capable exascale ecosystem, including software, 
 applications, and hardware technology, to support the nation's exascale computing imperative.
 
-## References
-* [NekRS, a GPU-Accelerated Spectral Element Navier-Stokes Solver](https://arxiv.org/abs/2104.05829) 
+

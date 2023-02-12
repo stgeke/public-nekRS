@@ -444,20 +444,12 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
                                      platform->o_mempool.slice6);
 
       // take care of Neumann-Dirichlet shared edges across elements
-      if (sweep == 0)
-        oogs::startFinish(platform->o_mempool.slice6,
-            1,
-            nrs->fieldOffset,
-            ogsDfloat,
-            ogsMax,
-            nrs->gsh);
-      if (sweep == 1)
-        oogs::startFinish(platform->o_mempool.slice6,
-            1,
-            nrs->fieldOffset,
-            ogsDfloat,
-            ogsMin,
-            nrs->gsh);
+      oogs::startFinish(platform->o_mempool.slice6,
+                        1,
+                        nrs->fieldOffset,
+                        ogsDfloat,
+                        (sweep == 0) ? ogsMax : ogsMin,
+                        nrs->gsh);
     }
 
     if (nrs->pSolver->Nmasked)
@@ -479,6 +471,7 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
         nrs->g0 * nrs->idt,
         0 * nrs->fieldOffset,
         nrs->fieldOffset,
+        0,
         nrs->o_mue,
         nrs->o_rho,
         o_NULL,
@@ -520,25 +513,6 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
           mesh->Nlocal, n_dim, o_BF, 1.0, o_RhsVel, offset, offset);
     }
 
-    if (nrs->uvwSolver) {
-      if(nrs->uvwSolver->Nmasked)
-        nrs->maskKernel(
-            nrs->uvwSolver->Nmasked, nrs->uvwSolver->o_maskIds, o_RhsVel);
-    } else {
-      if (nrs->uSolver->Nmasked)
-        nrs->maskKernel(nrs->uSolver->Nmasked,
-                        nrs->uSolver->o_maskIds,
-                        o_RhsVel + (0 * sizeof(dfloat)) * nrs->fieldOffset);
-      if (nrs->vSolver->Nmasked)
-        nrs->maskKernel(nrs->vSolver->Nmasked,
-                        nrs->vSolver->o_maskIds,
-                        o_RhsVel + (1 * sizeof(dfloat)) * nrs->fieldOffset);
-      if (nrs->wSolver->Nmasked)
-        nrs->maskKernel(nrs->wSolver->Nmasked,
-                        nrs->wSolver->o_maskIds,
-                        o_RhsVel + (2 * sizeof(dfloat)) * nrs->fieldOffset);
-    }
-
     platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset,
         -1.0*std::numeric_limits<dfloat>::max(),
         platform->o_mempool.slice3);
@@ -557,6 +531,8 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
                                      nrs->o_EToB,
                                      nrs->o_rho,
                                      nrs->o_mue,
+                                     nrs->neknek->o_pointMap,
+                                     nrs->neknek->o_U,
                                      nrs->o_usrwrk,
                                      nrs->o_Uc,
                                      platform->o_mempool.slice3);
@@ -578,20 +554,12 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
                                    platform->o_mempool.slice3);
 
       // take care of Neumann-Dirichlet shared edges across elements
-      if (sweep == 0)
-        oogs::startFinish(platform->o_mempool.slice3,
-            nrs->NVfields,
-            nrs->fieldOffset,
-            ogsDfloat,
-            ogsMax,
-            nrs->gsh);
-      if (sweep == 1)
-        oogs::startFinish(platform->o_mempool.slice3,
-            nrs->NVfields,
-            nrs->fieldOffset,
-            ogsDfloat,
-            ogsMin,
-            nrs->gsh);
+      oogs::startFinish(platform->o_mempool.slice3,
+                        nrs->NVfields,
+                        nrs->fieldOffset,
+                        ogsDfloat,
+                        (sweep == 0) ? ogsMax : ogsMin,
+                        nrs->gsh);
     }
     if (nrs->uvwSolver) {
 
@@ -625,6 +593,25 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
             nrs->o_Uc);
     }
     platform->timer.toc("velocity rhs");
+
+    if (nrs->uvwSolver) {
+      if(nrs->uvwSolver->Nmasked)
+        nrs->maskKernel(
+            nrs->uvwSolver->Nmasked, nrs->uvwSolver->o_maskIds, o_RhsVel);
+    } else {
+      if (nrs->uSolver->Nmasked)
+        nrs->maskKernel(nrs->uSolver->Nmasked,
+                        nrs->uSolver->o_maskIds,
+                        o_RhsVel + (0 * sizeof(dfloat)) * nrs->fieldOffset);
+      if (nrs->vSolver->Nmasked)
+        nrs->maskKernel(nrs->vSolver->Nmasked,
+                        nrs->vSolver->o_maskIds,
+                        o_RhsVel + (1 * sizeof(dfloat)) * nrs->fieldOffset);
+      if (nrs->wSolver->Nmasked)
+        nrs->maskKernel(nrs->wSolver->Nmasked,
+                        nrs->wSolver->o_maskIds,
+                        o_RhsVel + (2 * sizeof(dfloat)) * nrs->fieldOffset);
+    }
 
     if (nrs->uvwSolver) {
       ellipticSolve(nrs->uvwSolver, o_RhsVel, nrs->o_Uc);

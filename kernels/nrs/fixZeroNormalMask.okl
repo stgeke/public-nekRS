@@ -61,9 +61,55 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
           volNy *= invVolNMag;
           volNz *= invVolNMag;
 
-          const dfloat tol = 1e-4;
-          if (fabs(1.0 - volNMag) > tol) {  // finite angle between two p_ZERO_NORMAL faces
+          const dfloat tol = 1; // always average face normals
 
+          if (fabs(1.0 - volNMag) < tol) {
+
+             const dfloat nx = volNx;
+             const dfloat ny = volNy;
+             const dfloat nz = volNz;
+
+             sgeo[sid * p_Nsgeo + p_NXID] = nx;
+             sgeo[sid * p_Nsgeo + p_NYID] = ny;
+             sgeo[sid * p_Nsgeo + p_NZID] = nz;
+     
+             const dfloat tol = 1e-4;
+             dfloat vt1x = 0, vt1y = 0, vt1z = 0;
+             dfloat vt2x = 0, vt2y = 0, vt2z = 0;
+             if (fabs(fabs(nz) - 1.0) < tol) {
+               vt1x = 1.0;
+               vt1y = 0.0;
+               vt1z = 0.0;
+             }
+             else {
+               const dfloat mag = sqrt(nx * nx + ny * ny);
+               vt1x = -ny / mag;
+               vt1y = nx / mag;
+               vt1z = 0.0;
+             }
+     
+             sgeo[sid * p_Nsgeo + p_T1XID] = vt1x;
+             sgeo[sid * p_Nsgeo + p_T1YID] = vt1y;
+             sgeo[sid * p_Nsgeo + p_T1ZID] = vt1z;
+     
+             // vt2 = n \cross vt1
+             vt2x = ny * vt1z - nz * vt1y;
+             vt2y = nz * vt1x - nx * vt1z;
+             vt2z = nx * vt1y - ny * vt1x;
+     
+             // normalize vt2
+             const dfloat invMag = 1.0 / sqrt(vt2x * vt2x + vt2y * vt2y + vt2z * vt2z);
+             vt2x *= invMag;
+             vt2y *= invMag;
+             vt2z *= invMag;
+     
+            sgeo[sid * p_Nsgeo + p_T2XID] = vt2x;
+            sgeo[sid * p_Nsgeo + p_T2YID] = vt2y;
+            sgeo[sid * p_Nsgeo + p_T2ZID] = vt2z;
+
+          } else {
+
+#if 0
             const dfloat nx = sgeo[sid * p_Nsgeo + p_NXID];
             const dfloat ny = sgeo[sid * p_Nsgeo + p_NYID];
             const dfloat nz = sgeo[sid * p_Nsgeo + p_NZID];
@@ -120,48 +166,8 @@ dot(const dfloat a0, const dfloat a1, const dfloat a2, const dfloat b0, const df
               mask[idM + 1 * offset] = 0.0;
               mask[idM + 2 * offset] = 0.0;
             }
-          } else {
-             const dfloat nx = volNx;
-             const dfloat ny = volNy;
-             const dfloat nz = volNz;
+#endif
 
-             sgeo[sid * p_Nsgeo + p_NXID] = nx;
-             sgeo[sid * p_Nsgeo + p_NYID] = ny;
-             sgeo[sid * p_Nsgeo + p_NZID] = nz;
-     
-             const dfloat tol = 1e-4;
-             dfloat vt1x = 0, vt1y = 0, vt1z = 0;
-             dfloat vt2x = 0, vt2y = 0, vt2z = 0;
-             if (fabs(fabs(nz) - 1.0) < tol) {
-               vt1x = 1.0;
-               vt1y = 0.0;
-               vt1z = 0.0;
-             }
-             else {
-               const dfloat mag = sqrt(nx * nx + ny * ny);
-               vt1x = -ny / mag;
-               vt1y = nx / mag;
-               vt1z = 0.0;
-             }
-     
-             sgeo[sid * p_Nsgeo + p_T1XID] = vt1x;
-             sgeo[sid * p_Nsgeo + p_T1YID] = vt1y;
-             sgeo[sid * p_Nsgeo + p_T1ZID] = vt1z;
-     
-             // vt2 = n \cross vt1
-             vt2x = ny * vt1z - nz * vt1y;
-             vt2y = nz * vt1x - nx * vt1z;
-             vt2z = nx * vt1y - ny * vt1x;
-     
-             // normalize vt2
-             const dfloat invMag = 1.0 / sqrt(vt2x * vt2x + vt2y * vt2y + vt2z * vt2z);
-             vt2x *= invMag;
-             vt2y *= invMag;
-             vt2z *= invMag;
-     
-            sgeo[sid * p_Nsgeo + p_T2XID] = vt2x;
-            sgeo[sid * p_Nsgeo + p_T2YID] = vt2y;
-            sgeo[sid * p_Nsgeo + p_T2ZID] = vt2z;
           }
         }
       }

@@ -467,19 +467,24 @@ int nrsFinalize(nrs_t *nrs)
 {
   auto exitValue = nekrs::exitValue();
   if(platform->options.compareArgs("BUILD ONLY", "FALSE")) {
-    nek::finalize();
+    if(nrs->uSolver) delete nrs->uSolver;
+    if(nrs->vSolver) delete nrs->vSolver;
+    if(nrs->wSolver) delete nrs->wSolver;
+    if(nrs->uvwSolver) delete nrs->uvwSolver;
     if(nrs->pSolver) delete nrs->pSolver;
+    for(int is; is < nrs->Nscalar; is++) {
+      if(nrs->cds->solver[is]) delete nrs->cds->solver[is]; 
+    } 
+    if(nrs->meshSolver) delete nrs->meshSolver;
+
     hypreWrapper::finalize();
     hypreWrapperDevice::finalize();
     AMGXfinalize();
+    nek::finalize();
   }
 
-  if (platform->comm.mpiRank == 0) {
-    if(exitValue)
-      std::cout << "End with exitValue=" << exitValue << std::endl;
-    else
-      std::cout << "End\n";
-  }
+  if (platform->comm.mpiRank == 0 && exitValue)
+      std::cout << "finished with exit code " << exitValue << std::endl;
 
   return exitValue;
 }

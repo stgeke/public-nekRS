@@ -618,9 +618,6 @@ void lpm_t::writeFld(dfloat time)
     platform->timer.tic(timerName + "write", 1);
   }
 
-  static_assert(sizeof(float) == 4, "lpm_t::writeFld requires float be 32-bit");
-  static_assert(sizeof(int) == 4, "lpm_t::writefld requires int be 32-bit");
-
   // Required to determine if points are outside of the domain
   // Do not output points outside of the domain
 

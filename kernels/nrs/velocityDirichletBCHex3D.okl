@@ -94,7 +94,6 @@
         const dlong sid = e * p_Nfaces * p_Nfp + n;
         const dlong idM = vmapM[sk];
         const dlong bcType = EToB[f + p_Nfaces * e];
-        const dlong neknekOffset = neknekPoints[offset];
 
         if (bcType == p_bcTypeV || bcType == p_bcTypeINT) {
           bc.id = EToBM[f + p_Nfaces * e];
@@ -131,7 +130,7 @@
           bc.fieldOffset = offset;
 
           if (bcType == p_bcTypeINT) {
-            const int NVfields = 3;
+            const dlong neknekOffset = neknekPoints[offset];
             const int neknekId = neknekPoints[idM];
             bc.uinterp = neknekU[neknekId + 0 * neknekOffset];
             bc.vinterp = neknekU[neknekId + 1 * neknekOffset];

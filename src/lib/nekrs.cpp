@@ -62,8 +62,6 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
 
   configRead(comm);
 
-  if(debug) platform->options.setArgs("VERBOSE","TRUE");
-
   options.setArgs("BUILD ONLY", "FALSE");
   if(buildOnly) {
     options.setArgs("BUILD ONLY", "TRUE");
@@ -90,6 +88,9 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   platform_t* _platform = platform_t::getInstance(options, commg, comm);
   platform = _platform;
   platform->par = par;
+
+  if (debug)
+    platform->options.setArgs("VERBOSE", "TRUE");
 
   int buildRank = rank;
   if(platform->cacheLocal)
@@ -158,7 +159,9 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
   }
 
   nrsSetup(comm, options, nrs);
-  new neknek_t(nrs, session);
+  if (checkCoupled(nrs)) {
+    new neknek_t(nrs, session);
+  }
 
   const double setupTime = platform->timer.query("setup", "DEVICE:MAX");
   if(rank == 0) {
@@ -238,7 +241,7 @@ double dt(int tstep)
            "Invalid time step size %.2e\n", nrs->dt[0]);
 
   // during a neknek simulation, sync dt across all ranks
-  if (nrs->neknek->coupled) {
+  if (nrs->neknek) {
     MPI_Allreduce(MPI_IN_PLACE, &nrs->dt[0], 1, MPI_DFLOAT, MPI_MIN, platform->comm.mpiCommParent);
   }
 

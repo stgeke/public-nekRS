@@ -130,8 +130,8 @@
           bc.fieldOffset = offset;
 
           if (bcType == p_bcTypeINT) {
-            const dlong neknekOffset = neknekPoints[offset];
             const int neknekId = neknekPoints[idM];
+            const dlong neknekOffset = neknekPoints[offset];
             bc.uinterp = neknekU[neknekId + 0 * neknekOffset];
             bc.vinterp = neknekU[neknekId + 1 * neknekOffset];
             bc.winterp = neknekU[neknekId + 2 * neknekOffset];

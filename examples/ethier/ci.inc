@@ -224,6 +224,8 @@ auto generatePoints(int nPoints, double R)
 
 void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel, occa::kernel RKKernel)
 {
+  if(!nrs->flow) return;
+
   double endTime;
   platform->options.getArgs("END TIME", endTime);
 

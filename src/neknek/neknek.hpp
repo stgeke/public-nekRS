@@ -17,13 +17,14 @@ struct session_data_t {
   bool coupled;
 };
 
+bool checkCoupled(nrs_t *nrs);
+
 class neknek_t {
 public:
   neknek_t(nrs_t *nrs, const session_data_t &session);
   dlong nsessions, sessionID;
   MPI_Comm globalComm;
   MPI_Comm localComm;
-  bool coupled;
 
   dlong Nscalar;
   dlong nEXT;

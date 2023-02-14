@@ -808,7 +808,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
         }
       }
 
-      if (nrs->neknek->coupled) {
+      if (nrs->neknek) {
         printf("neknek   : sync %.2e  exchange %.2e\n", nrs->neknek->tSync, nrs->neknek->tExch);
       }
 

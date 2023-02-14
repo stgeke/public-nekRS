@@ -185,6 +185,9 @@ void updateInterpPoints(nrs_t *nrs)
 
 dlong computeNumInterpPoints(nrs_t *nrs)
 {
+  if (!nrs->flow)
+    return 0;
+
   auto *mesh = nrs->meshV;
   dlong numInterpFaces = 0;
   for (dlong e = 0; e < mesh->Nelements; ++e) {
@@ -297,31 +300,6 @@ void neknekSetup(nrs_t *nrs)
 {
   neknek_t *neknek = nrs->neknek;
 
-  // determine if sessions are coupled
-  auto numInterpPoints = computeNumInterpPoints(nrs);
-
-  dlong numInterpPointsSession = numInterpPoints;
-  MPI_Allreduce(MPI_IN_PLACE, &numInterpPointsSession, 1, MPI_DLONG, MPI_SUM, platform->comm.mpiComm);
-
-  dlong minPointsAcrossSessions = numInterpPointsSession;
-  MPI_Allreduce(MPI_IN_PLACE, &minPointsAcrossSessions, 1, MPI_DLONG, MPI_MIN, platform->comm.mpiCommParent);
-
-  dlong maxPointsAcrossSessions = numInterpPointsSession;
-  MPI_Allreduce(MPI_IN_PLACE, &maxPointsAcrossSessions, 1, MPI_DLONG, MPI_MAX, platform->comm.mpiCommParent);
-
-  neknek->coupled = minPointsAcrossSessions > 0;
-
-  nrsCheck((minPointsAcrossSessions == 0) && (maxPointsAcrossSessions > 0), platform->comm.mpiCommParent, EXIT_FAILURE, 
-          "One session has no interpolation points, but another session does!\n", "");
-
-  if (!neknek->coupled) {
-    neknek->Nscalar = nrs->Nscalar;
-    reserveAllocation(nrs, 0);
-    neknek->pointMap[nrs->fieldOffset] = 0;
-    neknek->o_pointMap.copyFrom(neknek->pointMap.data());
-    return;
-  }
-
   nrsCheck(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE"), platform->comm.mpiComm, EXIT_FAILURE,
            "constant flow rate support not supported\n", "");
 
@@ -355,9 +333,33 @@ void neknekSetup(nrs_t *nrs)
 
 } // namespace
 
+bool checkCoupled(nrs_t *nrs)
+{
+
+  // determine if sessions are coupled
+  auto numInterpPoints = computeNumInterpPoints(nrs);
+
+  dlong numInterpPointsSession = numInterpPoints;
+  MPI_Allreduce(MPI_IN_PLACE, &numInterpPointsSession, 1, MPI_DLONG, MPI_SUM, platform->comm.mpiComm);
+
+  dlong minPointsAcrossSessions = numInterpPointsSession;
+  MPI_Allreduce(MPI_IN_PLACE, &minPointsAcrossSessions, 1, MPI_DLONG, MPI_MIN, platform->comm.mpiCommParent);
+
+  dlong maxPointsAcrossSessions = numInterpPointsSession;
+  MPI_Allreduce(MPI_IN_PLACE, &maxPointsAcrossSessions, 1, MPI_DLONG, MPI_MAX, platform->comm.mpiCommParent);
+
+  nrsCheck((minPointsAcrossSessions == 0) && (maxPointsAcrossSessions > 0),
+           platform->comm.mpiCommParent,
+           EXIT_FAILURE,
+           "One session has no interpolation points, but another session does!\n",
+           "");
+
+  return minPointsAcrossSessions > 0;
+}
+
 neknek_t::neknek_t(nrs_t *nrs, const session_data_t &session)
     : nsessions(session.nsessions), sessionID(session.sessionID), globalComm(session.globalComm),
-      localComm(session.localComm), coupled(session.coupled)
+      localComm(session.localComm)
 {
 
   nrs->neknek = this;
@@ -373,24 +375,18 @@ neknek_t::neknek_t(nrs_t *nrs, const session_data_t &session)
   neknekSetup(nrs);
 
   // variable p0th + nek-nek is not supported
-  if (this->coupled) {
-    int issueError = 0;
-    if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
-      issueError = 1;
-    }
-
-    nrsCheck(issueError, platform->comm.mpiCommParent, EXIT_FAILURE,
-             "variable p0th is not supported!\n", "");
+  int issueError = 0;
+  if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
+    issueError = 1;
   }
+
+  nrsCheck(issueError, platform->comm.mpiCommParent, EXIT_FAILURE, "variable p0th is not supported!\n", "");
 
   this->copyNekNekPointsKernel = platform->kernels.get("copyNekNekPoints");
 }
 
 void neknek_t::updateBoundary(nrs_t *nrs, int tstep, int stage)
 {
-  if (!this->coupled)
-    return;
-
   // do not invoke barrier -- this is performed later
   platform->timer.tic("neknek update boundary", 0);
 

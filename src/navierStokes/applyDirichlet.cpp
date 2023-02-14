@@ -75,6 +75,8 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
                          -1.0 * std::numeric_limits<dfloat>::max(),
                          platform->o_mempool.slice6);
 
+  occa::memory o_nullptr;
+
   for (int sweep = 0; sweep < 2; sweep++) {
     nrs->pressureDirichletBCKernel(mesh->Nelements,
                                    time,
@@ -105,8 +107,8 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
                                    nrs->o_EToB,
                                    nrs->o_rho,
                                    nrs->o_mue,
-                                   nrs->neknek->o_pointMap,
-                                   nrs->neknek->o_U,
+                                   nrs->neknek ? nrs->neknek->o_pointMap : o_nullptr,
+                                   nrs->neknek ? nrs->neknek->o_U : o_nullptr,
                                    nrs->o_usrwrk,
                                    o_U,
                                    platform->o_mempool.slice7);
@@ -172,6 +174,8 @@ void applyDirichletScalars(nrs_t *nrs, double time, occa::memory& o_S, occa::mem
     auto o_diff_i = cds->o_diff + cds->fieldOffsetScan[is] * sizeof(dfloat);
     auto o_rho_i = cds->o_rho + cds->fieldOffsetScan[is] * sizeof(dfloat);
 
+    occa::memory o_nullptr;
+
     platform->linAlg->fill(cds->fieldOffset[is],
                            -1.0 * std::numeric_limits<dfloat>::max(),
                            platform->o_mempool.slice2);
@@ -190,9 +194,9 @@ void applyDirichletScalars(nrs_t *nrs, double time, occa::memory& o_S, occa::mem
                              cds->o_Ue,
                              o_diff_i,
                              o_rho_i,
-                             cds->neknek->o_pointMap,
-                             cds->neknek->o_U,
-                             cds->neknek->o_S,
+                             cds->neknek ? cds->neknek->o_pointMap : o_nullptr,
+                             cds->neknek ? cds->neknek->o_U : o_nullptr,
+                             cds->neknek ? cds->neknek->o_S : o_nullptr,
                              *(cds->o_usrwrk),
                              platform->o_mempool.slice2);
 

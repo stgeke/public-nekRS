@@ -73,6 +73,7 @@
 #include <limits>
 #include <math.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <vector>
 #include <algorithm>
 #include <sstream>
@@ -109,6 +110,29 @@ struct session_t {
   int size;
   std::string setupFile;
 };
+
+void fileSync(const char * file)
+{
+  std::string dir;
+  {
+    // POSIX allows dirname to overwrite input
+    const int len = std::char_traits<char>::length(file);
+    char *tmp = (char*) malloc((len+1) * sizeof(char));
+    strncpy(tmp, file, len);
+    tmp[len] = '\0';
+    dir.assign(dirname(tmp));
+    free(tmp);
+  }
+
+  int fd;
+  fd = open(file, O_RDONLY);
+  fsync(fd);
+  close(fd);
+
+  fd = open(dir.c_str(), O_RDONLY);
+  fsync(fd);
+  close(fd);
+}
 
 cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
 {
@@ -349,9 +373,7 @@ MPI_Comm setupSession(cmdOptions *cmdOpt, const MPI_Comm &comm, session_data_t &
   return newComm;
 }
 
-}
-
-static void signalHandler(int signum) 
+void signalHandler(int signum) 
 {
    std::cout << "generating backtrace ...\n";
 
@@ -361,9 +383,11 @@ static void signalHandler(int signum)
    file.open (fileName);
    file << nrsbacktrace(1); 
    file.close();
-  
-   exit(signum);  
+   fileSync(fileName.c_str());
 }
+
+} // namespace
+
 
 int main(int argc, char** argv)
 {

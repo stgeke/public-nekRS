@@ -309,13 +309,32 @@ occa::kernel benchmarkAx(int Nelements,
 
       size_t bytesMoved = Ndim * 2 * Np * wordSize; // x, Ax
       bytesMoved += 6 * Np_g * wordSize;            // geo
-      if (!constCoeff)
-        bytesMoved += 3 * Np * wordSize; // lambda1, lambda2, Jw
+
+      if(!poisson || stressForm)
+        bytesMoved += 1 * Np * wordSize; // Jw
+
+      if (!constCoeff) {
+        bytesMoved += 1 * Np * wordSize; // lambda1
+        if(!poisson) bytesMoved += 1 * Np * wordSize; // lambda2
+      }
+
+      if (stressForm)
+        bytesMoved += 3 * Np_g * wordSize; 
+
       const double bw = (Nelements * bytesMoved / elapsed) / 1.e9;
 
       double flopCount = Np * 12 * Nq + 15 * Np;
-      if (!constCoeff)
-        flopCount += 5 * Np;
+      if(constCoeff)
+        flopCount += 1 * Np;
+       else 
+        flopCount += 3 * Np;
+
+      if(!poisson)
+        flopCount += 3 * Np;
+
+      if (stressForm)
+        flopCount += 21 * Np;
+
       const double gflops = Ndim * (flopCount * Nelements / elapsed) / 1.e9;
       const int Nthreads = omp_get_max_threads();
 

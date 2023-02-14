@@ -41,11 +41,13 @@ void ellipticAx(elliptic_t* elliptic,
   mesh_t* mesh = elliptic->mesh;
   setupAide &options = elliptic->options;
 
+  const bool coeffField = options.compareArgs("ELLIPTIC COEFF FIELD", "TRUE");
   const bool continuous = options.compareArgs("DISCRETIZATION", "CONTINUOUS");
   const int mapType = (elliptic->elementType == HEXAHEDRA &&
                        options.compareArgs("ELEMENT MAP", "TRILINEAR")) ? 1:0;
   const std::string precisionStr(precision);
   const std::string dFloatStr(dfloatString);
+
 
   bool valid = true;
   valid &= continuous;
@@ -89,20 +91,21 @@ void ellipticAx(elliptic_t* elliptic,
            o_lambda1,
            o_q,
            o_Aq);
-  double flopCount = 0.0;
 
-  if (elliptic->stressForm) {
-    // already factors in Nfields
-    flopCount = 36 * mesh->Np * mesh->Nq + 123 * mesh->Np;
-    flopCount *= static_cast<double>(NelementsList);
-  }
-  else {
-    flopCount = 12 * mesh->Np * mesh->Nq + 15 * mesh->Np;
-    if (!elliptic->poisson) {
-      flopCount += 5 * mesh->Np;
-    }
-    flopCount *= elliptic->Nfields * static_cast<double>(NelementsList);
-  }
+  double flopCount = mesh->Np * 12 * mesh->Nq + 15 * mesh->Np;
+  if(coeffField)
+    flopCount += 3 * mesh->Np;
+  else 
+    flopCount += 1 * mesh->Np;
+
+  if(!elliptic->poisson)
+    flopCount += (2 + 1) * mesh->Np;
+
+  if (elliptic->stressForm)
+    flopCount += (15 + 6) * mesh->Np;
+
+  flopCount *= elliptic->Nfields * static_cast<double>(NelementsList);
+
 
   const double factor = std::is_same<pfloat, float>::value && (precisionStr != dFloatStr) ? 0.5 : 1.0;
 

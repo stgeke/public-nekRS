@@ -7,7 +7,7 @@
 #include "ogsKernels.hpp"
 #include "ogsInterface.h"
 
-//#define ENABLE_EARLY_PREPOST
+#define ENABLE_EARLY_PREPOST
 
 #ifdef __cplusplus
 extern "C" {

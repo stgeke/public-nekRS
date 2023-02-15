@@ -375,7 +375,7 @@ MPI_Comm setupSession(cmdOptions *cmdOpt, const MPI_Comm &comm, session_data_t &
 
 void signalHandler(int signum) 
 {
-   std::cout << "generating backtrace ...\n";
+   std::cerr << "generating backtrace ...\n";
 
    std::ofstream file;
    std::string fileName = "backtrace.";

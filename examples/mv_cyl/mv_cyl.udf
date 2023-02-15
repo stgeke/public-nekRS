@@ -34,7 +34,7 @@ void uservp(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_S,
 {
   mesh_t *mesh = nrs->meshV;
 
-  userVpKernel(mesh->Nelements, nrs->fieldOffset, nrs->cds->fieldOffset[0], nrs->p0the,
+  userVpKernel(mesh->Nlocal, nrs->fieldOffset, nrs->cds->fieldOffset[0], nrs->p0the,
                o_S, o_UProp, o_SProp);
   if(!platform->options.compareArgs("MESH SOLVER", "NONE")){
     const dfloat nu = 1.0;
@@ -110,7 +110,7 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 
     const dfloat hmin = linAlg->min(mesh->Nlocal, platform->o_mempool.slice0, platform->comm.mpiComm);
     const dfloat hmax = linAlg->max(mesh->Nlocal, platform->o_mempool.slice0, platform->comm.mpiComm);
-    userMeshVelocityKernel(mesh->Nelements,
+    userMeshVelocityKernel(mesh->Nlocal,
       nrs->fieldOffset,
       hmin,
       hmax,

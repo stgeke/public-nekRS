@@ -726,7 +726,7 @@ void oogs::start(occa::memory &o_v,
       const uint *p, *pe, *size = c->size;
       for (p = c->p, pe = p + c->n; p != pe; ++p) {
         const size_t len = *(size++) * unit_size;
-        MPI_Irecv((void *)buf, len * unit_size, MPI_UNSIGNED_CHAR, *p, *p, gs->comm, req++);
+        MPI_Irecv((void *)buf, len, MPI_UNSIGNED_CHAR, *p, *p, gs->comm, req++);
         buf += len;
       }
     }

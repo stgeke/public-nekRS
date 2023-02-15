@@ -337,7 +337,8 @@ void particleRHS(nrs_t *nrs, lpm_t *lpm, dfloat time, occa::memory o_y, void *us
 
 void UDF_Setup(nrs_t *nrs)
 {
-  particles = new lpm_t(nrs, nrs->nEXT, 0.0);
+  const int particleIntegrationOrder = 3;
+  particles = new lpm_t(nrs, particleIntegrationOrder, 0.0);
 
   particles->setVerbose(true); // issue findpts warnings when a point leaves the domain
 
@@ -377,19 +378,15 @@ void UDF_Setup(nrs_t *nrs)
 
 
   auto np = xp0.size();
-  particles->construct(np);
-
-  const auto particleOffset = particles->fieldOffset();
-  std::vector y0(particles->nDOFs() * particleOffset, 0.0);
+  std::vector y0(particles->nDOFs() * np, 0.0);
   for (int n = 0; n < np; ++n) {
-    // first 3 components are always the particle position
-    y0[n + 0 * particleOffset] = xp0[n];
-    y0[n + 1 * particleOffset] = yp0[n];
-    y0[n + 2 * particleOffset] = zp0[n];
+    // set particle initial position
+    y0[n + 0 * np] = xp0[n];
+    y0[n + 1 * np] = yp0[n];
+    y0[n + 2 * np] = zp0[n];
   }
 
-  // set initial particle positions
-  particles->o_y.copyFrom(y0.data(), particles->nDOFs() * particleOffset * sizeof(dfloat));
+  particles->initialize(np, y0);
 
   mesh_t *mesh = nrs->meshV;
   udf.sEqnSource = &userq;

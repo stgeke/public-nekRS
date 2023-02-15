@@ -54,7 +54,8 @@ void UDF_Setup(nrs_t *nrs)
 {
   auto * mesh = nrs->meshV;
 
-  particles = new lpm_t(nrs, nrs->nEXT, 0.0);
+  const int particleIntegrationOrder = 3;
+  particles = new lpm_t(nrs, particleIntegrationOrder, 0.0);
   particles->setUserRHS(particleRHS);
 
   // register fluid velocity as an interpolated quantity
@@ -65,8 +66,6 @@ void UDF_Setup(nrs_t *nrs)
 
   // register Stokes number as a property
   particles->registerProp("stokes_number");
-
-  particles->construct(nParticles);
 
   // generate random particles in the domain
   auto xPart = randomVector<dfloat>(nParticles);
@@ -86,20 +85,42 @@ void UDF_Setup(nrs_t *nrs)
     const auto y = yPart[pid];
     const auto z = zPart[pid];
 
+    // particle initial coordinates
     xPart[pid] = xMin + (xMax - xMin)*x;
     yPart[pid] = yMin + (yMax - yMin)*y;
     zPart[pid] = zMin + (zMax - zMin)*z;
   }
 
-  // set initial particle positions
-  const auto particleOffset = particles->fieldOffset();
-  auto o_xPart = particles->o_y + 0 * particleOffset * sizeof(dfloat);
-  auto o_yPart = particles->o_y + 1 * particleOffset * sizeof(dfloat);
-  auto o_zPart = particles->o_y + 2 * particleOffset * sizeof(dfloat);
+  // interpolate initial fluid velocity onto particle positions
+  std::vector<dfloat> particleU0(nrs->NVfields * nParticles);
+  auto interpolator = pointInterpolation_t(nrs);
+  interpolator.addPoints(nParticles, xPart.data(), yPart.data(), zPart.data());
+  interpolator.find();
 
-  o_xPart.copyFrom(xPart.data(), nParticles*sizeof(dfloat));
-  o_yPart.copyFrom(yPart.data(), nParticles*sizeof(dfloat));
-  o_zPart.copyFrom(zPart.data(), nParticles*sizeof(dfloat));
+  interpolator.eval(nrs->NVfields, nrs->fieldOffset, nrs->U, nParticles, particleU0.data());
+
+  // set particle initial positions and velocities
+  std::vector<dfloat> y0(particles->nDOFs() * nParticles);
+
+  for(int pid = 0; pid < nParticles; ++pid){
+    const auto x = xPart[pid];
+    const auto y = yPart[pid];
+    const auto z = zPart[pid];
+
+    const auto u = particleU0[pid + 0 * nParticles];
+    const auto v = particleU0[pid + 1 * nParticles];
+    const auto w = particleU0[pid + 2 * nParticles];
+
+    y0[pid + 0 * nParticles] = x;
+    y0[pid + 1 * nParticles] = y;
+    y0[pid + 2 * nParticles] = z;
+
+    y0[pid + 3 * nParticles] = u;
+    y0[pid + 4 * nParticles] = v;
+    y0[pid + 5 * nParticles] = w;
+  }
+
+  particles->initialize(nParticles, y0);
 
   // set Stokes number
   platform->linAlg->fill(nParticles, Stk, particles->o_prop);

@@ -134,6 +134,24 @@ void pointInterpolation_t::eval(dlong nFields,
   }
 }
 
+void pointInterpolation_t::eval(dlong nFields,
+                                dlong inputFieldOffset,
+                                dfloat *in,
+                                dlong outputFieldOffset,
+                                dfloat *out)
+{
+  if (timerLevel != TimerLevel::None) {
+    platform->timer.tic("pointInterpolation_t::eval", 1);
+  }
+
+  const auto n = data_.code.size();
+  findpts_->eval(n, nFields, inputFieldOffset, outputFieldOffset, in, &data_, out);
+
+  if (timerLevel != TimerLevel::None) {
+    platform->timer.toc("pointInterpolation_t::eval");
+  }
+}
+
 void pointInterpolation_t::addPoints(int n, dfloat * x, dfloat * y, dfloat * z)
 {
 

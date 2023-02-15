@@ -66,9 +66,9 @@ void lpm_t::registerDOF(std::string dofName, bool output) { registerDOF(1, dofNa
 
 void lpm_t::registerDOF(dlong Nfields, std::string dofName, bool output)
 {
-  if (this->constructed()) {
+  if (this->initialized()) {
     if (platform->comm.mpiRank == 0) {
-      std::cout << "ERROR: cannot register DOF " << dofName << " after construction!\n";
+      std::cout << "ERROR: cannot register DOF " << dofName << " after calling initialize!\n";
     }
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
@@ -112,9 +112,9 @@ void lpm_t::registerProp(std::string propName, bool output) { registerProp(1, pr
 
 void lpm_t::registerProp(dlong Nfields, std::string propName, bool output)
 {
-  if (this->constructed()) {
+  if (this->initialized()) {
     if (platform->comm.mpiRank == 0) {
-      std::cout << "ERROR: cannot register prop " << propName << " after construction!\n";
+      std::cout << "ERROR: cannot register prop " << propName << " after calling initialize!\n";
     }
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
@@ -156,9 +156,9 @@ int lpm_t::numProps(std::string propName) const
 
 void lpm_t::registerInterpField(std::string interpFieldName, int Nfields, occa::memory o_fld, bool output)
 {
-  if (this->constructed()) {
+  if (this->initialized()) {
     if (platform->comm.mpiRank == 0) {
-      std::cout << "ERROR: cannot register interpField " << interpFieldName << " after construction!\n";
+      std::cout << "ERROR: cannot register interpField " << interpFieldName << " after calling initialize!\n";
     }
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
@@ -253,8 +253,16 @@ std::vector<dfloat> lpm_t::getInterpFieldHost(std::string interpFieldName)
   return h_interpField;
 }
 
-void lpm_t::construct(int nParticles)
+void lpm_t::initialize(int nParticles, std::vector<dfloat> &y0)
 {
+  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
+  nrsCheck(y0.size() != nParticles * nDOFs_,
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "ERROR: y0.size() = %ld, while expecting %d entries!\n",
+           y0.size(),
+           nParticles * nDOFs_);
+
   nParticles_ = nParticles;
   fieldOffset_ = computeFieldOffset(nParticles);
 
@@ -268,7 +276,47 @@ void lpm_t::construct(int nParticles)
     o_interpFld = platform->device.malloc(fieldOffset_ * nInterpFields_ * sizeof(dfloat));
   }
 
-  constructed_ = true;
+  // set initial condition based on user-input
+  for (int dofId = 0; dofId < this->nDOFs(); ++dofId) {
+    auto o_y_dof = getDOF(dofId);
+    auto *h_y_dof = y0.data() + dofId * nParticles_;
+    o_y_dof.copyFrom(h_y_dof, nParticles_ * sizeof(dfloat));
+  }
+
+  initialized_ = true;
+}
+
+void lpm_t::initialize(int nParticles, occa::memory o_y0)
+{
+  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
+  nrsCheck(o_y0.size() != nParticles * nDOFs_ * sizeof(dfloat),
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "ERROR: o_y0.size() = %ld, while expecting %ld bytes!\n",
+           o_y0.size(),
+           nParticles * nDOFs_ * sizeof(dfloat));
+
+  nParticles_ = nParticles;
+  fieldOffset_ = computeFieldOffset(nParticles);
+
+  o_y = platform->device.malloc(fieldOffset_ * nDOFs_ * sizeof(dfloat));
+  o_ydot = platform->device.malloc(nAB * fieldOffset_ * nDOFs_ * sizeof(dfloat));
+
+  if (nProps_) {
+    o_prop = platform->device.malloc(fieldOffset_ * nProps_ * sizeof(dfloat));
+  }
+  if (nInterpFields_) {
+    o_interpFld = platform->device.malloc(fieldOffset_ * nInterpFields_ * sizeof(dfloat));
+  }
+
+  // set initial condition based on user-input
+  for (int dofId = 0; dofId < this->nDOFs(); ++dofId) {
+    auto o_y_dof = getDOF(dofId);
+    auto o_y0_dof = o_y0 + dofId * nParticles_ * sizeof(dfloat);
+    o_y_dof.copyFrom(o_y0_dof, nParticles_ * sizeof(dfloat));
+  }
+
+  initialized_ = true;
 }
 
 void lpm_t::coeff(dfloat *dt, int tstep)
@@ -315,9 +363,9 @@ void lpm_t::integrate(dfloat t0, dfloat tf, int step)
     interp = std::make_unique<pointInterpolation_t>(nrs, newton_tol);
   }
 
-  if (!constructed_) {
+  if (!initialized_) {
     if (platform->comm.mpiRank == 0) {
-      std::cout << "ERROR: cannot integrate before construction!\n";
+      std::cout << "ERROR: cannot integrate before calling initialize!\n";
     }
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
@@ -1008,7 +1056,12 @@ void lpm_t::restart(std::string restartFile)
     nPartLocal++;
   }
 
-  this->construct(nPartLocal);
+  // initial conditions are read from VTK file below
+  // pass in zeros at the moment -- these will be overwritten
+  {
+    std::vector<dfloat> dummy_y0(nPartLocal * this->nDOFs(), 0.0);
+    this->initialize(nPartLocal, dummy_y0);
+  }
 
   dlong pOffset = 0;
   MPI_Exscan(&nPartLocal, &pOffset, 1, MPI_DLONG, MPI_SUM, platform->comm.mpiComm);

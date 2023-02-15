@@ -21,6 +21,8 @@ public:
   void
   eval(dlong nFields, dlong inputFieldOffset, occa::memory o_in, dlong outputFieldOffset, occa::memory o_out);
 
+  void eval(dlong nFields, dlong inputFieldOffset, dfloat *in, dlong outputFieldOffset, dfloat *out);
+
   auto *ptr() { return findpts_.get(); }
   auto &data() {return data_;}
 

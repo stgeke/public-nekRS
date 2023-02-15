@@ -47,11 +47,10 @@ public:
                                              void *userdata,
                                              occa::memory o_ydot)>;
 
-  // By default, nAB is set to nrs->nEXT
+  // With this constructor, particle integration order is set to nrs->nEXT
   lpm_t(nrs_t *nrs, dfloat newton_tol_ = 0.0);
 
-  // nAB: maximum AB order (1,2, or 3)
-  //   nAB must be less than or equal to nrs->nEXT
+  // nAB: particle integration order
   lpm_t(nrs_t *nrs, int nAB, dfloat newton_tol_ = 0.0);
 
   ~lpm_t() = default;
@@ -69,7 +68,7 @@ public:
   // during a lpm_t::writeFld(...) call.
   // By default, only the particle coordinates are automatically registered.
   // Pre:
-  //   constructed() = false
+  //   initialized() = false
   void registerDOF(std::string dofName, bool output = true);
 
   // Multi-component field version
@@ -81,7 +80,7 @@ public:
   // As registerDOF(...), there's an optional bool output argument to
   // flag whether a field should be output during a lpm_t::writeFld(...) call.
   // Pre:
-  //   constructed() = false
+  //   initialized() = false
   void registerProp(std::string propName, bool output = true);
 
   // Multi-component field version
@@ -95,7 +94,7 @@ public:
   // As registerDOF(...), there's an optional bool output argument to
   // flag whether a field should be output during a lpm_t::writeFld(...) call.
   // Pre:
-  //   constructed() = false
+  //   initialized() = false
   void registerInterpField(std::string interpFieldName, occa::memory o_fld, bool output = true);
 
   // Multi-component field version
@@ -123,7 +122,7 @@ public:
   // Number of fields associated with an interpolated field
   int numFieldsInterp(std::string interpFieldName) const;
 
-  bool constructed() const { return constructed_; }
+  bool initialized() const { return initialized_; }
 
   // Required user RHS
   void setUserRHS(rhsFunc_t userRHS);
@@ -134,8 +133,11 @@ public:
   // Add optional userdata ptr to be passed to userRHS
   void addUserData(void *userdata);
 
-  // Construct particles on manager
-  void construct(int nParticles);
+  // Create nParticles particles with initial condition y0
+  void initialize(int nParticles, std::vector<dfloat> &y0);
+
+  // Create nParticles particles with initial condition o_y0
+  void initialize(int nParticles, occa::memory o_y0);
 
   // Page-aligned offset >= nParticles
   // Required to access particle-specific fields
@@ -159,7 +161,7 @@ public:
 
   // Integrate from time t0 to tf
   // Pre:
-  //   constructed() = true
+  //   initialized() = true
   void integrate(dfloat t0, dfloat tf, int step);
 
   // Write particle data to file
@@ -171,7 +173,7 @@ public:
 
   // Get particle degrees of freedom on device
   // Pre:
-  //  constructed() = true
+  //  initialized() = true
   occa::memory getDOF(int dofId);
   occa::memory getDOF(std::string dofName);
 
@@ -180,7 +182,7 @@ public:
 
   // Get particle property on device
   // Pre:
-  //  constructed() = true
+  //  initialized() = true
   occa::memory getProp(int propId);
   occa::memory getProp(std::string propName);
 
@@ -189,7 +191,7 @@ public:
 
   // Get interpolated field on device
   // Pre:
-  //  constructed() = true
+  //  initialized() = true
   occa::memory getInterpField(int interpFieldId);
   occa::memory getInterpField(std::string interpFieldName);
 
@@ -250,7 +252,7 @@ private:
   int nProps_ = 0;
   int nInterpFields_ = 0;
   int fieldOffset_ = 0; // page-aligned offset >= nParticles
-  bool constructed_ = false;
+  bool initialized_ = false;
 
   std::vector<dfloat> coeffAB;
   occa::memory o_coeffAB; // AB coefficients

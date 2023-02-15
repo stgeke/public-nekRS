@@ -23,5 +23,5 @@ density = 1.0
 viscosity = -1400
 
 [CASEDATA]
-nParticles = 1000
+nParticles = 500000
 Stk = 5

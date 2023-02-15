@@ -224,6 +224,9 @@ auto generatePoints(int nPoints, double R)
 
 void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel, occa::kernel RKKernel)
 {
+  // reserve testing to ciMode 1
+  if(ciMode != 1) return;
+
   if(!nrs->flow) return;
 
   double endTime;
@@ -332,6 +335,9 @@ void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel,
 // however, pointInterpolation_t itself is not thread-safe, so the two objects cannot be used concurrently.
 void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKernel)
 {
+  // reserve testing to ciMode 1
+  if(ciMode != 1) return;
+
   constexpr int nRandomInterp = 3;
 
   const double R = 0.25; // max radius of points to distribute
@@ -491,6 +497,9 @@ void surfaceArea(nrs_t *nrs, int BID, dfloat &SA)
 
 void ciTestAvgBoundary(nrs_t *nrs)
 {
+  // reserve testing to ciMode 1
+  if(ciMode != 1) return;
+
   const int rank = platform->comm.mpiRank;
   auto *mesh = nrs->meshV;
   const int BID = 1;
@@ -580,6 +589,9 @@ dfloat amax(dfloat const *const array, const int size, MPI_Comm comm)
 
 void ciTestLinAlg(const int N)
 {
+  // reserve testing to ciMode 1
+  if(ciMode != 1) return;
+
   linAlg_t *linAlg = platform->linAlg;
   MPI_Comm comm = platform->comm.mpiComm;
   int rank = platform->comm.mpiRank;

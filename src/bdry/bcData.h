@@ -19,8 +19,14 @@ struct bcData
   dfloat u, v, w;
   dfloat p;
 
+  // interpolated velocity values
+  dfloat uinterp, vinterp, winterp;
+
   int scalarId;
   dfloat s, flux;
+
+  // interpolated scalar value
+  dfloat sinterp;
 
   dfloat meshu, meshv, meshw;
 

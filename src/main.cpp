@@ -1,3 +1,4 @@
+
 /*---------------------------------------------------------------------------*\
    Copyright (c) 2019-2022, UCHICAGO ARGONNE, LLC.
 
@@ -65,12 +66,14 @@
 #include <fstream>
 #include <cstdio>
 #include <string>
+#include <sstream>
 #include <cstring>
 #include <getopt.h>
 #include <cfenv>
 #include <limits>
 #include <math.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <vector>
 #include <algorithm>
 #include <sstream>
@@ -90,21 +93,6 @@ namespace {
 
 int worldRank;
 
-std::vector<std::string> serializeString(const std::string sin, char dlim)
-{
-  std::vector<std::string> slist;
-  std::string s(sin);
-  s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
-  std::stringstream ss;
-  ss.str(s);
-  while( ss.good() ) {
-    std::string substr;
-    std::getline(ss, substr, dlim);
-    if(!substr.empty()) slist.push_back(substr);
-  }
-  return slist;
-}
-
 struct cmdOptions
 {
   int buildOnly = 0;
@@ -115,13 +103,36 @@ struct cmdOptions
   std::string setupFile;
   std::string deviceID;
   std::string backend;
+  bool redirectOutput;
 };
 
-struct session
-{
+struct session_t {
   int size;
   std::string setupFile;
 };
+
+void fileSync(const char * file)
+{
+  std::string dir;
+  {
+    // POSIX allows dirname to overwrite input
+    const int len = std::char_traits<char>::length(file);
+    char *tmp = (char*) malloc((len+1) * sizeof(char));
+    strncpy(tmp, file, len);
+    tmp[len] = '\0';
+    dir.assign(dirname(tmp));
+    free(tmp);
+  }
+
+  int fd;
+  fd = open(file, O_RDONLY);
+  fsync(fd);
+  close(fd);
+
+  fd = open(dir.c_str(), O_RDONLY);
+  fsync(fd);
+  close(fd);
+}
 
 cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
 {
@@ -172,8 +183,8 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         break;
       case 'c':
         cmdOpt->ciMode = atoi(optarg);
-        if (cmdOpt->ciMode < 1) {
-          std::cout << "ERROR: ci test id has to be >0!\n";
+        if (cmdOpt->ciMode < 0) {
+          std::cout << "ERROR: ci test id has to be >= 0!\n";
           printHelp = 1;
         }
         break;
@@ -212,25 +223,18 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
       }
     }
 #endif
-
   }
 
-  char buf[FILENAME_MAX];
-  strcpy(buf, cmdOpt->multiSessionFile.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->multiSessionFile.assign(buf);
-
-  strcpy(buf, cmdOpt->setupFile.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->setupFile.assign(buf);
-
-  strcpy(buf, cmdOpt->deviceID.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->deviceID.assign(buf);
-
-  strcpy(buf, cmdOpt->backend.c_str());
-  MPI_Bcast(buf, sizeof(buf), MPI_BYTE, 0, comm);
-  cmdOpt->backend.assign(buf);
+  for(auto opt: {&cmdOpt->multiSessionFile, &cmdOpt->setupFile, &cmdOpt->deviceID, &cmdOpt->backend})
+  {
+    int bufSize = opt->size() + 1;
+    MPI_Bcast(&bufSize, 1, MPI_INT, 0, comm);
+    auto buf = (char*) std::calloc(bufSize, sizeof(char));
+    if(rank == 0) std::strcpy(buf, opt->c_str());
+    MPI_Bcast(buf, bufSize, MPI_BYTE, 0, comm);
+    opt->assign(buf);
+    free(buf);
+  }
 
   MPI_Bcast(&cmdOpt->buildOnly, sizeof(cmdOpt->buildOnly), MPI_BYTE, 0, comm);
   MPI_Bcast(&cmdOpt->sizeTarget, sizeof(cmdOpt->sizeTarget), MPI_BYTE, 0, comm);
@@ -265,7 +269,7 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
   return cmdOpt;
 }
 
-MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
+MPI_Comm setupSession(cmdOptions *cmdOpt, const MPI_Comm &comm, session_data_t &session)
 {
   int rank, size;
   MPI_Comm_rank(comm, &rank);
@@ -297,7 +301,7 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
     free(buf);
 
     auto list = serializeString(multiSessionFileContent, ';');
-    auto sessionList = new session[list.size()];
+    auto sessionList = new session_t[list.size()];
 
     int nSessions = 0;
     int rankSum = 0;
@@ -313,6 +317,8 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
       rankSum += sessionList[nSessions].size;
       nSessions++;
     }
+
+    session.nsessions = nSessions;
 
     int err = 0;
     if(rankSum != size) err = 1;
@@ -342,15 +348,16 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
     MPI_Comm_rank(newComm, &rank);
     MPI_Comm_size(newComm, &size);
 
+    session.sessionID = color;
+    session.globalComm = comm;
+    session.localComm = newComm;
+
     cmdOpt->setupFile = sessionList[color].setupFile;
     cmdOpt->sizeTarget = size;
 
     if(cmdOpt->debug) {
-      std::cout << "globalRank:" << rankGlobal
-                << " localRank: " << rank
-                << " commSize: " << size
-                << " setupFile:" << cmdOpt->setupFile
-                << "\n";
+      std::cout << "globalRank:" << rankGlobal << " localRank: " << rank << " pid: " << ::getpid()
+                << " commSize: " << size << " setupFile:" << cmdOpt->setupFile << "\n";
     }
     fflush(stdout);
     MPI_Barrier(comm);
@@ -366,11 +373,9 @@ MPI_Comm setupSession(cmdOptions* cmdOpt, const MPI_Comm &comm)
   return newComm;
 }
 
-}
-
-static void signalHandler(int signum) 
+void signalHandler(int signum) 
 {
-   std::cout << "generating backtrace ...\n";
+   std::cerr << "generating backtrace ...\n";
 
    std::ofstream file;
    std::string fileName = "backtrace.";
@@ -378,9 +383,11 @@ static void signalHandler(int signum)
    file.open (fileName);
    file << nrsbacktrace(1); 
    file.close();
-  
-   exit(signum);  
+   fileSync(fileName.c_str());
 }
+
+} // namespace
+
 
 int main(int argc, char** argv)
 {
@@ -431,7 +438,14 @@ int main(int argc, char** argv)
   }
 
   cmdOptions* cmdOpt = processCmdLineOptions(argc, argv, commGlobal);
-  MPI_Comm comm = setupSession(cmdOpt, commGlobal);
+  session_data_t session;
+  session.globalComm = commGlobal;
+  session.sessionID = 0;
+  session.localComm = commGlobal;
+  session.nsessions = 1;
+  session.coupled = false;
+
+  MPI_Comm comm = setupSession(cmdOpt, commGlobal, session);
 
   int rank, size;
   MPI_Comm_rank(comm, &rank);
@@ -471,6 +485,7 @@ int main(int argc, char** argv)
     	       cmdOpt->buildOnly, cmdOpt->sizeTarget,
                cmdOpt->ciMode, cmdOpt->setupFile,
                cmdOpt->backend, cmdOpt->deviceID,
+               session,
                cmdOpt->debug);
 
   if (cmdOpt->buildOnly) {
@@ -575,18 +590,11 @@ int main(int argc, char** argv)
   }
   MPI_Pcontrol(0);
 
-  auto exitValue = nekrs::exitValue();
-  nekrs::finalize();
+  const int exitValue = nekrs::finalize();
 
   MPI_Barrier(commGlobal);
-  if (rank == 0) {
-    if(exitValue)
-      std::cout << "End with exitValue=" << exitValue << std::endl;
-    else
-      std::cout << "End\n";
-  }
-
   MPI_Finalize();
+
   if(exitValue)
     return EXIT_FAILURE;
   else

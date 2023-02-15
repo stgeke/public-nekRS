@@ -4,10 +4,7 @@
 
 occa::memory cdsSolve(const int is, cds_t* cds, dfloat time, int stage)
 {
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << is;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(is);
 
   platform->timer.tic("scalar rhs", 1);  
   mesh_t* mesh = cds->mesh[0];
@@ -40,11 +37,12 @@ occa::memory cdsSolve(const int is, cds_t* cds, dfloat time, int stage)
                        *(cds->o_usrwrk),
                        platform->o_mempool.slice1);
 
-  platform->timer.toc("scalar rhs"); 
+  platform->timer.toc("scalar rhs");
 
-  const occa::memory& o_S0 = (platform->options.compareArgs("SCALAR" + sid + " INITIAL GUESS", "EXTRAPOLATION") && stage == 1) ?
-                             cds->o_Se.slice(cds->fieldOffsetScan[is] * sizeof(dfloat), cds->fieldOffset[is] * sizeof(dfloat)) :
-                             cds->o_S.slice(cds->fieldOffsetScan[is] * sizeof(dfloat), cds->fieldOffset[is] * sizeof(dfloat));
+  const occa::memory &o_S0 =
+      (platform->options.compareArgs("SCALAR" + sid + " INITIAL GUESS", "EXTRAPOLATION") && stage == 1)
+          ? cds->o_Se.slice(cds->fieldOffsetScan[is] * sizeof(dfloat), cds->fieldOffset[is] * sizeof(dfloat))
+          : cds->o_S.slice(cds->fieldOffsetScan[is] * sizeof(dfloat), cds->fieldOffset[is] * sizeof(dfloat));
   platform->o_mempool.slice0.copyFrom(o_S0, mesh->Nlocal * sizeof(dfloat));
   ellipticSolve(cds->solver[is], platform->o_mempool.slice1, platform->o_mempool.slice0);
 

@@ -25,10 +25,7 @@ static std::ostringstream valueErrorLogger;
 
 static std::string mapTemperatureToScalarString()
 {
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(scalarWidth) << 0;
-  std::string sid = ss.str();
+  std::string sid = scalarDigitStr(0);
   return "scalar" + sid;
 }
 std::optional<int> parseScalarIntegerFromString(const std::string &scalarString)
@@ -45,12 +42,12 @@ std::optional<int> parseScalarIntegerFromString(const std::string &scalarString)
     catch (std::invalid_argument &e) {
       std::cout << "Hit an invalid_argument error for scalarString=\"" << scalarString << "\". It said\n"
                 << e.what() << "\n";
-      ABORT(EXIT_FAILURE);
+      nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, "\n", "");
       return {};
     }
   }
   else {
-    ABORT(EXIT_FAILURE);
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, "\n", "");
     return {};
   }
 }
@@ -63,13 +60,10 @@ std::string parPrefixFromParSection(const std::string &parSection)
     return mapTemperatureToScalarString() + " ";
   }
   if (parSection.find("scalar") != std::string::npos) {
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
     const auto is = parseScalarIntegerFromString(parSection);
 
     if (is) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is.value();
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is.value());
       return "scalar" + sid + " ";
     }
     else {
@@ -145,7 +139,10 @@ static std::vector<std::string> generalKeys = {
     {"oudf"},
     {"udf"},
     {"usr"},
+};
 
+static std::vector<std::string> neknekKeys = {
+    {"boundaryextorder"},
 };
 
 static std::vector<std::string> problemTypeKeys = {
@@ -236,6 +233,7 @@ static std::vector<std::string> deprecatedKeys = {
 
 static std::vector<std::string> validSections = {
     {"general"},
+    {"neknek"},
     {"temperature"},
     {"pressure"},
     {"velocity"},
@@ -259,6 +257,7 @@ void convertToLowerCase(std::vector<std::string>& stringVec)
 void makeStringsLowerCase()
 {
   convertToLowerCase(generalKeys);
+  convertToLowerCase(neknekKeys);
   convertToLowerCase(problemTypeKeys);
   convertToLowerCase(commonKeys);
   convertToLowerCase(meshKeys);
@@ -282,6 +281,8 @@ const std::vector<std::string>& getValidKeys(const std::string& section)
 
   if(section == "general")
     return generalKeys;
+  if (section == "neknek")
+    return neknekKeys;
   if(section == "problemtype")
     return problemTypeKeys;
   if(section == "mesh")
@@ -439,13 +440,28 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
         if(flowDirectionSet) issueError = true;
         flowDirectionSet = true;
         std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
+
+        std::string bidStr;
+        if (items.size() == 2) {
+          bidStr = items[1];
+        }
+        else {
+          std::ostringstream error;
+          error << "Error: could not parse " << s << "!\n";
+          append_error(error.str());
+        }
         std::vector<std::string> bids = serializeString(items[1], ',');
-        assert(bids.size() == 2);
-        const int fromBID = std::stoi(bids[0]);
-        const int toBID = std::stoi(bids[1]);
-        options.setArgs("CONSTANT FLOW FROM BID", std::to_string(fromBID));
-        options.setArgs("CONSTANT FLOW TO BID", std::to_string(toBID));
+        if (bids.size() == 2) {
+          const int fromBID = std::stoi(bids[0]);
+          const int toBID = std::stoi(bids[1]);
+          options.setArgs("CONSTANT FLOW FROM BID", std::to_string(fromBID));
+          options.setArgs("CONSTANT FLOW TO BID", std::to_string(toBID));
+        }
+        else {
+          std::ostringstream error;
+          error << "Error: could not parse " << s << "!\n";
+          append_error(error.str());
+        }
 
         append_error("Specifying a constant flow direction with a pair of BIDs is currently not supported.\n");
       }
@@ -455,17 +471,18 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
         if(flowDirectionSet) issueError = true;
         flowDirectionSet = true;
         std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        std::string direction = items[1];
-        issueError = (
-          direction.find("x") == std::string::npos &&
-          direction.find("y") == std::string::npos &&
-          direction.find("z") == std::string::npos
-        );
-
-        UPPER(direction);
-          
-        options.setArgs("CONSTANT FLOW DIRECTION", direction);
+        if (items.size() == 2) {
+          std::string direction = items[1];
+          issueError = (direction.find("x") == std::string::npos &&
+                        direction.find("y") == std::string::npos && direction.find("z") == std::string::npos);
+          UPPER(direction);
+          options.setArgs("CONSTANT FLOW DIRECTION", direction);
+        }
+        else {
+          std::ostringstream error;
+          error << "Error: could not parse " << s << "!\n";
+          append_error(error.str());
+        }
       }
 
     }
@@ -1300,7 +1317,9 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
 
   options.setArgs("NUMBER OF SCALARS", "0");
 
-  options.setArgs("TIME INTEGRATOR", "TOMBO2");
+  options.setArgs("BDF ORDER", "2");
+  options.setArgs("EXT ORDER", "3");
+
   options.setArgs("SUBCYCLING STEPS", "0");
   options.setArgs("SUBCYCLING TIME ORDER", "4");
   options.setArgs("SUBCYCLING TIME STAGE NUMBER", "4");
@@ -1314,6 +1333,8 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("DEVICE NUMBER", "LOCAL-RANK");
   options.setArgs("PLATFORM NUMBER", "0");
   options.setArgs("VERBOSE", "FALSE");
+
+  options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "1");
 
   options.setArgs("ADVECTION", "TRUE");
   options.setArgs("ADVECTION TYPE", "CUBATURE+CONVECTIVE");
@@ -1336,23 +1357,17 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("AMG DROP TOLERANCE", to_string_f(dropTol));
 }
 
-void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &options) {
+void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &options) {
   int rank;
   MPI_Comm_rank(comm, &rank);
 
-  int foundPar = 0;
   if (rank == 0) {
-    foundPar = 1;
     const char *ptr = realpath(setupFile.c_str(), NULL);
-    if (!ptr) {
-      std::cout << "ERROR: cannot find setup file " << setupFile << "!\n";
-      foundPar = 0;
-    }
+    nrsCheck(!ptr, MPI_COMM_SELF, EXIT_FAILURE,
+             "Cannot find setup file %s\n", setupFile.c_str());
   }
-  MPI_Bcast(&foundPar, sizeof(foundPar), MPI_BYTE, 0, comm);
-  if (!foundPar) ABORT(EXIT_FAILURE);
 
-  std::string casename = setupFile.substr(0, setupFile.find(".par"));
+  const std::string casename = setupFile.substr(0, setupFile.find(".par"));
   setDefaultSettings(options, casename, rank);
 
   char *rbuf;
@@ -1373,7 +1388,6 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   std::stringstream is;
   is.write(rbuf, fsize);
 
-  inipp::Ini *par = (inipp::Ini *)ppar;
   par->parse(is);
   par->interpolate();
 
@@ -1638,13 +1652,13 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   std::string timeStepper;
   if(par->extract("general", "timestepper", timeStepper)){
     if (timeStepper == "bdf3" || timeStepper == "tombo3") {
-      options.setArgs("TIME INTEGRATOR", "TOMBO3");
+      options.setArgs("BDF ORDER", "3");
     }
     else if (timeStepper == "bdf2" || timeStepper == "tombo2") {
-      options.setArgs("TIME INTEGRATOR", "TOMBO2");
+      options.setArgs("BDF ORDER", "2");
     }
     else if (timeStepper == "bdf1" || timeStepper == "tombo1") {
-      options.setArgs("TIME INTEGRATOR", "TOMBO1");
+      options.setArgs("BDF ORDER", "1");
     }
     else {
       std::ostringstream error;
@@ -1720,6 +1734,12 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     parseRegularization(rank, options, par, "general");
   }
 
+  // NEKNEK
+  dlong boundaryEXTOrder;
+  if (par->extract("neknek", "boundaryextorder", boundaryEXTOrder)) {
+    options.setArgs("BOUNDARY EXTRAPOLATION ORDER", std::to_string(boundaryEXTOrder));
+  }
+
   // PROBLEMTYPE
   bool stressFormulation;
   if (par->extract("problemtype", "stressformulation", stressFormulation)){
@@ -1746,7 +1766,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
       options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
 
     options.setArgs("ADVECTION", "TRUE");
-    if (eqn == "stokes"){
+    if (eqn == "stokes") {
       options.setArgs("ADVECTION", "FALSE");
     }
   }
@@ -1936,12 +1956,8 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   int nscal = optionalNscalar ? optionalNscalar.value() : 0;
   int isStart = 0;
 
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-
   if (par->sections.count("temperature")) {
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << 0;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(0);
     nscal++;
     isStart++;
 
@@ -2034,14 +2050,10 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         }
       }
 
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is.value();
-      sid = ss.str();
+      sid = scalarDigitStr(is.value());
       sidPar = sid;
       if (isStart == 0) {
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(scalarWidth) << is.value() + 1;
-        sidPar = ss.str();
+        sidPar = scalarDigitStr(is.value()+1);
       }
     }
     else {
@@ -2119,9 +2131,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
   // All SCALAR_DEFAULT <...> options are transferred to SCALAR{is} <...>
   const std::string defaultSettingStr = "SCALAR DEFAULT ";
   for (int is = 1; is < nscal; ++is) {
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
     const auto options_ = options;
     for (auto [keyWord, value] : options_) {
       auto delPos = keyWord.find(defaultSettingStr);
@@ -2147,9 +2157,7 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
         sList = serializeString(s_bcMap, ',');
       }
       for (int is = 1; is < nscal; ++is) {
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(scalarWidth) << is;
-        std::string sid = ss.str();
+        std::string sid = scalarDigitStr(is);
         std::string dummy;
         if (!par->extract("scalar" + sid, "boundarytypemap", dummy)) {
           if (sList.size() > 0) {
@@ -2189,15 +2197,17 @@ void parRead(void *ppar, std::string setupFile, MPI_Comm comm, setupAide &option
     int length = errorMessage.size();
     MPI_Bcast(&length, 1, MPI_INT, 0, comm);
 
-    if(rank == 0 && length > 0)
+    auto errTxt = [&]()
     {
-      std::cout << "detected par file errors:\n";
-      std::cout << errorMessage;
-      std::cout << "\nrun with `--help par` for more details\n";
-    }
-    fflush(stdout);
+      std::stringstream txt;
+      txt << "detected par file errors:\n";
+      txt << errorMessage;
+      txt << "\nrun with `--help par` for more details\n";
 
-    if(length > 0) ABORT(EXIT_FAILURE);
+      return txt.str();
+    };
+
+    nrsCheck(length > 0, comm, EXIT_FAILURE, errTxt().c_str(), ""); 
   }
 
 #if 0

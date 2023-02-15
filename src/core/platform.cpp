@@ -1,17 +1,17 @@
 #include <cstdlib>
 #include <strings.h>
-#include "platform.hpp"
+
 #include "nrs.hpp"
+#include "platform.hpp"
 #include "linAlg.hpp"
-#include "omp.h"
-#include <iostream>
 #include "flopCounter.hpp"
+#include "fileUtils.hpp"
 
 namespace {
 
-static void compileDummyKernel(const platform_t &plat)
+static void compileDummyKernel(platform_t &plat)
 {
-  const bool buildNodeLocal = useNodeLocalCache();
+  const bool buildNodeLocal = plat.cacheLocal;
   auto rank = buildNodeLocal ? plat.comm.localRank : plat.comm.mpiRank;
   const std::string dummyKernelName = "myDummyKernelName";
   const std::string dummyKernelStr = std::string("@kernel void myDummyKernelName(int N) {"
@@ -31,11 +31,8 @@ deviceVector_t::deviceVector_t(const size_t _offset,
                                const std::string _vectorName)
     : nVectors(_nVectors), wordSize(_wordSize), vectorName(_vectorName), offset(_offset)
 {
-  if (offset <= 0 || nVectors <= 0 || wordSize <= 0) {
-    if (platform->comm.mpiRank == 0)
-      printf("ERROR: deviceVector_t invalid input!\n");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(offset <= 0 || nVectors <= 0 || wordSize <= 0, MPI_COMM_SELF, EXIT_FAILURE,
+           "deviceVector_t invalid input!\n", "");
 
   o_vector = platform->device.malloc(nVectors * offset * wordSize);
   for (int s = 0; s < nVectors; ++s) {
@@ -45,16 +42,10 @@ deviceVector_t::deviceVector_t(const size_t _offset,
 
 occa::memory &deviceVector_t::at(const int i)
 {
-  if (i >= nVectors) {
-    if (platform->comm.mpiRank == 0) {
-      printf("ERROR: deviceVector_t(%s) has %zu size, but an attempt to access entry %i was made!\n",
-             vectorName.c_str(),
-             nVectors,
-             i);
-    }
-    ABORT(EXIT_FAILURE);
-    return o_vector;
-  }
+  nrsCheck(i >= nVectors, MPI_COMM_SELF, EXIT_FAILURE,
+           "deviceVector_t(%s) has %zu size, but an attempt to access entry %i was made!\n",
+           vectorName.c_str(), nVectors, i);
+
   return slices[i];
 }
 
@@ -63,16 +54,100 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
     : options(_options), warpSize(32), comm(_commg, _comm), device(options, comm),
       timer(_comm, device.occaDevice(), 0, 0), kernels(*this)
 {
+  int rank;
+  MPI_Comm_rank(_comm, &rank);
+
   exitValue = 0;
 
+  setenv("OCCA_MEM_BYTE_ALIGN", "1024", 1);
+
+  cacheLocal = 0;
+  if(getenv("NEKRS_CACHE_LOCAL"))
+    cacheLocal = std::stoi(getenv("NEKRS_CACHE_LOCAL"));
+
+  cacheBcast = 0;
+  if(getenv("NEKRS_CACHE_BCAST"))
+    cacheBcast = std::stoi(getenv("NEKRS_CACHE_BCAST"));
+
+  nrsCheck(cacheLocal && cacheBcast,
+           _comm, EXIT_FAILURE, 
+           "NEKRS_CACHE_LOCAL=1 and NEKRS_CACHE_BCAST=1 is incompatible!", "");
+
   srand48((long int)comm.mpiRank);
+
   oogs::gpu_mpi(std::stoi(getenv("NEKRS_GPU_MPI")));
+
+  verbose = options.compareArgs("VERBOSE", "TRUE") ? 1 : 0;
 
   timer.enableSync();
   if (options.compareArgs("ENABLE TIMER SYNC", "FALSE"))
     timer.disableSync();
 
   flopCounter = std::make_unique<flopCounter_t>();
+
+  {
+    int N;
+    options.getArgs("POLYNOMIAL DEGREE", N);
+    const int Nq = N + 1;
+    nrsCheck(BLOCKSIZE < Nq * Nq, comm.mpiComm, EXIT_FAILURE,
+             "Some kernels require BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+             BLOCKSIZE, Nq * Nq);
+  }
+
+  // create tmp dir
+  {
+    int rankLocal;
+    MPI_Comm_rank(comm.mpiCommLocal, &rankLocal);
+
+    char tmp[] = "nrs_XXXXXX";
+    const int tmpSize = sizeof(tmp)/sizeof(tmp[0]);
+    
+    int retVal = 0;
+    if(rankLocal == 0) { 
+      retVal = mkstemp(tmp);
+      fs::remove(fs::path(tmp));
+    }
+   
+    MPI_Bcast(&tmp, tmpSize, MPI_CHAR, 0, comm.mpiComm);
+    tmpDir = fs::temp_directory_path() / fs::path(tmp);
+    if(getenv("NEKRS_TMP_DIR")) tmpDir = getenv("NEKRS_TMP_DIR");
+
+    if(rankLocal == 0) { 
+      fs::create_directory(tmpDir);
+      nrsCheck(!fs::exists(tmpDir), MPI_COMM_SELF, EXIT_FAILURE,
+               "Cannot create %s\n", tmpDir.c_str());
+    }
+  }
+
+  // bcast install dir 
+  if(cacheBcast || cacheLocal) {
+    const auto NEKRS_HOME_NEW = fs::path(tmpDir) / "nekrs";
+    const auto srcPath = fs::path(getenv("NEKRS_HOME"));
+    for(auto &entry: {fs::path("udf"), 
+                      fs::path("nek5000"), 
+                      fs::path("nekInterface"),
+                      fs::path("include"), 
+                      fs::path("gatherScatter"),
+                      fs::path("findpts"), 
+                      fs::path("kernels")}) {
+      fileBcast(srcPath / entry, NEKRS_HOME_NEW, comm.mpiComm, verbose);
+    }
+    setenv("NEKRS_HOME", std::string(NEKRS_HOME_NEW).c_str(), 1);
+    setenv("NEKRS_KERNEL_DIR", std::string(NEKRS_HOME_NEW / "kernels").c_str(), 1);
+    setenv("OGS_HOME", std::string(NEKRS_HOME_NEW / "gatherScatter").c_str(), 1);
+  }
+
+  {
+    int rankLocal = rank;
+    if(cacheLocal)
+      MPI_Comm_rank(comm.mpiCommLocal, &rankLocal);
+ 
+    if(rankLocal == 0) {
+      std::string cache_dir;
+      cache_dir.assign(getenv("NEKRS_CACHE_DIR"));
+      mkdir(cache_dir.c_str(), S_IRWXU);
+    }
+  }
 
   // Disables the automatic insertion of barriers
   // between separate OKL inner loop blocks.
@@ -105,22 +180,18 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
 
   serial = device.mode() == "Serial" || device.mode() == "OpenMP";
 
-  if (serial) {
-  }
-
   const std::string extension = serial ? ".c" : ".okl";
 
   compileDummyKernel(*this);
 
-  std::string installDir, kernelName, fileName;
-  installDir.assign(getenv("NEKRS_INSTALL_DIR"));
-  const std::string oklpath = installDir + "/kernels/";
+  std::string kernelName, fileName;
+  const auto oklpath = std::string(getenv("NEKRS_KERNEL_DIR"));
   kernelName = "copyDfloatToPfloat";
-  fileName = installDir + "/kernels/core/" + kernelName + extension;
+  fileName = oklpath + "/core/" + kernelName + extension;
   this->kernels.add(kernelName, fileName, this->kernelInfo);
 
   kernelName = "copyPfloatToDfloat";
-  fileName = installDir + "/kernels/core/" + kernelName + extension;
+  fileName = oklpath + "/core/" + kernelName + extension;
   this->kernels.add(kernelName, fileName, this->kernelInfo);
 }
 void memPool_t::allocate(const dlong offset, const dlong fields)
@@ -190,6 +261,7 @@ void deviceMemPool_t::allocate(memPool_t &hostMemory, const dlong offset, const 
   if (fields > 19)
     slice19 = o_ptr.slice((19 * sizeof(dfloat)) * offset);
 }
+
 void platform_t::create_mempool(const dlong offset, const dlong fields)
 {
   mempool.allocate(offset, fields);

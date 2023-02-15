@@ -273,11 +273,8 @@ SEMFEMSolver_t::matrix_t *SEMFEMSolver_t::build(const int N_,
       long long numRowsGlobal64;
       long long numRows64 = numRows;
       comm_allreduce(&comm, gs_long_long, gs_add, &numRows64, 1, &numRowsGlobal64);
-      if (numRowsGlobal64 > std::numeric_limits<int>::max()) {
-        if (comm.id == 0)
-          printf("Number of global rows requires BigInt support!");
-        ABORT(EXIT_FAILURE);
-      }
+      nrsCheck(numRowsGlobal64 > std::numeric_limits<int>::max(), comm.c, EXIT_FAILURE,
+               "Number of global rows requires BigInt support!", "");
     }
 
     hypreWrapper::BigInt *ownedRows = (hypreWrapper::BigInt *)calloc(numRows, sizeof(hypreWrapper::BigInt));
@@ -685,11 +682,8 @@ void fem_assembly_host(hypreWrapper::IJ_t &hypreIJ)
   }
 
   int err = hypreIJ.MatrixAddToValues(nrows, ncols, rows, cols, vals);
-  if (err != 0) {
-    if (comm.id == 0)
-      printf("hypreWrapper::IJMatrixAddToValues failed!\n");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(err != 0, comm.c, EXIT_FAILURE, 
+           "hypreWrapper::IJMatrixAddToValues failed!\n", "");
 
   free(rows);
   free(rowOffsets);
@@ -793,11 +787,8 @@ void fem_assembly_device(hypreWrapper::IJ_t &hypreIJ)
     o_vals.free();
 
   int err = hypreIJ.MatrixAddToValues(nrows, ncols, rows, cols, vals);
-  if (err != 0) {
-    if (comm.id == 0)
-      printf("hypreWrapper::IJMatrixAddToValues failed!\n");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(err != 0, comm.c, EXIT_FAILURE,
+           "hypreWrapper::IJMatrixAddToValues failed!\n", "");
 
   free(rows);
   free(rowOffsets);

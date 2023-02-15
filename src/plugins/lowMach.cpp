@@ -40,14 +40,9 @@ void lowMach::buildKernel(occa::properties kernelInfo)
       int N;
       platform->options.getArgs("POLYNOMIAL DEGREE", N);
       const int Nq = N + 1;
-      if (BLOCKSIZE < Nq * Nq) {
-        if (platform->comm.mpiRank == 0)
-          printf("ERROR: surfaceFlux kernel requires BLOCKSIZE >= Nq * Nq."
-                 "BLOCKSIZE = %d, Nq*Nq = %d\n",
-                 BLOCKSIZE,
-                 Nq * Nq);
-        ABORT(EXIT_FAILURE);
-      }
+      nrsCheck(BLOCKSIZE < Nq * Nq, platform->comm.mpiComm, EXIT_FAILURE,
+               "surfaceFlux kernel requires BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+                 BLOCKSIZE, Nq * Nq);
     }
 
     kernelName = "surfaceFlux";
@@ -67,11 +62,10 @@ void lowMach::setup(nrs_t *nrs, dfloat gamma)
   int err = 1;
   if (platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE"))
     err = 0;
-  if (err) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "lowMach requires solving for temperature!\n";
-    ABORT(1);
-  }
+  
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE,
+           "requires solving for temperature!\n", "");
+
   platform->options.setArgs("LOWMACH", "TRUE");
 }
 

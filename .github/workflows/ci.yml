@@ -319,3 +319,34 @@ jobs:
     - name: 'traction channel (45 degree rotation)'
       working-directory: ${{ env.NEKRS_EXAMPLES }}/shlChannel
       run: ${{ env.NEKRS_HOME }}/bin/nrsmpi channel 2 --cimode 2
+
+  eddyNekNek:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v3
+      with:
+        clean: true
+
+    - name: APT dependencies
+      run: |
+        sudo apt -y update
+        sudo apt install -y mpich libmpich-dev
+
+    - name: Download install dir
+      uses: actions/download-artifact@v2
+      with:
+        name: install-dir
+        path: ${{ env.NEKRS_INSTALL_DIR }}
+
+    - name: Set install dir permissions
+      run: chmod -R 755 ${{ env.NEKRS_INSTALL_DIR }}
+
+    - name: 'eddyNekNek'
+      working-directory: ${{ env.NEKRS_EXAMPLES }}/eddyNekNek
+      run: ${{ env.NEKRS_HOME }}/bin/nrsmpi eddyNekNek.sess 2 --cimode 1
+
+    - name: 'eddyNekNekMv'
+      working-directory: ${{ env.NEKRS_EXAMPLES }}/eddyNekNek
+      run: ${{ env.NEKRS_HOME }}/bin/nrsmpi eddyNekNekMv.sess 2 --cimode 2

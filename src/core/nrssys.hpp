@@ -1,9 +1,6 @@
 #if !defined(nekrs_nrssys_hpp_)
 #define nekrs_nrssys_hpp_
 
-#define BLOCKSIZE 256
-#define ALIGN_SIZE 4096
-
 //float data type
 #if 0
 using dfloat = float;
@@ -63,28 +60,91 @@ using dlong = long long int;
 
 #include <mpi.h>
 #include <math.h>
-#include "omp.h"
+#include <omp.h>
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <string>
 #include <vector>
 #include <functional>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <getopt.h>
+#include <sys/stat.h>
 
 #include "occa.hpp"
 #include "ogs.hpp"
 #include "setupAide.hpp"
 #include "timer.hpp"
 
-static occa::memory o_NULL;
+#define nrsCheck(_nrsCheckCond, _nrsCheckComm, _nrsCheckExitCode, _nrsCheckMessage, ...) \
+  do { \
+    int _nrsCheckErr = 0; \
+    if(_nrsCheckCond) _nrsCheckErr = 1; \
+    MPI_Allreduce(MPI_IN_PLACE, &_nrsCheckErr, 1, MPI_INT, MPI_SUM, _nrsCheckComm); \
+    if(_nrsCheckErr) { \
+      int rank = 0; \
+      MPI_Comm_rank(_nrsCheckComm, &rank); \
+      if(rank == 0) { \
+        fprintf(stderr, "Error in %s: ", __func__);\
+        fprintf(stderr, _nrsCheckMessage, __VA_ARGS__); \
+      } \
+      fflush(stderr); \
+      fflush(stdout); \
+      MPI_Barrier(_nrsCheckComm); \
+      MPI_Abort(MPI_COMM_WORLD, _nrsCheckExitCode); \
+    } \
+  } while (0)
+
+#define nrsAbort(...) \
+  do { \
+    nrsCheck(true, __VA_ARGS__); \
+  } while (0)
+
 
 struct platform_t;
 extern platform_t* platform;
 
-bool useNodeLocalCache();
+namespace {
 
-#define NSCALAR_MAX 100
+constexpr int BLOCKSIZE = 256;
+constexpr int ALIGN_SIZE = 4096;
+constexpr int NSCALAR_MAX = 100;
+occa::memory o_NULL;
 
-#define EXIT_AND_FINALIZE(a)  { fflush(stdout); MPI_Finalize(); exit(a); }
-#define ABORT(a)  { fflush(stdout); MPI_Abort(MPI_COMM_WORLD, a); }
+const std::string scalarDigitStr(int i)
+{
+  static const int scalarWidth = std::to_string(NSCALAR_MAX - 1).length();
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(scalarWidth) << i;
+  return ss.str();
+};
+
+// std::to_string might be not accurate enough
+std::string to_string_f(double a)
+{
+  std::stringstream s;
+  constexpr auto maxPrecision{std::numeric_limits<double>::digits10 + 1};
+  s << std::setprecision(maxPrecision) << std::scientific << a;
+  return s.str();
+}
+
+std::vector<std::string> serializeString(const std::string sin, char dlim)
+{
+  std::vector<std::string> slist;
+  std::string s(sin);
+  s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+  std::stringstream ss;
+  ss.str(s);
+  while (ss.good()) {
+    std::string substr;
+    std::getline(ss, substr, dlim);
+    if(!substr.empty()) slist.push_back(substr);
+  }
+  return slist;
+}
+
+}
 
 #endif

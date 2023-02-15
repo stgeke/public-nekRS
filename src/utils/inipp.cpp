@@ -35,8 +35,6 @@
 
 #include <inipp.hpp>
 
-int getDigitsRepresentation(int n) { return std::to_string(n).length(); }
-
 namespace inipp
 {
 namespace detail

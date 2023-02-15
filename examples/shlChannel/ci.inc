@@ -13,7 +13,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("DT", std::string("1e-3"));
   options.setArgs("SUBCYCLING STEPS", std::string("0"));
   options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
-  options.setArgs("TIME INTEGRATOR", "TOMBO3");
+  options.setArgs("BDF ORDER", "3");
   options.setArgs("ADVECTION", "FALSE");
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-12"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-08"));
@@ -85,5 +85,5 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     std::cout << "LInfError in Vy: " << LInfError_y << "\n";
   }
  
-  (LInfError_x < tol && LInfError_y < tol) ? (PASS) : (FAIL); 
+  (LInfError_x < tol && LInfError_y < tol) ? (CIPASS) : (CIFAIL); 
 }

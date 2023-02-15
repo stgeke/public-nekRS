@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "neknek.hpp"
 #include "nrs.hpp"
 #include "avm.hpp"
 #include "cfl.hpp"
@@ -56,10 +57,7 @@ void evaluateProperties(nrs_t *nrs, const double timeNew) {
   if(nrs->Nscalar){
     cds_t* cds = nrs->cds;
     for(int is = 0 ; is < cds->NSfields; ++is){
-      const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
 
       std::string regularizationMethod;
       platform->options.getArgs("SCALAR" + sid + " REGULARIZATION METHOD", regularizationMethod);
@@ -133,12 +131,9 @@ void adjustDt(nrs_t* nrs, int tstep)
           {
             nrs->dt[0] = sqrt(targetCFL * lengthScale / maxU);
           } else {
-            if(platform->comm.mpiRank == 0){
-              printf("CFL: Zero velocity and body force! Please specify an initial timestep!\n");
-            }
-            ABORT(1);
+            nrsAbort(platform->comm.mpiComm, EXIT_FAILURE,
+                     "Zero velocity and body force! Please specify an initial timestep!\n", "");
           }
-
         }
       }
       nrs->CFL = CFL;
@@ -196,13 +191,13 @@ void extrapolate(nrs_t *nrs)
   cds_t *cds = nrs->cds;
 
   if (nrs->flow) {
-    nrs->extrapolateKernel(mesh->Nelements,
-        nrs->NVfields,
-        nrs->nEXT,
-        nrs->fieldOffset,
-        nrs->o_coeffEXT,
-        nrs->o_U,
-        nrs->o_Ue);
+    nrs->extrapolateKernel(mesh->Nlocal,
+                           nrs->NVfields,
+                           nrs->nEXT,
+                           nrs->fieldOffset,
+                           nrs->o_coeffEXT,
+                           nrs->o_U,
+                           nrs->o_Ue);
 
     if (nrs->pSolver->allNeumann && platform->options.compareArgs("LOWMACH", "TRUE")) {
       nrs->p0the = 0.0;
@@ -213,23 +208,23 @@ void extrapolate(nrs_t *nrs)
   }
 
   if (nrs->Nscalar)
-    nrs->extrapolateKernel(cds->mesh[0]->Nelements,
-        cds->NSfields,
-        cds->nEXT,
-        cds->fieldOffset[0],
-        cds->o_coeffEXT,
-        cds->o_S,
-        cds->o_Se);
+    nrs->extrapolateKernel(cds->mesh[0]->Nlocal,
+                           cds->NSfields,
+                           cds->nEXT,
+                           cds->fieldOffset[0],
+                           cds->o_coeffEXT,
+                           cds->o_S,
+                           cds->o_Se);
 
   if (platform->options.compareArgs("MOVING MESH", "TRUE")) {
-    if(nrs->cht) mesh = nrs->cds->mesh[0]; 
-    nrs->extrapolateKernel(mesh->Nelements,
-        nrs->NVfields,
-        nrs->nEXT,
-        nrs->fieldOffset,
-        nrs->o_coeffEXT,
-        mesh->o_U,
-        mesh->o_Ue);
+    if(nrs->cht) mesh = nrs->cds->mesh[0];
+    nrs->extrapolateKernel(mesh->Nlocal,
+                           nrs->NVfields,
+                           nrs->nEXT,
+                           nrs->fieldOffset,
+                           nrs->o_coeffEXT,
+                           mesh->o_U,
+                           mesh->o_Ue);
   }
 }
 
@@ -371,6 +366,10 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     const dfloat timeNew = time + nrs->dt[0];
 
     //////////////////////////////////////////////
+
+    if (nrs->neknek)
+      nrs->neknek->updateBoundary(nrs, tstep, iter);
+
     applyDirichlet(nrs, timeNew);
     
     if (nrs->Nscalar)
@@ -390,7 +389,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       meshSolve(nrs, timeNew, nrs->meshV->o_U, iter);
     //////////////////////////////////////////////
 
-    nrs->timeStepConverged = (udf.timeStepConverged) ? udf.timeStepConverged(nrs, iter) : true; 
+    nrs->timeStepConverged = (udf.timeStepConverged) ? udf.timeStepConverged(nrs, iter) : true;
 
     platform->timer.tic("udfExecuteStep", 1);
     nek::ifoutfld(0);
@@ -420,16 +419,13 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
 void coeffs(nrs_t *nrs, double dt, int tstep) {
   nrs->dt[0] = dt;
-  if (std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0])) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Unreasonable dt! Dying ...\n" << std::endl;
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0]), platform->comm.mpiComm, EXIT_FAILURE,
+           "Unreasonable dt! Dying ...\n", ""); 
 
   nrs->idt = 1 / nrs->dt[0];
 
-  const int bdfOrder = mymin(tstep, nrs->nBDF);
-  const int extOrder = mymin(tstep, nrs->nEXT);
+  const int bdfOrder = std::min(tstep, nrs->nBDF);
+  const int extOrder = std::min(tstep, nrs->nEXT);
 
   nek::bdfCoeff(&nrs->g0, nrs->coeffBDF, nrs->dt, bdfOrder);
   nek::extCoeff(nrs->coeffEXT, nrs->dt, extOrder, bdfOrder);
@@ -443,7 +439,7 @@ void coeffs(nrs_t *nrs, double dt, int tstep) {
     mesh_t *mesh = nrs->meshV;
     if (nrs->cht)
       mesh = nrs->cds->mesh[0];
-    const int meshOrder = mymin(tstep, mesh->nAB);
+    const int meshOrder = std::min(tstep, mesh->nAB);
     nek::coeffAB(mesh->coeffAB, nrs->dt, meshOrder);
     for (int i = 0; i < meshOrder; ++i)
       mesh->coeffAB[i] *= nrs->dt[0];
@@ -478,16 +474,13 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
     if (!cds->compute[is])
       continue;
 
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
 
     mesh_t *mesh;
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0];
     const dlong isOffset = cds->fieldOffsetScan[is];
 
-    if(platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "RELAXATION")){
+    if (platform->options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "RELAXATION")) {
       cds->filterRTKernel(
         cds->meshV->Nelements,
         is,
@@ -522,11 +515,10 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
     if (platform->options.compareArgs("ADVECTION", "TRUE")) {
       if (cds->Nsubsteps) {
         if (movingMesh)
-          o_Usubcycling = scalarSubCycleMovingMesh(
-              cds, mymin(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
+          o_Usubcycling =
+              scalarSubCycleMovingMesh(cds, std::min(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
         else
-          o_Usubcycling = scalarSubCycle(
-              cds, mymin(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
+          o_Usubcycling = scalarSubCycle(cds, std::min(tstep, cds->nEXT), time, is, cds->o_U, cds->o_S);
       } else {
         if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
           cds->strongAdvectionCubatureVolumeKernel(cds->meshV->Nelements,
@@ -561,7 +553,8 @@ void makeq(nrs_t *nrs, dfloat time, int tstep, occa::memory o_FS, occa::memory o
 
         advectionFlops(cds->mesh[0], 1);
       }
-    } else {
+    }
+    else {
       platform->linAlg->fill(cds->fieldOffsetSum, 0.0, o_Usubcycling);
     }
 
@@ -602,22 +595,18 @@ void scalarSolve(nrs_t *nrs, dfloat time, occa::memory o_S, int stage) {
     mesh_t *mesh;
     (is) ? mesh = cds->meshV : mesh = cds->mesh[0];
 
+    int BFDiag = 0;
+    if(cds->o_BFDiag.size()) BFDiag = 1;
+
     cds->setEllipticCoeffKernel(mesh->Nlocal,
         cds->g0 * cds->idt,
         cds->fieldOffsetScan[is],
         nrs->fieldOffset,
+        BFDiag,
         cds->o_diff,
         cds->o_rho,
+        cds->o_BFDiag,
         cds->o_ellipticCoeff);
-
-    if (cds->o_BFDiag.ptr())
-      platform->linAlg->axpby(mesh->Nlocal,
-          1.0,
-          cds->o_BFDiag,
-          1.0,
-          cds->o_ellipticCoeff,
-          cds->fieldOffsetScan[is],
-          nrs->fieldOffset);
 
     occa::memory o_Snew = cdsSolve(is, cds, time, stage);
     o_Snew.copyTo(o_S,
@@ -669,11 +658,9 @@ void makef(
   if (platform->options.compareArgs("ADVECTION", "TRUE")) {
     if (nrs->Nsubsteps) {
       if (movingMesh)
-        o_Usubcycling = velocitySubCycleMovingMesh(
-            nrs, mymin(tstep, nrs->nEXT), time, nrs->o_U);
+        o_Usubcycling = velocitySubCycleMovingMesh(nrs, std::min(tstep, nrs->nEXT), time, nrs->o_U);
       else
-        o_Usubcycling = velocitySubCycle(
-            nrs, mymin(tstep, nrs->nEXT), time, nrs->o_U);
+        o_Usubcycling = velocitySubCycle(nrs, std::min(tstep, nrs->nEXT), time, nrs->o_U);
     } else {
       if (platform->options.compareArgs("ADVECTION TYPE", "CUBATURE"))
         nrs->strongAdvectionCubatureVolumeKernel(mesh->Nelements,
@@ -765,8 +752,10 @@ void fluidSolve(
       nrs->g0 * nrs->idt,
       0 * nrs->fieldOffset,
       nrs->fieldOffset,
+      0,
       nrs->o_mue,
       nrs->o_rho,
+      o_NULL,
       nrs->o_ellipticCoeff);
 
   occa::memory o_Unew = tombo::velocitySolve(nrs, time, stage);
@@ -795,7 +784,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
   }
   if (platform->comm.mpiRank == 0) {
     if (verboseInfo && printVerboseInfo){
-      for(int is = 0; is < nrs->Nscalar; is++) {
+      for (int is = 0; is < nrs->Nscalar; is++) {
         if (cds->compute[is]) {
           elliptic_t *solver = cds->solver[is];
           if (solver->solutionProjection) {
@@ -812,11 +801,15 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
           }
           printf("S%02d      : iter %03d  resNorm0 %.2e  "
                  "resNorm %.2e\n",
-              is,
-              solver->Niter,
-              solver->res0Norm,
-              solver->resNorm);
+                 is,
+                 solver->Niter,
+                 solver->res0Norm,
+                 solver->resNorm);
         }
+      }
+
+      if (nrs->neknek) {
+        printf("neknek   : sync %.2e  exchange %.2e\n", nrs->neknek->tSync, nrs->neknek->tExch);
       }
 
       if (nrs->flow) {
@@ -931,7 +924,6 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
         printf("MSH      : iter %03d  resNorm0 %.2e  resNorm %.2e\n",
                solver->Niter, solver->res0Norm, solver->resNorm);
       }
- 
     }
 
     if(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")){
@@ -942,18 +934,16 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
       printf("step= %d  t= %.8e  dt=%.1e  C= %.2f", tstep, time, nrs->dt[0], cfl);
 
     if (!verboseInfo) {
-      for(int is = 0; is < nrs->Nscalar; is++)
-        if(cds->compute[is]) printf("  S: %d", cds->solver[is]->Niter);
+      for (int is = 0; is < nrs->Nscalar; is++)
+        if (cds->compute[is])
+          printf("  S: %d", cds->solver[is]->Niter);
 
       if (nrs->flow) {
         printf("  P: %d", nrs->pSolver->Niter);
         if (nrs->uvwSolver)
           printf("  UVW: %d", nrs->uvwSolver->Niter);
         else
-          printf("  U: %d  V: %d  W: %d",
-              nrs->uSolver->Niter,
-              nrs->vSolver->Niter,
-              nrs->wSolver->Niter);
+          printf("  U: %d  V: %d  W: %d", nrs->uSolver->Niter, nrs->vSolver->Niter, nrs->wSolver->Niter);
       }
       if(nrs->meshSolver)
         printf("  MSH: %d", nrs->meshSolver->Niter);
@@ -966,11 +956,8 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
 
   bool largeCFLCheck = (cfl > 30) && numberActiveFields(nrs);
 
-  if (largeCFLCheck || std::isnan(cfl) || std::isinf(cfl)) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Unreasonable CFL! Dying ...\n" << std::endl;
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(largeCFLCheck || std::isnan(cfl) || std::isinf(cfl), platform->comm.mpiComm, EXIT_FAILURE,
+           "Unreasonable CFL! Dying ...\n", "");
 }
 
 void computeDivUErr(nrs_t* nrs, dfloat& divUErrVolAvg, dfloat& divUErrL2)

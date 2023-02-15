@@ -5,8 +5,7 @@ std::vector<pfloat> optimalCoeffs(int ChebyshevDegree)
 {
   constexpr int maxChebyIterations = 16;
   if (ChebyshevDegree == 0)
-    return {
-    };
+    return {};
 
   if (ChebyshevDegree == 1)
     return {
@@ -208,9 +207,9 @@ std::vector<pfloat> optimalCoeffs(int ChebyshevDegree)
         1.51427891730346,
     };
 
-  if(platform->comm.mpiRank == 0){
-    std::cout << "Error: maximum chebyshev iterations (" << maxChebyIterations
-              << ") exceeded with requested iterations (" << ChebyshevDegree << ")\n";
-  }
-  ABORT(1);
+  nrsAbort(platform->comm.mpiComm, EXIT_FAILURE, 
+           "Error: maximum chebyshev iterations %d exceeded with requested iterations %d",
+           maxChebyIterations, ChebyshevDegree);
+  
+  return {};
 }

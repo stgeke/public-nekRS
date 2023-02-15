@@ -307,7 +307,7 @@ void registerMultiGridKernels(const std::string &section, int poissonEquation)
       {
         const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
 
-        std::string fileName = oklpath + "elliptic/vectorDotStar.okl";
+        std::string fileName = oklpath + "/elliptic/vectorDotStar.okl";
         std::string kernelName = "vectorDotStar";
         platform->kernels.add(kernelName, fileName, platform->kernelInfo);
       }

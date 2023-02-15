@@ -72,6 +72,13 @@ struct gs_data {
 }
 #endif
 
+namespace oogs {
+  occa::kernel packBufFloatAddKernel, unpackBufFloatAddKernel;
+  occa::kernel packBufDoubleAddKernel, unpackBufDoubleAddKernel;
+  occa::kernel packBufDoubleMinKernel, unpackBufDoubleMinKernel;
+  occa::kernel packBufDoubleMaxKernel, unpackBufDoubleMaxKernel;
+}
+
 static void convertPwMap(const uint *restrict map, int *restrict starts, int *restrict ids)
 {
   uint i, j;
@@ -242,26 +249,34 @@ void oogs::overlap(int val) { OGS_OVERLAP = val; }
 
 int oogs::gpu_mpi() { return OGS_MPI_SUPPORT; }
 
-void oogs::compile(const occa::device &device, std::string mode, MPI_Comm comm, bool verbose)
+void oogs::compile(const occa::device &device, ogsBuildKernel_t buildKernel, std::string mode, MPI_Comm comm, bool verbose)
 {
-  ogs::initKernels(comm, device, verbose);
+  if(!buildKernel) {
+    buildKernel =
+      [device](const std::string &fileName, const std::string &kernelName, const occa::properties &props)
+      {
+        return device.buildKernel(fileName, kernelName, props);
+      };
+  }
+
+  const auto oklpath = std::string(getenv("OGS_HOME")) + "/okl/";
+
+  ogs::initKernels(comm, device, buildKernel, verbose);
+
   occa::properties props = ogs::kernelInfo;
   if (verbose) {
     props["verbose"] = true;
   }
 
-  int rank;
-  MPI_Comm_rank(comm, &rank);
-  if (rank == 0) {
-    device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_floatAdd", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_floatAdd", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_doubleAdd", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_doubleAdd", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_doubleMin", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_doubleMin", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_doubleMax", props);
-    device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_doubleMax", props);
-  }
+  packBufFloatAddKernel    = buildKernel(oklpath + "oogs.okl", "packBuf_floatAdd", props);
+  unpackBufFloatAddKernel  = buildKernel(oklpath + "oogs.okl", "unpackBuf_floatAdd", props);
+  packBufDoubleAddKernel   = buildKernel(oklpath + "oogs.okl", "packBuf_doubleAdd", props);
+  unpackBufDoubleAddKernel = buildKernel(oklpath + "oogs.okl", "unpackBuf_doubleAdd", props);
+  packBufDoubleMinKernel   = buildKernel(oklpath + "oogs.okl", "packBuf_doubleMin", props);
+  unpackBufDoubleMinKernel = buildKernel(oklpath + "oogs.okl", "unpackBuf_doubleMin", props);
+  packBufDoubleMaxKernel   = buildKernel(oklpath + "oogs.okl", "packBuf_doubleMax", props);
+  unpackBufDoubleMaxKernel = buildKernel(oklpath + "oogs.okl", "unpackBuf_doubleMax", props);
+
   compiled++;
 }
 
@@ -323,6 +338,7 @@ oogs_t *oogs::setup(ogs_t *ogs,
   gs->ogs = ogs;
 
   occa::device device = gs->ogs->device;
+  const auto oklpath = std::string(getenv("OGS_HOME")) + "/okl/"; 
 
   struct gs_data *hgs = (gs_data *)ogs->haloGshSym;
   const void *execdata = hgs->r.data;
@@ -335,24 +351,23 @@ oogs_t *oogs::setup(ogs_t *ogs,
   gs->rank = rank;
   gs->mode = gsMode;
 
-  if (!compiled)
-    oogs::compile(device, device.mode(), gs->comm);
-
   if (gsMode == OOGS_DEFAULT)
     return gs;
 
-  gs->packBufFloatAddKernel = device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_floatAdd", ogs::kernelInfo);
-  gs->unpackBufFloatAddKernel =
-      device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_floatAdd", ogs::kernelInfo);
-  gs->packBufDoubleAddKernel = device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_doubleAdd", ogs::kernelInfo);
-  gs->unpackBufDoubleAddKernel =
-      device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_doubleAdd", ogs::kernelInfo);
-  gs->packBufDoubleMinKernel = device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_doubleMin", ogs::kernelInfo);
-  gs->unpackBufDoubleMinKernel =
-      device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_doubleMin", ogs::kernelInfo);
-  gs->packBufDoubleMaxKernel = device.buildKernel(DOGS "/okl/oogs.okl", "packBuf_doubleMax", ogs::kernelInfo);
-  gs->unpackBufDoubleMaxKernel =
-      device.buildKernel(DOGS "/okl/oogs.okl", "unpackBuf_doubleMax", ogs::kernelInfo);
+#if 0
+  oogs::packBufFloatAddKernel = buildKernel(oklpath + "oogs.okl", "packBuf_floatAdd", ogs::kernelInfo);
+  oogs::unpackBufFloatAddKernel =
+      buildKernel(oklpath + "oogs.okl", "unpackBuf_floatAdd", ogs::kernelInfo);
+  oogs::packBufDoubleAddKernel = buildKernel(oklpath + "oogs.okl", "packBuf_doubleAdd", ogs::kernelInfo);
+  oogs::unpackBufDoubleAddKernel =
+      buildKernel(oklpath + "oogs.okl", "unpackBuf_doubleAdd", ogs::kernelInfo);
+  oogs::packBufDoubleMinKernel = buildKernel(oklpath + "oogs.okl", "packBuf_doubleMin", ogs::kernelInfo);
+  oogs::unpackBufDoubleMinKernel =
+      buildKernel(oklpath + "oogs.okl", "unpackBuf_doubleMin", ogs::kernelInfo);
+  oogs::packBufDoubleMaxKernel = buildKernel(oklpath + "oogs.okl", "packBuf_doubleMax", ogs::kernelInfo);
+  oogs::unpackBufDoubleMaxKernel =
+      buildKernel(oklpath + "oogs.okl", "unpackBuf_doubleMax", ogs::kernelInfo);
+#endif
 
   std::list<oogs_mode> oogs_mode_list;
   oogs_mode_list.push_back(OOGS_LOCAL);
@@ -612,16 +627,16 @@ static void packBuf(oogs_t *gs,
   if(Ngather == 0) return;
 
   if (!strcmp(type, "float") && !strcmp(op, ogsAdd)) {
-    gs->packBufFloatAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::packBufFloatAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else if (!strcmp(type, "double") && !strcmp(op, ogsAdd)) {
-    gs->packBufDoubleAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::packBufDoubleAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else if (!strcmp(type, "double") && !strcmp(op, ogsMin)) {
-    gs->packBufDoubleMinKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::packBufDoubleMinKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else if (!strcmp(type, "double") && !strcmp(op, ogsMax)) {
-    gs->packBufDoubleMaxKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::packBufDoubleMaxKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else {
     printf("oogs: unsupported operation or datatype!\n");
@@ -645,16 +660,16 @@ static void unpackBuf(oogs_t *gs,
   if(Ngather == 0) return;
 
   if (!strcmp(type, "float") && !strcmp(op, ogsAdd)) {
-    gs->unpackBufFloatAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::unpackBufFloatAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else if (!strcmp(type, "double") && !strcmp(op, ogsAdd)) {
-    gs->unpackBufDoubleAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::unpackBufDoubleAddKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else if (!strcmp(type, "double") && !strcmp(op, ogsMin)) {
-    gs->unpackBufDoubleMinKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::unpackBufDoubleMinKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else if (!strcmp(type, "double") && !strcmp(op, ogsMax)) {
-    gs->unpackBufDoubleMaxKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
+    oogs::unpackBufDoubleMaxKernel(Ngather, k, stride, o_gstarts, o_gids, o_sstarts, o_sids, o_v, o_gv);
   }
   else {
     printf("oogs: unsupported operation or datatype!\n");
@@ -836,15 +851,6 @@ void oogs::destroy(oogs_t *gs)
 
   gs->o_bufRecv.free();
   gs->o_bufSend.free();
-
-  gs->packBufFloatAddKernel.free();
-  gs->unpackBufFloatAddKernel.free();
-  gs->packBufDoubleAddKernel.free();
-  gs->unpackBufDoubleAddKernel.free();
-  gs->packBufDoubleMinKernel.free();
-  gs->unpackBufDoubleMinKernel.free();
-  gs->packBufDoubleMaxKernel.free();
-  gs->unpackBufDoubleMaxKernel.free();
 
   free(gs);
 }

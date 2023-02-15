@@ -1,5 +1,3 @@
-static const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-
 cds_t *cdsSetup(nrs_t *nrs, setupAide options)
 {
   const std::string section = "cds-";
@@ -65,9 +63,7 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   cds->prop = (dfloat *)calloc(2 * cds->fieldOffsetSum, sizeof(dfloat));
 
   for (int is = 0; is < cds->NSfields; is++) {
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
 
     if (options.compareArgs("SCALAR" + sid + " SOLVER", "NONE"))
       continue;
@@ -103,9 +99,7 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   cds->o_Urst = nrs->o_Urst;
 
   for (int is = 0; is < cds->NSfields; is++) {
-    std::stringstream ss;
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
 
     cds->compute[is] = 1;
     if (options.compareArgs("SCALAR" + sid + " SOLVER", "NONE")) {
@@ -133,9 +127,7 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
   bool avmEnabled = false;
   {
     for (int is = 0; is < cds->NSfields; is++) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
 
       if (!options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "NONE"))
         scalarFilteringEnabled = true;
@@ -150,10 +142,7 @@ cds_t *cdsSetup(nrs_t *nrs, setupAide options)
     const dlong Nmodes = cds->mesh[0]->N + 1;
     cds->o_filterMT = platform->device.malloc(cds->NSfields * Nmodes * Nmodes, sizeof(dfloat));
     for (int is = 0; is < cds->NSfields; is++) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
-
+      std::string sid = scalarDigitStr(is);
 
       if (options.compareArgs("SCALAR" + sid + " REGULARIZATION METHOD", "NONE"))
         continue;

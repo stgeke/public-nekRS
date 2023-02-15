@@ -115,10 +115,8 @@ void findUThetaTau(dfloat uWall, dfloat tempWall,
     rLength = KAPPA*GACC*thetaTau/uTau/uTau;
   } else { // find the 2 roots utau1 and utau2
     const auto Det = sqrt(1 + 4*RiBulk*(BETAH - BETAM));
-    if(Det < 0) {
-      if (platform->comm.mpiRank == 0) std::cout << "findUThetaTau: Det < 0!\n";
-      ABORT(EXIT_FAILURE);
-    } 
+    nrsCheck(Det < 0, platform->comm.mpiComm, EXIT_FAILURE, "findUThetaTau: Det < 0!\n", "");
+
     const auto utau1 = (0.5*(2*brat - 1)*UmN/(brat - 1)) * (1 - Det/(2*brat - 1));
     const auto utau2 = (0.5*(2*brat - 1)*UmN/(brat - 1)) * (1 + Det/(2*brat - 1));
     auto thetau1 = 0.0;

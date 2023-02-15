@@ -389,6 +389,18 @@ void timer_t::printRunStat(int step)
 
   printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("    udfExecuteStep      ", "udfExecuteStep", "DEVICE:MAX", tElapsedTimeSolve);
+  const double tudf = query("udfExecuteStep", "DEVICE:MAX");
+  printStatEntry("      lpm integrate     ", "lpm_t::integrate", "DEVICE:MAX", tudf);
+  const double tlpm = query("lpm_t::integrate", "DEVICE:MAX");
+  printStatEntry("        findpts         ", "lpm_t::find", "DEVICE:MAX", tlpm);
+  const double tFindPart = query("lpm_t::find", "DEVICE:MAX");
+  printStatEntry("          find kernel   ", "lpm_t::findpts_t::localKernel", "DEVICE:MAX", tFindPart);
+  printStatEntry("        interpolate     ", "lpm_t::interpolate", "DEVICE:MAX", tlpm);
+  const double tInterpPart = query("lpm_t::interpolate", "DEVICE:MAX");
+  printStatEntry("          eval kernel   ", "lpm_t::findpts_t::localEvalKernel", "DEVICE:MAX", tInterpPart);
+  printStatEntry("        delete          ", "lpm_t::deleteParticles", "DEVICE:MAX", tlpm);
+  printStatEntry("      lpm add           ", "lpm_t::addParticles", "DEVICE:MAX", tudf);
+  printStatEntry("      lpm write         ", "lpm_t::write", "DEVICE:MAX", tudf);
 
   const double tMakef = query("makef", "DEVICE:MAX");
   printStatEntry("    makef               ", "makef", "DEVICE:MAX", tElapsedTimeSolve);
@@ -405,6 +417,16 @@ void timer_t::printRunStat(int step)
   printStatEntry("    meshSolve           ", "meshSolve", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("      preconditioner    ", "mesh preconditioner", "DEVICE:MAX", tMesh);
   printStatEntry("      initial guess     ", "mesh proj", "DEVICE:MAX", tMesh);
+
+  const double tNekNek = query("neknek update boundary", "DEVICE:MAX");
+  printStatEntry("    neknek              ", "neknek update boundary", "DEVICE:MAX", tElapsedTimeSolve);
+  printStatEntry("      sync              ", "neknek sync", "DEVICE:MAX", tNekNek);
+  printStatEntry("      exchange          ", "neknek exchange", "DEVICE:MAX", tNekNek);
+  const double tExchange = query("neknek exchange", "DEVICE:MAX");
+  printStatEntry("        eval kernel     ", "neknek_t::findpts_t::localEvalKernel", "DEVICE:MAX", tExchange);
+  printStatEntry("      findpts           ", "neknek updateInterpPoints", "DEVICE:MAX", tNekNek);
+  const double tFindpts = query("neknek updateInterpPoints", "DEVICE:MAX");
+  printStatEntry("        find kernel     ", "neknek_t::findpts_t::localKernel", "DEVICE:MAX", tFindpts);
 
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");
   printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tElapsedTimeSolve);
@@ -439,10 +461,7 @@ void timer_t::printRunStat(int step)
   auto precoTimeScalars = 0.0;
   auto precoCallsScalars = 0.0;
   for (int is = 0; is < nScalar; is++) {
-    std::stringstream ss;
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-    ss << std::setfill('0') << std::setw(scalarWidth) << is;
-    std::string sid = ss.str();
+    std::string sid = scalarDigitStr(is);
     precoTimeScalars += query("scalar" + sid + " preconditioner", "DEVICE:MAX"); 
     precoCallsScalars += count("scalar" + sid + " preconditioner");
   }  
@@ -463,6 +482,23 @@ void timer_t::printRunStat(int step)
 
   std::cout.unsetf(std::ios::scientific);
   std::cout.precision(outPrecisionSave);
+}
+
+void timer_t::printAll()
+{
+  if (platform->comm.mpiRank != 0)
+    return;
+  std::cout << "Device timers: {\n";
+  for (auto &&[name, data] : m_) {
+    std::cout << "\t" << name << " " << data.deviceElapsed << ",\n";
+  }
+  std::cout << "}\n";
+
+  std::cout << "Host timers: {\n";
+  for (auto &&[name, data] : m_) {
+    std::cout << "\t" << name << " " << data.hostElapsed << ",\n";
+  }
+  std::cout << "}\n";
 }
 
 } // namespace timer

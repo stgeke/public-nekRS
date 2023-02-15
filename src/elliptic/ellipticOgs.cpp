@@ -28,7 +28,8 @@ void ellipticOgs(mesh_t *mesh,
         if (bc > 0) {
           for (int n = 0; n < mesh->Nfp; n++) {
             int fid = mesh->faceNodes[n + f * mesh->Nfp];
-            mapB[fid + e * mesh->Np + fld * offset] = mymin(bc, mapB[fid + e * mesh->Np + fld * offset]); // DIRICHLET wins
+            mapB[fid + e * mesh->Np + fld * offset] =
+                std::min(bc, mapB[fid + e * mesh->Np + fld * offset]); // DIRICHLET wins
           }
         }
       }
@@ -120,11 +121,8 @@ void ellipticOgs(mesh_t *mesh,
   free(mapB);
 
   if(! *ogs) {
-    if(nFields > 1) {
-      if(platform->comm.mpiRank == 0)
-        printf("Creating a masked gs handle for nFields > 1 is currently not supported!\n");
-      ABORT(EXIT_FAILURE);
-    }
+    nrsCheck(nFields > 1, platform->comm.mpiComm, EXIT_FAILURE,
+             "Creating a masked gs handle for nFields > 1 is currently not supported!\n", "");
 
     hlong* maskedGlobalIds = (hlong*) calloc(mesh->Nlocal,sizeof(hlong));
     memcpy(maskedGlobalIds, mesh->globalIds, mesh->Nlocal * sizeof(hlong));

@@ -28,7 +28,6 @@
 #define MESH_H 1
 
 #include <unistd.h>
-#include <assert.h>
 
 #include <math.h>
 #include <stdlib.h>
@@ -149,7 +148,7 @@ struct mesh_t
   // face node info
   int Nfp;        // number of nodes per face
   int* faceNodes; // list of element reference interpolation nodes on element faces
-  dlong* vmapM;     // list of volume nodes that are face nodes
+  dlong *vmapM;   // list of volume nodes that are face nodes
   int* faceVertices; // list of mesh vertices on each face
 
   dlong Nsgeo;
@@ -247,9 +246,6 @@ void parallelSort(int size, int rank, MPI_Comm comm,
                   void (* match)(void*, void*)
                   );
 
-#define mymax(a,b) (((a) > (b))?(a):(b))
-#define mymin(a,b) (((a) < (b))?(a):(b))
-
 void meshSolve(nrs_t* nrs, dfloat time, occa::memory o_U, int stage);
 
 /* dimension independent mesh operations */
@@ -303,25 +299,6 @@ void printMeshMetrics(mesh_t* mesh);
 
 void occaTimerTic(occa::device device,std::string name);
 void occaTimerToc(occa::device device,std::string name);
-
-extern "C"
-{
-void* xxtSetup(uint num_local_rows,
-               void* row_ids,
-               uint nnz,
-               void*   A_i,
-               void*   A_j,
-               void* A_vals,
-               int null_space,
-               const char* inttype,
-               const char* floattype);
-
-void xxtSolve(void* x,
-              void* A,
-              void* rhs);
-
-void xxtFree(void* A);
-}
 
 extern "C"
 {

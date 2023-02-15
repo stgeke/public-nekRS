@@ -110,11 +110,9 @@ mesh_t *createMesh(MPI_Comm comm,
   // get mesh from nek
   meshNekReaderHex3D(N, mesh);
 
-  if ((hlong) mesh->Nelements * (mesh->Nvgeo * cubN) > std::numeric_limits<int>::max()) {
-    if (platform->comm.mpiRank == 0) 
-      printf("ERROR: mesh->Nelements * mesh->Nvgeo * cubN exceeds <int> limit!");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck((hlong) mesh->Nelements * (mesh->Nvgeo * cubN) > std::numeric_limits<int>::max(),
+           platform->comm.mpiComm, EXIT_FAILURE, 
+           "mesh->Nelements * mesh->Nvgeo * cubN exceeds int limit!", "");
 
   mesh->Nfields = 1; // TW: note this is a temporary patch (halo exchange depends on nfields)
 
@@ -180,7 +178,7 @@ mesh_t *createMesh(MPI_Comm comm,
     }
     free(tmp);
   }
-  if(err) ABORT(1);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 
   mesh->oogs = oogs::setup(mesh->ogs, 1, mesh->Nelements * mesh->Np, ogsDfloat, NULL, OOGS_AUTO);
 
@@ -281,10 +279,6 @@ mesh_t *createMeshMG(mesh_t* _mesh,
   mesh->o_x = platform->device.malloc(mesh->Np * mesh->Nelements * sizeof(dfloat), mesh->x);
   mesh->o_y = platform->device.malloc(mesh->Np * mesh->Nelements * sizeof(dfloat), mesh->y);
   mesh->o_z = platform->device.malloc(mesh->Np * mesh->Nelements * sizeof(dfloat), mesh->z);
-
-  free(mesh->x);
-  free(mesh->y);
-  free(mesh->z);
 
   mesh->o_D = platform->device.malloc(mesh->Nq * mesh->Nq * sizeof(dfloat), mesh->D);
 
@@ -396,7 +390,7 @@ mesh_t *createMeshV(
     }
     free(tmp);
   }
-  if(err) ABORT(1);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
 
   mesh->oogs = oogs::setup(mesh->ogs, 1, mesh->Nelements * mesh->Np, ogsDfloat, NULL, OOGS_AUTO);
 
@@ -448,8 +442,7 @@ void meshVOccaSetup3D(mesh_t* mesh, occa::properties &kernelInfo)
     platform->device.malloc(mesh->Nelements * mesh->Nfaces * sizeof(int),
                         mesh->EToB);
   mesh->o_vmapM =
-    platform->device.malloc(mesh->Nelements * mesh->Nfp * mesh->Nfaces * sizeof(dlong),
-                        mesh->vmapM);
+      platform->device.malloc(mesh->Nelements * mesh->Nfp * mesh->Nfaces * sizeof(dlong), mesh->vmapM);
   mesh->o_invLMM =
     platform->device.malloc(mesh->Nelements * mesh->Np ,  sizeof(dfloat));
 }

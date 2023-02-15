@@ -2,6 +2,7 @@
 #define nekrs_nrs_hpp_
 
 #include <mpi.h>
+#include "neknek.hpp"
 #include <string>
 
 namespace nekrs
@@ -10,6 +11,7 @@ void setup(MPI_Comm commg_in, MPI_Comm comm_in,
            int buildOnly, int commSizeTarget,
            int ciMode, std::string _setupFile,
            std::string _backend, std::string _deviceID,
+           const session_data_t &session,
            int debug);
 void runStep(double time, double dt, int tstep);
 void copyFromNek(double time, int tstep);
@@ -18,7 +20,7 @@ void outfld(double time, int step);
 void outfld(double time, int step, std::string suffix);
 int outputStep(double time, int tStep);
 void outputStep(int val);
-void finalize();
+int finalize();
 void nekUserchk(void);
 int runTimeStatFreq();
 int printInfoFreq();

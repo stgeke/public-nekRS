@@ -58,6 +58,7 @@ static bool importFromNek = true;
 static std::map<std::string, int> vBcTextToID = {
     {"periodic", 0},
     {"zerovalue", bcMap::bcTypeW},
+    {"interpolation", bcMap::bcTypeINT},
     {"codedfixedvalue", bcMap::bcTypeV},
     {"zeroxvalue/zerogradient", bcMap::bcTypeSYMX},
     {"zeroyvalue/zerogradient", bcMap::bcTypeSYMY},
@@ -78,6 +79,7 @@ static std::map<std::string, int> vBcTextToID = {
 static std::map<int, std::string> vBcIDToText = {
     {0, "periodic"},
     {bcMap::bcTypeW, "zeroValue"},
+    {bcMap::bcTypeINT, "interpolation"},
     {bcMap::bcTypeV, "codedFixedValue"},
     {bcMap::bcTypeSYMX, "zeroXValue/zeroGradient"},
     {bcMap::bcTypeSYMY, "zeroYValue/zeroGradient"},
@@ -94,20 +96,18 @@ static std::map<int, std::string> vBcIDToText = {
     {bcMap::bcTypeO, "fixedGradient"}
 };
 
-static std::map<std::string, int> sBcTextToID = {
-  {"periodic", 0},
-  {"codedfixedvalue", bcMap::bcTypeS},
-  {"zerogradient", bcMap::bcTypeF0},
-  {"codedfixedgradient", bcMap::bcTypeF},
-  {"codedFixedgradient", bcMap::bcTypeF}
-};
+static std::map<std::string, int> sBcTextToID = {{"periodic", 0},
+                                                 {"interpolation", bcMap::bcTypeINTS},
+                                                 {"codedfixedvalue", bcMap::bcTypeS},
+                                                 {"zerogradient", bcMap::bcTypeF0},
+                                                 {"codedfixedgradient", bcMap::bcTypeF},
+                                                 {"codedFixedgradient", bcMap::bcTypeF}};
 
-static std::map<int, std::string> sBcIDToText = {
-  {0, "periodic"},
-  {bcMap::bcTypeS, "codedFixedValue"},
-  {bcMap::bcTypeF0, "zeroGradient"},
-  {bcMap::bcTypeF, "codedFixedGradient"}
-};
+static std::map<int, std::string> sBcIDToText = {{0, "periodic"},
+                                                 {bcMap::bcTypeINTS, "interpolation"},
+                                                 {bcMap::bcTypeS, "codedFixedValue"},
+                                                 {bcMap::bcTypeF0, "zeroGradient"},
+                                                 {bcMap::bcTypeF, "codedFixedGradient"}};
 
 static void v_setup(std::string s);
 static void s_setup(std::string s);
@@ -126,6 +126,11 @@ static void v_setup(std::string field, std::vector<std::string> slist)
 
     if (key.compare("w") == 0) key = "zerovalue";
     if (key.compare("wall") == 0) key = "zerovalue";
+
+    if (key.compare("int") == 0)
+      key = "interpolation";
+    if (key.compare("interpolation") == 0)
+      key = "interpolation";
 
     if (key.compare("inlet") == 0) key = "codedfixedvalue";
     if (key.compare("v") == 0) key = "codedfixedvalue";
@@ -191,48 +196,54 @@ static void v_setup(std::string field, std::vector<std::string> slist)
     }
 #endif
 
-    if (vBcTextToID.find(key) == vBcTextToID.end()) {
-      if(rank == 0)
-        std::cout << "Invalid velocity bcType " << "\'" << key << "\'" << "!\n";
-      EXIT_AND_FINALIZE(EXIT_FAILURE);
-    }
+    nrsCheck(vBcTextToID.find(key) == vBcTextToID.end(), MPI_COMM_WORLD, EXIT_FAILURE,
+             "Invalid velocity bcType (%s)\n", key.c_str());
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
-  if(foundAligned && foundUnaligned) {
-    if(rank == 0)
-        std::cout << "Aligned together with unaligned mixed boundary types are not supported!\n";
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+
+  nrsCheck(foundAligned && foundUnaligned, MPI_COMM_WORLD, EXIT_FAILURE,
+           "Aligned together with unaligned mixed boundary types are not supported!\n", "");
 }
 
 static void s_setup(std::string field, std::vector<std::string> slist)
 {
   for (int bid = 0; bid < slist.size(); bid++) {
     std::string key = slist[bid];
-    if (key.compare("p") == 0) key = "periodic";
+    if (key.compare("p") == 0)
+      key = "periodic";
 
-    if (key.compare("t") == 0) key = "codedfixedvalue";
-    if (key.compare("inlet") == 0) key = "codedfixedvalue";
+    if (key.compare("int") == 0)
+      key = "interpolation";
+    if (key.compare("interpolation") == 0)
+      key = "interpolation";
 
-    if (key.compare("flux") == 0) key = "codedfixedgradient";
-    if (key.compare("f") == 0) key = "codedfixedgradient";
+    if (key.compare("t") == 0)
+      key = "codedfixedvalue";
+    if (key.compare("inlet") == 0)
+      key = "codedfixedvalue";
 
-    if (key.compare("zeroflux") == 0) key = "zerogradient";
-    if (key.compare("i") == 0) key = "zerogradient";
-    if (key.compare("insulated") == 0) key = "zerogradient";
+    if (key.compare("flux") == 0)
+      key = "codedfixedgradient";
+    if (key.compare("f") == 0)
+      key = "codedfixedgradient";
 
-    if (key.compare("outflow") == 0) key = "zerogradient";
-    if (key.compare("outlet") == 0) key = "zerogradient";
-    if (key.compare("o") == 0) key = "zerogradient";
+    if (key.compare("zeroflux") == 0)
+      key = "zerogradient";
+    if (key.compare("i") == 0)
+      key = "zerogradient";
+    if (key.compare("insulated") == 0)
+      key = "zerogradient";
 
-    if (sBcTextToID.find(key) == sBcTextToID.end()) {
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if(rank == 0)
-        std::cout << "Invalid scalar bcType " << "\'" << key << "\'" << "!\n";
-      EXIT_AND_FINALIZE(EXIT_FAILURE);
-    }
+    if (key.compare("outflow") == 0)
+      key = "zerogradient";
+    if (key.compare("outlet") == 0)
+      key = "zerogradient";
+    if (key.compare("o") == 0)
+      key = "zerogradient";
+
+    nrsCheck(sBcTextToID.find(key) == sBcTextToID.end(), MPI_COMM_WORLD, EXIT_FAILURE,
+             "Invalid scalar bcType (%s)\n", key.c_str());
 
     bToBc[make_pair(field, bid)] = sBcTextToID.at(key);
   }
@@ -287,17 +298,17 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
     if (keyIn.compare("wall") == 0) key = "zerovalue";
     if (keyIn.compare("inlet") == 0) key = "zerovalue";
     if (keyIn.compare("v") == 0) key = "zerovalue";
+    // interpolated b.c. defaults to zero mesh movement
+    if (key.compare("int") == 0)
+      key = "zerovalue";
+    if (key.compare("interpolation") == 0)
+      key = "zerovalue";
 
     if (keyIn.compare("mv") == 0) key = "codedfixedvalue";
     if (keyIn.compare("codedfixedvalue+moving") == 0) key = "codedfixedvalue";
 
-    if (vBcTextToID.find(key) == vBcTextToID.end()) {
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if(rank == 0)
-        std::cout << "Invalid bcType " << "\'" << key << "\'" << "!\n";
-      EXIT_AND_FINALIZE(EXIT_FAILURE);
-    }
+    nrsCheck(vBcTextToID.find(key) == vBcTextToID.end(), MPI_COMM_WORLD, EXIT_FAILURE,
+             "Invalid bcType (%s)\n", key.c_str());
 
     bToBc[make_pair(field, bid)] = vBcTextToID.at(key);
   }
@@ -313,9 +324,11 @@ int id(int bid, std::string field)
     return bToBc.at({field, bid - 1});
   }
   catch (const std::out_of_range &oor) {
-    printf("bcMap::id bid:%d field:%s lookup failed!\n", bid, field.c_str());
-    ABORT(1);
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, 
+             "bcMap::id bid:%d field:%s lookup failed!\n", bid, field.c_str());
   }
+
+  return -1;
 }
 
 int ellipticType(int bid, std::string field)
@@ -382,9 +395,7 @@ int ellipticType(int bid, std::string field)
     else if (field.compare("pressure") == 0) {
       const int bcID = bToBc.at({"velocity", bid - 1});
       bcType = NEUMANN;
-      if (bcID == bcTypeO || 
-          bcID == bcTypeONX || bcID == bcTypeONY || bcID == bcTypeONZ ||
-          bcID == bcTypeON)
+      if (bcID == bcTypeO || bcID == bcTypeONX || bcID == bcTypeONY || bcID == bcTypeONZ || bcID == bcTypeON)
         bcType = DIRICHLET;
     }
     else if (field.compare(0, 6, "scalar") == 0) {
@@ -395,16 +406,17 @@ int ellipticType(int bid, std::string field)
         bcType = DIRICHLET;
     }
 
-    if(bcType == -1) {
-      printf("ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
-      ABORT(1);
-    }
+    nrsCheck(bcType == -1, MPI_COMM_SELF, EXIT_FAILURE,
+             "ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
+
     return bcType;
   }
   catch (const std::out_of_range &oor) {
-    printf("ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
-    ABORT(1);
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE,
+             "ellipticType bid:%d field:%s lookup failed!\n", bid, field.c_str());
   }
+
+  return 0;
 }
 
 std::string text(int bid, std::string field)
@@ -413,17 +425,17 @@ std::string text(int bid, std::string field)
 
   const int bcID = bToBc.at({field, bid - 1});
 
-  if (field.compare("velocity") == 0 && bcID == bcTypeV)
+  if (field.compare("velocity") == 0 && (bcID == bcTypeV || bcID == bcTypeINT))
     oudfFindDirichlet(field);
   if (field.compare("mesh") == 0 && bcID == bcTypeV)
     oudfFindDirichlet(field);
-  if (field.compare("pressure") == 0 && 
+  if (field.compare("pressure") == 0 &&
       (bcID == bcTypeONX || bcID == bcTypeONY || bcID == bcTypeONZ || bcID == bcTypeON || bcID == bcTypeO))
     oudfFindDirichlet(field);
-  if (field.compare(0, 6, "scalar") == 0 && bcID == bcTypeS)
+  if (field.compare(0, 6, "scalar") == 0 && (bcID == bcTypeS || bcID == bcTypeINTS))
     oudfFindDirichlet(field);
 
-  if (field.compare("velocity") == 0 && 
+  if (field.compare("velocity") == 0 &&
       (bcID == bcTypeSHLX || bcID == bcTypeSHLY || bcID == bcTypeSHLZ || bcID == bcTypeSHL))
     oudfFindNeumann(field);
   if (field.compare("mesh") == 0 && bcID == bcTypeSHL)
@@ -436,8 +448,9 @@ std::string text(int bid, std::string field)
   else if (field.compare(0, 6, "scalar") == 0)
     return sBcIDToText.at(bcID);
 
-  std::cout << __func__ << "(): Unexpected error occured!" << std::endl;
-  ABORT(1);
+  nrsAbort(MPI_COMM_SELF, EXIT_FAILURE,
+           "Unexpected error occured!", "");
+
   return 0;
 }
 
@@ -482,7 +495,7 @@ void check(mesh_t* mesh)
     if (err && platform->comm.mpiRank == 0) 
       printf("Cannot find boundary ID %d in mesh!\n", id);
   }
-  if (err) EXIT_AND_FINALIZE(EXIT_FAILURE);
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 
   found = 0;
   for (int f = 0; f < mesh->Nelements * mesh->Nfaces; f++) {
@@ -527,9 +540,8 @@ void checkBoundaryAlignment(mesh_t *mesh)
       for (int f = 0; f < mesh->Nfaces; f++) {
         int bid = mesh->EToB[e * mesh->Nfaces + f];
         int bc = id(bid, field);
-        if (bc == bcTypeSYMX || bc == bcTypeSYMY || bc == bcTypeSYMZ || 
-            bc == bcTypeSHLX || bc == bcTypeSHLY || bc == bcTypeSHLZ ||
-            bc == bcTypeONX  || bc == bcTypeONY || bc == bcTypeONZ) {
+        if (bc == bcTypeSYMX || bc == bcTypeSYMY || bc == bcTypeSYMZ || bc == bcTypeSHLX ||
+            bc == bcTypeSHLY || bc == bcTypeSHLZ || bc == bcTypeONX || bc == bcTypeONY || bc == bcTypeONZ) {
           auto expectedAlignment = boundaryAlignment_t::UNALIGNED;
           switch (bc) {
           case bcTypeSYMX:
@@ -628,9 +640,7 @@ void checkBoundaryAlignment(mesh_t *mesh)
     }
   }
 
-  if (bail) {
-    EXIT_AND_FINALIZE(EXIT_FAILURE);
-  }
+  nrsCheck(bail, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
 }
 
 void remapUnalignedBoundaries(mesh_t *mesh)

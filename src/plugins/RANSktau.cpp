@@ -17,7 +17,7 @@ static occa::memory o_mut;
 
 static occa::memory o_k;
 static occa::memory o_tau;
-static occa::memory o_ywd;
+static occa::memory o_wd;
   
 static occa::kernel computeKernel;
 static occa::kernel mueKernel;
@@ -107,11 +107,8 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
   int Nscalar;
   platform->options.getArgs("NUMBER OF SCALARS", Nscalar);
 
-  if (Nscalar < 2) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "RANSktau: Nscalar needs to be >= 2!\n";
-    ABORT(1);
-  }
+  nrsCheck(Nscalar < 2, platform->comm.mpiComm, EXIT_FAILURE,
+           "Nscalar needs to be >= 2!\n", "");
   platform->options.setArgs("VELOCITY STRESSFORMULATION", "TRUE");
 }
 
@@ -170,17 +167,12 @@ void RANSktau::updateSourceTerms()
                 o_tau,
                 o_SijMag2,
                 o_OiOjSk,
-		o_ywd,
+		o_wd,
                 o_BFDiag,
                 o_FS);
 }
 
-void RANSktau::setup(nrs_t *nrsIn, dfloat mueIn, dfloat rhoIn, int ifld)
-{
-  setup(nrsIn, mueIn, rhoIn, ifld, NULL);
-}
-
-void RANSktau::setup(nrs_t *nrsIn, dfloat mueIn, dfloat rhoIn, int ifld, const dfloat *coeffIn)
+void RANSktau::setup(nrs_t *nrsIn, dfloat mueIn, dfloat rhoIn, int ifld, occa::memory& o_wdIn)
 {
   if (setupCalled)
     return;
@@ -193,8 +185,7 @@ void RANSktau::setup(nrs_t *nrsIn, dfloat mueIn, dfloat rhoIn, int ifld, const d
   cds_t *cds = nrs->cds;
   mesh_t *mesh = nrs->meshV;
 
-  if (coeffIn)
-    memcpy(coeff, coeffIn, sizeof(coeff));
+  o_wd = o_wdIn;
 
   o_k = cds->o_S + cds->fieldOffsetScan[kFieldIndex] * sizeof(dfloat);
   o_tau = cds->o_S + cds->fieldOffsetScan[kFieldIndex + 1] * sizeof(dfloat);
@@ -206,9 +197,5 @@ void RANSktau::setup(nrs_t *nrsIn, dfloat mueIn, dfloat rhoIn, int ifld, const d
     platform->linAlg->fill(cds->fieldOffsetSum, 0.0, cds->o_BFDiag);
   }
 
-  double *ywd = (double *) nek::scPtr(1);
-  o_ywd = platform->device.malloc(nrs->fieldOffset,sizeof(dfloat));
-  o_ywd.copyFrom(ywd,nrs->fieldOffset*sizeof(dfloat));
-  
   setupCalled = 1;
 }

@@ -16,7 +16,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("DT", std::string("1e-3"));
   options.setArgs("SUBCYCLING STEPS", std::string("0"));
   if (ciMode == 2) options.setArgs("SUBCYCLING STEPS", std::string("1"));
-  options.setArgs("TIME INTEGRATOR", "TOMBO2");
+  options.setArgs("BDF ORDER", "2");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-12"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-08"));
@@ -92,7 +92,7 @@ void testDirection(nrs_t* nrs, std::string dir)
 
   auto LInfError = computeLInfError(nrs, o_fields, o_refFields);
   if(LInfError > tol){
-    FAIL;
+    CIFAIL;
   }
 
   o_fields.free();
@@ -102,7 +102,7 @@ void testDirection(nrs_t* nrs, std::string dir)
 void testFusedPlanarAvg(nrs_t * nrs, std::string dir)
 {
   if(dir.size() != 2){
-    FAIL;
+    CIFAIL;
   }
 
   auto o_fields = platform->device.malloc((nrs->NVfields  * sizeof(dfloat))*nrs->fieldOffset);
@@ -126,7 +126,7 @@ void testFusedPlanarAvg(nrs_t * nrs, std::string dir)
 
   auto LInfError = computeLInfError(nrs, o_fields, o_refFields);
   if(LInfError > tol){
-    FAIL;
+    CIFAIL;
   }
 
   // (2) xz == x, z, e.g.
@@ -141,7 +141,7 @@ void testFusedPlanarAvg(nrs_t * nrs, std::string dir)
 
   LInfError = computeLInfError(nrs, o_fields, o_refFields);
   if(LInfError > tol){
-    FAIL;
+    CIFAIL;
   }
 
   // (3) xz, zx both work
@@ -156,7 +156,7 @@ void testFusedPlanarAvg(nrs_t * nrs, std::string dir)
 
   LInfError = computeLInfError(nrs, o_fields, o_refFields);
   if(LInfError > tol){
-    FAIL;
+    CIFAIL;
   }
 
   o_fields.free();
@@ -213,5 +213,5 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   if (rank == 0)
     printf("relative error to target: vx=%g pr=%g s=%g\n", vxErr, prErr, sErr);
 
-  (vxErr < EPS && prErr < EPS && sErr < EPS) ? (PASS) : (FAIL); 
+  (vxErr < EPS && prErr < EPS && sErr < EPS) ? (CIPASS) : (CIFAIL); 
 }

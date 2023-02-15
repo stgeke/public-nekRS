@@ -10,7 +10,7 @@ void velocityDirichletConditions(bcData *bc)
   bc->w = w;
 }
 
-@kernel void userVp(const dlong Nelements,
+@kernel void userVp(const dlong N,
                     const dlong uOffset,
                     const dlong sOffset,
                     const double p0th,
@@ -18,17 +18,14 @@ void velocityDirichletConditions(bcData *bc)
                     @restrict dfloat * UPROP,
                     @restrict dfloat * SPROP)
 {
-  for(dlong e=0;e<Nelements;++e;@outer(0)){
-    for(int n=0;n<p_Np;++n;@inner(0)){
-      const int id = e*p_Np + n;
-      UPROP[id + 0*uOffset] = 1e-2;
-      SPROP[id + 0*sOffset] = 1e-2;
-      UPROP[id + 1*uOffset] = p0th/TEMP[id];
-      SPROP[id + 1*sOffset] = p0th/TEMP[id];
-    }
+  for (dlong id = 0; id < N; ++id; @tile(p_blockSize, @outer, @inner)) {
+    UPROP[id + 0*uOffset] = 1e-2;
+    SPROP[id + 0*sOffset] = 1e-2;
+    UPROP[id + 1*uOffset] = p0th/TEMP[id];
+    SPROP[id + 1*sOffset] = p0th/TEMP[id];
   }
 }
-@kernel void userMeshVelocity(const dlong Nelements,
+@kernel void userMeshVelocity(const dlong N,
                     const dlong offset,
                     const dfloat hmin,
                     const dfloat hmax,
@@ -36,21 +33,18 @@ void velocityDirichletConditions(bcData *bc)
                     @restrict const dfloat * h,
                     @restrict dfloat * W)
 {
-  for(dlong e=0;e<Nelements;++e;@outer(0)){
-    for(int n=0;n<p_Np;++n;@inner(0)){
-      const dfloat v_piston = p_AMP * sin(p_OMEGA * time);
-      const dfloat hlen = hmin - hmax;
+  for (dlong id = 0; id < N; ++id; @tile(p_blockSize, @outer, @inner)) {
+    const dfloat v_piston = p_AMP * sin(p_OMEGA * time);
+    const dfloat hlen = hmin - hmax;
 
-      const int id = e*p_Np + n;
-      const dfloat hh = h[id];
+    const dfloat hh = h[id];
 
-      const dfloat hsc = (hh - hmax) / hlen;
-      const dfloat wxt = 0.0;
-      const dfloat wyt = hsc * v_piston;
+    const dfloat hsc = (hh - hmax) / hlen;
+    const dfloat wxt = 0.0;
+    const dfloat wyt = hsc * v_piston;
 
-      W[id + 0 * offset] = wxt * cos(p_ROT) - wyt * sin(p_ROT);
-      W[id + 1 * offset] = wxt * sin(p_ROT) + wyt * cos(p_ROT);
-      W[id + 2 * offset] = 0.0;
-    }
+    W[id + 0 * offset] = wxt * cos(p_ROT) - wyt * sin(p_ROT);
+    W[id + 1 * offset] = wxt * sin(p_ROT) + wyt * cos(p_ROT);
+    W[id + 2 * offset] = 0.0;
   }
 }

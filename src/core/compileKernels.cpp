@@ -1,3 +1,4 @@
+#include "nrssys.hpp"
 #include "compileKernels.hpp"
 #include "bcMap.hpp"
 #include "elliptic.h"
@@ -7,6 +8,9 @@
 #include "udf.hpp"
 #include <vector>
 #include <tuple>
+#include "findpts.hpp"
+#include "fileUtils.hpp"
+
 
 std::string createOptionsPrefix(std::string section) {
   std::string prefix = section + std::string(" ");
@@ -25,6 +29,7 @@ void compileKernels() {
   MPI_Barrier(platform->comm.mpiComm);
 
   platform->kernelInfo["defines/p_bcTypeW"] = bcMap::bcTypeW;
+  platform->kernelInfo["defines/p_bcTypeINT"] = bcMap::bcTypeINT;
   platform->kernelInfo["defines/p_bcTypeV"] = bcMap::bcTypeV;
   platform->kernelInfo["defines/p_bcTypeSYMX"] = bcMap::bcTypeSYMX;
   platform->kernelInfo["defines/p_bcTypeSYMY"] = bcMap::bcTypeSYMY;
@@ -40,10 +45,10 @@ void compileKernels() {
   platform->kernelInfo["defines/p_bcTypeON"] = bcMap::bcTypeON;
   platform->kernelInfo["defines/p_bcTypeO"] = bcMap::bcTypeO;
 
+  platform->kernelInfo["defines/p_bcTypeINTS"] = bcMap::bcTypeINTS;
   platform->kernelInfo["defines/p_bcTypeS"] = bcMap::bcTypeS;
   platform->kernelInfo["defines/p_bcTypeF0"] = bcMap::bcTypeF0;
   platform->kernelInfo["defines/p_bcTypeF"] = bcMap::bcTypeF;
-
 
   occa::properties kernelInfoBC = compileUDFKernels();
 
@@ -54,6 +59,8 @@ void compileKernels() {
 
   registerLinAlgKernels();
 
+  registerNekNekKernels();
+
   registerPostProcessingKernels();
 
   registerMeshKernels(kernelInfoBC);
@@ -62,14 +69,11 @@ void compileKernels() {
 
   int Nscalars;
   platform->options.getArgs("NUMBER OF SCALARS", Nscalars);
-  const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
 
   if (Nscalars) {
     registerCdsKernels(kernelInfoBC);
     for(int is = 0; is < Nscalars; is++){
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
       const std::string section = "scalar" + sid;
       const int poisson = 0;
 
@@ -104,13 +108,17 @@ void compileKernels() {
     registerEllipticPreconditionerKernels(section, poissonEquation);
   }
 
-
   {
-    const bool buildNodeLocal = useNodeLocalCache();
+    const bool buildNodeLocal = platform->cacheLocal;
     const bool buildOnly = platform->options.compareArgs("BUILD ONLY", "TRUE");
     auto communicator = buildNodeLocal ? platform->comm.mpiCommLocal : platform->comm.mpiComm;
-    oogs::compile(
-        platform->device.occaDevice(), platform->device.mode(), communicator, buildOnly);
+    auto &plat = platform;
+    ogsBuildKernel_t buildKernel = 
+      [plat](const std::string &fileName, const std::string &kernelName, const occa::properties &props) 
+      {
+        return plat->device.buildKernel(fileName, kernelName, props);
+      };
+    oogs::compile(platform->device.occaDevice(), buildKernel, platform->device.mode(), communicator, buildOnly);
   }
 
   platform->kernels.compile();

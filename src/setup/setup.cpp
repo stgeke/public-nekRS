@@ -92,19 +92,6 @@ void printICMinMax(nrs_t *nrs)
 
 void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
 {
-  {
-    int N;
-    platform->options.getArgs("POLYNOMIAL DEGREE", N);
-    const int Nq = N + 1;
-    if (BLOCKSIZE < Nq * Nq) {
-      if (platform->comm.mpiRank == 0)
-        printf("ERROR: several kernels requires BLOCKSIZE >= Nq * Nq."
-               "BLOCKSIZE = %d, Nq*Nq = %d\n",
-               BLOCKSIZE,
-               Nq * Nq);
-      ABORT(EXIT_FAILURE);
-    }
-  }
   platform_t *platform = platform_t::getInstance();
   device_t &device = platform->device;
   nrs->kernelInfo = new occa::properties();
@@ -150,20 +137,23 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   }
 
   nrs->cht = 0;
-  if (nekData.nelv != nekData.nelt && nrs->Nscalar)
-    nrs->cht = 1;
-  if (nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE")) {
-    if (platform->comm.mpiRank == 0)
-      std::cout << "Conjugate heat transfer requires solving for temperature!\n";
-    ABORT(EXIT_FAILURE);
-    ;
+  {
+    hlong NelementsV = nekData.nelv; 
+    hlong NelementsT = nekData.nelt;
+    MPI_Allreduce(MPI_IN_PLACE, &NelementsV, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
+    MPI_Allreduce(MPI_IN_PLACE, &NelementsT, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
+    if ((NelementsT > NelementsV) && nrs->Nscalar) nrs->cht = 1;
   }
-  if (nrs->cht && options.compareArgs("MOVING MESH", "TRUE")) {
-    if (platform->comm.mpiRank == 0){
-      std::cout << "Conjugate heat transfer + moving mesh is not supported\n";
-    }
-    ABORT(EXIT_FAILURE);
-  }
+
+  nrsCheck(nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE"),
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Conjugate heat transfer requires solving for temperature!\n", "");
+
+  nrsCheck(nrs->cht && options.compareArgs("MOVING MESH", "TRUE"),
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Conjugate heat transfer + moving mesh is not supported\n", "");
 
   nrs->_mesh = createMesh(comm, N, cubN, nrs->cht, kernelInfo);
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
@@ -179,18 +169,14 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   nrs->idt = 1 / nrs->dt[0];
   nrs->g0 = 1;
 
-  if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO1")) {
-    nrs->nBDF = 1;
-  }
-  else if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO2")) {
-    nrs->nBDF = 2;
-  }
-  else if (platform->options.compareArgs("TIME INTEGRATOR", "TOMBO3")) {
-    nrs->nBDF = 3;
-  }
-  nrs->nEXT = 3;
+  platform->options.getArgs("BDF ORDER", nrs->nBDF);
+  platform->options.getArgs("EXT ORDER", nrs->nEXT);
   if (nrs->Nsubsteps)
     nrs->nEXT = nrs->nBDF;
+
+  nrsCheck(nrs->nEXT < nrs->nBDF, platform->comm.mpiComm, EXIT_FAILURE,
+           "EXT order needs to be >= BDF order!\n", ""); 
+
   nrs->coeffEXT = (dfloat *)calloc(nrs->nEXT, sizeof(dfloat));
   nrs->coeffBDF = (dfloat *)calloc(nrs->nBDF, sizeof(dfloat));
 
@@ -207,7 +193,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   { // setup fieldOffset
     nrs->fieldOffset = mesh->Np * (mesh->Nelements + mesh->totalHaloPairs);
     mesh_t *meshT = nrs->_mesh;
-    nrs->fieldOffset = mymax(nrs->fieldOffset, meshT->Np * (meshT->Nelements + meshT->totalHaloPairs));
+    nrs->fieldOffset = std::max(nrs->fieldOffset, meshT->Np * (meshT->Nelements + meshT->totalHaloPairs));
 
     const int pageW = ALIGN_SIZE / sizeof(dfloat);
     if (nrs->fieldOffset % pageW)
@@ -243,9 +229,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       memcpy(nrs->nodesRK, rkc, nrs->nRK * sizeof(dfloat));
     }
     else {
-      if (platform->comm.mpiRank == 0)
-        std::cout << "Unsupported subcycling scheme!\n";
-      ABORT(1);
+      nrsCheck(true, platform->comm.mpiComm, EXIT_FAILURE, "Unsupported subcycling scheme!\n", "");
     }
     nrs->o_coeffsfRK = device.malloc(nrs->nRK * sizeof(dfloat), nrs->coeffsfRK);
     nrs->o_weightsRK = device.malloc(nrs->nRK * sizeof(dfloat), nrs->weightsRK);
@@ -584,12 +568,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   if (nrs->Nscalar) {
     cds_t *cds = nrs->cds;
 
-    const int scalarWidth = getDigitsRepresentation(NSCALAR_MAX - 1);
-
     for (int is = 0; is < cds->NSfields; is++) {
-      std::stringstream ss;
-      ss << std::setfill('0') << std::setw(scalarWidth) << is;
-      std::string sid = ss.str();
+      std::string sid = scalarDigitStr(is);
 
       if (!cds->compute[is])
         continue;
@@ -624,8 +604,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
           cds->g0 * cds->idt,
           cds->fieldOffsetScan[is],
           nrs->fieldOffset,
+          0,
           cds->o_diff,
           cds->o_rho,
+          o_NULL,
           cds->o_ellipticCoeff);
 
       cds->solver[is]->o_lambda0 = cds->o_ellipticCoeff.slice(0*nrs->fieldOffset*sizeof(dfloat));
@@ -651,13 +633,11 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     nrs->uvwSolver = NULL;
 
     bool unalignedBoundary = bcMap::unalignedMixedBoundary("velocity");
-    if (unalignedBoundary) {
-      if (!options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE")) {
-        if (platform->comm.mpiRank == 0)
-          printf("ERROR: SHL or unaligned SYM boundaries require solver = pcg+block\n");
-        ABORT(EXIT_FAILURE);
-      }
-    }
+
+    nrsCheck(unalignedBoundary && !options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"),
+             platform->comm.mpiComm, 
+             EXIT_FAILURE, 
+             "SHL or unaligned SYM boundaries require solver = pcg+block\n", "");
 
     if (platform->options.compareArgs("VELOCITY BLOCK SOLVER", "TRUE"))
       nrs->uvwSolver = new elliptic_t();
@@ -672,8 +652,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       nrs->g0 * nrs->idt,
       0 * nrs->fieldOffset,
       nrs->fieldOffset,
+      0,
       nrs->o_mue,
       nrs->o_rho,
+      o_NULL,
       nrs->o_ellipticCoeff);
 
     if (nrs->uvwSolver) {
@@ -710,9 +692,8 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       }
 
       if (unalignedBoundary) {
-        nrs->o_zeroNormalMaskVelocity = 
-          platform->device.malloc((nrs->uvwSolver->Nfields * sizeof(dfloat)) * 
-                                  nrs->uvwSolver->fieldOffset);
+        nrs->o_zeroNormalMaskVelocity =
+            platform->device.malloc((nrs->uvwSolver->Nfields * sizeof(dfloat)) * nrs->uvwSolver->fieldOffset);
         nrs->o_EToBVVelocity = platform->device.malloc(nrs->meshV->Nlocal * sizeof(int));
         createEToBV(nrs->meshV, nrs->uvwSolver->EToB, nrs->o_EToBVVelocity);
         auto o_EToB = 
@@ -856,8 +837,10 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       1.0,
       0 * nrs->fieldOffset,
       nrs->fieldOffset,
+      0,
       nrs->o_meshMue,
       nrs->o_meshRho,
+      o_NULL,
       nrs->o_ellipticCoeff);
 
     nrs->meshSolver = new elliptic_t();

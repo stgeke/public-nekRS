@@ -99,11 +99,8 @@ void tavg::reset()
 
 void tavg::run(dfloat time)
 {
-  if (!setupCalled || !buildKernelCalled) {
-    if(platform->comm.mpiRank == 0)
-      std::cout << "tavg::run() was called prior to tavg::setup()!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(!setupCalled || !buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+           "called prior to tavg::setup()!\n", "");
 
   if (!nrs->timeStepConverged)
     return;
@@ -183,29 +180,20 @@ void tavg::setup(nrs_t *nrs_, const fields& flds)
   userFieldList = flds;
 
   for(auto& entry : userFieldList) {
-    if(entry.size() < 1 || entry.size() > 4) {
-      if(platform->comm.mpiRank == 0)
-        std::cout << "tavg::setup() invalid number of vectors!\n";
-      EXIT_AND_FINALIZE(1);
-    }
- }
+    nrsCheck(entry.size() < 1 || entry.size() > 4, platform->comm.mpiComm, EXIT_FAILURE,
+             "tavg::setup() invalid number of vectors!\n", "");
+  }
  
   setup(nrs_);
 }
 
 void tavg::setup(nrs_t *nrs_)
 {
-  if (setupCalled) {
-    if(platform->comm.mpiRank == 0)
-      std::cout << "invalid second call to tavg::setup()!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(setupCalled, platform->comm.mpiComm, EXIT_FAILURE,
+           "invalid second call\n", "");
 
-  if (!buildKernelCalled) {
-    if(platform->comm.mpiRank == 0)
-      std::cout << "tavg::setup() was called prior tavg::buildKernel()!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(!buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+           "called prior tavg::buildKernel()!\n", "");
 
   nrs = nrs_;
   mesh_t *mesh = nrs->meshV;
@@ -240,11 +228,8 @@ void tavg::setup(nrs_t *nrs_)
 
 void tavg::outfld(int _outXYZ, int FP64)
 {
-  if (!setupCalled || !buildKernelCalled) {
-    if(platform->comm.mpiRank == 0)
-      std::cout << "tavg::outfld() was called prior to tavg::setup()!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(!setupCalled || !buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+           "called prior to tavg::setup()!\n", "");
 
   if (!nrs->timeStepConverged)
     return;
@@ -285,11 +270,8 @@ void tavg::outfld()
 
 occa::memory tavg::userFieldAvg()
 {
-  if (!setupCalled || !buildKernelCalled) {
-    if(platform->comm.mpiRank == 0)
-      std::cout << "tavg::userFieldAvg() was called prior to tavg::setup()!\n";
-    EXIT_AND_FINALIZE(1);
-  }
+  nrsCheck(!setupCalled || !buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+           "called prior to tavg::setup()!\n", "");
 
   return o_userFieldAvg;
 }

@@ -23,7 +23,7 @@ void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
 {
   cds_t *cds   = nrs->cds;
   mesh_t *mesh = cds->mesh[0];
-  userQKernel(mesh->Nelements, mesh->o_x, o_FS);
+  userQKernel(mesh->Nlocal, mesh->o_x, o_FS);
 }
 
 void uservp(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_S,
@@ -31,7 +31,7 @@ void uservp(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_S,
 {
   mesh_t *mesh = nrs->meshV;
 
-  userVpKernel(mesh->Nelements, nrs->fieldOffset, nrs->cds->fieldOffset[0], 
+  userVpKernel(mesh->Nlocal, nrs->fieldOffset, nrs->cds->fieldOffset[0], 
                o_S, o_UProp, o_SProp);
 }
 

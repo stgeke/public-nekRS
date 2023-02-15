@@ -23,12 +23,12 @@ extern "C" void FUNC(axpbyMany)(const dlong & N, const dlong & Nfields, const dl
                     const dfloat & beta, dfloat * __restrict__ cpu_b){
 
 #ifdef __NEKRS__OMP__
-  #pragma omp parallel for
+#pragma omp parallel for
 #endif
   for(int fld=0;fld<Nfields;fld++) { 
     for(dlong i=0;i<N;++i){
       const dlong id = i + fld*offset;
-      cpu_b[id] = alpha*cpu_a[id] + beta*cpu_b[id];
+      cpu_b[id] = alpha * cpu_a[id] + beta * cpu_b[id];
     }
   }
 

@@ -11,6 +11,7 @@
 
 static dfloat rho, mueLam;
 static occa::kernel scalarScaledAddKernel;
+static occa::memory o_ywd;
 
 void userq(nrs_t *nrs, dfloat time, occa::memory o_S, occa::memory o_FS)
 {
@@ -59,7 +60,11 @@ void UDF_Setup(nrs_t *nrs)
   const int scalarFieldStart = 1;
   platform->options.getArgs("VISCOSITY", mueLam); 
   platform->options.getArgs("DENSITY", rho); 
-  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart);
+
+  double *ywd = (double *) nek::scPtr(1);
+  o_ywd = platform->device.malloc(nrs->fieldOffset * sizeof(dfloat), ywd);
+
+  RANSktau::setup(nrs, mueLam, rho, scalarFieldStart, o_ywd);
 }
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)

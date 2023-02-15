@@ -185,7 +185,7 @@ void compute_element_lengths(ElementLengths *lengths, elliptic_t *elliptic)
   }
 
   std::array<int, 3> errors = {errZero, errNegative, errInvalid};
-  MPI_Allreduce(MPI_IN_PLACE, errors.data(), 3, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, errors.data(), 3, MPI_INT, MPI_MAX, platform->comm.mpiComm);
   std::ostringstream errorLogger;
   if (errors[0]) {
     errorLogger << "\tEncountered " << errors[0] << " elements with zero length!" << std::endl;
@@ -198,13 +198,16 @@ void compute_element_lengths(ElementLengths *lengths, elliptic_t *elliptic)
   }
 
   if (!errorLogger.str().empty()) {
-    if (platform->comm.mpiRank == 0) {
-      std::cout << "Encountered errors in Schwarz setup for N = " << N << ":" << std::endl;
-      std::cout << "{\n";
-      std::cout << errorLogger.str();
-      std::cout << "}\n";
-    }
-    ABORT(1);
+    auto errTxt = [&]()
+    {
+      std::stringstream txt;
+      txt << "failed for N = " << N << ":" << std::endl;
+      txt << "{\n";
+      txt << errorLogger.str();
+      txt << "}\n";
+      return txt.str();
+    };
+    nrsAbort(platform->comm.mpiComm, EXIT_FAILURE, errTxt().c_str(), "");
   }
 
   // In Nq == 2 case, there are no interior points to use for obtaining
@@ -289,7 +292,6 @@ void compute_element_boundary_conditions(int *lbr,
   for (int iface = 0; iface < 6; ++iface) {
     const int id = lookup[iface];
     int bc = elliptic->EToB[6 * e + id];
-    assert(bc == NO_OP || DIRICHLET || NEUMANN);
     fbc[iface] = bc;
   }
   *lbr = fbc[0];
@@ -531,15 +533,20 @@ void compute_1d_matrices(dfloat *S,
     solve_generalized_ev(S, b, lam, nl);
   }
   catch (std::exception &failure) {
-    std::cout << "Encountered error:\n";
-    std::cout << failure.what();
-    std::cout << "Direction " << direction << "\n";
-    std::cout << "e = " << e << "\n";
-    std::cout << "lbc = " << lbc << ", rbc = " << rbc << "\n";
-    for (int iface = 0; iface < 6; ++iface)
-      std::cout << "EToB[iface] = " << elliptic->EToB[6 * e + iface] << "\n";
-    ABORT(EXIT_FAILURE);
-    ;
+    auto errTxt = [&]()
+    {
+      std::stringstream txt;
+      txt << "Encountered error:\n";
+      txt << failure.what();
+      txt << "Direction " << direction << "\n";
+      txt << "e = " << e << "\n";
+      txt << "lbc = " << lbc << ", rbc = " << rbc << "\n";
+      for (int iface = 0; iface < 6; ++iface)
+        txt << "EToB[iface] = " << elliptic->EToB[6 * e + iface] << "\n";
+
+      return txt.str();
+    };
+    nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, errTxt().c_str(), "");
   }
   if (lbc > 0)
     row_zero(S, nl, 0);
@@ -693,7 +700,7 @@ mesh_t *create_extended_mesh(elliptic_t *elliptic, hlong *maskedGlobalIds)
       if (bc > 0) {
         for (int n = 0; n < mesh->Nfp; n++) {
           const int fid = mesh->faceNodes[n + f * mesh->Nfp];
-          mapB[fid + e * mesh->Np] = mymin(bc, mapB[fid + e * mesh->Np]);
+          mapB[fid + e * mesh->Np] = std::min(bc, mapB[fid + e * mesh->Np]);
         }
       }
     }
@@ -830,29 +837,12 @@ void pMGLevel::generate_weights()
 
 void pMGLevel::build(elliptic_t *pSolver)
 {
-  if (elliptic->elementType != HEXAHEDRA) {
-    if (platform->comm.mpiRank == 0)
-      printf("ERROR: Unsupported element type!");
-    ABORT(EXIT_FAILURE);
-  }
+  nrsCheck(elliptic->elementType != HEXAHEDRA, platform->comm.mpiComm, EXIT_FAILURE, 
+           "Unsupported element type!", "");
 
   const dlong Nelements = elliptic->mesh->Nelements;
   const int Nq = elliptic->mesh->Nq;
   const int Np = elliptic->mesh->Np;
-
-#if 0
-#if 0
-  if(Nq == 2 && elliptic->options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE")){
-    return;
-  }
-#else
-  if(Nq == 2) { 
-    if(platform->comm.mpiRank == 0) 
-      printf("ERROR: Schwarz smoother requires N>1!\n");
-    ABORT(EXIT_FAILURE);
-  }
-#endif
-#endif
 
   hlong *maskedGlobalIdsExt;
   maskedGlobalIdsExt = (hlong *)calloc(Nelements * (Nq + 2) * (Nq + 2) * (Nq + 2), sizeof(hlong));

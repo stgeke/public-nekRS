@@ -16,7 +16,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("SUBCYCLING STEPS", std::string("0"));
   options.setArgs("PRESSURE INITIAL GUESS", "PREVIOUS");
 
-  options.setArgs("TIME INTEGRATOR", "TOMBO3");
+  options.setArgs("BDF ORDER", "3");
   options.setArgs("ADVECTION TYPE", "CONVECTIVE+CUBATURE");
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-09"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-10"));
@@ -132,5 +132,5 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   if(pIterErr >= 2) passed = false;
 
   if(rank == 0) printf("\n"); 
-  passed ? (PASS) : (FAIL);
+  passed ? (CIPASS) : (CIFAIL);
 }

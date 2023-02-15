@@ -236,6 +236,7 @@ set(SRC
     src/setup/setup.cpp
     src/bdry/alignment.cpp
     src/core/registerNrsKernels.cpp
+    src/core/registerNekNekKernels.cpp
     src/core/registerPostProcessingKernels.cpp
     src/core/registerEllipticKernels.cpp
     src/core/registerEllipticPreconditionerKernels.cpp
@@ -269,6 +270,10 @@ set(SRC
     src/plugins/velRecycling.cpp
     src/plugins/RANSktau.cpp
     src/plugins/lowMach.cpp
+    src/plugins/lpm.cpp
+    src/findpts/findpts.cpp
+    src/pointInterpolation/pointInterpolation.cpp
+    src/neknek/neknek.cpp
     src/udf/udf.cpp
     src/udf/compileUDFKernels.cpp
     src/nekInterface/nekInterfaceAdapter.cpp
@@ -277,6 +282,7 @@ set(SRC
     ${MESH_SOURCES}
     ${ELLIPTIC_SOURCES}
     ${OGS_SOURCES}
+    ${FINDPTS_SOURCES}
 )
 
 set_property(
@@ -293,10 +299,6 @@ add_library(nekrs-lib SHARED ${SRC})
 set_target_properties(nekrs-lib PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
 target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB} openblas)
 
-target_compile_definitions(nekrs-lib PUBLIC
-    -DDOGS="${CMAKE_INSTALL_PREFIX}/gatherScatter"
-)
-
 target_include_directories(nekrs-lib 
   PUBLIC 
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -311,8 +313,12 @@ target_include_directories(nekrs-lib
   src/regularization
   src/linAlg
   src/navierStokes
+  src/neknek
   src/cds
+  src/findpts
   src/postProcessing
+  src/pointInterpolation
+  src/lns
   ${BENCH_SOURCE_DIR}
   ${BENCH_SOURCE_DIR}/core
   ${BENCH_SOURCE_DIR}/fdm
@@ -322,12 +328,12 @@ target_include_directories(nekrs-lib
   ${NEKINTERFACEDIR}
   ${OGS_SOURCE_DIR}/include
   ${OGS_SOURCE_DIR}
+  ${FINDPTS_SOURCE_DIR}
   ${ELLIPTIC_SOURCE_DIR}
   PRIVATE
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/hypre
   ${ELLIPTIC_SOURCE_DIR}/amgSolver/amgx
   ${ELLIPTIC_SOURCE_DIR}/MG
-  ${PARALMOND_SOURCE_DIR}
 )
 
 if(ENABLE_AMGX AND OCCA_CUDA_ENABLED)
@@ -414,7 +420,7 @@ install(
 # Trailing slash prevents parent directory from being copied
 install(DIRECTORY scripts/ DESTINATION bin
   FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-install(DIRECTORY kernels/ DESTINATION kernels FILES_MATCHING REGEX "\.okl$|\.c|\.h$")
+install(DIRECTORY kernels/ DESTINATION kernels FILES_MATCHING REGEX "\.okl$|\.c|\.h$|\.hpp$|")
 install(DIRECTORY src/ DESTINATION include FILES_MATCHING REGEX "\.hpp$|\.h$|\.tpp$")
 install(FILES src/udf/CMakeLists.txt DESTINATION udf)
 install(DIRECTORY src/nekInterface/ DESTINATION nekInterface REGEX "\.hpp$|\.cpp$" EXCLUDE)

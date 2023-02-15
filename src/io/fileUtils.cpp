@@ -1,5 +1,4 @@
 #include <sys/stat.h>
-#include <assert.h>
 #include <fstream> 
 #include <cstdio>
 #include <unistd.h>
@@ -191,7 +190,7 @@ void fileBcast(const fs::path &srcPathIn,
 bool isFileNewer(const char *file1, const char *file2)
 {
   struct stat s1, s2;
-  if (lstat(file1, &s1) != 0) assert(1);
+  lstat(file1, &s1);
   if (lstat(file2, &s2) != 0) return true; 
   if (s1.st_mtime > s2.st_mtime) 
     return true;

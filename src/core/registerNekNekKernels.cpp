@@ -7,15 +7,10 @@ namespace {
 // from: https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 unsigned nearestPowerOfTwo(unsigned int v)
 {
-  static_assert(sizeof(unsigned int) == 4);
-  v--;
-  v |= v >> 1;
-  v |= v >> 2;
-  v |= v >> 4;
-  v |= v >> 8;
-  v |= v >> 16;
-  v++;
-  return v;
+  unsigned answer = 1;
+  while (answer < v)
+    answer *= 2;
+  return answer;
 }
 } // namespace
 

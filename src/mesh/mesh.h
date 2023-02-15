@@ -28,7 +28,6 @@
 #define MESH_H 1
 
 #include <unistd.h>
-#include <assert.h>
 
 #include <math.h>
 #include <stdlib.h>

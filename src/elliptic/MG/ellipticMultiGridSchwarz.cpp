@@ -292,7 +292,6 @@ void compute_element_boundary_conditions(int *lbr,
   for (int iface = 0; iface < 6; ++iface) {
     const int id = lookup[iface];
     int bc = elliptic->EToB[6 * e + id];
-    assert(bc == NO_OP || DIRICHLET || NEUMANN);
     fbc[iface] = bc;
   }
   *lbr = fbc[0];

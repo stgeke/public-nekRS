@@ -93,8 +93,6 @@ oogs_t *gtpp_gs_setup(nrs_t *nrs, int nelgx, int nelgy, int nelgz, std::string d
 
 void fusedPlanarAvg(nrs_t *nrs, const std::string & direction, int NELGX, int NELGY, int NELGZ, int nflds, occa::memory o_avg)
 {
-  static_assert(std::is_same<dlong,int>::value, "dlong != int");
-
   static bool issueWarning = true;
 
   if (!platform->device.deviceAtomic) {
@@ -181,7 +179,6 @@ void fusedPlanarAvg(nrs_t *nrs, const std::string & direction, int NELGX, int NE
     o_locToGlobE,
     o_scratch,
     o_avg);
-
 }
 
 } // namespace

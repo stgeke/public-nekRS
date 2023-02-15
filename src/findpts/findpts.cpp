@@ -28,7 +28,6 @@ SOFTWARE.
 #include "nrssys.hpp"
 #include "nrs.hpp"
 
-#include <cassert>
 #include <cstdlib>
 #include <vector>
 #include "ogstypes.h"
@@ -686,9 +685,6 @@ findpts_t::findpts_t(MPI_Comm comm,
                      const dlong npt_max,
                      const dfloat newt_tol)
 {
-  static_assert(sizeof(dfloat) == sizeof(double), "findpts : dfloat must be double");
-  static_assert(sizeof(dlong) == sizeof(int), "findpts : dlong must be int");
-
   const dlong Nlocal = Nq * Nq * Nq * Nelements;
 
   const dfloat *elx[dim] = {x, y, z};

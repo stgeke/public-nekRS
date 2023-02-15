@@ -440,13 +440,28 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
         if(flowDirectionSet) issueError = true;
         flowDirectionSet = true;
         std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
+
+        std::string bidStr;
+        if (items.size() == 2) {
+          bidStr = items[1];
+        }
+        else {
+          std::ostringstream error;
+          error << "Error: could not parse " << s << "!\n";
+          append_error(error.str());
+        }
         std::vector<std::string> bids = serializeString(items[1], ',');
-        assert(bids.size() == 2);
-        const int fromBID = std::stoi(bids[0]);
-        const int toBID = std::stoi(bids[1]);
-        options.setArgs("CONSTANT FLOW FROM BID", std::to_string(fromBID));
-        options.setArgs("CONSTANT FLOW TO BID", std::to_string(toBID));
+        if (bids.size() == 2) {
+          const int fromBID = std::stoi(bids[0]);
+          const int toBID = std::stoi(bids[1]);
+          options.setArgs("CONSTANT FLOW FROM BID", std::to_string(fromBID));
+          options.setArgs("CONSTANT FLOW TO BID", std::to_string(toBID));
+        }
+        else {
+          std::ostringstream error;
+          error << "Error: could not parse " << s << "!\n";
+          append_error(error.str());
+        }
 
         append_error("Specifying a constant flow direction with a pair of BIDs is currently not supported.\n");
       }
@@ -456,17 +471,18 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
         if(flowDirectionSet) issueError = true;
         flowDirectionSet = true;
         std::vector<std::string> items = serializeString(s, '=');
-        assert(items.size() == 2);
-        std::string direction = items[1];
-        issueError = (
-          direction.find("x") == std::string::npos &&
-          direction.find("y") == std::string::npos &&
-          direction.find("z") == std::string::npos
-        );
-
-        UPPER(direction);
-          
-        options.setArgs("CONSTANT FLOW DIRECTION", direction);
+        if (items.size() == 2) {
+          std::string direction = items[1];
+          issueError = (direction.find("x") == std::string::npos &&
+                        direction.find("y") == std::string::npos && direction.find("z") == std::string::npos);
+          UPPER(direction);
+          options.setArgs("CONSTANT FLOW DIRECTION", direction);
+        }
+        else {
+          std::ostringstream error;
+          error << "Error: could not parse " << s << "!\n";
+          append_error(error.str());
+        }
       }
 
     }

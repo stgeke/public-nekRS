@@ -145,10 +145,10 @@
 
 	  const dfloat mry = mue / rho / yw;
 	  const dfloat imry = 1. / mry;
-	  const dfloat cr_tau = p_beta0 * yw * imry / 6.0;
+	  const dfloat cr_edd = 4.4 * mue;
 	  dfloat S_taun = 0.0;
 	  dfloat Scoefn = 0.0;
-	  if(tau < cr_tau){
+	  if(mu_t < cr_edd){
 	    if(yw > 0.0) Scoefn = (12.0 / p_beta0) * mry * mry;
 	  }
 	  else{

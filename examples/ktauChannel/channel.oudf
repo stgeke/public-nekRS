@@ -40,9 +40,9 @@
 
 	  const dfloat scale = mue * invLMM[idM];
 
-	  drag[sid + 0 * offset] = -scale * (s11*n1 + s12*n2 + s13*n3);
-	  drag[sid + 1 * offset] = -scale * (s21*n1 + s22*n2 + s23*n3);
-	  drag[sid + 2 * offset] = -scale * (s31*n1 + s32*n2 + s33*n3);
+	  drag[sid + 0 * soffset] = -scale * (s11*n1 + s12*n2 + s13*n3);
+	  drag[sid + 1 * soffset] = -scale * (s21*n1 + s22*n2 + s23*n3);
+	  drag[sid + 2 * soffset] = -scale * (s31*n1 + s32*n2 + s33*n3);
 	  area[sid] = sWJ; 
 	}
       }

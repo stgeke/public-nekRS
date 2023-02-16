@@ -343,7 +343,7 @@ void UDF_Setup(nrs_t *nrs)
   const int particleIntegrationOrder = 3;
   particles->abOrder(particleIntegrationOrder);
 
-  particles->setVerbose(true); // issue findpts warnings when a point leaves the domain
+  particles->setVerbosity(lpm_t::VerbosityLevel::Basic); // issue findpts warnings when a point leaves the domain
 
   particles->setUserRHS(particleRHS);
 

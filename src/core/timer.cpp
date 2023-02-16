@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <tuple>
 
 #include "timer.hpp"
 #include "platform.hpp"
@@ -38,6 +39,28 @@ inline void sync()
 }
 
 double tElapsedTime = 0;
+
+auto sumAllMatchingTags(std::function<bool(std::string)> predicate, const std::string metric)
+{
+  long long int count = 0;
+  double elapsed = 0;
+  const auto timerTags = platform->timer.tags();
+
+  // filter out tags that do contain tag in the name
+  std::vector<std::string> filteredTags;
+  std::copy_if(timerTags.begin(),
+               timerTags.end(),
+               std::back_inserter(filteredTags),
+               [&](const std::string &tag) { return predicate(tag); });
+
+  for (auto &&t : filteredTags) {
+    count += platform->timer.count(t);
+    elapsed += platform->timer.query(t, metric);
+  }
+
+  return std::make_tuple(elapsed, count);
+}
+
 } // namespace
 
 timer_t::timer_t(MPI_Comm comm, occa::device device, int ifSyncDefault, int enableSync)
@@ -288,6 +311,24 @@ std::string printPercentage(double num, double dom)
   return std::string(buf);
 }
 
+void timer_t::printStatEntry(std::string name, double tTag, long long int nCalls, double tNorm)
+{
+  int rank;
+  MPI_Comm_rank(comm_, &rank);
+  const bool child = (tNorm != tElapsedTime);
+  if (tTag > 0) {
+    if (rank == 0) {
+      std::cout << name << tTag << "s"
+                << "  " << printPercentage(tTag, tElapsedTime);
+      if (child)
+        std::cout << "  " << printPercentage(tTag, tNorm);
+      else
+        std::cout << "      ";
+      std::cout << "  " << nCalls << "\n";
+    }
+  }
+}
+
 void timer_t::printStatEntry(std::string name, std::string tag, std::string type, double tNorm)
 {
   int rank;
@@ -387,17 +428,40 @@ void timer_t::printRunStat(int step)
       std::cout << "    flops/rank          " << flops << "\n";
   }
 
+  auto lpmLocalKernelPredicate = [](const std::string &tag) {
+    return tag.find("lpm_t::") != std::string::npos && tag.find("localKernel") != std::string::npos;
+  };
+
+  auto lpmLocalEvalKernelPredicate = [](const std::string &tag) {
+    return tag.find("lpm_t::") != std::string::npos && tag.find("localEvalKernel") != std::string::npos;
+  };
+
+  auto neknekLocalKernelPredicate = [](const std::string &tag) {
+    return tag.find("neknek_t::") != std::string::npos && tag.find("localKernel") != std::string::npos;
+  };
+
+  auto neknekLocalEvalKernelPredicate = [](const std::string &tag) {
+    return tag.find("neknek_t::") != std::string::npos && tag.find("localEvalKernel") != std::string::npos;
+  };
+
   printStatEntry("    checkpointing       ", "checkpointing", "DEVICE:MAX", tElapsedTimeSolve);
   printStatEntry("    udfExecuteStep      ", "udfExecuteStep", "DEVICE:MAX", tElapsedTimeSolve);
   const double tudf = query("udfExecuteStep", "DEVICE:MAX");
   printStatEntry("      lpm integrate     ", "lpm_t::integrate", "DEVICE:MAX", tudf);
   const double tlpm = query("lpm_t::integrate", "DEVICE:MAX");
-  printStatEntry("        findpts         ", "lpm_t::find", "DEVICE:MAX", tlpm);
-  const double tFindPart = query("lpm_t::find", "DEVICE:MAX");
-  printStatEntry("          find kernel   ", "lpm_t::findpts_t::localKernel", "DEVICE:MAX", tFindPart);
-  printStatEntry("        interpolate     ", "lpm_t::interpolate", "DEVICE:MAX", tlpm);
-  const double tInterpPart = query("lpm_t::interpolate", "DEVICE:MAX");
-  printStatEntry("          eval kernel   ", "lpm_t::findpts_t::localEvalKernel", "DEVICE:MAX", tInterpPart);
+  printStatEntry("        userRHS         ", "lpm_t::integrate::userRHS", "DEVICE:MAX", tlpm);
+  const double tParticleRHS = query("lpm_t::integrate::userRHS", "DEVICE:MAX");
+  printStatEntry("          interpolate   ",
+                 "lpm_t::integrate::userRHS::interpolate",
+                 "DEVICE:MAX",
+                 tParticleRHS);
+  const double tInterpPart = query("lpm_t::integrate::userRHS::interpolate", "DEVICE:MAX");
+  auto [tLocalKernel, nLocalKernel] = sumAllMatchingTags(lpmLocalEvalKernelPredicate, "DEVICE:MAX");
+  printStatEntry("            eval kernel ", tLocalKernel, nLocalKernel, tInterpPart);
+  printStatEntry("        findpts         ", "lpm_t::integrate::find", "DEVICE:MAX", tlpm);
+  const double tFindPart = query("lpm_t::integrate::find", "DEVICE:MAX");
+  auto [tFindKernel, nFindKernel] = sumAllMatchingTags(lpmLocalKernelPredicate, "DEVICE:MAX");
+  printStatEntry("          find kernel   ", tFindKernel, nFindKernel, tFindPart);
   printStatEntry("        delete          ", "lpm_t::deleteParticles", "DEVICE:MAX", tlpm);
   printStatEntry("      lpm add           ", "lpm_t::addParticles", "DEVICE:MAX", tudf);
   printStatEntry("      lpm write         ", "lpm_t::write", "DEVICE:MAX", tudf);
@@ -423,10 +487,15 @@ void timer_t::printRunStat(int step)
   printStatEntry("      sync              ", "neknek sync", "DEVICE:MAX", tNekNek);
   printStatEntry("      exchange          ", "neknek exchange", "DEVICE:MAX", tNekNek);
   const double tExchange = query("neknek exchange", "DEVICE:MAX");
-  printStatEntry("        eval kernel     ", "neknek_t::findpts_t::localEvalKernel", "DEVICE:MAX", tExchange);
+  std::tie(tLocalKernel, nLocalKernel) = sumAllMatchingTags(neknekLocalEvalKernelPredicate, "DEVICE:MAX");
+  printStatEntry("        eval kernel     ", tLocalKernel, nLocalKernel, tExchange);
   printStatEntry("      findpts           ", "neknek updateInterpPoints", "DEVICE:MAX", tNekNek);
   const double tFindpts = query("neknek updateInterpPoints", "DEVICE:MAX");
-  printStatEntry("        find kernel     ", "neknek_t::findpts_t::localKernel", "DEVICE:MAX", tFindpts);
+
+  if (tFindpts > 0.0) {
+    std::tie(tFindKernel, nFindKernel) = sumAllMatchingTags(neknekLocalKernelPredicate, "DEVICE:MAX");
+    printStatEntry("        find kernel     ", tFindKernel, nFindKernel, tFindpts);
+  }
 
   const double tVelocity = query("velocitySolve", "DEVICE:MAX");
   printStatEntry("    velocitySolve       ", "velocitySolve", "DEVICE:MAX", tElapsedTimeSolve);
@@ -499,6 +568,15 @@ void timer_t::printAll()
     std::cout << "\t" << name << " " << data.hostElapsed << ",\n";
   }
   std::cout << "}\n";
+}
+
+std::vector<std::string> timer_t::tags()
+{
+  std::vector<std::string> entries;
+  for (auto &&[name, data] : m_) {
+    entries.push_back(name);
+  }
+  return entries;
 }
 
 } // namespace timer

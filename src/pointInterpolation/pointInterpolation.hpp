@@ -12,6 +12,7 @@ using findpts::TimerLevel;
 
 class pointInterpolation_t {
 public:
+  enum class VerbosityLevel { None, Basic, Detailed };
   pointInterpolation_t(nrs_t *nrs_, dfloat newton_tol_ = 0, bool mySession_ = true);
   pointInterpolation_t(nrs_t *nrs_,
                        dlong localHashSize,
@@ -21,7 +22,7 @@ public:
   ~pointInterpolation_t() = default;
 
   // Finds the process, element, and reference coordinates of the given points
-  void find(bool printWarnings = true);
+  void find(VerbosityLevel verbosity = VerbosityLevel::Basic);
 
   void
   eval(dlong nFields, dlong inputFieldOffset, occa::memory o_in, dlong outputFieldOffset, occa::memory o_out);
@@ -30,6 +31,9 @@ public:
 
   auto *ptr() { return findpts_.get(); }
   auto &data() {return data_;}
+
+  // calls underlying findpts_t::update
+  void update();
 
   // add points on device
   void addPoints(int n, occa::memory o_x, occa::memory o_y, occa::memory o_z);

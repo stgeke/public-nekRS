@@ -341,15 +341,16 @@ void lpm_t::interpolate()
 void lpm_t::interpolate(std::string interpFieldName)
 {
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "interpolate", 1);
+    platform->timer.tic(timerName + "integrate::userRHS::interpolate", 1);
   }
   auto o_fld = interpFieldInputs.at(interpFieldName);
   auto o_interpFld = getInterpField(interpFieldName);
   const auto Nfields = numFieldsInterp(interpFieldName);
 
+  interp->setTimerName(timerName + "integrate::userRHS::interpolate::");
   interp->eval(Nfields, nrs->fieldOffset, o_fld, fieldOffset_, o_interpFld);
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "interpolate");
+    platform->timer.toc(timerName + "integrate::userRHS::interpolate");
   }
 }
 
@@ -386,9 +387,10 @@ void lpm_t::integrate(dfloat t0, dfloat tf, int step)
 
   interp->addPoints(size(), o_xcoord, o_ycoord, o_zcoord);
 
-  platform->timer.tic("lpm_t::find", 1);
-  interp->find(issueWarnings_);
-  platform->timer.toc("lpm_t::find");
+  platform->timer.tic(timerName + "integrate::find", 1);
+  interp->setTimerName(timerName + "integrate::find::");
+  interp->find(verbosityLevel);
+  platform->timer.toc(timerName + "integrate::find");
 
   deleteParticles();
 
@@ -402,7 +404,9 @@ void lpm_t::integrate(dfloat t0, dfloat tf, int step)
       o_ydot.copyFrom(o_ydot, Nbyte, (s - 1) * Nbyte, (s - 2) * Nbyte);
     }
 
+    platform->timer.tic(timerName + "integrate::userRHS", 1);
     userRHS_(nrs, this, t0, o_y, userdata_, o_ydot);
+    platform->timer.toc(timerName + "integrate::userRHS");
 
     nStagesSumManyKernel(nParticles_, fieldOffset_, nAB, nDOFs_, o_coeffAB, o_ydot, o_y);
   }
@@ -681,7 +685,7 @@ void lpm_t::writeFld(dfloat time)
     // disable findpts kernel timer for this call
     auto saveLevel = getTimerLevel();
     setTimerLevel(TimerLevel::None);
-    interp->find(false);
+    interp->find(VerbosityLevel::None);
     setTimerLevel(saveLevel);
 
     for (int pid = 0; pid < size(); ++pid) {
@@ -1202,4 +1206,62 @@ void lpm_t::restart(std::string restartFile)
   }
 
   MPI_File_close(&file_in);
+}
+
+void lpm_t::printTimers()
+{
+  const auto timerTags = platform->timer.tags();
+
+  // filter out tags that do not start with timerName
+  std::vector<std::string> filteredTags;
+  std::copy_if(timerTags.begin(),
+               timerTags.end(),
+               std::back_inserter(filteredTags),
+               [&](const std::string &tag) { return tag.find(timerName) == 0; });
+
+  // construct tree where parent entries are the portion of the tag left of the last '::'
+  std::map<std::string, std::vector<std::string>> tree;
+
+  for (auto &&tag : filteredTags) {
+    auto pos = tag.rfind("::");
+    if (pos == std::string::npos) {
+      tree[""].push_back(tag);
+    }
+    else {
+      auto parent = tag.substr(0, pos);
+      tree[parent].push_back(tag);
+    }
+  }
+
+  // print tree
+  std::function<void(std::string, int)> printTree;
+  printTree = [&](std::string tag, int level) {
+    if (level > 0) {
+      const auto tTag = platform->timer.query(tag, "DEVICE:MAX");
+      if (platform->comm.mpiRank == 0) {
+        for (int i = 0; i < level; ++i) {
+          std::cout << "> ";
+        }
+        std::cout << tag << " " << tTag << "s\n";
+      }
+    }
+
+    for (auto &&child : tree[tag]) {
+      printTree(child, level + 1);
+    }
+  };
+
+  auto pos = timerName.rfind("::");
+  const auto start = timerName.substr(0, pos);
+
+  if (platform->comm.mpiRank == 0) {
+    std::cout << "\n";
+    std::cout << "Detailed timers for particles " << start << ":\n";
+  }
+
+  printTree(start, 0);
+
+  if (platform->comm.mpiRank == 0) {
+    std::cout << "\n";
+  }
 }

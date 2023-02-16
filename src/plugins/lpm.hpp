@@ -14,6 +14,8 @@ class nrs_t;
 // Lagrangian particle manager
 class lpm_t {
 public:
+  using VerbosityLevel = pointInterpolation_t::VerbosityLevel;
+
   // User-defined RHS function
   // INPUTS:
   //   nrs: NekRS object
@@ -229,7 +231,9 @@ public:
   void setTimerName(std::string name);
 
   // enables verbose warnings from findpts
-  void setVerbose(bool verbose) { issueWarnings_ = verbose; };
+  void setVerbosity(VerbosityLevel level) { verbosityLevel = level; };
+
+  void printTimers();
 
 private:
   // delete particles that have left the domain
@@ -242,11 +246,11 @@ private:
 
   std::string timerName = "lpm_t::";
   TimerLevel timerLevel = TimerLevel::Basic;
+  VerbosityLevel verbosityLevel = VerbosityLevel::Basic;
   nrs_t *nrs = nullptr;
   int nAB;
   dfloat newton_tol;
   std::unique_ptr<pointInterpolation_t> interp;
-  bool issueWarnings_ = false;
 
   int nParticles_ = 0;
   int nDOFs_ = 0;

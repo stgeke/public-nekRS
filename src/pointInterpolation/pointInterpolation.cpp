@@ -50,7 +50,7 @@ pointInterpolation_t::pointInterpolation_t(nrs_t *nrs_,
                                                   newton_tol);
 }
 
-void pointInterpolation_t::find(bool printWarnings)
+void pointInterpolation_t::find(pointInterpolation_t::VerbosityLevel verbosity)
 {
   if (timerLevel != TimerLevel::None) {
     platform->timer.tic("pointInterpolation_t::find", 1);
@@ -76,12 +76,12 @@ void pointInterpolation_t::find(bool printWarnings)
     findpts_->find(&data_, _o_x, _o_y, _o_z, n);
   }
 
-  if (printWarnings) {
+  if (verbosity != VerbosityLevel::None) {
 
     auto *h_x = _x;
     auto *h_y = _y;
     auto *h_z = _z;
-    if (useDevicePoints) {
+    if (useDevicePoints && verbosity == VerbosityLevel::Detailed) {
       h_x = h_x_vec.data();
       h_y = h_y_vec.data();
       h_z = h_z_vec.data();
@@ -95,7 +95,7 @@ void pointInterpolation_t::find(bool printWarnings)
       if (data_.code_base[in] == findpts::CODE_BORDER) {
         if (data_.dist2_base[in] > 10 * newton_tol) {
           nFail += 1;
-          if (nFail < 5) {
+          if (nFail < 5 && verbosity == VerbosityLevel::Detailed) {
             std::cout << " WARNING: point on boundary or outside the mesh xy[z]d^2: " << h_x[in] << ","
                       << h_y[in] << ", " << h_z[in] << ", " << data_.dist2_base[in] << std::endl;
           }
@@ -103,7 +103,7 @@ void pointInterpolation_t::find(bool printWarnings)
       }
       else if (data_.code_base[in] == findpts::CODE_NOT_FOUND) {
         nFail += 1;
-        if (nFail < 5) {
+        if (nFail < 5 && verbosity == VerbosityLevel::Detailed) {
           std::cout << " WARNING: point not within mesh xy[z]: " << h_x[in] << "," << h_y[in] << ", "
                     << h_z[in] << std::endl;
         }
@@ -111,7 +111,7 @@ void pointInterpolation_t::find(bool printWarnings)
     }
     hlong counts[4] = {n, nFail, 0, 0};
     MPI_Reduce(counts, counts + 2, 2, MPI_HLONG, MPI_SUM, 0, platform_t::getInstance()->comm.mpiComm);
-    if (platform_t::getInstance()->comm.mpiRank == 0 && counts[3] > 0) {
+    if (platform->comm.mpiRank == 0 && counts[3] > 0) {
       std::cout << "interp::find - Total number of points = " << counts[2] << ", failed = " << counts[3]
                 << std::endl;
     }
@@ -211,3 +211,5 @@ void pointInterpolation_t::setTimerName(std::string name)
   timerName = name;
   findpts_->setTimerName(name);
 }
+
+void pointInterpolation_t::update() { findpts_->update(data_); }

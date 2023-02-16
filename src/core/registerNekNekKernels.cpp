@@ -53,4 +53,8 @@ void registerNekNekKernels()
   kernelName = "findptsLocalEval";
   fileName = oklpath + "/findpts/" + kernelName + ".okl";
   platform->kernels.add(kernelName, fileName, findptsKernelInfo);
+
+  kernelName = "findptsLocalEvalMask";
+  fileName = oklpath + "/findpts/" + kernelName + ".okl";
+  platform->kernels.add(kernelName, fileName, findptsKernelInfo);
 }

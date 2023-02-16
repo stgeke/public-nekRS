@@ -157,9 +157,9 @@ void updateInterpPoints(nrs_t *nrs)
 
   neknek->interpolator->addPoints(neknek->npt, neknek->o_x, neknek->o_y, neknek->o_z);
 
-  constexpr bool printWarnings = true;
+  const auto warningLevel = pointInterpolation_t::VerbosityLevel::Detailed;
   for (dlong sess = 0; sess < nsessions; ++sess) {
-    sessionInterpolators[sess]->find(printWarnings);
+    sessionInterpolators[sess]->find(warningLevel);
   }
 
   auto &sessionData = neknek->interpolator->data();
@@ -181,6 +181,8 @@ void updateInterpPoints(nrs_t *nrs)
       sessionData.dist2[pt] = data.dist2[pt];
     }
   }
+
+  neknek->interpolator->update();
 }
 
 dlong computeNumInterpPoints(nrs_t *nrs)
@@ -218,10 +220,14 @@ void findInterpPoints(nrs_t *nrs)
   std::vector<std::shared_ptr<pointInterpolation_t>> sessionInterpolators(nsessions);
   for (dlong i = 0; i < nsessions; ++i) {
     sessionInterpolators[i] = std::make_shared<pointInterpolation_t>(nrs, tol, i == sessionID);
+    sessionInterpolators[i]->setTimerLevel(TimerLevel::Basic);
+    sessionInterpolators[i]->setTimerName("neknek_t::");
   }
 
   neknek->interpolator.reset();
   neknek->interpolator = std::make_shared<pointInterpolation_t>(nrs, tol);
+  neknek->interpolator->setTimerLevel(TimerLevel::Basic);
+  neknek->interpolator->setTimerName("neknek_t::");
 
   auto numPoints = computeNumInterpPoints(nrs);
   reserveAllocation(nrs, numPoints);
@@ -264,9 +270,9 @@ void findInterpPoints(nrs_t *nrs)
 
   neknek->interpolator->addPoints(numPoints, neknekX.data(), neknekY.data(), neknekZ.data());
 
-  constexpr bool printWarnings = true;
+  const auto warningLevel = pointInterpolation_t::VerbosityLevel::Detailed;
   for (dlong sess = 0; sess < nsessions; ++sess) {
-    sessionInterpolators[sess]->find(printWarnings);
+    sessionInterpolators[sess]->find(warningLevel);
   }
 
   auto &sessionData = neknek->interpolator->data();
@@ -287,6 +293,8 @@ void findInterpPoints(nrs_t *nrs)
       sessionData.dist2[pt] = data.dist2[pt];
     }
   }
+
+  neknek->interpolator->update();
 
   // allocate device coordinates for later use
   if (neknek->globalMovingMesh) {

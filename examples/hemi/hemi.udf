@@ -3,7 +3,7 @@
 //
 #include <math.h>
 #include "udf.hpp"
-#include "randomVector.hpp"
+#include "linspaceVector.hpp"
 
 static dfloat Stk;
 static dlong nParticles;
@@ -30,12 +30,6 @@ void UDF_Setup0(MPI_Comm comm, setupAide &options)
   platform->par->extract("casedata", "stk", Stk);
   platform->par->extract("casedata", "nparticles", nParticlesGlobal);
 
-  nParticles = nParticlesGlobal / commSize;
-
-  // distribute remaining particles
-  const int remainder = nParticlesGlobal % commSize;
-  if(rank < remainder)
-    nParticles++;
 }
 
 void particleRHS(nrs_t *nrs, lpm_t *lpm, dfloat time, occa::memory o_y, void *userdata, occa::memory o_ydot)
@@ -70,11 +64,6 @@ void UDF_Setup(nrs_t *nrs)
   // register Stokes number as a property
   particles->registerProp("stokes_number");
 
-  // generate random particles in the domain
-  auto xPart = randomVector<dfloat>(nParticles);
-  auto yPart = randomVector<dfloat>(nParticles);
-  auto zPart = randomVector<dfloat>(nParticles);
-
   const auto xMin = platform->linAlg->min(mesh->Nlocal, mesh->o_x, platform->comm.mpiComm);
   const auto yMin = platform->linAlg->min(mesh->Nlocal, mesh->o_y, platform->comm.mpiComm);
   const auto zMin = platform->linAlg->min(mesh->Nlocal, mesh->o_z, platform->comm.mpiComm);
@@ -83,16 +72,33 @@ void UDF_Setup(nrs_t *nrs)
   const auto yMax = platform->linAlg->max(mesh->Nlocal, mesh->o_y, platform->comm.mpiComm);
   const auto zMax = platform->linAlg->max(mesh->Nlocal, mesh->o_z, platform->comm.mpiComm);
 
-  for(int pid = 0; pid < nParticles; ++pid){
-    const auto x = xPart[pid];
-    const auto y = yPart[pid];
-    const auto z = zPart[pid];
+  // uniformly distribute particles inside domain
+  // in a round-robin fashion
+  int px = static_cast<int>(std::round(std::cbrt(nParticlesGlobal)));
+  int py = px;
+  int pz = px;
 
-    // particle initial coordinates
-    xPart[pid] = xMin + (xMax - xMin)*x;
-    yPart[pid] = yMin + (yMax - yMin)*y;
-    zPart[pid] = zMin + (zMax - zMin)*z;
+  auto xPoint = linspace<dfloat>(xMin, xMax, px);
+  auto yPoint = linspace<dfloat>(yMin, yMax, py);
+  auto zPoint = linspace<dfloat>(zMin, zMax, pz);
+
+  std::vector<dfloat> xPart, yPart, zPart;
+
+  int pid = 0;
+  for(auto&& x : xPoint) {
+    for(auto&& y : yPoint) {
+      for(auto&& z : zPoint) {
+        if(pid % platform->comm.mpiCommSize == platform->comm.mpiRank) {
+          xPart.push_back(x);
+          yPart.push_back(y);
+          zPart.push_back(z);
+        }
+        pid++;
+      }
+    }
   }
+
+  nParticles = xPart.size();
 
   // interpolate initial fluid velocity onto particle positions
   std::vector<dfloat> particleU0(nrs->NVfields * nParticles);

@@ -11,6 +11,15 @@
 #include <algorithm>
 
 pointInterpolation_t::pointInterpolation_t(nrs_t *nrs_, double newton_tol_, bool mySession_)
+    : pointInterpolation_t(nrs_, nrs_->meshV->Nlocal, nrs_->meshV->Nlocal, newton_tol_, mySession_)
+{
+}
+
+pointInterpolation_t::pointInterpolation_t(nrs_t *nrs_,
+                                           dlong localHashSize,
+                                           dlong globalHashSize,
+                                           double newton_tol_,
+                                           bool mySession_)
     : nrs(nrs_), newton_tol(newton_tol_), mySession(mySession_), nPoints(0)
 {
 
@@ -20,9 +29,6 @@ pointInterpolation_t::pointInterpolation_t(nrs_t *nrs_, double newton_tol_, bool
   const dfloat bb_tol = 0.01;
 
   mesh_t *mesh = nrs->meshV;
-
-  // used for # of cells in hash tables
-  const dlong hash_size = mesh->Nlocal;
 
   if (mySession) {
     mesh->o_x.copyTo(mesh->x, mesh->Nlocal * sizeof(dfloat));
@@ -38,8 +44,8 @@ pointInterpolation_t::pointInterpolation_t(nrs_t *nrs_, double newton_tol_, bool
                                                   mySession ? mesh->Nelements : 0,
                                                   2 * mesh->Nq,
                                                   bb_tol,
-                                                  hash_size,
-                                                  hash_size,
+                                                  localHashSize,
+                                                  globalHashSize,
                                                   npt_max,
                                                   newton_tol);
 }

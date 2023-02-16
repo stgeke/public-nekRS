@@ -13,6 +13,11 @@ using findpts::TimerLevel;
 class pointInterpolation_t {
 public:
   pointInterpolation_t(nrs_t *nrs_, dfloat newton_tol_ = 0, bool mySession_ = true);
+  pointInterpolation_t(nrs_t *nrs_,
+                       dlong localHashSize,
+                       dlong globalHashSize,
+                       dfloat newton_tol_ = 0,
+                       bool mySession_ = true);
   ~pointInterpolation_t() = default;
 
   // Finds the process, element, and reference coordinates of the given points

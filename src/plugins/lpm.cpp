@@ -43,23 +43,24 @@ lpm_t::lpm_t(nrs_t *nrs_, dfloat newton_tol_)
   setTimerName(timerName);
 }
 
-lpm_t::lpm_t(nrs_t *nrs_, int nAB_, dfloat newton_tol_)
-    : nrs(nrs_), nAB(nAB_), newton_tol(newton_tol_),
-      interp(std::make_unique<pointInterpolation_t>(nrs, newton_tol))
+void lpm_t::abOrder(int order)
 {
-  coeffAB.resize(nAB);
-  o_coeffAB = platform->device.malloc(nAB * sizeof(dfloat));
+  nrsCheck(order <= 0,
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Integration order (%d) must be positive!\n",
+           order);
+  nAB = order;
+}
 
-  // coordinates are registered by default
-  registerDOF("x");
-  registerDOF("y");
-  registerDOF("z");
-
-  nStagesSumManyKernel = platform->kernels.get("nStagesSumMany");
-  remapParticlesKernel = platform->kernels.get("remapParticles");
-
-  setTimerLevel(timerLevel);
-  setTimerName(timerName);
+void lpm_t::setSolver(std::string solver)
+{
+  solver = lowerCase(solver);
+  nrsCheck(solver != "ab",
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Solver (%s) is not supported. Only solver AB is currently supported!",
+           solver.c_str());
 }
 
 void lpm_t::registerDOF(std::string dofName, bool output) { registerDOF(1, dofName, output); }
@@ -253,7 +254,7 @@ std::vector<dfloat> lpm_t::getInterpFieldHost(std::string interpFieldName)
   return h_interpField;
 }
 
-void lpm_t::initialize(int nParticles, std::vector<dfloat> &y0)
+void lpm_t::initialize(int nParticles, dfloat t0, std::vector<dfloat> &y0)
 {
   nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
   nrsCheck(y0.size() != nParticles * nDOFs_,
@@ -286,7 +287,7 @@ void lpm_t::initialize(int nParticles, std::vector<dfloat> &y0)
   initialized_ = true;
 }
 
-void lpm_t::initialize(int nParticles, occa::memory o_y0)
+void lpm_t::initialize(int nParticles, dfloat t0, occa::memory o_y0)
 {
   nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
   nrsCheck(o_y0.size() != nParticles * nDOFs_ * sizeof(dfloat),
@@ -1060,7 +1061,9 @@ void lpm_t::restart(std::string restartFile)
   // pass in zeros at the moment -- these will be overwritten
   {
     std::vector<dfloat> dummy_y0(nPartLocal * this->nDOFs(), 0.0);
-    this->initialize(nPartLocal, dummy_y0);
+    dfloat t0;
+    platform->options.getArgs("START TIME", t0);
+    this->initialize(nPartLocal, t0, dummy_y0);
   }
 
   dlong pOffset = 0;

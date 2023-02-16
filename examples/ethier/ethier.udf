@@ -337,8 +337,11 @@ void particleRHS(nrs_t *nrs, lpm_t *lpm, dfloat time, occa::memory o_y, void *us
 
 void UDF_Setup(nrs_t *nrs)
 {
+  particles = new lpm_t(nrs, 0.0);
+
+  particles->setSolver("AB");
   const int particleIntegrationOrder = 3;
-  particles = new lpm_t(nrs, particleIntegrationOrder, 0.0);
+  particles->abOrder(particleIntegrationOrder);
 
   particles->setVerbose(true); // issue findpts warnings when a point leaves the domain
 
@@ -386,7 +389,10 @@ void UDF_Setup(nrs_t *nrs)
     y0[n + 2 * np] = zp0[n];
   }
 
-  particles->initialize(np, y0);
+  dfloat t0;
+  platform->options.getArgs("START TIME", t0);
+
+  particles->initialize(np, t0, y0);
 
   mesh_t *mesh = nrs->meshV;
   udf.sEqnSource = &userq;

@@ -47,16 +47,17 @@ public:
                                              void *userdata,
                                              occa::memory o_ydot)>;
 
-  // With this constructor, particle integration order is set to nrs->nEXT
   lpm_t(nrs_t *nrs, dfloat newton_tol_ = 0.0);
 
   // nAB: particle integration order
   lpm_t(nrs_t *nrs, int nAB, dfloat newton_tol_ = 0.0);
 
   ~lpm_t() = default;
+  // set AB integration order
+  void abOrder(int order);
 
-  lpm_t(const lpm_t &) = delete;
-  lpm_t(const lpm_t &&) = delete;
+  // set ODE solver
+  void setSolver(std::string solver);
 
   // static kernel registration function
   // This *MUST* be called during UDF_LoadKernels
@@ -134,10 +135,10 @@ public:
   void addUserData(void *userdata);
 
   // Create nParticles particles with initial condition y0
-  void initialize(int nParticles, std::vector<dfloat> &y0);
+  void initialize(int nParticles, dfloat t0, std::vector<dfloat> &y0);
 
   // Create nParticles particles with initial condition o_y0
-  void initialize(int nParticles, occa::memory o_y0);
+  void initialize(int nParticles, dfloat t0, occa::memory o_y0);
 
   // Page-aligned offset >= nParticles
   // Required to access particle-specific fields

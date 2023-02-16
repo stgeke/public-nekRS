@@ -76,15 +76,19 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
 		    nrs->o_U,
 		    o_Sij);
   oogs::startFinish(o_Sij, 2*nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
-  
-  occa::memory o_drag = platform->device.malloc(3 * nrs->fieldOffset * sizeof(dfloat));
-  platform->linAlg->fillKernel(nrs->fieldOffset, 0.0, o_drag);
+
+  const int NfpTotal = mesh->Nelements * mesh->Nfaces * mesh->Nfp;
+  occa::memory o_drag = platform->device.malloc(3 * NfpTotal * sizeof(dfloat));
+  occa::memory o_area = platform->device.malloc(NfpTotal * sizeof(dfloat));
+  platform->linAlg->fillKernel(3 * NfpTotal, 0.0, o_drag);
+  platform->linAlg->fillKernel(NfpTotal, 0.0, o_area);
 
   //User specified boundary ID
   const int biD = 1;
   
   dragKernel(mesh->Nelements,
 	     nrs->fieldOffset,
+	     NfpTotal,
 	     mue,
 	     biD,
 	     mesh->o_sgeo,
@@ -92,10 +96,12 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
 	     mesh->o_EToB,
 	     mesh->o_invLMM,
 	     o_Sij,
-	     o_drag);
+	     o_drag,
+	     o_area);
 
-  const dfloat dragmax = platform->linAlg->max(mesh->Nlocal,o_drag,platform->comm.mpiComm);
-  const dfloat utau = sqrt(dragmax);
+  const dfloat areasum = platform->linAlg->sum(NfpTotal,o_area,platform->comm.mpiComm);
+  const dfloat dragsum = platform->linAlg->sum(NfpTotal,o_drag,platform->comm.mpiComm);
+  const dfloat utau = sqrt(dragsum/areasum);
   const dfloat utauErr = (utau-utauRef)/utauRef;
   
   if(platform->comm.mpiRank == 0){

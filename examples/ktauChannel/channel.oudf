@@ -1,5 +1,6 @@
 @kernel void drag(const dlong Nelements,
 		  const dlong offset,
+		  const dlong soffset,
 		  const dfloat mue,
 		  const dlong biD,
 		  @ restrict const dfloat *sgeo,
@@ -7,21 +8,22 @@
 		  @ restrict const int *EToBM,
 		  @ restrict const dfloat *invLMM,
 		  @ restrict const dfloat *sij,		  
-		  @ restrict dfloat *drag)
+		  @ restrict dfloat *drag,
+		  @ restrict dfloat *area)
 {
   for (dlong e = 0; e < Nelements; e++; @outer(0)) {
     
     for (int f = 0; f < p_Nfaces; f++) {
       for (int m = 0; m < p_Nfp; ++m; @inner(0)) {
 	const int n = m + f * p_Nfp;
-        const int sk = e * p_Nfp * p_Nfaces + n;
 	const dlong sid = e * p_Nfaces * p_Nfp + n;
-	const dlong idM = vmapM[sk];
+	const dlong idM = vmapM[sid];
         const dlong biDM = EToBM[f + p_Nfaces * e];
 
-	const dfloat n1 = sgeo[sid * p_Nsgeo + p_NXID];
-	const dfloat n2 = sgeo[sid * p_Nsgeo + p_NYID];
-	const dfloat n3 = sgeo[sid * p_Nsgeo + p_NZID];
+	const dfloat sWJ = sgeo[sid * p_Nsgeo + p_WSJID];
+	const dfloat n1 = sgeo[sid * p_Nsgeo + p_NXID] * sWJ;
+	const dfloat n2 = sgeo[sid * p_Nsgeo + p_NYID] * sWJ;
+	const dfloat n3 = sgeo[sid * p_Nsgeo + p_NZID] * sWJ;
 		
 	if(biDM == biD){
 	  const dfloat s11 = sij[idM + 0 * offset];
@@ -38,9 +40,10 @@
 
 	  const dfloat scale = mue * invLMM[idM];
 
-	  drag[idM + 0 * offset] = -scale * (s11*n1 + s12*n2 + s13*n3);
-	  drag[idM + 1 * offset] = -scale * (s21*n1 + s22*n2 + s23*n3);
-	  drag[idM + 2 * offset] = -scale * (s31*n1 + s32*n2 + s33*n3);
+	  drag[sid + 0 * offset] = -scale * (s11*n1 + s12*n2 + s13*n3);
+	  drag[sid + 1 * offset] = -scale * (s21*n1 + s22*n2 + s23*n3);
+	  drag[sid + 2 * offset] = -scale * (s31*n1 + s32*n2 + s33*n3);
+	  area[sid] = sWJ; 
 	}
       }
       @barrier();

@@ -7,7 +7,7 @@ static int ciMode = 0;
 static occa::kernel dragKernel;
 static occa::kernel dragScaleKernel;
 
-#define EPS 1e-1
+#define EPS 5e-2
 
 void ciSetup(MPI_Comm comm, setupAide &options)
 {

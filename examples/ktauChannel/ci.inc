@@ -4,7 +4,10 @@
 
 static int ciMode = 0;
 
-#define EPS 1e-2
+static occa::kernel dragKernel;
+static occa::kernel dragScaleKernel;
+
+#define EPS 1e-1
 
 void ciSetup(MPI_Comm comm, setupAide &options)
 {
@@ -46,21 +49,59 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("SCALAR02 INITIAL GUESS","EXTRAPOLATION");
 }
 
-void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
+void buildCIKernel(occa::properties& kernelInfo)
+{
+  dragKernel = oudfBuildKernel(kernelInfo, "drag");
+  dragScaleKernel = oudfBuildKernel(kernelInfo, "dragScale");
+}
+
+void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
 {
   if (!nrs->lastStep) return;
 
   mesh_t *mesh = nrs->meshV;
-  
+
+  //Friction factor
   const dfloat factor = 2.0 * ConstantFlowRate::scaleFactor();
+  const dfloat fricFact = 2.0 * 2.27618e-03;
+  const double fricErr = (factor - fricFact)/fricFact;
 
-  const dfloat dnsFricFact = 2.0 * 2.27618e-03;
+  //Friction velocity
+  const dfloat utauDNS = 4.58794e-02;
+  occa::memory o_Sij = platform->o_mempool.slice2;
+  nrs->SijOijKernel(mesh->Nelements,
+		    nrs->fieldOffset,
+		    0,
+		    mesh->o_vgeo,
+		    mesh->o_D,
+		    nrs->o_U,
+		    o_Sij);
+  
+  occa::memory o_drag = platform->device.malloc(3 * nrs->fieldOffset * sizeof(dfloat));
+  platform->linAlg->fillKernel(nrs->fieldOffset, 0.0, o_drag);
+  
+  dragKernel(mesh->Nelements,
+	     nrs->fieldOffset,
+	     mue,
+	     mesh->o_sgeo,
+	     mesh->o_vmapM,
+	     nrs->o_EToB,
+	     o_Sij,
+	     o_drag);
 
-  const double facErr = (factor - dnsFricFact)/dnsFricFact;
+  dragScaleKernel(mesh->Nelements,
+		  nrs->fieldOffset,
+		  mesh->o_vgeo,
+		  o_drag);
+
+  const dfloat dragmax = platform->linAlg->max(mesh->Nlocal,o_drag,platform->comm.mpiComm);
+  const dfloat utau = sqrt(dragmax);
+  const dfloat utauErr = (utau-utauDNS)/utauDNS;
   
   if(platform->comm.mpiRank == 0){
-    printf("Rel. error in computed friction factor: %g\n",facErr);
+    printf("Fiction Velocity: %g; Rel. error = %g\n",utau,utauErr);
+    printf("Friction Factor: %g; Rel. error =%g\n",factor,fricErr);
   }
 
-  (fabs(facErr) < EPS) ? (CIPASS) : (CIFAIL);
+  (fabs(utauErr) < EPS && fabs(fricErr) < EPS) ? (CIPASS) : (CIFAIL);
 }

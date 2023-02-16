@@ -7,7 +7,7 @@ static int ciMode = 0;
 static occa::kernel dragKernel;
 static occa::kernel dragScaleKernel;
 
-#define EPS 5e-2
+#define EPS 1e-2
 
 void ciSetup(MPI_Comm comm, setupAide &options)
 {
@@ -52,7 +52,6 @@ void ciSetup(MPI_Comm comm, setupAide &options)
 void buildCIKernel(occa::properties& kernelInfo)
 {
   dragKernel = oudfBuildKernel(kernelInfo, "drag");
-  dragScaleKernel = oudfBuildKernel(kernelInfo, "dragScale");
 }
 
 void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
@@ -63,11 +62,11 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
 
   //Friction factor
   const dfloat factor = 2.0 * ConstantFlowRate::scaleFactor();
-  const dfloat fricFact = 2.0 * 2.27618e-03;
+  const dfloat fricFact = 2.0 * 2.27e-03;
   const double fricErr = (factor - fricFact)/fricFact;
 
   //Friction velocity
-  const dfloat utauDNS = 4.58794e-02;
+  const dfloat utauRef = 0.048; 
   occa::memory o_Sij = platform->o_mempool.slice2;
   nrs->SijOijKernel(mesh->Nelements,
 		    nrs->fieldOffset,
@@ -76,27 +75,28 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
 		    mesh->o_D,
 		    nrs->o_U,
 		    o_Sij);
+  oogs::startFinish(o_Sij, 2*nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
   
   occa::memory o_drag = platform->device.malloc(3 * nrs->fieldOffset * sizeof(dfloat));
   platform->linAlg->fillKernel(nrs->fieldOffset, 0.0, o_drag);
+
+  //User specified boundary ID
+  const int biD = 1;
   
   dragKernel(mesh->Nelements,
 	     nrs->fieldOffset,
 	     mue,
+	     biD,
 	     mesh->o_sgeo,
 	     mesh->o_vmapM,
-	     nrs->o_EToB,
+	     mesh->o_EToB,
+	     mesh->o_invLMM,
 	     o_Sij,
 	     o_drag);
 
-  dragScaleKernel(mesh->Nelements,
-		  nrs->fieldOffset,
-		  mesh->o_vgeo,
-		  o_drag);
-
   const dfloat dragmax = platform->linAlg->max(mesh->Nlocal,o_drag,platform->comm.mpiComm);
   const dfloat utau = sqrt(dragmax);
-  const dfloat utauErr = (utau-utauDNS)/utauDNS;
+  const dfloat utauErr = (utau-utauRef)/utauRef;
   
   if(platform->comm.mpiRank == 0){
     printf("Fiction Velocity: %g; Rel. error = %g\n",utau,utauErr);

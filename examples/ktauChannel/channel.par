@@ -18,7 +18,7 @@ equation = navierStokes+variableViscosity
 residualTol = 1e-04
 
 [VELOCITY]
-boundaryTypeMap = wall, SYM
+boundaryTypeMap = wall, slipY
 residualTol = 1e-06
 density = 1.0
 viscosity = -43500. 

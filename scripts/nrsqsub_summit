@@ -8,7 +8,7 @@ if [ -z "$PROJ_ID" ]; then
 fi
 
 if [ $# -ne 3 ]; then
-  echo "usage: [PROJ_ID] [CPUONLY=1] $0 <casename> <number of compute nodes> <hh:mm>"
+  echo "usage: [PROJ_ID=value] [CPUONLY=1] $0 <casename> <number of compute nodes> <hh:mm>"
   exit 0
 fi
 
@@ -81,11 +81,6 @@ fi
 
 if [ ! -f $case.udf ]; then
   echo "Cannot find" $case.udf
-  exit 1
-fi
-
-if [ ! -f $case.oudf ]; then
-  echo "Cannot find" $case.oudf
   exit 1
 fi
 

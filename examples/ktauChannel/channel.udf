@@ -40,7 +40,7 @@ void uservp(nrs_t *nrs, dfloat time, occa::memory o_U, occa::memory o_S,
 void UDF_LoadKernels(occa::properties& kernelInfo)
 {
   scalarScaledAddKernel = oudfBuildKernel(kernelInfo, "scalarScaledAdd");
-  if(ciMode) buildCIKernel(kernelInfo);
+  if(ciMode)buildCIKernel(kernelInfo);
   RANSktau::buildKernel(kernelInfo);
 }
 
@@ -70,5 +70,5 @@ void UDF_Setup(nrs_t *nrs)
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 {
-  if (ciMode) ciTestErrors(nrs, time, tstep, mueLam);
+  if (ciMode) ciTestErrors(nrs, time, tstep);
 }

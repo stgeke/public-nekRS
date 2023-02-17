@@ -6,6 +6,10 @@
 namespace postProcessing
 {
 void planarAvg(nrs_t *nrs, const std::string& dir, int NELGX, int NELGY, int NELGZ, int nflds, occa::memory o_avg);
+
+void buildDragKernel(occa::properties kernelInfo);
+void dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose = true);
+dfloat* getDrag();
 }
 
 #endif

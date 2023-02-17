@@ -1,11 +1,10 @@
 #include <math.h>
+#include <vector>
 
 #include "constantFlowRate.hpp"
+#include "postProcessing.hpp"
 
 static int ciMode = 0;
-
-static occa::kernel dragKernel;
-static occa::kernel dragScaleKernel;
 
 #define EPS 1e-2
 
@@ -51,10 +50,10 @@ void ciSetup(MPI_Comm comm, setupAide &options)
 
 void buildCIKernel(occa::properties& kernelInfo)
 {
-  dragKernel = oudfBuildKernel(kernelInfo, "drag");
+  postProcessing::buildDragKernel(kernelInfo);
 }
 
-void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
+void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
 {
   if (!nrs->lastStep) return;
 
@@ -67,42 +66,14 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep, dfloat mue)
 
   //Friction velocity
   const dfloat utauRef = 0.048; 
-  occa::memory o_Sij = platform->o_mempool.slice2;
-  nrs->SijOijKernel(mesh->Nelements,
-		    nrs->fieldOffset,
-		    0,
-		    mesh->o_vgeo,
-		    mesh->o_D,
-		    nrs->o_U,
-		    o_Sij);
-  oogs::startFinish(o_Sij, 2*nrs->NVfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
 
-  const int NfpTotal = mesh->Nelements * mesh->Nfaces * mesh->Nfp;
-  occa::memory o_drag = platform->device.malloc(3 * NfpTotal * sizeof(dfloat));
-  occa::memory o_area = platform->device.malloc(NfpTotal * sizeof(dfloat));
-  platform->linAlg->fillKernel(3 * NfpTotal, 0.0, o_drag);
-  platform->linAlg->fillKernel(NfpTotal, 0.0, o_area);
+  //User specified boundary ID list
+  std::vector<int> biDlist = {1};
+  postProcessing::dragCalc(nrs,biDlist,false);
 
-  //User specified boundary ID
-  const int biD = 1;
-  
-  dragKernel(mesh->Nelements,
-	     nrs->fieldOffset,
-	     NfpTotal,
-	     mue,
-	     biD,
-	     mesh->o_sgeo,
-	     mesh->o_vmapM,
-	     mesh->o_EToB,
-	     mesh->o_invLMM,
-	     o_Sij,
-	     o_drag,
-	     o_area);
-
-  const dfloat areasum = platform->linAlg->sum(NfpTotal,o_area,platform->comm.mpiComm);
-  const dfloat dragsum = platform->linAlg->sum(NfpTotal,o_drag,platform->comm.mpiComm);
-  const dfloat utau = sqrt(dragsum/areasum);
-  const dfloat utauErr = (utau-utauRef)/utauRef;
+  double *drag = postProcessing::getDrag();
+  const double utau = sqrt(drag[0]); 
+  const double utauErr = (utau - utauRef)/utauRef;
   
   if(platform->comm.mpiRank == 0){
     printf("Fiction Velocity: %g; Rel. error = %g\n",utau,utauErr);

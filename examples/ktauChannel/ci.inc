@@ -48,11 +48,6 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("SCALAR02 INITIAL GUESS","EXTRAPOLATION");
 }
 
-void buildCIKernel(occa::properties& kernelInfo)
-{
-  postProcessing::buildDragKernel(kernelInfo);
-}
-
 void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
 {
   if (!nrs->lastStep) return;

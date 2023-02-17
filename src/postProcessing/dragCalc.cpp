@@ -20,23 +20,8 @@ namespace {
 
   static occa::memory o_areab;
   static occa::memory o_dragb;
-  
-  static occa::kernel dragKernel;
 
   static bool setup = 0;
-}
-
-void postProcessing::buildDragKernel(occa::properties kernelInfo)
-{
-  const std::string path = getenv("NEKRS_KERNEL_DIR") + std::string("/postProcessing/");
-
-  std::string fileName, kernelName;
-  const std::string extension = ".okl";
-  {
-    kernelName = "drag";
-    fileName = path + kernelName + extension;
-    dragKernel = platform->device.buildKernel(fileName, kernelInfo, true);
-  }
 }
 
 dfloat* postProcessing::getDrag()
@@ -79,6 +64,8 @@ void postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose)
 		    o_SijOij);
   oogs::startFinish(o_SijOij, 9, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
 
+  auto dragKernel = platform->kernels.get("drag");
+  
   dragKernel(mesh->Nelements,
 	     nrs->fieldOffset,
 	     NfpTotal,

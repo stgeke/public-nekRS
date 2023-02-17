@@ -1667,6 +1667,16 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     }
   }
 
+  {
+    int NSubCycles = 0;
+    options.getArgs("SUBCYCLING STEPS", NSubCycles);
+    if(NSubCycles) {
+      int bdfOrder;
+      options.getArgs("BDF ORDER", bdfOrder);
+      options.setArgs("EXT ORDER", std::to_string(bdfOrder));
+    }
+  }
+
   parseConstFlowRate(rank, options, par);
 
   double endTime;

@@ -321,7 +321,8 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
   options.getArgs("THREAD MODEL", requestedOccaMode);
 
   if (strcasecmp(requestedOccaMode.c_str(), "CUDA") == 0) {
-    setenv("CUDA_DISABLE_PTX_JIT", "1", 1);
+    if(!getenv("CUDA_DISABLE_PTX_JIT"))
+      setenv("CUDA_DISABLE_PTX_JIT", "1", 1);
     sprintf(deviceConfig, "{mode: 'CUDA', device_id: %d}", device_id);
   }
   else if (strcasecmp(requestedOccaMode.c_str(), "HIP") == 0) {

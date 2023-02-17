@@ -278,6 +278,7 @@ set(SRC
     src/udf/compileUDFKernels.cpp
     src/nekInterface/nekInterfaceAdapter.cpp
     src/postProcessing/planarAvg.cpp
+    src/postProcessing/dragCalc.cpp
     ${BENCH_SOURCES}
     ${MESH_SOURCES}
     ${ELLIPTIC_SOURCES}

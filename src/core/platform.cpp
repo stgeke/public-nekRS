@@ -123,13 +123,12 @@ platform_t::platform_t(setupAide &_options, MPI_Comm _commg, MPI_Comm _comm)
   if(cacheBcast || cacheLocal) {
     const auto NEKRS_HOME_NEW = fs::path(tmpDir) / "nekrs";
     const auto srcPath = fs::path(getenv("NEKRS_HOME"));
-    for(auto &entry: {fs::path("udf"), 
-                      fs::path("nek5000"), 
-                      fs::path("nekInterface"),
-                      fs::path("include"), 
-                      fs::path("gatherScatter"),
-                      fs::path("findpts"), 
-                      fs::path("kernels")}) {
+    for (auto &entry : {fs::path("udf"),
+                        fs::path("nek5000"),
+                        fs::path("nekInterface"),
+                        fs::path("include"),
+                        fs::path("gatherScatter"),
+                        fs::path("kernels")}) {
       fileBcast(srcPath / entry, NEKRS_HOME_NEW, comm.mpiComm, verbose);
     }
     setenv("NEKRS_HOME", std::string(NEKRS_HOME_NEW).c_str(), 1);

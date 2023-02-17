@@ -67,7 +67,7 @@ void ellipticAx(elliptic_t* elliptic,
 
     return txt.str();
   };
-  nrsCheck(!valid, platform->comm.mpiComm, EXIT_FAILURE, errTxt().c_str(), "");
+  nrsCheck(!valid, MPI_COMM_SELF, EXIT_FAILURE, errTxt().c_str(), "");
 
   occa::memory & o_geom_factors =
     (precisionStr != dFloatStr) ? mesh->o_ggeoPfloat :

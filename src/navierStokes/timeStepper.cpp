@@ -236,7 +236,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
   const bool movingMesh = platform->options.compareArgs("MOVING MESH", "TRUE");
 
-  coeffs(nrs, dt, tstep);
+  setDt(nrs, dt, tstep);
 
   extrapolate(nrs);
 
@@ -417,7 +417,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
   }
 }
 
-void coeffs(nrs_t *nrs, double dt, int tstep) {
+void setDt(nrs_t *nrs, double dt, int tstep) {
   nrs->dt[0] = dt;
   nrsCheck(std::isnan(nrs->dt[0]) || std::isinf(nrs->dt[0]), platform->comm.mpiComm, EXIT_FAILURE,
            "Unreasonable dt! Dying ...\n", ""); 

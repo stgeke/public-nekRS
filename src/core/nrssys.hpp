@@ -82,7 +82,7 @@ using dlong = long long int;
   do { \
     int _nrsCheckErr = 0; \
     if(_nrsCheckCond) _nrsCheckErr = 1; \
-    MPI_Allreduce(MPI_IN_PLACE, &_nrsCheckErr, 1, MPI_INT, MPI_SUM, _nrsCheckComm); \
+    if(_nrsCheckComm != MPI_COMM_SELF) MPI_Allreduce(MPI_IN_PLACE, &_nrsCheckErr, 1, MPI_INT, MPI_SUM, _nrsCheckComm); \
     if(_nrsCheckErr) { \
       int rank = 0; \
       MPI_Comm_rank(_nrsCheckComm, &rank); \

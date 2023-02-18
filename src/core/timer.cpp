@@ -7,6 +7,7 @@
 #include "timer.hpp"
 #include "platform.hpp"
 #include "ogs.hpp"
+#include "orderedMap.hpp"
 
 namespace timer {
 namespace {
@@ -17,7 +18,7 @@ struct tagData {
   double startTime;
   occa::streamTag startTag;
 };
-std::map<std::string, tagData> m_;
+orderedMap<std::string, tagData> m_;
 
 const int NEKRS_TIMER_INVALID_KEY = -1;
 const int NEKRS_TIMER_INVALID_METRIC = -2;
@@ -573,9 +574,8 @@ void timer_t::printAll()
 std::vector<std::string> timer_t::tags()
 {
   std::vector<std::string> entries;
-  for (auto &&[name, data] : m_) {
-    entries.push_back(name);
-  }
+  auto &keys = m_.keys();
+  std::copy(keys.begin(), keys.end(), std::back_inserter(entries));
   return entries;
 }
 

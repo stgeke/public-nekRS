@@ -74,8 +74,19 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
   for (auto &&kernelVariant : kernelVariants) {
 
     auto candidateKernel = kernelBuilder(kernelVariant);
-    if (!candidateKernel.isInitialized())
-      continue;
+
+    {
+      int isInitializedMin = candidateKernel.isInitialized();
+      MPI_Allreduce(MPI_IN_PLACE, &isInitializedMin, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
+      int isInitializedMax = candidateKernel.isInitialized();
+      MPI_Allreduce(MPI_IN_PLACE, &isInitializedMax, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
+      nrsCheck(isInitializedMin != isInitializedMax, platform->comm.mpiComm, EXIT_FAILURE,
+               "Kernel could not be intialized on some ranks\n", "");
+
+      if (!candidateKernel.isInitialized())
+        continue; // remove variant if it doesn't compile
+    }
+
     if(platform->options.compareArgs("BUILD ONLY", "FALSE")){
 
       // warmup

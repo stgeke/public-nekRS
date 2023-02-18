@@ -14,7 +14,7 @@ void flopCounter_t::add(const std::string &entry, dfloat work)
 dfloat flopCounter_t::get(const std::string &entry, MPI_Comm comm) const
 {
   dfloat total = flopMap.at(entry);
-  if (comm != MPI_COMM_NULL) {
+  if (comm != MPI_COMM_SELF) {
     MPI_Allreduce(MPI_IN_PLACE, &total, 1, MPI_DFLOAT, MPI_SUM, comm);
   }
   return total;
@@ -31,14 +31,14 @@ dfloat flopCounter_t::get(MPI_Comm comm) const
   }
 
   std::array<dfloat, 2> errAndTotal = {err, total};
-  if (comm != MPI_COMM_NULL) {
+  if (comm != MPI_COMM_SELF) {
     MPI_Allreduce(MPI_IN_PLACE, errAndTotal.data(), 2, MPI_DFLOAT, MPI_SUM, comm);
   }
 
   err = errAndTotal[0];
   total = errAndTotal[1];
 
-  if (comm != MPI_COMM_NULL && err > 0)
+  if (comm != MPI_COMM_SELF && err > 0)
     nrsAbort(comm, EXIT_FAILURE, "Encountered error in flopCounter_t::get", "");
 
   return total;

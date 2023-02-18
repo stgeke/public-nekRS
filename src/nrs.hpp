@@ -41,7 +41,7 @@ struct nrs_t {
   int flow;
   int cht;
   int Nscalar;
-  int NVfields, NTfields;
+  int NVfields;
   dlong fieldOffset;
   dlong cubatureOffset;
 

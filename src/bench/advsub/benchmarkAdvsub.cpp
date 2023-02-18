@@ -84,13 +84,12 @@ occa::kernel benchmarkAdvsub(int Nfields,
   }
 
   nrsCheck(Nq > 14, platform->comm.mpiComm, EXIT_FAILURE, 
-           "Error: maximum Nq of 14 has been exceed with Nq=%d\n", Nq);
+           "Nq > 14 is unsupported\n", "");
 
   const auto largestCubNq = maximumCubaturePoints.at(Nq);
 
   nrsCheck(cubNq > largestCubNq, platform->comm.mpiComm, EXIT_FAILURE, 
-           "Error: maximum cubNq for Nq = %d is %d\ncubNq as specified is %d\n", 
-           Nq, largestCubNq, cubNq);
+           "cubNq > %d is unsupported\n", largestCubNq); 
 
   if (!dealias || cubNq < Nq) {
     cubNq = Nq;

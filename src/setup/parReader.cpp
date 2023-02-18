@@ -85,17 +85,6 @@ void append_value_error(Printable message)
   valueErrorLogger << "\t" << message << "\n";
 }
 
-#define UPPER(a)                                                               \
-  {                                                                            \
-    transform(a.begin(), a.end(), a.begin(),                                   \
-              [](int c){return std::toupper(c);});                             \
-  }
-#define LOWER(a)                                                               \
-  {                                                                            \
-    transform(a.begin(), a.end(), a.begin(),                                   \
-              [](int c){return std::tolower(c);});                             \
-  }
-
 namespace
 {
 
@@ -246,29 +235,21 @@ static std::vector<std::string> validSections = {
     {"casedata"},
 };
 
-void convertToLowerCase(std::vector<std::string>& stringVec)
-{
-  for(auto && s : stringVec){
-    std::transform(s.begin(), s.end(), s.begin(),
-      [](unsigned char c){ return std::tolower(c); });
-  }
-}
-
 void makeStringsLowerCase()
 {
-  convertToLowerCase(generalKeys);
-  convertToLowerCase(neknekKeys);
-  convertToLowerCase(problemTypeKeys);
-  convertToLowerCase(commonKeys);
-  convertToLowerCase(meshKeys);
-  convertToLowerCase(temperatureKeys);
-  convertToLowerCase(scalarKeys);
-  convertToLowerCase(deprecatedKeys);
-  convertToLowerCase(amgxKeys);
-  convertToLowerCase(boomeramgKeys);
-  convertToLowerCase(pressureKeys);
-  convertToLowerCase(occaKeys);
-  convertToLowerCase(validSections);
+  lowerCase(generalKeys);
+  lowerCase(neknekKeys);
+  lowerCase(problemTypeKeys);
+  lowerCase(commonKeys);
+  lowerCase(meshKeys);
+  lowerCase(temperatureKeys);
+  lowerCase(scalarKeys);
+  lowerCase(deprecatedKeys);
+  lowerCase(amgxKeys);
+  lowerCase(boomeramgKeys);
+  lowerCase(pressureKeys);
+  lowerCase(occaKeys);
+  lowerCase(validSections);
 }
 
 const std::vector<std::string>& getValidKeys(const std::string& section)
@@ -475,7 +456,7 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
           std::string direction = items[1];
           issueError = (direction.find("x") == std::string::npos &&
                         direction.find("y") == std::string::npos && direction.find("z") == std::string::npos);
-          UPPER(direction);
+          upperCase(direction);
           options.setArgs("CONSTANT FLOW DIRECTION", direction);
         }
         else {
@@ -504,7 +485,7 @@ void parseSolverTolerance(const int rank, setupAide &options, inipp::Ini *par, s
 {
 
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   const std::vector<std::string> validValues = {
     {"relative"},
@@ -536,7 +517,7 @@ void parseSolverTolerance(const int rank, setupAide &options, inipp::Ini *par, s
 void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::Ini *par, std::string parScope)
 {
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
   std::string p_coarseGridDiscretization;
   const bool continueParsing = par->extract(parScope, "coarsegriddiscretization", p_coarseGridDiscretization);
   if (!continueParsing)
@@ -576,7 +557,7 @@ void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::In
 void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std::string parScope)
 {
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   std::string p_coarseSolver;
   const bool keyExist = par->extract(parScope, "coarsesolver", p_coarseSolver) ||
@@ -697,7 +678,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
   std::string p_smoother;
 
   std::string parSection = parPrefixFromParSection(parScope);
-  UPPER(parSection);
+  upperCase(parSection);
 
   if (options.compareArgs(parSection + "PRECONDITIONER", "MULTIGRID")) {
     options.setArgs(parSection + "MULTIGRID SMOOTHER", "FOURTHOPTCHEBYSHEV+DAMPEDJACOBI");
@@ -842,7 +823,7 @@ void parsePreconditioner(const int rank, setupAide &options,
   };
 
   std::string parSection = parPrefixFromParSection(parScope);
-  UPPER(parSection);
+  upperCase(parSection);
 
   std::string p_preconditioner;
   if(!par->extract(parScope, "preconditioner", p_preconditioner)) {
@@ -965,7 +946,7 @@ void parseLinearSolver(const int rank, setupAide &options,
 {
 
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   options.setArgs(parSectionName + "MAXIMUM ITERATIONS", "500");
 
@@ -1039,7 +1020,7 @@ void parseInitialGuess(const int rank, setupAide &options,
 
   std::string parSectionName = parPrefixFromParSection(parScope);
 
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   std::string initialGuess;
 
@@ -1115,7 +1096,7 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
   std::string sbuf;
 
   std::string parPrefix = parPrefixFromParSection(parSection);
-  UPPER(parPrefix);
+  upperCase(parPrefix);
 
   options.setArgs(parPrefix + "REGULARIZATION METHOD", "NONE");
 
@@ -1458,24 +1439,24 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       append_error(error.str());
     }
 
-    UPPER(threadModel);
+    upperCase(threadModel);
     options.setArgs("THREAD MODEL", threadModel);
 
     if(!architecture.empty()){
-      UPPER(architecture);
+      upperCase(architecture);
       options.setArgs("ARCHITECTURE", architecture);
     }
   }
 
   std::string deviceNumber;
   if (par->extract("occa", "devicenumber", deviceNumber)) {
-    UPPER(deviceNumber);
+    upperCase(deviceNumber);
     options.setArgs("DEVICE NUMBER", deviceNumber);
   }
 
   std::string platformNumber;
   if (par->extract("occa", "platformnumber", platformNumber)) {
-    UPPER(platformNumber);
+    upperCase(platformNumber);
     options.setArgs("PLATFORM NUMBER", platformNumber);
   }
 

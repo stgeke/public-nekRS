@@ -71,7 +71,7 @@ void linAlg_t::runTimers()
     MPI_Barrier(platform->comm.mpiComm);
     const auto tStart = MPI_Wtime();
     for (int i = 0; i < Nrep; i++) {
-      weightedInnerProdMany(Nlocal, fields, 1, o_weight, o_r, o_z, MPI_COMM_NULL);
+      weightedInnerProdMany(Nlocal, fields, 1, o_weight, o_r, o_z, MPI_COMM_SELF);
     }
     platform->device.finish();
     const auto elapsed = (MPI_Wtime() - tStart) / Nrep;
@@ -486,7 +486,7 @@ dfloat linAlg_t::sum(const dlong N, occa::memory &o_a, MPI_Comm _comm, const dlo
     sum += scratch[n];
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   return sum;
@@ -516,7 +516,7 @@ dfloat linAlg_t::sumMany(const dlong N,
     sum += scratch[n];
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   return sum;
@@ -571,7 +571,7 @@ dfloat linAlg_t::max(const dlong N, occa::memory &o_a, MPI_Comm _comm)
     max = (scratch[n] > max) ? scratch[n] : max;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_DFLOAT, MPI_MAX, _comm);
 
   return max;
@@ -599,7 +599,7 @@ dfloat linAlg_t::amax(const dlong N, occa::memory &o_a, MPI_Comm _comm)
     max = (scratch[n] > max) ? scratch[n] : max;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_DFLOAT, MPI_MAX, _comm);
 
   return max;
@@ -635,7 +635,7 @@ dfloat linAlg_t::amaxMany(const dlong N,
     max = std::abs(x);
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &max, 1, MPI_DFLOAT, MPI_MAX, _comm);
 
   return max;
@@ -672,7 +672,7 @@ dfloat linAlg_t::norm2(const dlong N, occa::memory &o_x, MPI_Comm _comm)
     norm = x * x;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -713,7 +713,7 @@ dfloat linAlg_t::norm2Many(const dlong N,
     norm = x * x;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -751,7 +751,7 @@ dfloat linAlg_t::norm1(const dlong N, occa::memory &o_x, MPI_Comm _comm)
     norm = std::abs(x);
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -793,7 +793,7 @@ dfloat linAlg_t::norm1Many(const dlong N,
     norm = std::abs(x);
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -838,7 +838,7 @@ linAlg_t::innerProd(const dlong N, occa::memory &o_x, occa::memory &o_y, MPI_Com
     dot = x * y;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &dot, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -885,7 +885,7 @@ dfloat linAlg_t::weightedInnerProd(const dlong N,
     dot = w * x * y;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &dot, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -934,7 +934,7 @@ void linAlg_t::weightedInnerProdMulti(const dlong N,
     result[0] = w * x * y;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, result, NVec, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -971,7 +971,7 @@ void linAlg_t::weightedInnerProdMulti(const dlong N,
                                        o_y,
                                        o_result);
 
-  if (_comm != MPI_COMM_NULL) {
+  if (_comm != MPI_COMM_SELF) {
     platform->device.finish();
     MPI_Allreduce(MPI_IN_PLACE, o_result.ptr(), NVec, MPI_DFLOAT, MPI_SUM, _comm);
   }
@@ -1020,7 +1020,7 @@ dfloat linAlg_t::weightedInnerProdMany(const dlong N,
     dot = w * x * y;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &dot, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -1063,7 +1063,7 @@ dfloat linAlg_t::weightedNorm2(const dlong N, occa::memory &o_w, occa::memory &o
     norm = w * a * a;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -1109,7 +1109,7 @@ dfloat linAlg_t::weightedNorm2Many(const dlong N,
     norm = w * a * a;
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -1151,7 +1151,7 @@ dfloat linAlg_t::weightedNorm1(const dlong N, occa::memory &o_w, occa::memory &o
     norm = std::abs(w * a);
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)
@@ -1194,7 +1194,7 @@ dfloat linAlg_t::weightedNorm1Many(const dlong N,
     norm = std::abs(w * a);
   }
 
-  if (_comm != MPI_COMM_NULL)
+  if (_comm != MPI_COMM_SELF)
     MPI_Allreduce(MPI_IN_PLACE, &norm, 1, MPI_DFLOAT, MPI_SUM, _comm);
 
   if (timer)

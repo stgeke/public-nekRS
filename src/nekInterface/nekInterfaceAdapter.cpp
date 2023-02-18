@@ -545,7 +545,7 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
       int nelgt, nelgv;
       const int ndim = 3;
       const std::string meshFile = options.getArgs("MESH FILE");
-      re2::nelg(meshFile, nelgt, nelgv, MPI_COMM_NULL);
+      re2::nelg(meshFile, nelgt, nelgv, MPI_COMM_SELF);
 
       int lelt = (nelgt / np) + 3;
       if (lelt > nelgt)

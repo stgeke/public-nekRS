@@ -8,11 +8,6 @@
 #include <regex>
 
 namespace {
-std::string lowerCase(std::string s)
-{
-  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
-  return s;
-}
 
 int computeFieldOffset(int n)
 {
@@ -376,14 +371,14 @@ void lpm_t::integrate(dfloat t0, dfloat tf, int step)
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: cannot integrate before calling initialize!\n";
     }
-    nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+    nrsCheck(1, MPI_COMM_SELF, EXIT_FAILURE, "", "");
   }
 
   if (!userRHS_) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: cannot integrate without setting userRHS!\n";
     }
-    nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+    nrsCheck(1, MPI_COMM_SELF, EXIT_FAILURE, "", "");
   }
 
   coeff(nrs->dt, step);
@@ -473,7 +468,7 @@ void lpm_t::addParticles(int newNParticles, occa::memory o_yNewPart, occa::memor
       std::cout << "ERROR: o_yNewPart size is " << o_yNewPart.size() << " but expected " << expectedYSize
                 << " bytes!\n";
     }
-    nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+    nrsCheck(1, MPI_COMM_SELF, EXIT_FAILURE, "", "");
   }
 
   if (o_propNewPart.size() != expectedPropSize) {
@@ -481,7 +476,7 @@ void lpm_t::addParticles(int newNParticles, occa::memory o_yNewPart, occa::memor
       std::cout << "ERROR: o_propNewPart size is " << o_propNewPart.size() << " but expected "
                 << expectedPropSize << " bytes!\n";
     }
-    nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+    nrsCheck(1, MPI_COMM_SELF, EXIT_FAILURE, "", "");
   }
 
   std::vector<dlong> remainingMap(this->nParticles_, 0);

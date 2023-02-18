@@ -145,6 +145,25 @@ std::vector<std::string> serializeString(const std::string sin, char dlim)
   return slist;
 }
 
+std::string lowerCase(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+  return s;
+}
+
+std::string upperCase(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); });
+  return s;
+}
+
+void lowerCase(std::vector<std::string>& stringVec)
+{
+  for(auto && s : stringVec) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+  }
+}
+
 }
 
 #endif

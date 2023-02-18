@@ -26,9 +26,12 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
 {
   occa::kernel fastestKernel;
   double fastestTime = std::numeric_limits<double>::max();
+
   for (auto &&kernelVariant : kernelVariants) {
 
+    MPI_Barrier(platform->comm.mpiComm);
     auto candidateKernel = kernelBuilder(kernelVariant);
+
     if (!candidateKernel.isInitialized())
       continue;
 
@@ -71,21 +74,14 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
 {
   occa::kernel fastestKernel;
   double fastestTime = std::numeric_limits<double>::max();
+
   for (auto &&kernelVariant : kernelVariants) {
 
+    MPI_Barrier(platform->comm.mpiComm);
     auto candidateKernel = kernelBuilder(kernelVariant);
 
-    {
-      int isInitializedMin = candidateKernel.isInitialized();
-      MPI_Allreduce(MPI_IN_PLACE, &isInitializedMin, 1, MPI_INT, MPI_MIN, platform->comm.mpiComm);
-      int isInitializedMax = candidateKernel.isInitialized();
-      MPI_Allreduce(MPI_IN_PLACE, &isInitializedMax, 1, MPI_INT, MPI_MAX, platform->comm.mpiComm);
-      nrsCheck(isInitializedMin != isInitializedMax, platform->comm.mpiComm, EXIT_FAILURE,
-               "Kernel could not be intialized on some ranks\n", "");
-
-      if (!candidateKernel.isInitialized())
-        continue; // remove variant if it doesn't compile
-    }
+    if (!candidateKernel.isInitialized())
+      continue; // remove variant if it doesn't compile
 
     if(platform->options.compareArgs("BUILD ONLY", "FALSE")){
 

@@ -8,7 +8,7 @@
 
 // private members
 namespace {
-  static dfloat *dragIntegral;
+  static dfloat dragIntegral;
 
   static int nbID;
   static int NfpTotal;
@@ -18,13 +18,10 @@ namespace {
   static occa::memory o_drag;
   static occa::memory o_area;
 
-  static occa::memory o_areab;
-  static occa::memory o_dragb;
-
   static bool setup = 0;
 }
 
-dfloat* postProcessing::getDrag()
+dfloat postProcessing::getDrag()
 {
   return dragIntegral;
 }
@@ -43,16 +40,14 @@ void postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose)
 
     NfpTotal = mesh->Nelements * mesh->Nfaces * mesh->Nfp;
     
-    o_drag = platform->device.malloc(3 * NfpTotal * nbID * sizeof(dfloat));
-    o_area = platform->device.malloc(NfpTotal * nbID * sizeof(dfloat));
-
-    dragIntegral = (dfloat *)calloc(3 * nbID, sizeof(dfloat));
+    o_drag = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat));
+    o_area = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat));
 
     platform->options.getArgs("VISCOSITY",mueLam);
   }
  
-  platform->linAlg->fillKernel(3 * NfpTotal * nbID, 0.0, o_drag);
-  platform->linAlg->fillKernel(NfpTotal * nbID, 0.0, o_area);
+  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_drag);
+  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_area);
 
   occa::memory o_SijOij = platform->o_mempool.slice2;
   nrs->SijOijKernel(mesh->Nelements,
@@ -71,7 +66,7 @@ void postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose)
 	     NfpTotal,
 	     nbID,
 	     mueLam,
-	     o_bID,
+	     1,
 	     mesh->o_sgeo,
 	     mesh->o_vmapM,
 	     mesh->o_EToB,
@@ -80,25 +75,9 @@ void postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose)
 	     o_drag,
 	     o_area);
   
-  for(int i=0; i < nbID; i++){
-    const int boffset = i * NfpTotal;
-    o_areab = o_area.slice(boffset * sizeof(dfloat), NfpTotal * sizeof(dfloat));
-    const dfloat areasum = platform->linAlg->sum(NfpTotal, o_areab, platform->comm.mpiComm);
-
-    if(!setup)nrsCheck(areasum==0, platform->comm.mpiComm, EXIT_FAILURE,
-		       "Boundary ID %d not found in mesh",bID[i]);
+  const dfloat areasum = platform->linAlg->sum(mesh->Nelements, o_area, platform->comm.mpiComm);
     
-    const int doffset = boffset * 3;
-    for(int idim=0; idim < 3; idim++){
-      o_dragb = o_drag.slice((doffset + idim*NfpTotal) * sizeof(dfloat), NfpTotal * sizeof(dfloat));
-      dragIntegral[i * 3 + idim] = platform->linAlg->sum(NfpTotal, o_dragb, platform->comm.mpiComm) / areasum;
-    }
-  }
-
-  if(platform->comm.mpiRank == 0 && verbose){
-    for(int i=0; i < nbID; i++){
-	printf("bid %d: dragx = %g, dragy = %g, dragz = %g\n",bID[i],dragIntegral[i*3],dragIntegral[i*3+1],dragIntegral[i*3+2]);
-      }
-  }
+  dragIntegral = platform->linAlg->sum(mesh->Nelements, o_drag, platform->comm.mpiComm) / areasum;
+      
   setup = 1;
 }

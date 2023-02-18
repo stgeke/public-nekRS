@@ -9,7 +9,7 @@ void planarAvg(nrs_t *nrs, const std::string& dir, int NELGX, int NELGY, int NEL
 
 void buildDragKernel(occa::properties kernelInfo);
 void dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose = true);
-dfloat* getDrag();
+dfloat getDrag();
 }
 
 #endif

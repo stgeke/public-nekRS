@@ -51,6 +51,13 @@ void lpm_t::abOrder(int order)
            "Integration order (%d) must be positive!\n",
            order);
   nAB = order;
+  coeffAB.resize(nAB);
+
+  if (o_coeffAB.size()) {
+    o_coeffAB.free();
+  }
+
+  o_coeffAB = platform->device.malloc(nAB * sizeof(dfloat));
 }
 
 void lpm_t::setSolver(std::string solver)

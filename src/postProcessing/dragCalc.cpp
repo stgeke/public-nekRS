@@ -11,7 +11,6 @@ namespace {
   static dfloat *dragIntegral;
 
   static int nbID;
-  static int NfpTotal;
   static int Nblock;
   static dfloat mueLam;
 
@@ -32,9 +31,7 @@ dfloat* postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID)
   if(!setup){
     nbID = bID.size();
     o_bID = platform->device.malloc(nbID * sizeof(int), bID.data());
-
-    NfpTotal = mesh->Nelements * mesh->Nfaces * mesh->Nfp;
-
+    
     Nblock = (mesh->Nelements + BLOCKSIZE - 1) / BLOCKSIZE;
 
     drag = (dfloat *)calloc(Nblock * nbID, sizeof(dfloat));

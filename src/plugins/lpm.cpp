@@ -57,7 +57,7 @@ void lpm_t::abOrder(int order)
 
 void lpm_t::setSolver(std::string solver)
 {
-  solver = lowerCase(solver);
+  lowerCase(solver);
   nrsCheck(solver != "ab",
            platform->comm.mpiComm,
            EXIT_FAILURE,
@@ -76,7 +76,7 @@ void lpm_t::registerDOF(dlong Nfields, std::string dofName, bool output)
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
 
-  dofName = lowerCase(dofName);
+  lowerCase(dofName);
   const auto nDOFs = dofIds.size();
   if (dofIds.count(dofName) == 0) {
     dofIds[dofName] = nDOFs;
@@ -89,7 +89,7 @@ void lpm_t::registerDOF(dlong Nfields, std::string dofName, bool output)
 
 int lpm_t::dofId(std::string dofName) const
 {
-  dofName = lowerCase(dofName);
+  lowerCase(dofName);
   if (dofIds.count(dofName) == 0) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: DOF " << dofName << " not registered!\n";
@@ -101,7 +101,7 @@ int lpm_t::dofId(std::string dofName) const
 
 int lpm_t::numDOFs(std::string dofName) const
 {
-  dofName = lowerCase(dofName);
+  lowerCase(dofName);
   if (dofIds.count(dofName) == 0) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: DOF " << dofName << " not registered!\n";
@@ -122,7 +122,7 @@ void lpm_t::registerProp(dlong Nfields, std::string propName, bool output)
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
 
-  propName = lowerCase(propName);
+  lowerCase(propName);
   const auto nprops = propIds.size();
   if (propIds.count(propName) == 0) {
     propIds[propName] = nprops;
@@ -135,7 +135,7 @@ void lpm_t::registerProp(dlong Nfields, std::string propName, bool output)
 
 int lpm_t::propId(std::string propName) const
 {
-  propName = lowerCase(propName);
+  lowerCase(propName);
   if (propIds.count(propName) == 0) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: prop " << propName << " not registered!\n";
@@ -147,7 +147,7 @@ int lpm_t::propId(std::string propName) const
 
 int lpm_t::numProps(std::string propName) const
 {
-  propName = lowerCase(propName);
+  lowerCase(propName);
   if (propIds.count(propName) == 0) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: prop " << propName << " not registered!\n";
@@ -166,7 +166,7 @@ void lpm_t::registerInterpField(std::string interpFieldName, int Nfields, occa::
     nrsCheck(1, platform->comm.mpiComm, EXIT_FAILURE, "", "");
   }
 
-  interpFieldName = lowerCase(interpFieldName);
+  lowerCase(interpFieldName);
   const auto nInterpFields = interpFieldIds.size();
   if (interpFieldIds.count(interpFieldName) == 0) {
     interpFieldIds[interpFieldName] = nInterpFields;
@@ -185,7 +185,7 @@ void lpm_t::registerInterpField(std::string interpFieldName, occa::memory o_fld,
 
 int lpm_t::interpFieldId(std::string interpFieldName) const
 {
-  interpFieldName = lowerCase(interpFieldName);
+  lowerCase(interpFieldName);
   if (interpFieldIds.count(interpFieldName) == 0) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: interpField " << interpFieldName << " not registered!\n";
@@ -197,7 +197,7 @@ int lpm_t::interpFieldId(std::string interpFieldName) const
 
 int lpm_t::numFieldsInterp(std::string interpFieldName) const
 {
-  interpFieldName = lowerCase(interpFieldName);
+  lowerCase(interpFieldName);
   if (interpFieldIds.count(interpFieldName) == 0) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "ERROR: interpField " << interpFieldName << " not registered!\n";

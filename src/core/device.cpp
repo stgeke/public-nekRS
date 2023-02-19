@@ -253,16 +253,17 @@ occa::kernel device_t::buildKernel(const std::string &fullPath,
       }
       occa::env::OCCA_CACHE_DIR = OCCA_CACHE_DIR0;
     }
+
+    int isInitializedMin = constructedKernel.isInitialized();
+    MPI_Allreduce(MPI_IN_PLACE, &isInitializedMin, 1, MPI_INT, MPI_MIN, _comm.mpiComm);
+    int isInitializedMax = constructedKernel.isInitialized();
+    MPI_Allreduce(MPI_IN_PLACE, &isInitializedMax, 1, MPI_INT, MPI_MAX, _comm.mpiComm);
+    nrsCheck(isInitializedMin != isInitializedMax,  _comm.mpiComm, EXIT_FAILURE,
+             "Kernel status of %s inconsistent across ranks\n", constructedKernel.name().c_str());
+
   } else {
     constructedKernel = this->buildKernel(fullPath, props, suffix);
   }
-
-  int isInitializedMin = constructedKernel.isInitialized();
-  MPI_Allreduce(MPI_IN_PLACE, &isInitializedMin, 1, MPI_INT, MPI_MIN, _comm.mpiComm);
-  int isInitializedMax = constructedKernel.isInitialized();
-  MPI_Allreduce(MPI_IN_PLACE, &isInitializedMax, 1, MPI_INT, MPI_MAX, _comm.mpiComm);
-  nrsCheck(isInitializedMin != isInitializedMax,  _comm.mpiComm, EXIT_FAILURE,
-           "Kernel status of %s inconsistent across ranks\n", constructedKernel.name().c_str());
 
   return constructedKernel;
 }

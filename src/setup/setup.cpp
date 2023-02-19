@@ -109,8 +109,17 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   platform->options.getArgs("NUMBER OF SCALARS", nrs->Nscalar);
   platform->options.getArgs("MESH DIMENSION", nrs->dim);
   platform->options.getArgs("ELEMENT TYPE", nrs->elementType);
-  if (platform->device.mode() == "Serial")
-    platform->options.setArgs("GS OVERLAP", "FALSE");
+
+  {
+    if (platform->device.mode() == "Serial")
+      platform->options.setArgs("GS OVERLAP", "FALSE");
+
+    if (platform->comm.mpiCommSize == 1)
+      platform->options.setArgs("GS OVERLAP", "FALSE");
+
+    if (platform->comm.mpiRank == 0 && platform->options.compareArgs("GS OVERLAP", "FALSE"))
+      std::cout << "gs overlap disabled\n\n";
+  }
 
   nrs->flow = 1;
   if (platform->options.compareArgs("VELOCITY SOLVER", "NONE"))

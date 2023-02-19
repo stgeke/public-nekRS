@@ -122,16 +122,12 @@ void ellipticOperator(elliptic_t* elliptic,
 {
   mesh_t* mesh = elliptic->mesh;
   setupAide &options = elliptic->options;
-  oogs_t* oogsAx = elliptic->oogsAx;
-
+  oogs_t* oogs = elliptic->oogsAx;
+  const bool overlap = (oogs != elliptic->oogs);
   const char* ogsDataTypeString = (!strstr(precision, dfloatString)) ? ogsPfloat : ogsDfloat;
 
-  const size_t wordSize = (strstr(precision, dfloatString)) ? 8 : 4;
-  const bool overlap = (wordSize * elliptic->Nfields * mesh->Nlocal > (2<<18) && 
-                        platform->comm.mpiCommSize > 1)
-                        ? true : false;
-
   if(overlap) {
+
     ellipticAx(elliptic, mesh->NglobalGatherElements, mesh->o_globalGatherElementList, o_q, o_Aq, precision);
     if (masked) {
       ellipticApplyMask(elliptic,
@@ -143,7 +139,7 @@ void ellipticOperator(elliptic_t* elliptic,
                         precision);
     }
  
-    oogs::start(o_Aq, elliptic->Nfields, elliptic->fieldOffset, ogsDataTypeString, ogsAdd, oogsAx);
+    oogs::start(o_Aq, elliptic->Nfields, elliptic->fieldOffset, ogsDataTypeString, ogsAdd, oogs);
     ellipticAx(elliptic, mesh->NlocalGatherElements, mesh->o_localGatherElementList, o_q, o_Aq, precision);
  
     if (masked) {
@@ -156,8 +152,10 @@ void ellipticOperator(elliptic_t* elliptic,
                         precision);
     }
 
-    oogs::finish(o_Aq, elliptic->Nfields, elliptic->fieldOffset, ogsDataTypeString, ogsAdd, oogsAx);
+    oogs::finish(o_Aq, elliptic->Nfields, elliptic->fieldOffset, ogsDataTypeString, ogsAdd, oogs);
+
   } else {
+
     ellipticAx(elliptic, mesh->Nelements, mesh->o_elementList, o_q, o_Aq, precision);
     if (masked) {
       ellipticApplyMask(elliptic,
@@ -168,6 +166,7 @@ void ellipticOperator(elliptic_t* elliptic,
                         o_Aq,
                         precision);
     }
-    oogs::startFinish(o_Aq, elliptic->Nfields, elliptic->fieldOffset, ogsDataTypeString, ogsAdd, oogsAx);
+    oogs::startFinish(o_Aq, elliptic->Nfields, elliptic->fieldOffset, ogsDataTypeString, ogsAdd, oogs);
+
   }
 }

@@ -74,7 +74,6 @@ struct elliptic_t
 {
   static constexpr double targetTimeBenchmark {0.2};
   static constexpr int NScratchFields {6};
-  static constexpr int minFDMBytesOverlap{2<<22};
 
   int elementType = 12;      // number of edges (3=tri, 4=quad, 6=tet, 12=hex)
   int blockSolver = 0;

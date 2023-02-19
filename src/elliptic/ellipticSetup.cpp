@@ -287,11 +287,17 @@ void ellipticSolveSetup(elliptic_t* elliptic)
     };
     elliptic->oogsAx = oogs::setup(elliptic->ogs, elliptic->Nfields, elliptic->fieldOffset, ogsDfloat, callback, oogsMode);
 
-    if(timeEllipticOperator() > nonOverlappedTime)
+    auto overlappedTime = timeEllipticOperator();
+    if(overlappedTime > nonOverlappedTime)
       elliptic->oogsAx = elliptic->oogs;
 
-    if((elliptic->oogsAx != elliptic->oogs) && platform->comm.mpiRank == 0)
-      printf("overlap enabled");
+    if(platform->comm.mpiRank == 0) {
+      printf("testing Ax overlap %.2es %.2es ", nonOverlappedTime, overlappedTime);
+      if(elliptic->oogsAx != elliptic->oogs)
+        printf("(overlap enabled)");
+
+      printf("\n");
+    }
   }
 
   ellipticPreconditionerSetup(elliptic, elliptic->ogs);

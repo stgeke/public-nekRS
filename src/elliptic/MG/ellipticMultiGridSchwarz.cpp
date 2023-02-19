@@ -979,14 +979,20 @@ void pMGLevel::build(elliptic_t *pSolver)
                                             callback,
                                             oogsMode);
 
-        if(timeOperator(o_u, o_Su) > nonOverlappedTime)
+        auto overlappedTime = timeOperator(o_u, o_Su); 
+        if(overlappedTime > nonOverlappedTime)
           ogsExtOverlap = NULL;
 
         o_u.free();
         o_Su.free();
 
-        if(ogsExtOverlap && platform->comm.mpiRank == 0)
-          printf("overlap enabled");
+        if(platform->comm.mpiRank == 0) {
+          printf("testing fdm overlap %.2es %.2es ", nonOverlappedTime, overlappedTime);
+          if(ogsExtOverlap)
+            printf("(overlap enabled)");
+
+          printf("\n");
+        }
       }
   };
 

@@ -11,7 +11,6 @@ namespace {
   static dfloat *dragIntegral;
 
   static int nbID;
-  static int Nblock;
   static dfloat mueLam;
 
   static dfloat *drag;
@@ -32,20 +31,18 @@ dfloat* postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID)
     nbID = bID.size();
     o_bID = platform->device.malloc(nbID * sizeof(int), bID.data());
     
-    Nblock = (mesh->Nelements + BLOCKSIZE - 1) / BLOCKSIZE;
-
-    drag = (dfloat *)calloc(Nblock * nbID, sizeof(dfloat));
-    area = (dfloat *)calloc(Nblock * nbID, sizeof(dfloat));
-    o_drag = platform->device.malloc(Nblock * nbID * sizeof(dfloat), drag);
-    o_area = platform->device.malloc(Nblock * nbID * sizeof(dfloat), area);
+    drag = (dfloat *)calloc(mesh->Nelements * nbID, sizeof(dfloat));
+    area = (dfloat *)calloc(mesh->Nelements * nbID, sizeof(dfloat));
+    o_drag = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat), drag);
+    o_area = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat), area);
 
     platform->options.getArgs("VISCOSITY",mueLam);
 
     dragIntegral = (dfloat *)calloc(nbID, sizeof(dfloat));
   }
  
-  platform->linAlg->fillKernel(Nblock * nbID, 0.0, o_drag);
-  platform->linAlg->fillKernel(Nblock * nbID, 0.0, o_area);
+  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_drag);
+  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_area);
 
   occa::memory o_SijOij = platform->o_mempool.slice2;
   nrs->SijOijKernel(mesh->Nelements,
@@ -59,8 +56,7 @@ dfloat* postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID)
 
   auto dragKernel = platform->kernels.get("drag");
   
-  dragKernel(Nblock,
-	     mesh->Nelements,
+  dragKernel(mesh->Nelements,
 	     nrs->fieldOffset,
 	     nbID,
 	     mueLam,
@@ -75,9 +71,9 @@ dfloat* postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID)
 
   o_drag.copyTo(drag);
   o_area.copyTo(area);
-  for (int ibID = 0; ibID < nbID; ibID++){
+  for (dlong ibID = 0; ibID < nbID; ibID++){
     dfloat sbuf[2] = {0, 0};
-    for (int n = 0; n < Nblock; n++){
+    for (dlong n = 0; n < mesh->Nelements; n++){
       sbuf[0] += drag[n];
       sbuf[1] += area[n];
     }

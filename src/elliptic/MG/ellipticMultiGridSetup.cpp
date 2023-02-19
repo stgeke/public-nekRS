@@ -95,19 +95,19 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
   oogs_mode oogsMode = OOGS_AUTO;
 
-  auto autoOverlap = [&](elliptic_t* elliptic)
+  auto autoOverlap = [&](elliptic_t* _elliptic)
   {
     auto timeOperator = [&]()
     {
       const int Nsamples = 10;
-      ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, dfloatString);
+      ellipticOperator(_elliptic, _elliptic->o_p, _elliptic->o_Ap, pfloatString);
  
       platform->device.finish();
       MPI_Barrier(platform->comm.mpiComm);
       const double start = MPI_Wtime();
  
       for (int test = 0; test < Nsamples; ++test)
-        ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, dfloatString);
+        ellipticOperator(_elliptic, _elliptic->o_p, _elliptic->o_Ap, pfloatString);
  
       platform->device.finish();
       double elapsed = (MPI_Wtime() - start) / Nsamples;
@@ -120,19 +120,19 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
         auto nonOverlappedTime = timeOperator();
         auto callback = [&]()
         {
-        ellipticAx(elliptic, elliptic->mesh->NlocalGatherElements, elliptic->mesh->o_localGatherElementList,
-                   elliptic->o_p, elliptic->o_Ap, pfloatString);
+          ellipticAx(_elliptic, _elliptic->mesh->NlocalGatherElements, _elliptic->mesh->o_localGatherElementList,
+                     _elliptic->o_p, _elliptic->o_Ap, pfloatString);
         };
   
-        elliptic->oogsAx = oogs::setup(elliptic->ogs, 1, 0, ogsPfloat, callback, oogsMode);
+        elliptic->oogsAx = oogs::setup(_elliptic->ogs, 1, 0, ogsPfloat, callback, oogsMode);
 
         auto overlappedTime = timeOperator();        
         if(overlappedTime > nonOverlappedTime)
-          elliptic->oogsAx = elliptic->oogs;
+          _elliptic->oogsAx = _elliptic->oogs;
     
         if(platform->comm.mpiRank == 0) {
           printf("testing Ax overlap %.2es %.2es ", nonOverlappedTime, overlappedTime);
-          if(elliptic->oogsAx != elliptic->oogs)
+          if(_elliptic->oogsAx != _elliptic->oogs)
             printf("(overlap enabled)");
 
           printf("\n");
@@ -147,11 +147,12 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
     elliptic->oogs   = oogs::setup(elliptic->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
     elliptic->oogsAx = elliptic->oogs;
-    autoOverlap(elliptic);
   
     levels[0] = new pMGLevel(elliptic, Nmax, options, platform->comm.mpiComm);
     pMGLevelAllocateStorage((pMGLevel*) levels[0], 0);
     precon->MGSolver->numLevels++;
+
+    autoOverlap(elliptic);
   }
 
   //build intermediate MGLevels
@@ -166,8 +167,7 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
     ellipticC->oogs   = oogs::setup(ellipticC->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
     ellipticC->oogsAx = ellipticC->oogs;
-    autoOverlap(ellipticC); 
-
+  
     levels[n] = new pMGLevel(elliptic,
                             meshLevels,
                             ellipticFine,
@@ -177,6 +177,8 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
                             platform->comm.mpiComm);
     pMGLevelAllocateStorage((pMGLevel*) levels[n], n);
     precon->MGSolver->numLevels++;
+
+    autoOverlap(ellipticC); 
   }
 
   //set up coarse level
@@ -192,7 +194,6 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
     ellipticCoarse->oogs   = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
     ellipticCoarse->oogsAx = ellipticCoarse->oogs;
-    autoOverlap(ellipticCoarse);
 
     elliptic_t* ellipticFine = ((pMGLevel*) levels[numMGLevels - 2])->elliptic;
     levels[numMGLevels - 1] = new pMGLevel(elliptic,
@@ -203,6 +204,7 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
                                            options,
                                            platform->comm.mpiComm,
                                            true);
+    autoOverlap(ellipticCoarse);
   } else {
     ellipticCoarse = elliptic; 
     levels[numMGLevels - 1] = new pMGLevel(ellipticCoarse, Nmin, options, platform->comm.mpiComm, true);

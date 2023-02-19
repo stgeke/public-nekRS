@@ -64,10 +64,9 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
 
   //User specified boundary ID list
   std::vector<int> biDlist = {1};
-  postProcessing::dragCalc(nrs,biDlist,false);
+  double *drag = postProcessing::dragCalc(nrs,biDlist);
 
-  double drag = postProcessing::getDrag();
-  const double utau = sqrt(drag); 
+  const double utau = sqrt(drag[0]); 
   const double utauErr = (utau - utauRef)/utauRef;
   
   if(platform->comm.mpiRank == 0){

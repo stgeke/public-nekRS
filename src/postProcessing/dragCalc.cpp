@@ -12,7 +12,11 @@ namespace {
 
   static int nbID;
   static int NfpTotal;
+  static int Nblock;
   static dfloat mueLam;
+
+  static dfloat *drag;
+  static dfloat *area;
   
   static occa::memory o_bID;
   static occa::memory o_drag;
@@ -39,15 +43,19 @@ void postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose)
     o_bID = platform->device.malloc(nbID * sizeof(int), bID.data());
 
     NfpTotal = mesh->Nelements * mesh->Nfaces * mesh->Nfp;
-    
-    o_drag = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat));
-    o_area = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat));
+
+    Nblock = (mesh->Nelements + BLOCKSIZE - 1) / BLOCKSIZE;
+
+    drag = (dfloat *)calloc(Nblock * nbID, sizeof(dfloat));
+    area = (dfloat *)calloc(Nblock * nbID, sizeof(dfloat));
+    o_drag = platform->device.malloc(Nblock * nbID * sizeof(dfloat), drag);
+    o_area = platform->device.malloc(Nblock * nbID * sizeof(dfloat), area);
 
     platform->options.getArgs("VISCOSITY",mueLam);
   }
  
-  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_drag);
-  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_area);
+  platform->linAlg->fillKernel(Nblock * nbID, 0.0, o_drag);
+  platform->linAlg->fillKernel(Nblock * nbID, 0.0, o_area);
 
   occa::memory o_SijOij = platform->o_mempool.slice2;
   nrs->SijOijKernel(mesh->Nelements,
@@ -74,10 +82,17 @@ void postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID, bool verbose)
 	     o_SijOij,
 	     o_drag,
 	     o_area);
+
+  o_drag.copyTo(drag);
+  o_area.copyTo(area);
+  dfloat sbuf[2] = {0, 0};
+  for (int n = 0; n < Nblock; n++){
+    sbuf[0] += drag[n];
+    sbuf[1] += area[n];
+  }
+  MPI_Allreduce(MPI_IN_PLACE, sbuf, 2, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
   
-  const dfloat areasum = platform->linAlg->sum(mesh->Nelements, o_area, platform->comm.mpiComm);
-    
-  dragIntegral = platform->linAlg->sum(mesh->Nelements, o_drag, platform->comm.mpiComm) / areasum;
+  dragIntegral = sbuf[0]/sbuf[1];
       
   setup = 1;
 }

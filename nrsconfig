@@ -24,6 +24,7 @@ cmake -Wno-dev \
       $@ \
       .. 
 
+cd ..
 if [ $? -eq 0 ]; then
   cmd="cmake --build ./build --target install -j8"
   echo ""        

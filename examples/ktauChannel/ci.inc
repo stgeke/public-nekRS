@@ -66,7 +66,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
   std::vector<int> biDlist = {1};
   double *drag = postProcessing::dragCalc(nrs,biDlist);
 
-  const double utau = sqrt(drag[0]); 
+  const double utau = sqrt(drag[0]/8.); 
   const double utauErr = (utau - utauRef)/utauRef;
   
   if(platform->comm.mpiRank == 0){

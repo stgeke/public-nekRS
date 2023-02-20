@@ -10,40 +10,40 @@
 namespace {
   static dfloat *dragIntegral;
 
-  static int nbID;
+  static int nbID = 0;
   static dfloat mueLam;
 
   static dfloat *drag;
-  static dfloat *area;
-  
+    
   static occa::memory o_bID;
   static occa::memory o_drag;
-  static occa::memory o_area;
-
-  static bool setup = 0;
 }
 
 dfloat* postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID)
 {
   mesh_t *mesh = nrs->meshV;
 
-  if(!setup){
+  if(nbID != bID.size()){
+    if(nbID != 0){
+      o_bID.free();
+      o_drag.free();
+    }
     nbID = bID.size();
+    
     o_bID = platform->device.malloc(nbID * sizeof(int), bID.data());
     
-    drag = (dfloat *)calloc(mesh->Nelements * nbID, sizeof(dfloat));
-    area = (dfloat *)calloc(mesh->Nelements * nbID, sizeof(dfloat));
+    drag = (dfloat *)realloc(drag, mesh->Nelements * nbID * sizeof(dfloat));
     o_drag = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat), drag);
-    o_area = platform->device.malloc(mesh->Nelements * nbID * sizeof(dfloat), area);
-
-    platform->options.getArgs("VISCOSITY",mueLam);
-
-    dragIntegral = (dfloat *)calloc(nbID, sizeof(dfloat));
+    
+    dragIntegral = (dfloat *)realloc(dragIntegral, nbID * sizeof(dfloat));
   }
- 
+  
+  o_bID.copyFrom(bID.data());
+  
+  platform->options.getArgs("VISCOSITY",mueLam);
+  
   platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_drag);
-  platform->linAlg->fillKernel(mesh->Nelements * nbID, 0.0, o_area);
-
+  
   occa::memory o_SijOij = platform->o_mempool.slice2;
   nrs->SijOijKernel(mesh->Nelements,
 		    nrs->fieldOffset,
@@ -66,21 +66,21 @@ dfloat* postProcessing::dragCalc(nrs_t *nrs, std::vector<int> bID)
 	     mesh->o_EToB,
 	     mesh->o_invLMM,
 	     o_SijOij,
-	     o_drag,
-	     o_area);
+	     o_drag);
 
   o_drag.copyTo(drag);
-  o_area.copyTo(area);
-  for (dlong ibID = 0; ibID < nbID; ibID++){
-    dfloat sbuf[2] = {0, 0};
-    for (dlong n = 0; n < mesh->Nelements; n++){
-      sbuf[0] += drag[n];
-      sbuf[1] += area[n];
-    }
-    MPI_Allreduce(MPI_IN_PLACE, sbuf, 2, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
-    dragIntegral[ibID] = sbuf[0]/sbuf[1];
+  
+  for (dlong ibID = 0; ibID < nbID; ibID++) {
+    dragIntegral[ibID] = 0;
   }
-  setup = 1;
 
+  for (dlong n = 0; n < mesh->Nelements; n++) {
+    for (dlong ibID = 0; ibID < nbID; ibID++) {
+      dragIntegral[ibID] += drag[n + ibID * mesh->Nelements];
+    }
+  }
+
+  MPI_Allreduce(MPI_IN_PLACE, dragIntegral, nbID, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
+    
   return dragIntegral;
 }

@@ -9,14 +9,12 @@
 		  @ restrict const int *EToBM,
 		  @ restrict const dfloat *invLMM,
 		  @ restrict const dfloat *sij,		  
-		  @ restrict dfloat *drag,
-		  @ restrict dfloat *area)
+		  @ restrict dfloat *drag)
 {
   for (dlong e=0; e < Nelements; e++; @outer(0)){
 
     @shared volatile dfloat s_drag[p_blockSize];
-    @shared volatile dfloat s_area[p_blockSize];
-
+    
     for (int f = 0; f < p_Nfaces; f++) {
       const dlong biDM = EToBM[f + p_Nfaces * e];
       dlong ibiD = -1;
@@ -27,7 +25,6 @@
 	for (int t = 0; t < p_blockSize; ++t; @inner(0)){
 	  if(t >= p_Nfp){
 	    s_drag[t] = 0.0;
-	    s_area[t] = 0.0;
 	  }
 	  else{
 	    const int n = t + f * p_Nfp;
@@ -58,7 +55,6 @@
 	    const dfloat dragz = -scale * (s31*n1 + s32*n2 + s33*n3);
 	    
 	    s_drag[t] = sqrt(dragx * dragx + dragy * dragy + dragz * dragz);
-	    s_area[t] = sWJ;
 	  }
 	}
 	@barrier();
@@ -67,7 +63,6 @@
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 512) {
 	    s_drag[t] += s_drag[t + 512];
-	    s_area[t] += s_area[t + 512];
 	  }
 	@barrier();
 #endif
@@ -75,7 +70,6 @@
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 256) {
 	    s_drag[t] += s_drag[t + 256];
-	    s_area[t] += s_area[t + 256];
 	  }
 	@barrier();
 #endif
@@ -83,51 +77,43 @@
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 128) {
 	    s_drag[t] += s_drag[t + 128];
-	    s_area[t] += s_area[t + 128];
 	  }
 	@barrier();
 	
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 64) {
 	    s_drag[t] += s_drag[t + 64];
-	    s_area[t] += s_area[t + 64];
 	  }
 	@barrier();
 	
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 32) {
 	    s_drag[t] += s_drag[t + 32];
-	    s_area[t] += s_area[t + 32];
 	  }
 	@barrier();
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 16) {
 	    s_drag[t] += s_drag[t + 16];
-	    s_area[t] += s_area[t + 16];
 	  }
 	@barrier();
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 8) {
 	    s_drag[t] += s_drag[t + 8];
-	    s_area[t] += s_area[t + 8];
 	  }
 	@barrier();
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 4) {
 	    s_drag[t] += s_drag[t + 4];
-	    s_area[t] += s_area[t + 4];
 	  }
 	@barrier();
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 2) {
 	    s_drag[t] += s_drag[t + 2];
-	    s_area[t] += s_area[t + 2];
 	  }
 	@barrier();
 	for (int t = 0; t < p_blockSize; ++t; @inner(0))
 	  if (t < 1) {
 	    drag[e + Nelements * ibiD] = s_drag[0] + s_drag[1];
-	    area[e + Nelements * ibiD] = s_area[0] + s_area[1];
 	  }
       }
     }

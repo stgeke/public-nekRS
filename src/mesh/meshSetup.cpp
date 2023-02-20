@@ -202,7 +202,7 @@ mesh_t *createMesh(MPI_Comm comm,
     MPI_Allreduce(MPI_IN_PLACE, &valMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
 
     if (platform->comm.mpiRank == 0)
-      printf("%2.0f%% to %2.0f%% of the local elements are internal\n", 100*valMin, 100*valMax);
+      printf("number of interior elements min/max: %2.0f%%  %2.0f%%\n", 100*valMin, 100*valMax);
   }
 
   mesh->fluid = mesh;
@@ -419,7 +419,7 @@ mesh_t *createMeshV(
     MPI_Allreduce(MPI_IN_PLACE, &valMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
 
     if (platform->comm.mpiRank == 0)
-      printf("%2.0f%% to %2.0f%% of the local elements are internal\n", 100*valMin, 100*valMax);
+      printf("number of interior elements min/max: %2.0f%%  %2.0f%%\n", 100*valMin, 100*valMax);
   }
 
   return mesh;

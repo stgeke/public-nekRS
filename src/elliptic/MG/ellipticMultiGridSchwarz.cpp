@@ -981,7 +981,7 @@ void pMGLevel::build(elliptic_t *pSolver)
 
         auto overlappedTime = timeOperator(o_u, o_Su); 
         if(overlappedTime > nonOverlappedTime)
-          ogsExtOverlap = NULL;
+          ogsExtOverlap = nullptr;
 
         o_u.free();
         o_Su.free();
@@ -1004,10 +1004,10 @@ void pMGLevel::build(elliptic_t *pSolver)
                                platform->comm.mpiComm,
                                1,
                                platform->device.occaDevice(),
-                               NULL,
+                               nullptr,
                                oogsMode);
 
-  ogsExtOverlap = NULL;
+  ogsExtOverlap = nullptr;
   autoOverlap();
 
   free(maskedGlobalIdsExt);
@@ -1027,7 +1027,7 @@ void pMGLevel::smoothSchwarz(occa::memory &o_u, occa::memory &o_Su, bool xIsZero
   const dlong Nelements = elliptic->mesh->Nelements;
   preFDMKernel(Nelements, o_u, o_work1);
 
-  const int overlap = (ogsExtOverlap) ? 1 : 0;
+  const int overlap = (ogsExtOverlap != nullptr) ? 1 : 0;
   oogs_t *hogsExt = (overlap) ? (oogs_t *)ogsExtOverlap : (oogs_t *)ogsExt;
 
   oogs::startFinish(o_work1, 1, 0, ogsDataTypeString, ogsAdd, hogsExt);

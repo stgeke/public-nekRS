@@ -95,19 +95,19 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
   oogs_mode oogsMode = OOGS_AUTO;
 
-  auto autoOverlap = [&](elliptic_t* _elliptic)
+  auto autoOverlap = [&](elliptic_t* elliptic)
   {
     auto timeOperator = [&]()
     {
       const int Nsamples = 10;
-      ellipticOperator(_elliptic, _elliptic->o_p, _elliptic->o_Ap, pfloatString);
+      ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, pfloatString);
  
       platform->device.finish();
       MPI_Barrier(platform->comm.mpiComm);
       const double start = MPI_Wtime();
  
       for (int test = 0; test < Nsamples; ++test)
-        ellipticOperator(_elliptic, _elliptic->o_p, _elliptic->o_Ap, pfloatString);
+        ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, pfloatString);
  
       platform->device.finish();
       double elapsed = (MPI_Wtime() - start) / Nsamples;
@@ -120,19 +120,19 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
         auto nonOverlappedTime = timeOperator();
         auto callback = [&]()
         {
-          ellipticAx(_elliptic, _elliptic->mesh->NlocalGatherElements, _elliptic->mesh->o_localGatherElementList,
-                     _elliptic->o_p, _elliptic->o_Ap, pfloatString);
+          ellipticAx(elliptic, elliptic->mesh->NlocalGatherElements, elliptic->mesh->o_localGatherElementList,
+                     elliptic->o_p, elliptic->o_Ap, pfloatString);
         };
   
-        elliptic->oogsAx = oogs::setup(_elliptic->ogs, 1, 0, ogsPfloat, callback, oogsMode);
+        elliptic->oogsAx = oogs::setup(elliptic->ogs, 1, 0, ogsPfloat, callback, oogsMode);
 
         auto overlappedTime = timeOperator();        
         if(overlappedTime > nonOverlappedTime)
-          _elliptic->oogsAx = _elliptic->oogs;
+          elliptic->oogsAx = elliptic->oogs;
     
         if(platform->comm.mpiRank == 0) {
           printf("testing Ax overlap %.2es %.2es ", nonOverlappedTime, overlappedTime);
-          if(_elliptic->oogsAx != _elliptic->oogs)
+          if(elliptic->oogsAx != elliptic->oogs)
             printf("(overlap enabled)");
 
           printf("\n");

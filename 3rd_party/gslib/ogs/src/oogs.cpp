@@ -7,8 +7,6 @@
 #include "ogsKernels.hpp"
 #include "ogsInterface.h"
 
-#define ENABLE_EARLY_PREPOST
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -354,6 +352,13 @@ oogs_t *oogs::setup(ogs_t *ogs,
   if (gsMode == OOGS_DEFAULT)
     return gs;
 
+  int nbcDeviceEnabled = 0;
+  if(getenv("OOGS_ENABLE_NBC_DEVICE")) {
+    if(std::stoi(getenv("OOGS_ENABLE_NBC_DEVICE")) > 0) {
+      nbcDeviceEnabled = 1;
+    } 
+  }
+
 #if 0
   oogs::packBufFloatAddKernel = buildKernel(oklpath + "oogs.okl", "packBuf_floatAdd", ogs::kernelInfo);
   oogs::unpackBufFloatAddKernel =
@@ -452,6 +457,7 @@ oogs_t *oogs::setup(ogs_t *ogs,
     void * q = calloc(std::max(stride, ogs->N) * nVec * Nbytes, 1);
     occa::memory o_q = device.malloc(std::max(stride, ogs->N) * nVec * Nbytes, q);
     free(q);
+ 
 
     for (auto const &mode : oogs_mode_list) {
       gs->mode = mode;
@@ -459,14 +465,13 @@ oogs_t *oogs::setup(ogs_t *ogs,
       for (auto const &modeExchange : oogs_modeExchange_list) {
         gs->modeExchange = modeExchange;
 
-        if (gs->modeExchange == OOGS_EX_NBC && gs->mode == OOGS_DEVICEMPI)
-          continue; // not supported yet by all MPI implementations
+        if (gs->modeExchange == OOGS_EX_NBC && gs->mode == OOGS_DEVICEMPI) {
+          if(!nbcDeviceEnabled) {
+            continue; // not supported yet by all MPI implementations
+          }
+        }
 
-#ifdef ENABLE_EARLY_PREPOST
         const int nPass = 2;
-#else
-        const int nPass = 1;
-#endif
 
         MPI_Barrier(gs->comm);
         for (int pass = 0; pass < nPass; pass++) {
@@ -531,7 +536,6 @@ oogs_t *oogs::setup(ogs_t *ogs,
 #ifdef DISABLE_OOGS
   gs->mode = OOGS_DEFAULT;
 #endif
-
 
   double elapsedMinMPI = std::numeric_limits<double>::max();
   {

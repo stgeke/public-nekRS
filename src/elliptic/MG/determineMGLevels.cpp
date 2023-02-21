@@ -25,6 +25,10 @@ std::vector<int> determineMGLevels(std::string section)
     // note: default order is not required here.
     // We just need the levels, not the degree.
     auto [scheduleMap, errorString] = parseMultigridSchedule(p_mgschedule, platform->options, 3);
+
+    nrsCheck(errorString.size(), platform->comm.mpiComm, EXIT_FAILURE,
+             "%s\n", errorString.c_str());
+
     for(auto && [cyclePosition, smootherOrder] : scheduleMap){
       auto [order, isDownLeg] = cyclePosition;
       if(isDownLeg){

@@ -304,8 +304,9 @@ int pgmres(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
       error = fabs(s[i+1]) * sqrt(elliptic->resNormFactor);
       rdotr = error;
 
-      nrsCheck(std::isnan(error), MPI_COMM_SELF, EXIT_FAILURE,
-               "Detected invalid resiual norm while running linear solver!\n", "");
+      if (platform->comm.mpiRank == 0)
+        nrsCheck(std::isnan(error), MPI_COMM_SELF, EXIT_FAILURE,
+                 "Detected invalid resiual norm while running linear solver!\n", "");
 
       if (verbose && (platform->comm.mpiRank == 0))
         printf("it %d r norm %.15e\n", iter, rdotr);

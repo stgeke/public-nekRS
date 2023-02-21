@@ -63,7 +63,7 @@ void pMGLevel::coarsen(occa::memory o_x, occa::memory o_Rx)
 
   if (options.compareArgs("DISCRETIZATION","CONTINUOUS")) {
     oogs::startFinish(o_Rx, elliptic->Nfields, elliptic->fieldOffset, ogsPfloat, ogsAdd, elliptic->oogs);
-    ellipticApplyMask(elliptic, o_Rx, dfloatString); // apply mask again because coarsenKernel do not preserve it
+    ellipticApplyMask(elliptic, o_Rx, pfloatString); // apply mask again because coarsenKernel do not preserve it
   }
 
   const double factor = std::is_same<pfloat, float>::value ? 0.5 : 1.0;

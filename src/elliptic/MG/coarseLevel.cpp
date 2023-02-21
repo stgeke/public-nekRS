@@ -91,16 +91,16 @@ void MGSolver_t::coarseLevel_t::setupSolver(
     settings[10] = 0;    /* aggressive coarsening levels */
     settings[11] = 2;    /* chebyRelaxOrder */
 
-    options.getArgs("BOOMERAMG COARSEN TYPE", settings[1]);
-    options.getArgs("BOOMERAMG INTERPOLATION TYPE", settings[2]);
-    options.getArgs("BOOMERAMG COARSE SMOOTHER TYPE", settings[4]);
-    options.getArgs("BOOMERAMG SMOOTHER TYPE", settings[6]);
-    options.getArgs("BOOMERAMG SMOOTHER SWEEPS", settings[7]);
-    options.getArgs("BOOMERAMG ITERATIONS", settings[3]);
-    options.getArgs("BOOMERAMG STRONG THRESHOLD", settings[8]);
-    options.getArgs("BOOMERAMG NONGALERKIN TOLERANCE" , settings[9]);
-    options.getArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS" , settings[10]);
-    options.getArgs("BOOMERAMG CHEBYSHEV RELAX ORDER" , settings[11]);
+    platform->options.getArgs("BOOMERAMG COARSEN TYPE", settings[1]);
+    platform->options.getArgs("BOOMERAMG INTERPOLATION TYPE", settings[2]);
+    platform->options.getArgs("BOOMERAMG COARSE SMOOTHER TYPE", settings[4]);
+    platform->options.getArgs("BOOMERAMG SMOOTHER TYPE", settings[6]);
+    platform->options.getArgs("BOOMERAMG SMOOTHER SWEEPS", settings[7]);
+    platform->options.getArgs("BOOMERAMG ITERATIONS", settings[3]);
+    platform->options.getArgs("BOOMERAMG STRONG THRESHOLD", settings[8]);
+    platform->options.getArgs("BOOMERAMG NONGALERKIN TOLERANCE" , settings[9]);
+    platform->options.getArgs("BOOMERAMG AGGRESSIVE COARSENING LEVELS" , settings[10]);
+    platform->options.getArgs("BOOMERAMG CHEBYSHEV RELAX ORDER" , settings[11]);
 
     if(useDevice) {
       boomerAMG = new hypreWrapperDevice::boomerAMG_t(

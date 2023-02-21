@@ -32,7 +32,8 @@ smootherType = RAS+OptFourthChebyshev #+maxEigenvalueBoundFactor=1.1
 
 initialGuess = previous
 
-[VELOCITY] # dummy
+[VELOCITY]
+boundaryTypeMap = zeroGradient #zeroValue 
 preconditioner = none
 density = 1.0
 viscosity = 1.0

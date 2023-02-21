@@ -539,10 +539,9 @@ void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::In
     return;
   }
 
-  // coarse grid discretization
+
   options.setArgs(parSectionName + "MULTIGRID SEMFEM", "FALSE");
-  if(options.compareArgs(parSectionName + "MULTIGRID SMOOTHER", "DAMPEDJACOBI"))
-    options.setArgs("BOOMERAMG ITERATIONS", "2");
+
   if (p_coarseGridDiscretization.find("semfem") != std::string::npos) {
     options.setArgs(parSectionName + "MULTIGRID SEMFEM", "TRUE");
   }
@@ -588,6 +587,14 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   const int boomer = p_coarseSolver.find("boomeramg") != std::string::npos;
   if(amgx + boomer > 1)
     append_error("Conflicting solver types in coarseSolver!\n");
+
+  if(boomer) {
+    std::string smoother;
+    options.getArgs(parSectionName + "MULTIGRID SMOOTHER", smoother);
+    if (smoother.find("DAMPEDJACOBI") != std::string::npos) { 
+      options.setArgs("BOOMERAMG ITERATIONS", "2");
+    }
+  }
 
   if(boomer || amgx) {
     options.setArgs(parSectionName + "MULTIGRID COARSE SOLVE", "TRUE");
@@ -751,7 +758,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
           surrogateSmootherSet = true;
           options.setArgs(parSection + "MULTIGRID SMOOTHER",
                           "DAMPEDJACOBI," + chebyshevType);
-          //options.setArgs("BOOMERAMG ITERATIONS", "2");
           if (p_preconditioner.find("additive") != std::string::npos) 
             append_error("Additive vcycle is not supported for Chebyshev smoother");
         } else if (s.find("asm") != std::string::npos)
@@ -800,7 +806,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
       append_error("Jacobi smoother requires Chebyshev");
       options.setArgs(parSection + "MULTIGRID SMOOTHER",
                       "DAMPEDJACOBI");
-      options.setArgs("BOOMERAMG ITERATIONS", "2");
       if (p_preconditioner.find("additive") != std::string::npos)
         append_error("Additive vcycle is not supported for Jacobi smoother");
     } else {

@@ -375,7 +375,7 @@ neknek_t::neknek_t(nrs_t *nrs, const session_data_t &session)
     nrs->cds->neknek = this;
   }
 
-  platform->options.getArgs("BOUNDARY EXTRAPOLATION ORDER", this->nEXT);
+  platform->options.getArgs("NEKNEK BOUNDARY EXT ORDER", this->nEXT);
 
   this->coeffEXT.resize(this->nEXT);
   this->o_coeffEXT = platform->device.malloc(this->nEXT * sizeof(dfloat));

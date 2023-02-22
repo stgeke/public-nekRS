@@ -1320,7 +1320,7 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PLATFORM NUMBER", "0");
   options.setArgs("VERBOSE", "FALSE");
 
-  options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "1");
+  options.setArgs("NEKNEK BOUNDARY EXT ORDER", "1");
 
   options.setArgs("ADVECTION", "TRUE");
   options.setArgs("ADVECTION TYPE", "CUBATURE+CONVECTIVE");
@@ -1733,7 +1733,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
   // NEKNEK
   dlong boundaryEXTOrder;
   if (par->extract("neknek", "boundaryextorder", boundaryEXTOrder)) {
-    options.setArgs("BOUNDARY EXTRAPOLATION ORDER", std::to_string(boundaryEXTOrder));
+    options.setArgs("NEKNEK BOUNDARY EXT ORDER", std::to_string(boundaryEXTOrder));
   }
 
   // PROBLEMTYPE

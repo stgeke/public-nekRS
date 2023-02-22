@@ -24,11 +24,11 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("BDF ORDER", "3");
   if (ciMode == 1) {
     options.setArgs("NEKNEK CORRECTOR STEPS", "1");
-    options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "3");
+    options.setArgs("NEKNEK BOUNDARY EXT ORDER", "3");
   }
   else if (ciMode == 2) {
     options.setArgs("NEKNEK CORRECTOR STEPS", "0");
-    options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "1");
+    options.setArgs("NEKNEK BOUNDARY EXT ORDER", "1");
   }
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-12"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-08"));

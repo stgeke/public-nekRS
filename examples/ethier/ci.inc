@@ -837,6 +837,22 @@ void ciTestErrors(nrs_t *nrs,
       }
       CIFAIL;
     }
+
+    // check flop count
+    const auto expectedOperations = 125188214670; // from nvprof
+    const auto accuracy = 0.035; // observed 3% error in result
+    const auto operations = platform->flopCounter->get(platform->comm.mpiComm)/(platform->comm.mpiCommSize);
+    if (operations >= (1+accuracy) * expectedOperations || operations <= (1-accuracy) * expectedOperations) {
+      if (platform->comm.mpiRank == 0) {
+        printf("Expected operation count differs!\n"
+               "Expected : %g\n"
+               "Actual   : %g\n",
+               expectedOperations,
+               operations);
+        fflush(stdout);
+      }
+      CIFAIL;
+    }
   }
   if (ciMode == 8) {
     const int expectedSteps = 56;

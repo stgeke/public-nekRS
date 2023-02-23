@@ -19,6 +19,7 @@
 
 ## Good to know
 
+* [udf] Changes in include files do not trigger rebuild 
 * [nrsconfig] Optional build settings have to be passed as a command line arg e.g. `-DENABLE_AMGX=ON`
 
 ## Breaking Changes

@@ -210,17 +210,23 @@ void udfBuild(const char *_udfFile, setupAide &options)
 
     if (platform->options.compareArgs("BUILD ONLY", "TRUE")) {
       buildRequired = 1;
-    } else if (!fileExists(udfLib.c_str())) {
+    } else if (!fs::exists(udfLib)) {
       buildRequired = 1;
     } else if (isFileNewer(udfFile.c_str(), udfFileCache.c_str())) {
       buildRequired = 1;
-    } else if (fs::exists(oudfFile)) {
+    };
+
+    if (fs::exists(oudfFile)) {
       if (isFileNewer(oudfFile.c_str(), oudfFileCache.c_str())) 
         buildRequired = 1;
-    } else if (fs::exists(std::string(case_dir + "/ci.inc").c_str())) {
+    }
+
+    if (fs::exists(std::string(case_dir + "/ci.inc"))) {
       if (isFileNewer(std::string(case_dir + "/ci.inc").c_str(), udfFileCache.c_str()))
         buildRequired = 1;
-    } else if (fs::exists(std::string(case_dir + "/" + casename + ".okl").c_str())) {
+    }
+
+    if (fs::exists(std::string(case_dir + "/" + casename + ".okl"))) {
       if (isFileNewer(std::string(case_dir + "/" + casename + ".okl").c_str(), oudfFileCache.c_str())) 
         buildRequired = 1;
     }

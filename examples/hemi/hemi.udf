@@ -41,7 +41,7 @@ void particleRHS(nrs_t *nrs, lpm_t *lpm, dfloat time, occa::memory o_y, void *us
 
   auto o_Uinterp = lpm->getInterpField("fluid_velocity");
 
-  particleRHSKernel(lpm->size(), offset, o_y, lpm->o_prop, o_Uinterp, o_ydot);
+  particleRHSKernel(lpm->numParticles(), offset, o_y, lpm->o_prop, o_Uinterp, o_ydot);
 }
 
 void UDF_Setup(nrs_t *nrs)
@@ -52,8 +52,6 @@ void UDF_Setup(nrs_t *nrs)
   particles->setUserRHS(particleRHS);
 
   particles->setSolver("AB");
-  const int particleIntegrationOrder = 3;
-  particles->abOrder(particleIntegrationOrder);
 
   // register fluid velocity as an interpolated quantity
   particles->registerInterpField("fluid_velocity", nrs->NVfields, nrs->o_U);
@@ -140,8 +138,17 @@ void UDF_Setup(nrs_t *nrs)
 
 void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
 {
-  if (!nrs->lastStep) {
-    particles->integrate(time, time + nrs->dt[0], tstep);
+  particles->integrate(time);
+
+  // If more than 10% of particles cannot be evaluated on the owning processor, migrate particles to the correct position.
+  const auto migrationFraction = 0.1;
+  const auto numNonLocalParticles = particles->numNonLocalParticles();
+  
+  auto nonLocalParticleFraction = particles->numParticles() ? numNonLocalParticles/particles->numParticles() : 0.0;
+  MPI_Allreduce(MPI_IN_PLACE, &nonLocalParticleFraction, 1, MPI_DFLOAT, MPI_MAX, platform->comm.mpiComm);
+  
+  if(nonLocalParticleFraction > migrationFraction){
+    particles->migrate();
   }
 
   if (nrs->isOutputStep) {
@@ -149,6 +156,6 @@ void UDF_ExecuteStep(nrs_t *nrs, dfloat time, int tstep)
     nek::userchk(); // compute lambda2
     nek::ocopyFromNek(time);
 
-    particles->writeFld(time);
+    particles->writeFld();
   }
 }

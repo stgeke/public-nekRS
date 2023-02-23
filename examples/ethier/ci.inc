@@ -14,6 +14,13 @@ std::vector<dfloat> xp0;
 std::vector<dfloat> yp0;
 std::vector<dfloat> zp0;
 
+// initial coordinates, based on global particle id (duplicated on each proc)
+std::vector<dfloat> xpg0;
+std::vector<dfloat> ypg0;
+std::vector<dfloat> zpg0;
+
+std::vector<dfloat> pid0;
+
 // solve ODE system dx_i/dt = u_i using 4th order Runge-Kutta
 occa::memory solveODE(nrs_t *nrs,
                       dfloat t0,
@@ -222,7 +229,7 @@ auto generatePoints(int nPoints, double R)
   return std::make_tuple(pointsX, pointsY, pointsZ);
 }
 
-void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel, occa::kernel RKKernel)
+void ciTestParticles(nrs_t *nrs, lpm_t *particles, occa::kernel exactUVWPKernel, occa::kernel RKKernel)
 {
   // reserve testing to ciMode 1
   if(ciMode != 1) return;
@@ -232,53 +239,63 @@ void ciTestParticles(nrs_t *nrs, lpm_t &particles, occa::kernel exactUVWPKernel,
   double endTime;
   platform->options.getArgs("END TIME", endTime);
 
-  // compare against RK4 solution
-  std::vector<dfloat> xExpected(xp0.size(), 0.0);
-  std::vector<dfloat> yExpected(yp0.size(), 0.0);
-  std::vector<dfloat> zExpected(zp0.size(), 0.0);
+  // gid of particles currently on rank
+  std::vector<int> gids(particles->numParticles());
+  std::vector<dfloat> xp0_g(particles->numParticles()); // based on current rank
+  std::vector<dfloat> yp0_g(particles->numParticles());
+  std::vector<dfloat> zp0_g(particles->numParticles());
+  auto gidFloat = particles->getPropHost("gid");
+  for (int i = 0; i < particles->numParticles(); ++i) {
+    int gid = gidFloat[i];
+    gids[i] = gid;
+    xp0_g[i] = xpg0[gid];
+    yp0_g[i] = ypg0[gid];
+    zp0_g[i] = zpg0[gid];
+  }
 
-  auto o_y0 = platform->device.malloc(nrs->dim * xp0.size() * sizeof(dfloat));
-  auto o_x0coord = o_y0 + 0 * xp0.size() * sizeof(dfloat);
-  auto o_y0coord = o_y0 + 1 * yp0.size() * sizeof(dfloat);
-  auto o_z0coord = o_y0 + 2 * zp0.size() * sizeof(dfloat);
-  o_x0coord.copyFrom(xp0.data(), xp0.size() * sizeof(dfloat));
-  o_y0coord.copyFrom(yp0.data(), yp0.size() * sizeof(dfloat));
-  o_z0coord.copyFrom(zp0.data(), zp0.size() * sizeof(dfloat));
+
+  // compare against RK4 solution
+  std::vector<dfloat> xExpected(xp0_g.size(), 0.0);
+  std::vector<dfloat> yExpected(yp0_g.size(), 0.0);
+  std::vector<dfloat> zExpected(zp0_g.size(), 0.0);
+
+  auto o_y0 = platform->device.malloc(nrs->dim * xp0_g.size() * sizeof(dfloat));
+  auto o_x0coord = o_y0 + 0 * xp0_g.size() * sizeof(dfloat);
+  auto o_y0coord = o_y0 + 1 * yp0_g.size() * sizeof(dfloat);
+  auto o_z0coord = o_y0 + 2 * zp0_g.size() * sizeof(dfloat);
+  o_x0coord.copyFrom(xp0_g.data(), xp0_g.size() * sizeof(dfloat));
+  o_y0coord.copyFrom(yp0_g.data(), yp0_g.size() * sizeof(dfloat));
+  o_z0coord.copyFrom(zp0_g.data(), zp0_g.size() * sizeof(dfloat));
 
   auto o_y = solveODE(nrs, 0.0, endTime, 5e-3 * nrs->dt[0], o_y0, exactUVWPKernel, RKKernel);
-  auto o_xcoord = o_y + 0 * xp0.size() * sizeof(dfloat);
-  auto o_ycoord = o_y + 1 * xp0.size() * sizeof(dfloat);
-  auto o_zcoord = o_y + 2 * xp0.size() * sizeof(dfloat);
+  auto o_xcoord = o_y + 0 * xp0_g.size() * sizeof(dfloat);
+  auto o_ycoord = o_y + 1 * xp0_g.size() * sizeof(dfloat);
+  auto o_zcoord = o_y + 2 * xp0_g.size() * sizeof(dfloat);
 
   o_xcoord.copyTo(xExpected.data(), xExpected.size() * sizeof(dfloat));
   o_ycoord.copyTo(yExpected.data(), yExpected.size() * sizeof(dfloat));
   o_zcoord.copyTo(zExpected.data(), zExpected.size() * sizeof(dfloat));
 
-  if (xExpected.size() != particles.size()) {
+  if (xExpected.size() != particles->numParticles()) {
     if (platform->comm.mpiRank == 0) {
       std::cout << "Unexpected number of particles" << std::endl;
     }
     CIFAIL;
   }
 
-  auto relTol = 5e-7;
-
-  if(platform->options.compareArgs("MOVING MESH", "TRUE")){
-    relTol = 1e-5;
-  }
-
+  auto relTol = 1e-7;
   auto floorTol = 1e-12;
 
   auto LinfErrX = 0.0;
   auto LinfErrY = 0.0;
   auto LinfErrZ = 0.0;
 
-  std::vector<dfloat> xP = particles.getDOFHost("x");
-  std::vector<dfloat> yP = particles.getDOFHost("y");
-  std::vector<dfloat> zP = particles.getDOFHost("z");
+  std::vector<dfloat> xP = particles->getDOFHost("x");
+  std::vector<dfloat> yP = particles->getDOFHost("y");
+  std::vector<dfloat> zP = particles->getDOFHost("z");
 
   bool passed = true;
-  for (int pid = 0; pid < particles.size(); ++pid) {
+  for (int pid = 0; pid < particles->numParticles(); ++pid) {
     auto expectedX = xExpected.at(pid);
     auto expectedY = yExpected.at(pid);
     auto expectedZ = zExpected.at(pid);
@@ -626,7 +643,7 @@ void ciTestLinAlg(const int N)
 void ciTestErrors(nrs_t *nrs,
                   dfloat time,
                   int tstep,
-                  lpm_t &particles,
+                  lpm_t *particles,
                   occa::kernel exactUVWPKernel,
                   occa::kernel RKKernel)
 {
@@ -644,6 +661,11 @@ void ciTestErrors(nrs_t *nrs,
       CIFAIL;
     }
   }
+
+  if(ciMode == 1){
+    particles->migrate(); // invoke particle migration
+  }
+
   if (!nrs->lastStep)
     return;
 

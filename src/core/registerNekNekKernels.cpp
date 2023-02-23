@@ -4,7 +4,6 @@
 
 namespace {
 // compute nearest power of two larger than v
-// from: https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 unsigned nearestPowerOfTwo(unsigned int v)
 {
   unsigned answer = 1;
@@ -42,6 +41,14 @@ void registerNekNekKernels()
   findptsKernelInfo["defines/hlong"] = hlongString;
   findptsKernelInfo["defines/dfloat"] = dfloatString;
   findptsKernelInfo["defines/DBL_MAX"] = std::numeric_limits<dfloat>::max();
+
+  // findpts kernel currently requires INNER_SIZE > 3 * p_Nq
+  // However, we must also make this a multiple of the warp size
+  auto innerSize = 3 * Nq;
+  if (innerSize % platform->warpSize)
+    innerSize = (innerSize / platform->warpSize + 1) * platform->warpSize;
+
+  findptsKernelInfo["defines/p_innerSize"] = innerSize;
 
   findptsKernelInfo["includes"] += oklpath + "/findpts/findpts.okl.hpp";
   findptsKernelInfo["includes"] += oklpath + "/findpts/poly.okl.hpp";

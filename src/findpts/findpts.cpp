@@ -27,6 +27,7 @@ SOFTWARE.
 // for platform
 #include "nrssys.hpp"
 #include "nrs.hpp"
+#include "tuple_for_each.hpp"
 
 #include <cstdlib>
 #include <vector>
@@ -271,10 +272,12 @@ void findpts_t::findptsLocal(int *const code,
     platform->timer.toc(timerName + "findptsLocal::localKernel");
   }
 
-  o_code.copyTo(code, sizeof(dlong) * pn);
-  o_el.copyTo(el, sizeof(dlong) * pn);
-  o_r.copyTo(r, dim * sizeof(dfloat) * pn);
-  o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  if (pn > 0) {
+    o_code.copyTo(code, sizeof(dlong) * pn);
+    o_el.copyTo(el, sizeof(dlong) * pn);
+    o_r.copyTo(r, dim * sizeof(dfloat) * pn);
+    o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  }
   if (timerLevel == TimerLevel::Detailed) {
     platform->timer.toc(timerName + "findptsLocal");
   }
@@ -351,10 +354,12 @@ void findpts_t::findptsLocal(int *const code,
     platform->timer.toc(timerName + "findptsLocal::localKernel");
   }
 
-  o_code.copyTo(code, sizeof(dlong) * pn);
-  o_el.copyTo(el, sizeof(dlong) * pn);
-  o_r.copyTo(r, dim * sizeof(dfloat) * pn);
-  o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  if (pn > 0) {
+    o_code.copyTo(code, sizeof(dlong) * pn);
+    o_el.copyTo(el, sizeof(dlong) * pn);
+    o_r.copyTo(r, dim * sizeof(dfloat) * pn);
+    o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  }
   if (timerLevel == TimerLevel::Detailed) {
     platform->timer.toc(timerName + "findptsLocal");
   }
@@ -967,9 +972,11 @@ void findpts_t::find(data_t *const findPtsData,
   }
 
   platform->timer.tic(timerName + "find::initial copy op", 1);
-  o_xint.copyTo(x_base.data(), npt * sizeof(dfloat));
-  o_yint.copyTo(y_base.data(), npt * sizeof(dfloat));
-  o_zint.copyTo(z_base.data(), npt * sizeof(dfloat));
+  if (npt) {
+    o_xint.copyTo(x_base.data(), npt * sizeof(dfloat));
+    o_yint.copyTo(y_base.data(), npt * sizeof(dfloat));
+    o_zint.copyTo(z_base.data(), npt * sizeof(dfloat));
+  }
   platform->timer.toc(timerName + "find::initial copy op");
 
   int *const code_base = findPtsData->code_base;
@@ -1574,50 +1581,31 @@ void findpts_t::eval(const dlong npt,
 
   const auto timerNameSave = timerName;
   timerName = timerName + "eval::";
-#define FINDPTS_EVAL(fieldSize)                                                                              \
-{                                                                                                            \
-if (nFields == (fieldSize)) {                                                                                \
-findptsEvalImpl<evalOutPt_t<(fieldSize)>>(o_out,                                                             \
-                                          findPtsData->code_base,                                            \
-                                          findPtsData->proc_base,                                            \
-                                          findPtsData->el_base,                                              \
-                                          findPtsData->r_base,                                               \
-                                          npt,                                                               \
-                                          nFields,                                                           \
-                                          inputOffset,                                                       \
-                                          outputOffset,                                                      \
-                                          o_in,                                                              \
-                                          *this->hash,                                                       \
-                                          *this->cr);                                                        \
-}                                                                                                            \
-}
-  FINDPTS_EVAL(1);
-  FINDPTS_EVAL(2);
-  FINDPTS_EVAL(3);
-  FINDPTS_EVAL(4);
-  FINDPTS_EVAL(5);
-  FINDPTS_EVAL(6);
-  FINDPTS_EVAL(7);
-  FINDPTS_EVAL(8);
-  FINDPTS_EVAL(9);
-  FINDPTS_EVAL(10);
-  FINDPTS_EVAL(11);
-  FINDPTS_EVAL(12);
-  FINDPTS_EVAL(13);
-  FINDPTS_EVAL(14);
-  FINDPTS_EVAL(15);
-  FINDPTS_EVAL(16);
-  FINDPTS_EVAL(17);
-  FINDPTS_EVAL(18);
-  FINDPTS_EVAL(19);
-  FINDPTS_EVAL(20);
-#undef FINDPTS_EVAL
 
-  nrsCheck(nFields < 1 || nFields > 20,
+  auto fieldSizesTuple = n_tuple<int, findpts_t::maxFields>{};
+  tuple_for_each(fieldSizesTuple, [&](auto T) {
+    if (nFields != decltype(T)::value)
+      return;
+    findptsEvalImpl<evalOutPt_t<decltype(T)::value>>(o_out,
+                                                     findPtsData->code_base,
+                                                     findPtsData->proc_base,
+                                                     findPtsData->el_base,
+                                                     findPtsData->r_base,
+                                                     npt,
+                                                     nFields,
+                                                     inputOffset,
+                                                     outputOffset,
+                                                     o_in,
+                                                     *this->hash,
+                                                     *this->cr);
+  });
+
+  nrsCheck(nFields < 1 || nFields > findpts_t::maxFields,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "Error: nFields = %d is not supported.",
-           nFields);
+           "Error: nFields = %d is not supported. nFields must be between 1 and %d.",
+           nFields,
+           findpts_t::maxFields);
 
   timerName = timerNameSave;
 
@@ -1640,50 +1628,30 @@ void findpts_t::eval(const dlong npt,
 
   const auto timerNameSave = timerName;
   timerName = timerName + "eval::";
-#define FINDPTS_EVAL(fieldSize)                                                                              \
-{                                                                                                            \
-if (nFields == (fieldSize)) {                                                                                \
-findptsEvalImpl<evalOutPt_t<(fieldSize)>>(out,                                                               \
-                                          findPtsData->code_base,                                            \
-                                          findPtsData->proc_base,                                            \
-                                          findPtsData->el_base,                                              \
-                                          findPtsData->r_base,                                               \
-                                          npt,                                                               \
-                                          nFields,                                                           \
-                                          inputOffset,                                                       \
-                                          outputOffset,                                                      \
-                                          in,                                                                \
-                                          *this->hash,                                                       \
-                                          *this->cr);                                                        \
-}                                                                                                            \
-}
-  FINDPTS_EVAL(1);
-  FINDPTS_EVAL(2);
-  FINDPTS_EVAL(3);
-  FINDPTS_EVAL(4);
-  FINDPTS_EVAL(5);
-  FINDPTS_EVAL(6);
-  FINDPTS_EVAL(7);
-  FINDPTS_EVAL(8);
-  FINDPTS_EVAL(9);
-  FINDPTS_EVAL(10);
-  FINDPTS_EVAL(11);
-  FINDPTS_EVAL(12);
-  FINDPTS_EVAL(13);
-  FINDPTS_EVAL(14);
-  FINDPTS_EVAL(15);
-  FINDPTS_EVAL(16);
-  FINDPTS_EVAL(17);
-  FINDPTS_EVAL(18);
-  FINDPTS_EVAL(19);
-  FINDPTS_EVAL(20);
-#undef FINDPTS_EVAL
+  auto fieldSizesTuple = n_tuple<int, findpts_t::maxFields>{};
+  tuple_for_each(fieldSizesTuple, [&](auto T) {
+    if (nFields != decltype(T)::value)
+      return;
+    findptsEvalImpl<evalOutPt_t<decltype(T)::value>>(out,
+                                                     findPtsData->code_base,
+                                                     findPtsData->proc_base,
+                                                     findPtsData->el_base,
+                                                     findPtsData->r_base,
+                                                     npt,
+                                                     nFields,
+                                                     inputOffset,
+                                                     outputOffset,
+                                                     in,
+                                                     *this->hash,
+                                                     *this->cr);
+  });
 
-  nrsCheck(nFields < 1 || nFields > 20,
+  nrsCheck(nFields < 1 || nFields > findpts_t::maxFields,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "Error: nFields = %d is not supported.",
-           nFields);
+           "Error: nFields = %d is not supported. nFields must be between 1 and %d.",
+           nFields,
+           findpts_t::maxFields);
 
   timerName = timerNameSave;
 

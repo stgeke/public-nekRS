@@ -125,6 +125,8 @@ public:
   void update(data_t &data);
 
 private:
+  static constexpr int maxFields = 30;
+
   MPI_Comm comm;
   int rank;
   TimerLevel timerLevel = TimerLevel::None;

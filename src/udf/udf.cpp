@@ -36,32 +36,32 @@ void oudfFindDirichlet(std::string &field)
 {
   nrsCheck(field.find("velocity") != std::string::npos && !velocityDirichletConditions,
            platform->comm.mpiComm, EXIT_FAILURE,
-           "Cannot find oudf function: velocityDirichletConditions!\n", "");
+           "Cannot find velocityDirichletConditions!\n", "");
 
   nrsCheck(field.find("scalar") != std::string::npos && !scalarDirichletConditions,
            platform->comm.mpiComm, EXIT_FAILURE,
-           "Cannot find oudf function: scalarDirichletConditions!\n", "");
+           "Cannot find scalarDirichletConditions!\n", "");
 
   if (field == "pressure" && !pressureDirichletConditions) {
     if (platform->comm.mpiRank == 0)
-      std::cout << "WARNING: Cannot find oudf function: pressureDirichletConditions!\n";
+      std::cout << "WARNING: Cannot find pressureDirichletConditions!\n";
   }
   nrsCheck(field.find("mesh") != std::string::npos && !meshVelocityDirichletConditions &&
            !bcMap::useDerivedMeshBoundaryConditions(), platform->comm.mpiComm, EXIT_FAILURE,
-           "Cannot find oudf function: meshVelocityDirichletConditions!\n", "");
+           "Cannot find meshVelocityDirichletConditions!\n", "");
 }
 
 void oudfFindNeumann(std::string &field)
 {
   nrsCheck(field.find("velocity") != std::string::npos && !velocityNeumannConditions,
            platform->comm.mpiComm, EXIT_FAILURE,
-           "Cannot find oudf function: velocityNeumannConditions!\n", "");
+           "Cannot find velocityNeumannConditions!\n", "");
   nrsCheck(field.find("scalar") != std::string::npos && !scalarNeumannConditions,
            platform->comm.mpiComm, EXIT_FAILURE,
-           "Cannot find oudf function: scalarNeumannConditions!\n", "");
+           "Cannot find scalarNeumannConditions!\n", "");
 }
 
-void convertSingleSourceUdf(const std::string &udfFileCache, const std::string &oudfFileCache)
+bool udfSplit(const std::string &udfFileCache, const std::string &oudfFileCache)
 {
   std::regex rgx(R"(\s*@oklBegin\s*\{([\s\S]*)\}\s*@oklEnd)");
 
@@ -76,13 +76,20 @@ void convertSingleSourceUdf(const std::string &udfFileCache, const std::string &
   udff.close();
   fileSync(udfFileCache.c_str());
 
-  std::ofstream df(oudfFileCache, std::ios::trunc);
   std::smatch match;
   std::string search = buffer.str();
   std::regex_search(search, match, rgx);
-  df << match.str(1);
-  df.close();
-  fileSync(oudfFileCache.c_str());
+
+  const bool oklSectionFound = !match.str(1).empty();
+
+  if(oklSectionFound) {
+    std::ofstream df(oudfFileCache, std::ios::trunc);
+    df << match.str(1);
+    df.close();
+    fileSync(oudfFileCache.c_str());
+  }
+
+  return oklSectionFound;
 }
 
 void adjustOudf(const std::string &filePath)
@@ -129,15 +136,53 @@ void adjustOudf(const std::string &filePath)
   fileSync(filePath.c_str());
 }
 
+void udfAutoKernels(const std::string& udfFileCache, const std::string& oudfFileCache)
+{
+  const std::string includeFile = fs::path(udfFileCache).parent_path() / fs::path("udfAutoLoadKernel.hpp");
+  std::ifstream stream(oudfFileCache);
+  std::regex exp(R"(\s*@kernel\s*void\s*([\S]*)\s*\()");
+  std::smatch res;
+  std::ofstream f(includeFile);
+
+  std::string line;
+  std::vector<std::string> kernelNameList;
+  while (std::getline(stream, line)) {
+    if (std::regex_search(line, res, exp)) {
+      std::string kernelName = res[1];
+      kernelNameList.push_back(kernelName);
+      f << "static occa::kernel " << kernelName << ";\n";
+    }
+  }
+
+  f << "void UDF_AutoLoadKernels(occa::properties& kernelInfo)" << std::endl << "{" << std::endl;
+
+  for (auto entry : kernelNameList) {
+    f << "  " << entry << " = "
+      << "oudfBuildKernel(kernelInfo, \"" << entry << "\");" << std::endl;
+  }
+
+  f << "}" << std::endl;
+
+  f.close();
+  fileSync(includeFile.c_str());
+  stream.close();
+
+  std::stringstream udfBuffer;
+  {
+    std::ifstream udf(udfFileCache);
+    udfBuffer << udf.rdbuf();
+    udf.close();
+  }
+  std::ofstream udf(udfFileCache, std::ios::trunc);
+  udf << std::regex_replace(udfBuffer.str(), std::regex("__replace__udf_auto__include__"), "#include \"udfAutoLoadKernel.hpp\"");
+  udf.close(); 
+}
+
 void udfBuild(const char *_udfFile, setupAide &options)
 {
   std::string udfFile = fs::absolute(_udfFile);
   if (platform->comm.mpiRank == 0)
     nrsCheck(!fs::exists(udfFile), MPI_COMM_SELF, EXIT_FAILURE, "Cannot find %s!\n", udfFile); 
-
-  std::string oudfFile;
-  options.getArgs("UDF OKL FILE", oudfFile);
-  oudfFile = fs::absolute(oudfFile);
 
   const int verbose = options.compareArgs("VERBOSE", "TRUE") ? 1 : 0;
   const std::string installDir(getenv("NEKRS_HOME"));
@@ -146,42 +191,55 @@ void udfBuild(const char *_udfFile, setupAide &options)
   const std::string udfLib = cache_dir + "/udf/libUDF.so";
   const std::string udfFileCache = cache_dir + "/udf/udf.cpp";
   const std::string oudfFileCache = cache_dir + "/udf/udf.okl";
+  const std::string case_dir(fs::current_path());
+  const std::string casename = options.getArgs("CASENAME");
+
   options.setArgs("OKL FILE CACHE", oudfFileCache);
+
+  std::string oudfFile;
+  options.getArgs("UDF OKL FILE", oudfFile);
+  oudfFile = fs::absolute(oudfFile);
+
 
   MPI_Comm comm = (platform->cacheLocal) ? platform->comm.mpiCommLocal : platform->comm.mpiComm;
   int buildRank;
   MPI_Comm_rank(comm, &buildRank);
 
-  int configRequired = 0;
-  int oudfFileExists;
+  int buildRequired = 0;
   if(platform->comm.mpiRank == 0) {
-    if (isFileNewer(udfFile.c_str(), udfFileCache.c_str()) || 
-        !fileExists(udfLib.c_str())) {
-      configRequired = 1;
-    }
-    oudfFileExists = fs::exists(oudfFile);
 
-    if (oudfFileExists) {
-       std::stringstream buffer;
-       std::ifstream udff(udfFile);
-       buffer << udff.rdbuf();
-       udff.close();
-       nrsCheck(buffer.str().find("@oklBegin") != std::string::npos,
-                MPI_COMM_SELF, 
-                EXIT_FAILURE, 
-                "udf with an okl section and a separate oudf is not supported!\n", "");
-     }
+    if (platform->options.compareArgs("BUILD ONLY", "TRUE")) {
+      buildRequired = 1;
+    } else if (!fileExists(udfLib.c_str())) {
+      buildRequired = 1;
+    } else if (isFileNewer(udfFile.c_str(), udfFileCache.c_str())) {
+      buildRequired = 1;
+    } else if (fs::exists(oudfFile)) {
+      if (isFileNewer(oudfFile.c_str(), oudfFileCache.c_str())) 
+        buildRequired = 1;
+    } else if (fs::exists(std::string(case_dir + "/ci.inc").c_str())) {
+      if (isFileNewer(std::string(case_dir + "/ci.inc").c_str(), udfFileCache.c_str()))
+        buildRequired = 1;
+    } else if (fs::exists(std::string(case_dir + "/" + casename + ".okl").c_str())) {
+      if (isFileNewer(std::string(case_dir + "/" + casename + ".okl").c_str(), oudfFileCache.c_str())) 
+        buildRequired = 1;
+    }
+
   }
-  MPI_Bcast(&configRequired, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&buildRequired, 1, MPI_INT, 0, comm);
+
+  int oudfFileExists;
+  if(platform->comm.mpiRank == 0) oudfFileExists = fs::exists(oudfFile);
   MPI_Bcast(&oudfFileExists, 1, MPI_INT, 0, comm);
+  if(!oudfFileExists) options.removeArgs("UDF OKL FILE");
 
   if (platform->cacheBcast || platform->cacheLocal) {
-    if (oudfFileExists)
+    if (oudfFileExists) {
       fileBcast(oudfFile, platform->tmpDir, comm, platform->verbose);
-
-    oudfFile = platform->tmpDir / fs::path(oudfFile).filename();
-    options.setArgs("UDF OKL FILE", std::string(oudfFile));
-  } 
+      oudfFile = platform->tmpDir / fs::path(oudfFile).filename();
+      options.setArgs("UDF OKL FILE", std::string(oudfFile));
+    }
+  }
 
   if (platform->cacheBcast) {
     fileBcast(udfFile, platform->tmpDir, comm, platform->verbose);
@@ -194,18 +252,17 @@ void udfBuild(const char *_udfFile, setupAide &options)
     if (buildRank == 0) {
       double tStart = MPI_Wtime();
 
-      if (platform->comm.mpiRank == 0)
-        printf("building udf ... \n");
-      fflush(stdout);
-
       char cmd[4096];
       mkdir(std::string(cache_dir + "/udf").c_str(), S_IRWXU);
-      std::string case_dir(fs::current_path());
 
       const std::string pipeToNull =
           (platform->comm.mpiRank == 0) ? std::string("") : std::string("> /dev/null 2>&1");
 
-      if (configRequired) {
+      if (buildRequired) {
+        if (platform->comm.mpiRank == 0)
+          printf("building udf ... \n");
+        fflush(stdout);
+
         copyFile(udfFile.c_str(), udfFileCache.c_str());
         copyFile(std::string(udf_dir + std::string("/CMakeLists.txt")).c_str(),
                  std::string(cache_dir + std::string("/udf/CMakeLists.txt")).c_str());
@@ -215,11 +272,19 @@ void udfBuild(const char *_udfFile, setupAide &options)
           cmakeFlags += " --trace-expand";
         std::string cmakeBuildDir = cache_dir + "/udf";
 
+        { // generate dummy to make cmake happy that the file exists
+          const std::string includeFile = std::string(cache_dir + std::string("/udf/udfAutoLoadKernel.hpp"));
+          std::ofstream f(includeFile);
+          f << "// dummy";
+          f.close();
+          fileSync(includeFile.c_str());
+        }
+
         sprintf(cmd,
-                "rm -f %s/udf/*.so && cmake %s -S %s -B %s "
+                "rm -f %s/*.so && cmake %s -S %s -B %s "
                 "-DNEKRS_INSTALL_DIR=\"%s\" -DCASE_DIR=\"%s\" -DCMAKE_CXX_COMPILER=\"$NEKRS_CXX\" "
                 "-DCMAKE_CXX_FLAGS=\"$NEKRS_CXXFLAGS\" %s >cmake.log 2>&1",
-                udf_dir.c_str(),
+                cmakeBuildDir.c_str(),
                 cmakeFlags.c_str(),
                 cmakeBuildDir.c_str(),
                 cmakeBuildDir.c_str(),
@@ -233,85 +298,66 @@ void udfBuild(const char *_udfFile, setupAide &options)
         if (retVal)
           return EXIT_FAILURE;
 
-        { // generate dummy
-          const std::string includeFile = std::string(cache_dir + std::string("/udf/udfAutoLoadKernel.hpp"));
-          std::ofstream f(includeFile);
-          f << "//automatically generated\n";
-          f.close();
-          fileSync(includeFile.c_str());
+
+        {
+          // run cpp and split
+          sprintf(cmd, "cd %s && make -j1 udf.i %s", cmakeBuildDir.c_str(), pipeToNull.c_str());
+          const std::string postCppSource = cmakeBuildDir + "/CMakeFiles/UDF.dir/udf.cpp.i";
+          const int retVal = system(cmd);
+
+          if (verbose && platform->comm.mpiRank == 0)
+            printf("%s (preprocessing retVal: %d)\n", cmd, retVal);
+
+          if (retVal)
+            return EXIT_FAILURE;
+
+          // clean-up
+          std::stringstream buffer;
+          {
+            std::ifstream f(postCppSource);
+            buffer << f.rdbuf();
+            f.close();
+          }
+          std::ofstream f(postCppSource, std::ios::trunc);
+          f << std::regex_replace(buffer.str(), std::regex(R"(#\s*\d.*\n)"), "");
+          f.close(); 
+          copyFile(postCppSource.c_str(), udfFileCache.c_str());
+        
+          bool oklSectionFound = udfSplit(udfFileCache, oudfFileCache);
+          if(!oklSectionFound && oudfFileExists) {
+             copyFile(oudfFile.c_str(), oudfFileCache.c_str());
+          } else if (!oklSectionFound) {
+            if(platform->comm.mpiRank == 0)
+              printf("Cannot find oudf or okl section in udf\n");
+            return EXIT_FAILURE;
+          }
+
+          udfAutoKernels(udfFileCache, oudfFileCache);
         }
 
-        if (!fileExists(oudfFile.c_str())) {
-          sprintf(cmd, "cd %s/udf && make -j1 udf.i %s", cache_dir.c_str(), pipeToNull.c_str());
+        {
+          sprintf(cmd, "cd %s/udf && make -j1 %s", cache_dir.c_str(), pipeToNull.c_str());
           const int retVal = system(cmd);
           if (verbose && platform->comm.mpiRank == 0) {
-            printf("%s (preprocessing retVal: %d)\n", cmd, retVal);
+            printf("%s (make retVal: %d)\n", cmd, retVal);
           }
           if (retVal)
             return EXIT_FAILURE;
-          convertSingleSourceUdf(udfFileCache, oudfFileCache);
-
-          {
-            const std::string includeFile =
-                std::string(cache_dir + std::string("/udf/udfAutoLoadKernel.hpp"));
-            std::ifstream stream(oudfFileCache);
-            std::regex exp(R"(\s*@kernel\s*void\s*([\S]*)\s*\()");
-            std::smatch res;
-            std::ofstream f(includeFile);
-            f << "//automatically generated\n";
-
-            std::string line;
-            std::vector<std::string> kernelNameList;
-            while (std::getline(stream, line)) {
-              if (std::regex_search(line, res, exp)) {
-                std::string kernelName = res[1];
-                kernelNameList.push_back(kernelName);
-                f << "occa::kernel " << kernelName << "Kernel;\n";
-              }
-            }
-
-            f << "void UDF_AutoLoadKernels(occa::properties& kernelInfo)" << std::endl << "{" << std::endl;
-
-            for (auto entry : kernelNameList) {
-              f << "  " << entry << "Kernel = "
-                << "oudfBuildKernel(kernelInfo, \"" << entry << "\");" << std::endl;
-            }
-
-            f << "}" << std::endl;
-
-            f.close();
-            fileSync(includeFile.c_str());
-            stream.close();
-          }
+          fileSync(udfLib.c_str());
         }
-      }
 
-      // always run make to trigger rebuild if env-vars or header files have changed!
-      {
-        sprintf(cmd, "cd %s/udf && make -j1 %s", cache_dir.c_str(), pipeToNull.c_str());
-        const int retVal = system(cmd);
-        if (verbose && platform->comm.mpiRank == 0) {
-          printf("%s (make retVal: %d)\n", cmd, retVal);
-        }
-        if (retVal)
-          return EXIT_FAILURE;
-        fileSync(udfLib.c_str());
-      }
+        if (platform->comm.mpiRank == 0)
+          printf("done (%gs)\n", MPI_Wtime() - tStart);
+        fflush(stdout);
 
-      // just copy, occa will only recompile if kernel hash has changed
-      if (fileExists(oudfFile.c_str())) {
-        copyFile(oudfFile.c_str(), oudfFileCache.c_str());
-      }
+      } // buildRequired
 
-      adjustOudf(oudfFileCache);
+      adjustOudf(oudfFileCache); // called every time to check if required device BC functions exist
 
-      if (platform->comm.mpiRank == 0)
-        printf("done (%gs)\n", MPI_Wtime() - tStart);
-      fflush(stdout);
     } // rank 0
 
     if (platform->cacheBcast || platform->cacheLocal)
-      fileBcast(fs::path(oudfFileCache).parent_path(), platform->tmpDir, comm, platform->verbose);
+      fileBcast(fs::path(udfFileCache).parent_path(), platform->tmpDir, comm, platform->verbose);
 
     return 0;
   }();
@@ -328,7 +374,7 @@ void udfBuild(const char *_udfFile, setupAide &options)
 
   MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_INT, MPI_SUM, platform->comm.mpiComm);
 
-  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "\n", "");
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", "see above and cmake.log for more details");
 }
 
 void *udfLoadFunction(const char *fname, int errchk)
@@ -345,11 +391,11 @@ void *udfLoadFunction(const char *fname, int errchk)
       std::cout << "loading " << udfLib << std::endl;
 
     h = dlopen(udfLib.c_str(), RTLD_NOW | RTLD_GLOBAL);
-    nrsCheck(!h, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", dlerror());
+    nrsCheck(!h, MPI_COMM_SELF, EXIT_FAILURE, "%s\n", dlerror());
   }
 
   void *fptr = dlsym(h, fname);
-  nrsCheck(!fptr && errchk, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", dlerror());
+  nrsCheck(!fptr && errchk, MPI_COMM_SELF, EXIT_FAILURE, "%s\n", dlerror());
 
   dlerror();
 

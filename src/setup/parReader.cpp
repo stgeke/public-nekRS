@@ -1311,6 +1311,7 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("SUBCYCLING TIME STAGE NUMBER", "4");
 
   options.setArgs("CASENAME", casename);
+  options.setArgs("UDF OKL FILE", casename + ".oudf");
   options.setArgs("UDF FILE", casename + ".udf");
   options.setArgs("NEK USR FILE", casename + ".usr");
   options.setArgs("MESH FILE", casename + ".re2");
@@ -1513,6 +1514,14 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     std::string usrFile;
     if(par->extract("general", "usr", usrFile)){
       options.setArgs("NEK USR FILE", usrFile);
+    }
+  }
+
+  // oudf file
+  {
+    std::string oudfFile;
+    if(par->extract("general", "oudf", oudfFile)){
+      options.setArgs("UDF OKL FILE", oudfFile);
     }
   }
 

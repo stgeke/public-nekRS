@@ -136,36 +136,39 @@ void adjustOudf(const std::string &filePath)
   fileSync(filePath.c_str());
 }
 
-void udfAutoKernels(const std::string& udfFileCache, const std::string& oudfFileCache)
+void udfAutoKernels(bool oklSectionFound, const std::string& udfFileCache, const std::string& oudfFileCache)
 {
-  const std::string includeFile = fs::path(udfFileCache).parent_path() / fs::path("udfAutoLoadKernel.hpp");
-  std::ifstream stream(oudfFileCache);
-  std::regex exp(R"(\s*@kernel\s*void\s*([\S]*)\s*\()");
-  std::smatch res;
-  std::ofstream f(includeFile);
-
-  std::string line;
-  std::vector<std::string> kernelNameList;
-  while (std::getline(stream, line)) {
-    if (std::regex_search(line, res, exp)) {
-      std::string kernelName = res[1];
-      kernelNameList.push_back(kernelName);
-      f << "static occa::kernel " << kernelName << ";\n";
+  if(oklSectionFound) {
+    const std::string includeFile = fs::path(udfFileCache).parent_path() / fs::path("udfAutoLoadKernel.hpp");
+ 
+    std::ifstream stream(oudfFileCache);
+    std::regex exp(R"(\s*@kernel\s*void\s*([\S]*)\s*\()");
+    std::smatch res;
+    std::ofstream f(includeFile);
+ 
+    std::string line;
+    std::vector<std::string> kernelNameList;
+    while (std::getline(stream, line)) {
+      if (std::regex_search(line, res, exp)) {
+        std::string kernelName = res[1];
+        kernelNameList.push_back(kernelName);
+        f << "static occa::kernel " << kernelName << ";\n";
+      }
     }
+ 
+    f << "void UDF_AutoLoadKernels(occa::properties& kernelInfo)" << std::endl << "{" << std::endl;
+ 
+    for (auto entry : kernelNameList) {
+      f << "  " << entry << " = "
+        << "oudfBuildKernel(kernelInfo, \"" << entry << "\");" << std::endl;
+    }
+ 
+    f << "}" << std::endl;
+ 
+    f.close();
+    fileSync(includeFile.c_str());
+    stream.close();
   }
-
-  f << "void UDF_AutoLoadKernels(occa::properties& kernelInfo)" << std::endl << "{" << std::endl;
-
-  for (auto entry : kernelNameList) {
-    f << "  " << entry << " = "
-      << "oudfBuildKernel(kernelInfo, \"" << entry << "\");" << std::endl;
-  }
-
-  f << "}" << std::endl;
-
-  f.close();
-  fileSync(includeFile.c_str());
-  stream.close();
 
   std::stringstream udfBuffer;
   {
@@ -174,7 +177,9 @@ void udfAutoKernels(const std::string& udfFileCache, const std::string& oudfFile
     udf.close();
   }
   std::ofstream udf(udfFileCache, std::ios::trunc);
+
   udf << std::regex_replace(udfBuffer.str(), std::regex("__replace__udf_auto__include__"), "#include \"udfAutoLoadKernel.hpp\"");
+
   udf.close(); 
 }
 
@@ -208,6 +213,9 @@ void udfBuild(const char *_udfFile, setupAide &options)
   int buildRequired = 0;
   if(platform->comm.mpiRank == 0) {
 
+    // there is no mechansism to check for dependency changes
+    // without invoking system, comparing file timestamps for now 
+    // note, this will not work for unknown include files and env-var changes! 
     if (platform->options.compareArgs("BUILD ONLY", "TRUE")) {
       buildRequired = 1;
     } else if (!fs::exists(udfLib)) {
@@ -332,13 +340,15 @@ void udfBuild(const char *_udfFile, setupAide &options)
           bool oklSectionFound = udfSplit(udfFileCache, oudfFileCache);
           if(!oklSectionFound && oudfFileExists) {
              copyFile(oudfFile.c_str(), oudfFileCache.c_str());
+             if(platform->comm.mpiRank == 0)
+               printf("Cannot find okl section in udf (oudf will be deprecated in next version!)\n");
           } else if (!oklSectionFound) {
             if(platform->comm.mpiRank == 0)
               printf("Cannot find oudf or okl section in udf\n");
             return EXIT_FAILURE;
           }
 
-          udfAutoKernels(udfFileCache, oudfFileCache);
+          udfAutoKernels(oklSectionFound, udfFileCache, oudfFileCache);
         }
 
         {

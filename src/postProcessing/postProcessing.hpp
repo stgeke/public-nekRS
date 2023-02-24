@@ -7,7 +7,9 @@ namespace postProcessing
 {
 void planarAvg(nrs_t *nrs, const std::string& dir, int NELGX, int NELGY, int NELGZ, int nflds, occa::memory o_avg);
 
-dfloat* dragCalc(nrs_t *nrs, std::vector<int> bID);
+dfloat dragCalc(nrs_t *nrs, std::vector<int> bID);
+dfloat dragCalc(nrs_t *nrs, std::vector<int> bID, occa::memory& o_Sij);
+occa::memory computeSij(nrs_t *nrs);
 }
 
 #endif

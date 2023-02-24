@@ -56,7 +56,7 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
 
   //Friction factor
   const dfloat factor = 2.0 * ConstantFlowRate::scaleFactor();
-  const dfloat fricFact = 2.0 * 2.27e-03;
+  const dfloat fricFact = 0.00455;
   const double fricErr = (factor - fricFact)/fricFact;
 
   //Friction velocity
@@ -64,9 +64,9 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
 
   //User specified boundary ID list
   std::vector<int> biDlist = {1};
-  double *drag = postProcessing::dragCalc(nrs,biDlist);
+  const double drag = postProcessing::dragCalc(nrs,biDlist);
 
-  const double utau = sqrt(drag[0]/8.); 
+  const double utau = sqrt(drag/8.); 
   const double utauErr = (utau - utauRef)/utauRef;
   
   if(platform->comm.mpiRank == 0){

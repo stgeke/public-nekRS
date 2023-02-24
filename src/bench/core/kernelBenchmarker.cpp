@@ -26,9 +26,12 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
 {
   occa::kernel fastestKernel;
   double fastestTime = std::numeric_limits<double>::max();
+
   for (auto &&kernelVariant : kernelVariants) {
 
+    MPI_Barrier(platform->comm.mpiComm);
     auto candidateKernel = kernelBuilder(kernelVariant);
+
     if (!candidateKernel.isInitialized())
       continue;
 
@@ -71,11 +74,15 @@ benchmarkKernel(std::function<occa::kernel(int kernelVariant)> kernelBuilder,
 {
   occa::kernel fastestKernel;
   double fastestTime = std::numeric_limits<double>::max();
+
   for (auto &&kernelVariant : kernelVariants) {
 
+    MPI_Barrier(platform->comm.mpiComm);
     auto candidateKernel = kernelBuilder(kernelVariant);
+
     if (!candidateKernel.isInitialized())
-      continue;
+      continue; // remove variant if it doesn't compile
+
     if(platform->options.compareArgs("BUILD ONLY", "FALSE")){
 
       // warmup

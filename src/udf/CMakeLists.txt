@@ -41,8 +41,6 @@ set(INCLUDE_DIRS
   ${NEKRS_INSTALL_DIR}/occa/include
 )
 
-add_compile_definitions(USE_AUTOLOADKERNEL)
-
 add_library(UDF SHARED udf.cpp)
 target_include_directories(UDF PRIVATE $ENV{NEKRS_UDF_INCLUDES} ${INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR})
 

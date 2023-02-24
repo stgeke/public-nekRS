@@ -105,7 +105,7 @@ mesh_t *createMesh(MPI_Comm comm,
   mesh->cht  = cht;
 
   if (platform->comm.mpiRank == 0)
-    printf("generating t-mesh ...\n");
+    printf("generating mesh ...\n");
 
   // get mesh from nek
   meshNekReaderHex3D(N, mesh);
@@ -195,11 +195,14 @@ mesh_t *createMesh(MPI_Comm comm,
     mesh->o_coeffAB = platform->device.malloc(maxTemporalOrder * sizeof(dfloat), mesh->coeffAB);
   }
 
-  if(mesh->NlocalGatherElements) {
-    double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
-    MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
+  {
+    double valMin = (double)mesh->NlocalGatherElements / mesh->Nelements;
+    double valMax = (double)mesh->NlocalGatherElements / mesh->Nelements;
+    MPI_Allreduce(MPI_IN_PLACE, &valMin, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
+    MPI_Allreduce(MPI_IN_PLACE, &valMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
+
     if (platform->comm.mpiRank == 0)
-      printf("min %2.0f%% of the local elements are internal\n", 100 * val);
+      printf("number of interior elements min/max: %2.0f%%  %2.0f%%\n", 100*valMin, 100*valMax);
   }
 
   mesh->fluid = mesh;
@@ -409,11 +412,14 @@ mesh_t *createMeshV(
   MPI_Allreduce(MPI_IN_PLACE, &volume, 1, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
   mesh->volume = volume;
 
-  if(mesh->NlocalGatherElements) {
-    double val = (double)mesh->NlocalGatherElements / mesh->Nelements;
-    MPI_Allreduce(MPI_IN_PLACE, &val, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
+  {
+    double valMin = (double)mesh->NlocalGatherElements / mesh->Nelements;
+    double valMax = (double)mesh->NlocalGatherElements / mesh->Nelements;
+    MPI_Allreduce(MPI_IN_PLACE, &valMin, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
+    MPI_Allreduce(MPI_IN_PLACE, &valMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
+
     if (platform->comm.mpiRank == 0)
-      printf("min %2.0f%% of the local elements are internal\n", 100 * val);
+      printf("number of interior elements min/max: %2.0f%%  %2.0f%%\n", 100*valMin, 100*valMax);
   }
 
   return mesh;

@@ -17,7 +17,7 @@ void ellipticApplyMask(elliptic_t *solver,
   occa::kernel &maskKernel = (precision != dfloatString) ? mesh->maskPfloatKernel : mesh->maskKernel;
 
   if (solver->applyZeroNormalMask) {
-    nrsCheck(precision != dfloatString, platform->comm.mpiComm, EXIT_FAILURE,
+    nrsCheck(precision != dfloatString, MPI_COMM_SELF, EXIT_FAILURE,
              "Precision level (%s) not supported in applyZeroNormalMask\n", precision.c_str());
     solver->applyZeroNormalMask(Nelements, o_elementList, o_x);
   }

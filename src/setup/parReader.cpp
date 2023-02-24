@@ -85,17 +85,6 @@ void append_value_error(Printable message)
   valueErrorLogger << "\t" << message << "\n";
 }
 
-#define UPPER(a)                                                               \
-  {                                                                            \
-    transform(a.begin(), a.end(), a.begin(),                                   \
-              [](int c){return std::toupper(c);});                             \
-  }
-#define LOWER(a)                                                               \
-  {                                                                            \
-    transform(a.begin(), a.end(), a.begin(),                                   \
-              [](int c){return std::tolower(c);});                             \
-  }
-
 namespace
 {
 
@@ -104,7 +93,7 @@ static std::string parseValueForKey(std::string token, std::string key){
     std::vector<std::string> params = serializeString(token, '=');
     if (params.size() != 2) {
       std::ostringstream error;
-      error << "Error: could not parse " << key << " " << token << "!\n";
+      error << "could not parse " << key << " " << token << "!\n";
       append_error(error.str());
     }
     return params[1];
@@ -246,29 +235,21 @@ static std::vector<std::string> validSections = {
     {"casedata"},
 };
 
-void convertToLowerCase(std::vector<std::string>& stringVec)
-{
-  for(auto && s : stringVec){
-    std::transform(s.begin(), s.end(), s.begin(),
-      [](unsigned char c){ return std::tolower(c); });
-  }
-}
-
 void makeStringsLowerCase()
 {
-  convertToLowerCase(generalKeys);
-  convertToLowerCase(neknekKeys);
-  convertToLowerCase(problemTypeKeys);
-  convertToLowerCase(commonKeys);
-  convertToLowerCase(meshKeys);
-  convertToLowerCase(temperatureKeys);
-  convertToLowerCase(scalarKeys);
-  convertToLowerCase(deprecatedKeys);
-  convertToLowerCase(amgxKeys);
-  convertToLowerCase(boomeramgKeys);
-  convertToLowerCase(pressureKeys);
-  convertToLowerCase(occaKeys);
-  convertToLowerCase(validSections);
+  lowerCase(generalKeys);
+  lowerCase(neknekKeys);
+  lowerCase(problemTypeKeys);
+  lowerCase(commonKeys);
+  lowerCase(meshKeys);
+  lowerCase(temperatureKeys);
+  lowerCase(scalarKeys);
+  lowerCase(deprecatedKeys);
+  lowerCase(amgxKeys);
+  lowerCase(boomeramgKeys);
+  lowerCase(pressureKeys);
+  lowerCase(occaKeys);
+  lowerCase(validSections);
 }
 
 const std::vector<std::string>& getValidKeys(const std::string& section)
@@ -329,7 +310,7 @@ int validateKeys(const inipp::Ini::Sections& sections)
       if (scalarNumber) {
         if (scalarNumber.value() >= NSCALAR_MAX) {
           std::ostringstream error;
-          error << "ERROR: specified " << scalarNumber.value() << " scalars, while the maximum allowed is "
+          error << "specified " << scalarNumber.value() << " scalars, while the maximum allowed is "
                 << NSCALAR_MAX << "\n";
           append_error(error.str());
           err++;
@@ -342,7 +323,7 @@ int validateKeys(const inipp::Ini::Sections& sections)
     if (std::find(validSections.begin(), validSections.end(), sec.first) == validSections.end() &&
         !isScalar) {
       std::ostringstream error;
-      error << "ERROR: Invalid section name: " << sec.first << std::endl;
+      error << "Invalid section name: " << sec.first << std::endl;
       append_error(error.str());
       err++;
     }
@@ -447,7 +428,7 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
         }
         else {
           std::ostringstream error;
-          error << "Error: could not parse " << s << "!\n";
+          error << "could not parse " << s << "!\n";
           append_error(error.str());
         }
         std::vector<std::string> bids = serializeString(items[1], ',');
@@ -459,7 +440,7 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
         }
         else {
           std::ostringstream error;
-          error << "Error: could not parse " << s << "!\n";
+          error << "could not parse " << s << "!\n";
           append_error(error.str());
         }
 
@@ -475,12 +456,12 @@ void parseConstFlowRate(const int rank, setupAide& options, inipp::Ini *par)
           std::string direction = items[1];
           issueError = (direction.find("x") == std::string::npos &&
                         direction.find("y") == std::string::npos && direction.find("z") == std::string::npos);
-          UPPER(direction);
+          upperCase(direction);
           options.setArgs("CONSTANT FLOW DIRECTION", direction);
         }
         else {
           std::ostringstream error;
-          error << "Error: could not parse " << s << "!\n";
+          error << "could not parse " << s << "!\n";
           append_error(error.str());
         }
       }
@@ -504,7 +485,7 @@ void parseSolverTolerance(const int rank, setupAide &options, inipp::Ini *par, s
 {
 
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   const std::vector<std::string> validValues = {
     {"relative"},
@@ -536,7 +517,7 @@ void parseSolverTolerance(const int rank, setupAide &options, inipp::Ini *par, s
 void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::Ini *par, std::string parScope)
 {
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
   std::string p_coarseGridDiscretization;
   const bool continueParsing = par->extract(parScope, "coarsegriddiscretization", p_coarseGridDiscretization);
   if (!continueParsing)
@@ -558,10 +539,9 @@ void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::In
     return;
   }
 
-  // coarse grid discretization
+
   options.setArgs(parSectionName + "MULTIGRID SEMFEM", "FALSE");
-  if(options.compareArgs(parSectionName + "MULTIGRID SMOOTHER", "DAMPEDJACOBI"))
-    options.setArgs("BOOMERAMG ITERATIONS", "2");
+
   if (p_coarseGridDiscretization.find("semfem") != std::string::npos) {
     options.setArgs(parSectionName + "MULTIGRID SEMFEM", "TRUE");
   }
@@ -576,7 +556,7 @@ void parseCoarseGridDiscretization(const int rank, setupAide &options, inipp::In
 void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std::string parScope)
 {
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   std::string p_coarseSolver;
   const bool keyExist = par->extract(parScope, "coarsesolver", p_coarseSolver) ||
@@ -607,6 +587,14 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   const int boomer = p_coarseSolver.find("boomeramg") != std::string::npos;
   if(amgx + boomer > 1)
     append_error("Conflicting solver types in coarseSolver!\n");
+
+  if(boomer) {
+    std::string smoother;
+    options.getArgs(parSectionName + "MULTIGRID SMOOTHER", smoother);
+    if (smoother.find("DAMPEDJACOBI") != std::string::npos) { 
+      options.setArgs("BOOMERAMG ITERATIONS", "2");
+    }
+  }
 
   if(boomer || amgx) {
     options.setArgs(parSectionName + "MULTIGRID COARSE SOLVE", "TRUE");
@@ -672,7 +660,7 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
   const bool runSolverOnDevice = options.compareArgs(parSectionName + "COARSE SOLVER LOCATION", "DEVICE");
   const bool overlapCrsSolve = options.compareArgs(parSectionName + "MGSOLVER CYCLE", "OVERLAPCRS");
   if(overlapCrsSolve && runSolverOnDevice){
-    append_error("ERROR: Cannot overlap coarse grid solve when running coarse solver on the GPU!\n");
+    append_error("Cannot overlap coarse grid solve when running coarse solver on the GPU!\n");
   }
 }
 
@@ -697,7 +685,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
   std::string p_smoother;
 
   std::string parSection = parPrefixFromParSection(parScope);
-  UPPER(parSection);
+  upperCase(parSection);
 
   if (options.compareArgs(parSection + "PRECONDITIONER", "MULTIGRID")) {
     options.setArgs(parSection + "MULTIGRID SMOOTHER", "FOURTHOPTCHEBYSHEV+DAMPEDJACOBI");
@@ -755,7 +743,7 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
         const auto minEigBoundStr = parseValueForKey(s, "mineigenvalueboundfactor");
         if(!minEigBoundStr.empty()){
           if(chebyshevType.find("FOURTH") != std::string::npos){
-            append_error("ERROR: minEigenvalueBoundFactor not supported for 4th kind or Opt. 4th kind Chebyshev smoother!\n");
+            append_error("minEigenvalueBoundFactor not supported for 4th kind or Opt. 4th kind Chebyshev smoother!\n");
           }
           options.setArgs(parSection + "MULTIGRID CHEBYSHEV MIN EIGENVALUE BOUND FACTOR",
                           minEigBoundStr);
@@ -770,7 +758,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
           surrogateSmootherSet = true;
           options.setArgs(parSection + "MULTIGRID SMOOTHER",
                           "DAMPEDJACOBI," + chebyshevType);
-          //options.setArgs("BOOMERAMG ITERATIONS", "2");
           if (p_preconditioner.find("additive") != std::string::npos) 
             append_error("Additive vcycle is not supported for Chebyshev smoother");
         } else if (s.find("asm") != std::string::npos)
@@ -819,7 +806,6 @@ void parseSmoother(const int rank, setupAide &options, inipp::Ini *par,
       append_error("Jacobi smoother requires Chebyshev");
       options.setArgs(parSection + "MULTIGRID SMOOTHER",
                       "DAMPEDJACOBI");
-      options.setArgs("BOOMERAMG ITERATIONS", "2");
       if (p_preconditioner.find("additive") != std::string::npos)
         append_error("Additive vcycle is not supported for Jacobi smoother");
     } else {
@@ -842,7 +828,7 @@ void parsePreconditioner(const int rank, setupAide &options,
   };
 
   std::string parSection = parPrefixFromParSection(parScope);
-  UPPER(parSection);
+  upperCase(parSection);
 
   std::string p_preconditioner;
   if(!par->extract(parScope, "preconditioner", p_preconditioner)) {
@@ -925,7 +911,7 @@ void parsePreconditioner(const int rank, setupAide &options,
                if(isMinOrder && minOrderInvalid) continue;
 
                if(degreeConflicts){
-                 append_error("ERROR: order specified in pMGSchedule conflicts with that specified in smootherType!\n");
+                 append_error("order specified in pMGSchedule conflicts with that specified in smootherType!\n");
                }
              }
            }
@@ -939,7 +925,7 @@ void parsePreconditioner(const int rank, setupAide &options,
        const bool smoothCrs = options.compareArgs(parSection + "COARSE SOLVER", "SMOOTHER") ||
                               options.compareArgs(parSection + "MULTIGRID COARSE SOLVE AND SMOOTH", "TRUE");
        if(!smoothCrs)
-         append_error("ERROR: specified coarse Chebyshev degree, but coarseSolver=smoother is not set.\n");
+         append_error("specified coarse Chebyshev degree, but coarseSolver=smoother is not set.\n");
      }
 
    }
@@ -965,7 +951,7 @@ void parseLinearSolver(const int rank, setupAide &options,
 {
 
   std::string parSectionName = parPrefixFromParSection(parScope);
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   options.setArgs(parSectionName + "MAXIMUM ITERATIONS", "500");
 
@@ -1039,7 +1025,7 @@ void parseInitialGuess(const int rank, setupAide &options,
 
   std::string parSectionName = parPrefixFromParSection(parScope);
 
-  UPPER(parSectionName);
+  upperCase(parSectionName);
 
   std::string initialGuess;
 
@@ -1062,7 +1048,7 @@ void parseInitialGuess(const int rank, setupAide &options,
       options.setArgs(parSectionName + "INITIAL GUESS", "EXTRAPOLATION");
 
       if (parScope == "pressure")
-        append_error("ERROR: initialGuess = extrapolation not supported for pressure!\n");
+        append_error("initialGuess = extrapolation not supported for pressure!\n");
       return;
     }
 
@@ -1115,7 +1101,7 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
   std::string sbuf;
 
   std::string parPrefix = parPrefixFromParSection(parSection);
-  UPPER(parPrefix);
+  upperCase(parPrefix);
 
   options.setArgs(parPrefix + "REGULARIZATION METHOD", "NONE");
 
@@ -1144,17 +1130,17 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
     std::string filtering;
     par->extract(parSection, "filtering", filtering);
     if (filtering == "hpfrt") {
-      append_error("ERROR: cannot specify both regularization and filtering!\n");
+      append_error("cannot specify both regularization and filtering!\n");
     }
     const bool usesAVM =
         std::find(list.begin(), list.end(), "avm") != list.end();
     const bool usesHPFRT =
         std::find(list.begin(), list.end(), "hpfrt") != list.end();
     if (!usesAVM && !usesHPFRT) {
-      append_error("ERROR: regularization must use avm or hpfrt!\n");
+      append_error("regularization must use avm or hpfrt!\n");
     }
     if (usesAVM && isVelocity) {
-      append_error("ERROR: avm regularization is only enabled for scalars!\n");
+      append_error("avm regularization is only enabled for scalars!\n");
     }
 
     options.setArgs(parPrefix + "HPFRT MODES", "1");
@@ -1164,7 +1150,7 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
       else if(regularization.find("highestmodaldecay") != std::string::npos)
         options.setArgs(parPrefix + "REGULARIZATION METHOD", "HIGHEST_MODAL_DECAY");
       else {
-        append_error("Error: avm must be specified with hpfResidual or HighestModalDecay!\n");
+        append_error("avm must be specified with hpfResidual or HighestModalDecay!\n");
       }
 
       options.setArgs(parPrefix + "REGULARIZATION VISMAX COEFF", "0.5");
@@ -1242,7 +1228,7 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
         }
       }
       if (!setsStrength) {
-        append_error("ERROR: required parameter scalingCoeff for hpfrt regularization is not "
+        append_error("required parameter scalingCoeff for hpfrt regularization is not "
              "set!\n");
       }
     }
@@ -1296,7 +1282,7 @@ void parseRegularization(const int rank, setupAide &options, inipp::Ini *par, st
       if(defaultSettings.find("avm") != std::string::npos){
         if(isVelocity){
           // Catch if the general block is using AVM + no [VELOCITY] specification
-          append_error("ERROR: avm regularization is only enabled for scalars!\n");
+          append_error("avm regularization is only enabled for scalars!\n");
         }
         options.setArgs(parPrefix + "REGULARIZATION VISMAX COEFF", options.getArgs("REGULARIZATION VISMAX COEFF"));
         options.setArgs(parPrefix + "REGULARIZATION SCALING COEFF", options.getArgs("REGULARIZATION SCALING COEFF"));
@@ -1334,7 +1320,7 @@ void setDefaultSettings(setupAide &options, std::string casename, int rank) {
   options.setArgs("PLATFORM NUMBER", "0");
   options.setArgs("VERBOSE", "FALSE");
 
-  options.setArgs("BOUNDARY EXTRAPOLATION ORDER", "1");
+  options.setArgs("NEKNEK BOUNDARY EXT ORDER", "1");
 
   options.setArgs("ADVECTION", "TRUE");
   options.setArgs("ADVECTION TYPE", "CUBATURE+CONVECTIVE");
@@ -1458,24 +1444,24 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       append_error(error.str());
     }
 
-    UPPER(threadModel);
+    upperCase(threadModel);
     options.setArgs("THREAD MODEL", threadModel);
 
     if(!architecture.empty()){
-      UPPER(architecture);
+      upperCase(architecture);
       options.setArgs("ARCHITECTURE", architecture);
     }
   }
 
   std::string deviceNumber;
   if (par->extract("occa", "devicenumber", deviceNumber)) {
-    UPPER(deviceNumber);
+    upperCase(deviceNumber);
     options.setArgs("DEVICE NUMBER", deviceNumber);
   }
 
   std::string platformNumber;
   if (par->extract("occa", "platformnumber", platformNumber)) {
-    UPPER(platformNumber);
+    upperCase(platformNumber);
     options.setArgs("PLATFORM NUMBER", platformNumber);
   }
 
@@ -1634,7 +1620,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
         if(maxDt > 0 && initialDt > maxDt)
         {
           std::ostringstream error;
-          error << "Error: initial dt " << initialDt << " is larger than max dt " << maxDt << "\n";
+          error << "initial dt " << initialDt << " is larger than max dt " << maxDt << "\n";
           append_error(error.str());
         }
       }
@@ -1664,6 +1650,16 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       std::ostringstream error;
       error << "Could not parse general::timeStepper = " << timeStepper;
       append_error(error.str());
+    }
+  }
+
+  {
+    int NSubCycles = 0;
+    options.getArgs("SUBCYCLING STEPS", NSubCycles);
+    if(NSubCycles) {
+      int bdfOrder;
+      options.getArgs("BDF ORDER", bdfOrder);
+      options.setArgs("EXT ORDER", std::to_string(bdfOrder));
     }
   }
 
@@ -1737,7 +1733,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
   // NEKNEK
   dlong boundaryEXTOrder;
   if (par->extract("neknek", "boundaryextorder", boundaryEXTOrder)) {
-    options.setArgs("BOUNDARY EXTRAPOLATION ORDER", std::to_string(boundaryEXTOrder));
+    options.setArgs("NEKNEK BOUNDARY EXT ORDER", std::to_string(boundaryEXTOrder));
   }
 
   // PROBLEMTYPE
@@ -2003,13 +1999,13 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       std::string s_bcMap;
       if (par->extract("temperature", "boundarytypemap", s_bcMap)) {
         if (!bcInPar)
-          append_error("ERROR: boundaryTypeMap has to be defined for all fields");
+          append_error("boundaryTypeMap has to be defined for all fields");
         std::vector<std::string> sList;
         sList = serializeString(s_bcMap, ',');
         bcMap::setup(sList, "scalar" + sid);
       } else {
         if (bcInPar)
-          append_error("ERROR: boundaryTypeMap has to be defined for all fields");
+          append_error("boundaryTypeMap has to be defined for all fields");
         bcInPar = 0;
       }
     }
@@ -2021,7 +2017,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
   if (optionalNscalar) {
     // check that generic [SCALAR] section exists
     if (sections.count("scalar") == 0) {
-      append_error("ERROR: [scalar] section is required when generic::nscalars is specified");
+      append_error("[scalar] section is required when generic::nscalars is specified");
     }
   }
   else {
@@ -2032,6 +2028,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     }
   }
   options.setArgs("NUMBER OF SCALARS", std::to_string(nscal));
+
 
   auto parseScalarParSection = [&](const auto &sec) {
     const auto parScope = sec.first;
@@ -2045,7 +2042,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
 
       if (optionalNscalar) {
         if (is.value() > optionalNscalar.value()) {
-          append_error("ERROR: scalar index " + std::to_string(is.value()) +
+          append_error("scalar index " + std::to_string(is.value()) +
                        " is larger than general::nscalar=" + std::to_string(optionalNscalar.value()));
         }
       }
@@ -2106,7 +2103,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     std::string s_bcMap;
     if (par->extract(parScope, "boundarytypemap", s_bcMap)) {
       if (!bcInPar)
-        append_error("ERROR: boundaryTypeMap has to be defined for all fields");
+        append_error("boundaryTypeMap has to be defined for all fields");
       std::vector<std::string> sList;
       sList = serializeString(s_bcMap, ',');
       bcMap::setup(sList, "scalar" + sid);
@@ -2117,7 +2114,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     }
     else {
       if (bcInPar)
-        append_error("ERROR: boundaryTypeMap has to be defined for all fields");
+        append_error("boundaryTypeMap has to be defined for all fields");
       bcInPar = 0;
     }
   };
@@ -2164,10 +2161,19 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
             bcMap::setup(sList, "scalar" + sid);
           }
           else {
-            append_error("ERROR: boundaryTypeMap has to be defined for all fields");
+            append_error("boundaryTypeMap has to be defined for all fields");
           }
         }
       }
+    }
+  }
+
+  {
+    int nscal;
+    options.getArgs("NUMBER OF SCALARS", nscal);
+    if(nscal) {
+      std::string dummy;
+      if(!options.getArgs("SCALAR00 SOLVER", dummy)) append_error("scalar index needs to start from 0");
     }
   }
 
@@ -2184,7 +2190,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
       {
         const std::string dtString = options.getArgs("DT");
         if(dtString.empty())
-          append_error("ERROR: dt not defined!\n");
+          append_error("dt not defined!\n");
       }
     }
   }
@@ -2200,7 +2206,7 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     auto errTxt = [&]()
     {
       std::stringstream txt;
-      txt << "detected par file errors:\n";
+      txt << std::endl;
       txt << errorMessage;
       txt << "\nrun with `--help par` for more details\n";
 

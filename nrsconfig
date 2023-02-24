@@ -24,7 +24,10 @@ cmake -Wno-dev \
       $@ \
       .. 
 
+cd ..
 if [ $? -eq 0 ]; then
+  cmd="cmake --build ./build --target install -j8"
   echo ""        
-  echo "--> Now just run \`cmake --build ./build --target install -j8\`"
+  read -p "Hit enter to run: $cmd"
+  $cmd
 fi

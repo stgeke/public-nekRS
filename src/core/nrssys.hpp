@@ -82,7 +82,7 @@ using dlong = long long int;
   do { \
     int _nrsCheckErr = 0; \
     if(_nrsCheckCond) _nrsCheckErr = 1; \
-    MPI_Allreduce(MPI_IN_PLACE, &_nrsCheckErr, 1, MPI_INT, MPI_SUM, _nrsCheckComm); \
+    if(_nrsCheckComm != MPI_COMM_SELF) MPI_Allreduce(MPI_IN_PLACE, &_nrsCheckErr, 1, MPI_INT, MPI_SUM, _nrsCheckComm); \
     if(_nrsCheckErr) { \
       int rank = 0; \
       MPI_Comm_rank(_nrsCheckComm, &rank); \
@@ -143,6 +143,30 @@ std::vector<std::string> serializeString(const std::string sin, char dlim)
     if(!substr.empty()) slist.push_back(substr);
   }
   return slist;
+}
+
+void lowerCase(std::string& s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+}
+
+void lowerCase(std::vector<std::string>& stringVec)
+{
+  for(auto && s : stringVec) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+  }
+}
+
+void upperCase(std::vector<std::string>& stringVec)
+{
+  for(auto && s : stringVec) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::toupper(c); });
+  }
+}
+
+void upperCase(std::string& s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); });
 }
 
 }

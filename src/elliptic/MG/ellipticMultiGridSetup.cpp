@@ -94,26 +94,65 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
   MGSolver_t::multigridLevel** levels = precon->MGSolver->levels;
 
   oogs_mode oogsMode = OOGS_AUTO;
-  //if(platform->device.mode() == "Serial" || platform->device.mode() == "OpenMP") oogsMode = OOGS_DEFAULT;
+
+  auto autoOverlap = [&](elliptic_t* elliptic)
+  {
+    auto timeOperator = [&]()
+    {
+      const int Nsamples = 10;
+      ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, pfloatString);
+ 
+      platform->device.finish();
+      MPI_Barrier(platform->comm.mpiComm);
+      const double start = MPI_Wtime();
+ 
+      for (int test = 0; test < Nsamples; ++test)
+        ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, pfloatString);
+ 
+      platform->device.finish();
+      double elapsed = (MPI_Wtime() - start) / Nsamples;
+      MPI_Allreduce(MPI_IN_PLACE, &elapsed, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
+ 
+      return elapsed;
+    };
+
+    if(platform->options.compareArgs("GS OVERLAP", "TRUE")) {
+        auto nonOverlappedTime = timeOperator();
+        auto callback = [&]()
+        {
+          ellipticAx(elliptic, elliptic->mesh->NlocalGatherElements, elliptic->mesh->o_localGatherElementList,
+                     elliptic->o_p, elliptic->o_Ap, pfloatString);
+        };
+  
+        elliptic->oogsAx = oogs::setup(elliptic->ogs, 1, 0, ogsPfloat, callback, oogsMode);
+
+        auto overlappedTime = timeOperator();        
+        if(overlappedTime > nonOverlappedTime)
+          elliptic->oogsAx = elliptic->oogs;
+    
+        if(platform->comm.mpiRank == 0) {
+          printf("testing Ax overlap %.2es %.2es ", nonOverlappedTime, overlappedTime);
+          if(elliptic->oogsAx != elliptic->oogs)
+            printf("(overlap enabled)");
+
+          printf("\n");
+        }
+      }
+  };
 
   //set up the finest level
   if (Nmax > Nmin) {
     if(platform->comm.mpiRank == 0)
       printf("============= BUILDING pMG%d ==================\n", Nmax);
 
-    auto callback = [&]()
-                    {
-                      ellipticAx(elliptic, mesh->NlocalGatherElements, mesh->o_localGatherElementList,
-                                 elliptic->o_p, elliptic->o_Ap, pfloatString);
-                    };
     elliptic->oogs   = oogs::setup(elliptic->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
     elliptic->oogsAx = elliptic->oogs;
-    if(options.compareArgs("GS OVERLAP", "TRUE"))
-      elliptic->oogsAx = oogs::setup(elliptic->ogs, 1, 0, ogsPfloat, callback, oogsMode);
-
+  
     levels[0] = new pMGLevel(elliptic, Nmax, options, platform->comm.mpiComm);
     pMGLevelAllocateStorage((pMGLevel*) levels[0], 0);
     precon->MGSolver->numLevels++;
+
+    autoOverlap(elliptic);
   }
 
   //build intermediate MGLevels
@@ -126,20 +165,9 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
     elliptic_t* ellipticC = ellipticBuildMultigridLevel(ellipticFine,Nc,Nf);
 
-    auto callback = [&]()
-                    {
-                      ellipticAx(ellipticC,
-                                 ellipticC->mesh->NlocalGatherElements,
-                                 ellipticC->mesh->o_localGatherElementList,
-                                 ellipticC->o_p,
-                                 ellipticC->o_Ap,
-                                 pfloatString);
-                    };
     ellipticC->oogs   = oogs::setup(ellipticC->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
-    ellipticC->oogsAx = ellipticC->oogs; 
-    if(options.compareArgs("GS OVERLAP", "TRUE"))
-      ellipticC->oogsAx = oogs::setup(ellipticC->ogs, 1, 0, ogsPfloat, callback, oogsMode);
-
+    ellipticC->oogsAx = ellipticC->oogs;
+  
     levels[n] = new pMGLevel(elliptic,
                             meshLevels,
                             ellipticFine,
@@ -149,6 +177,8 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
                             platform->comm.mpiComm);
     pMGLevelAllocateStorage((pMGLevel*) levels[n], n);
     precon->MGSolver->numLevels++;
+
+    autoOverlap(ellipticC); 
   }
 
   //set up coarse level
@@ -162,21 +192,8 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
 
     ellipticCoarse = ellipticBuildMultigridLevel(elliptic,Nc,Nf);
 
-    auto callback = [&]()
-                    {
-                      ellipticAx(ellipticCoarse,
-                                 ellipticCoarse->mesh->NlocalGatherElements,
-                                 ellipticCoarse->mesh->o_localGatherElementList,
-                                 ellipticCoarse->o_p,
-                                 ellipticCoarse->o_Ap,
-                                 pfloatString);
-                    };
     ellipticCoarse->oogs   = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, NULL, oogsMode);
     ellipticCoarse->oogsAx = ellipticCoarse->oogs;
-
-    if(options.compareArgs("GS OVERLAP", "TRUE")) {
-        ellipticCoarse->oogsAx = oogs::setup(ellipticCoarse->ogs, 1, 0, ogsPfloat, callback, oogsMode);
-    }
 
     elliptic_t* ellipticFine = ((pMGLevel*) levels[numMGLevels - 2])->elliptic;
     levels[numMGLevels - 1] = new pMGLevel(elliptic,
@@ -187,6 +204,7 @@ void ellipticMultiGridSetup(elliptic_t *elliptic_, precon_t *precon_)
                                            options,
                                            platform->comm.mpiComm,
                                            true);
+    autoOverlap(ellipticCoarse);
   } else {
     ellipticCoarse = elliptic; 
     levels[numMGLevels - 1] = new pMGLevel(ellipticCoarse, Nmin, options, platform->comm.mpiComm, true);

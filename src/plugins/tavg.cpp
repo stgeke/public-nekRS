@@ -99,7 +99,7 @@ void tavg::reset()
 
 void tavg::run(dfloat time)
 {
-  nrsCheck(!setupCalled || !buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+  nrsCheck(!setupCalled || !buildKernelCalled, MPI_COMM_SELF, EXIT_FAILURE,
            "called prior to tavg::setup()!\n", "");
 
   if (!nrs->timeStepConverged)
@@ -189,10 +189,10 @@ void tavg::setup(nrs_t *nrs_, const fields& flds)
 
 void tavg::setup(nrs_t *nrs_)
 {
-  nrsCheck(setupCalled, platform->comm.mpiComm, EXIT_FAILURE,
+  nrsCheck(setupCalled, MPI_COMM_SELF, EXIT_FAILURE,
            "invalid second call\n", "");
 
-  nrsCheck(!buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+  nrsCheck(!buildKernelCalled, MPI_COMM_SELF, EXIT_FAILURE,
            "called prior tavg::buildKernel()!\n", "");
 
   nrs = nrs_;
@@ -228,7 +228,7 @@ void tavg::setup(nrs_t *nrs_)
 
 void tavg::outfld(int _outXYZ, int FP64)
 {
-  nrsCheck(!setupCalled || !buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+  nrsCheck(!setupCalled || !buildKernelCalled, MPI_COMM_SELF, EXIT_FAILURE,
            "called prior to tavg::setup()!\n", "");
 
   if (!nrs->timeStepConverged)
@@ -270,7 +270,7 @@ void tavg::outfld()
 
 occa::memory tavg::userFieldAvg()
 {
-  nrsCheck(!setupCalled || !buildKernelCalled, platform->comm.mpiComm, EXIT_FAILURE,
+  nrsCheck(!setupCalled || !buildKernelCalled, MPI_COMM_SELF, EXIT_FAILURE,
            "called prior to tavg::setup()!\n", "");
 
   return o_userFieldAvg;

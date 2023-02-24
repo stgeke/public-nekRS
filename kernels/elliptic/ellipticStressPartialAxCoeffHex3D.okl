@@ -214,7 +214,8 @@
                                                @ restrict const dfloat *vgeo,
                                                @ restrict const dfloat *D,
                                                @ restrict const dfloat *S,
-                                               @ restrict const dfloat *lambda,
+                                               @ restrict const dfloat *lambda0,
+                                               @ restrict const dfloat *lambda1,
                                                @ restrict const dfloat *q,
                                                @ restrict dfloat *Aq)
 {
@@ -345,13 +346,13 @@
             
             const dlong id = element * p_Np + (s+k*n_plane) * p_Nq * p_Nq + j * p_Nq + i;
 
-            const dfloat u_lam0 = lambda[p_lambda*id + 0 * offset + 0 * loffset];
-            const dfloat v_lam0 = lambda[p_lambda*id + 0 * offset + 1 * loffset];
-            const dfloat w_lam0 = lambda[p_lambda*id + 0 * offset + 2 * loffset];
-
-            const dfloat u_lam1 = lambda[p_lambda*id + 1 * offset + 0 * loffset];
-            const dfloat v_lam1 = lambda[p_lambda*id + 1 * offset + 1 * loffset];
-            const dfloat w_lam1 = lambda[p_lambda*id + 1 * offset + 2 * loffset];
+            const dfloat u_lam0 = lambda0[p_lambda*id + 0 * loffset];
+            const dfloat v_lam0 = lambda0[p_lambda*id + 1 * loffset];
+            const dfloat w_lam0 = lambda0[p_lambda*id + 2 * loffset];
+  
+            const dfloat u_lam1 = lambda1[p_lambda*id + 0 * loffset];
+            const dfloat v_lam1 = lambda1[p_lambda*id + 1 * loffset];
+            const dfloat w_lam1 = lambda1[p_lambda*id + 2 * loffset];
 
             const dfloat dudx = rx * r_Ur[k] + sx * r_Us[k] + tx * r_Ut[k];
             const dfloat dudy = ry * r_Ur[k] + sy * r_Us[k] + ty * r_Ut[k];

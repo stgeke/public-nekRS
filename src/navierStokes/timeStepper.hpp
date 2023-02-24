@@ -7,7 +7,7 @@ namespace timeStepper {
 void adjustDt(nrs_t *nrs, int tstep);
 
 void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep);
-void coeffs(nrs_t *nrs, dfloat dt, int tstep);
+void setDt(nrs_t *nrs, dfloat dt, int tstep);
 void makef(nrs_t* nrs, dfloat time, int tstep, occa::memory o_FU, occa::memory o_BF);
 occa::memory velocityStrongSubCycle(nrs_t* nrs, int nEXT, dfloat time, occa::memory o_U);
 occa::memory velocityStrongSubCycleMovingMesh(nrs_t* nrs, int nEXT, dfloat time, occa::memory o_U);

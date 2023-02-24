@@ -109,8 +109,17 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
   platform->options.getArgs("NUMBER OF SCALARS", nrs->Nscalar);
   platform->options.getArgs("MESH DIMENSION", nrs->dim);
   platform->options.getArgs("ELEMENT TYPE", nrs->elementType);
-  if (platform->device.mode() == "Serial")
-    platform->options.setArgs("GS OVERLAP", "FALSE");
+
+  {
+    if (platform->device.mode() == "Serial")
+      platform->options.setArgs("GS OVERLAP", "FALSE");
+
+    if (platform->comm.mpiCommSize == 1)
+      platform->options.setArgs("GS OVERLAP", "FALSE");
+
+    if (platform->comm.mpiRank == 0 && platform->options.compareArgs("GS OVERLAP", "FALSE"))
+      std::cout << "gs overlap disabled\n\n";
+  }
 
   nrs->flow = 1;
   if (platform->options.compareArgs("VELOCITY SOLVER", "NONE"))
@@ -143,24 +152,21 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     MPI_Allreduce(MPI_IN_PLACE, &NelementsV, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
     MPI_Allreduce(MPI_IN_PLACE, &NelementsT, 1, MPI_HLONG, MPI_SUM, platform->comm.mpiComm);
     if ((NelementsT > NelementsV) && nrs->Nscalar) nrs->cht = 1;
+
+    nrsCheck(nrs->cht && NelementsT <= NelementsV, MPI_COMM_SELF, EXIT_FAILURE,
+             "Invalid solid element partitioning", "");
+
+    nrsCheck(nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE"),
+             platform->comm.mpiComm,
+             EXIT_FAILURE,
+             "Conjugate heat transfer requires solving for temperature!\n", "");
   }
-
-  nrsCheck(nrs->cht && !platform->options.compareArgs("SCALAR00 IS TEMPERATURE", "TRUE"),
-           platform->comm.mpiComm,
-           EXIT_FAILURE,
-           "Conjugate heat transfer requires solving for temperature!\n", "");
-
-  nrsCheck(nrs->cht && options.compareArgs("MOVING MESH", "TRUE"),
-           platform->comm.mpiComm,
-           EXIT_FAILURE,
-           "Conjugate heat transfer + moving mesh is not supported\n", "");
 
   nrs->_mesh = createMesh(comm, N, cubN, nrs->cht, kernelInfo);
   nrs->meshV = (mesh_t *)nrs->_mesh->fluid;
   mesh_t *mesh = nrs->meshV;
 
   nrs->NVfields = 3;
-  nrs->NTfields = nrs->NVfields + 1; // Total Velocity + Pressure
   mesh->Nfields = 1;
 
   platform->options.getArgs("SUBCYCLING STEPS", nrs->Nsubsteps);

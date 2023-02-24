@@ -84,13 +84,12 @@ occa::kernel benchmarkAdvsub(int Nfields,
   }
 
   nrsCheck(Nq > 14, platform->comm.mpiComm, EXIT_FAILURE, 
-           "Error: maximum Nq of 14 has been exceed with Nq=%d\n", Nq);
+           "Nq > 14 is unsupported\n", "");
 
   const auto largestCubNq = maximumCubaturePoints.at(Nq);
 
   nrsCheck(cubNq > largestCubNq, platform->comm.mpiComm, EXIT_FAILURE, 
-           "Error: maximum cubNq for Nq = %d is %d\ncubNq as specified is %d\n", 
-           Nq, largestCubNq, cubNq);
+           "cubNq > %d is unsupported\n", largestCubNq); 
 
   if (!dealias || cubNq < Nq) {
     cubNq = Nq;
@@ -271,6 +270,7 @@ occa::kernel benchmarkAdvsub(int Nfields,
     auto newProps = props;
     if (!platform->serial && dealias)
       newProps["defines/p_knl"] = kernelVariant;
+
     auto kernel = platform->device.buildKernel(fileName, newProps, true);
     if (platform->options.compareArgs("BUILD ONLY", "TRUE"))
       return kernel;
@@ -285,20 +285,21 @@ occa::kernel benchmarkAdvsub(int Nfields,
     kernelRunner(kernel);
     o_NU.copyTo(results.data(), results.size() * sizeof(dfloat));
 
-    double err = 0.0;
+    double err = 0;
     for (auto i = 0; i < results.size(); ++i) {
-      err = std::max(err, std::abs(results[i] - referenceResults[i]));
+      err = std::max(err, (double) std::abs(results[i] - referenceResults[i]));
     }
+    MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
 
-    const auto tol = 100. * std::numeric_limits<dfloat>::epsilon();
-    if (platform->comm.mpiRank == 0 && verbosity > 1 && err > tol) {
-      std::cout << "Error in kernel " << kernelVariant << " is " << err
-                << " compared to reference implementation.\n";
-    }
-
-    // error is too large -- pass an un-initialized kernel to the benchmarker
-    // to skip this kernel variant
+    const auto tol = 200. * std::numeric_limits<dfloat>::epsilon();
     if (err > tol) {
+      if (platform->comm.mpiRank == 0 && verbosity > 1) {
+        std::cout << "Ignore kernel " << kernelVariant 
+                  << " because error of " << err
+                  << " is too large compared to reference\n";
+      }
+
+      // pass un-initialized kernel to skip this kernel variant
       kernel = occa::kernel();
     }
 

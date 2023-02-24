@@ -101,8 +101,6 @@ void checkConfig(elliptic_t* elliptic)
   nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
 }
 
-#define UPPER(a) transform(a.begin(), a.end(), a.begin(), [](int c) { return std::toupper(c); });
-
 void ellipticSolveSetup(elliptic_t* elliptic)
 {
   MPI_Barrier(platform->comm.mpiComm);
@@ -116,13 +114,16 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   // create private options based on platform
   for (auto &entry : platform->options.keyWordToDataMap) {
     std::string prefix = elliptic->name;
-    UPPER(prefix);
+    upperCase(prefix);
     if (entry.first.find(prefix) != std::string::npos) {
       std::string key = entry.first;
       key.erase(0, prefix.size() + 1);
       elliptic->options.setArgs(key, entry.second);
     }
   }
+
+  if(platform->comm.mpiRank == 0 && platform->verbose) 
+    std::cout << elliptic->options << std::endl;
 
   if (platform->device.mode() == "Serial")
     elliptic->options.setArgs("COARSE SOLVER LOCATION", "CPU");
@@ -254,16 +255,50 @@ void ellipticSolveSetup(elliptic_t* elliptic)
       platform->kernels.get(sectionIdentifier + "ellipticBlockUpdatePCG");
   }
 
+  auto timeEllipticOperator = [&]()
+  {
+    const int Nsamples = 10;
+    ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, dfloatString);
+
+    platform->device.finish();
+    MPI_Barrier(platform->comm.mpiComm);
+    const double start = MPI_Wtime();
+
+    for (int test = 0; test < Nsamples; ++test)
+      ellipticOperator(elliptic, elliptic->o_p, elliptic->o_Ap, dfloatString);
+
+    platform->device.finish();
+    double elapsed = (MPI_Wtime() - start) / Nsamples;
+    MPI_Allreduce(MPI_IN_PLACE, &elapsed, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
+
+    return elapsed;
+  };
+
   oogs_mode oogsMode = OOGS_AUTO;
-  auto callback = [&]() // hardwired to FP64 variable coeff
-                  {
-                    ellipticAx(elliptic, mesh->NlocalGatherElements, mesh->o_localGatherElementList,
-                               elliptic->o_p, elliptic->o_Ap, dfloatString);
-                  };
   elliptic->oogs = oogs::setup(elliptic->ogs, elliptic->Nfields, elliptic->fieldOffset, ogsDfloat, NULL, oogsMode);
   elliptic->oogsAx = elliptic->oogs;
-  if(options.compareArgs("GS OVERLAP", "TRUE")) 
+
+  if(platform->options.compareArgs("GS OVERLAP", "TRUE")) {
+    auto nonOverlappedTime = timeEllipticOperator();
+    auto callback = [&]()
+    {
+    ellipticAx(elliptic, mesh->NlocalGatherElements, mesh->o_localGatherElementList,
+               elliptic->o_p, elliptic->o_Ap, dfloatString);
+    };
     elliptic->oogsAx = oogs::setup(elliptic->ogs, elliptic->Nfields, elliptic->fieldOffset, ogsDfloat, callback, oogsMode);
+
+    auto overlappedTime = timeEllipticOperator();
+    if(overlappedTime > nonOverlappedTime)
+      elliptic->oogsAx = elliptic->oogs;
+
+    if(platform->comm.mpiRank == 0) {
+      printf("testing Ax overlap %.2es %.2es ", nonOverlappedTime, overlappedTime);
+      if(elliptic->oogsAx != elliptic->oogs)
+        printf("(overlap enabled)");
+
+      printf("\n");
+    }
+  }
 
   ellipticPreconditionerSetup(elliptic, elliptic->ogs);
 

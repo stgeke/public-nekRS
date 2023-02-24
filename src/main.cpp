@@ -470,6 +470,8 @@ int main(int argc, char** argv)
     MPI_Barrier(comm);
   }
 
+  try{
+
   if (cmdOpt->debug) feraiseexcept(FE_ALL_EXCEPT);
 
   { // change working dir
@@ -599,4 +601,11 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   else
     return EXIT_SUCCESS;
+
+  } // try
+  catch(const std::exception& ex)
+  {
+    std::cerr << ex.what() << std::endl;
+    MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+  }
 }

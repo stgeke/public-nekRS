@@ -5,7 +5,7 @@
 * Point interpolation
 * Coupled multi-session (neknek)
 * Particle tracking 
-* Single source udf+oudf (see ethier example) 
+* Single source udf+oudf
 * Device support BoomerAMG
 * Improved runtime statistics
 * Improved Chebyshev smoother
@@ -19,9 +19,11 @@
 
 ## Good to know
 
+* [udf] Changes in include files do not trigger rebuild 
 * [nrsconfig] Optional build settings have to be passed as a command line arg e.g. `-DENABLE_AMGX=ON`
 
 ## Breaking Changes
+* [udf] Rename `bc->wrk` => `bc->usrwrk`
 * Time step was added to `nekRS::outfld(..., int step, ...)`
 * [par] Use `pMGSchedule` instead of `pMultigridCoarsening` (see help for more details)
 * [par] Rename writeControl value `runTime` => `simulationTime`
@@ -30,7 +32,6 @@
 * [par] Replace `stressFormulation = true` by `equation = navierStokes+variableViscosity` 
 * [par] Replace bcType `fixedValue` by `codedFixedValue`
 * [par] Replace `elasticity` by `pcg+block` for mesh solver
-* [oudf] Rename `bc->wrk` => `bc->usrwrk`
 
 ## Known Bugs / Restrictions
 

@@ -58,7 +58,7 @@ elliptic_t* ellipticBuildMultigridLevel(elliptic_t* baseElliptic, int Nc, int Nf
   elliptic->fieldOffset = mesh->Nlocal; // assumes elliptic->Nfields == 1
 
   { // setup an unmasked gs handle
-    ogs_t *ogs = NULL;
+    ogs_t *ogs = nullptr;
     ellipticOgs(mesh,
                 mesh->Nlocal,
                 /* nFields */ 1,

@@ -190,22 +190,31 @@ occa::kernel device_t::buildKernel(const std::string &fileName,
 
   occa::kernel constructedKernel;
 
-  // rank0 compiles, than all load
+  // rank0 compiles + loads, then all other just load
   for (int pass = 0; pass < 2; ++pass) {
     occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 : OCCA_CACHE_DIR; 
     if ((pass == 0 && rank == 0) || (pass == 1 && rank != 0)) {
       constructedKernel = this->buildKernel(fileName, kernelName, props, suffix);
     }
 
-    if(platform->cacheBcast && pass == 0) {
-      const auto srcPath = (fs::path(constructedKernel.sourceFilename()).parent_path());
-      const auto dstPath = OCCA_CACHE_DIR / fs::path("cache/");
-      fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
-    } else {
-      MPI_Barrier(localCommunicator);
+    if(pass == 0) {
+      if(platform->cacheBcast) {
+        const auto srcPath = (fs::path(constructedKernel.sourceFilename()).parent_path());
+        const auto dstPath = OCCA_CACHE_DIR / fs::path("cache/");
+        fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
+      } else {
+        MPI_Barrier(localCommunicator);
+      }
     }
     occa::env::OCCA_CACHE_DIR = OCCA_CACHE_DIR0;
   }
+
+  int isInitializedMin = constructedKernel.isInitialized();
+  MPI_Allreduce(MPI_IN_PLACE, &isInitializedMin, 1, MPI_INT, MPI_MIN, _comm.mpiComm);
+  int isInitializedMax = constructedKernel.isInitialized();
+  MPI_Allreduce(MPI_IN_PLACE, &isInitializedMax, 1, MPI_INT, MPI_MAX, _comm.mpiComm);
+  nrsCheck(isInitializedMin != isInitializedMax,  _comm.mpiComm, EXIT_FAILURE,
+           "Kernel status of %s inconsistent across ranks\n", constructedKernel.name().c_str());
 
   return constructedKernel;
 }
@@ -226,22 +235,32 @@ occa::kernel device_t::buildKernel(const std::string &fullPath,
     const int rank = platform->cacheLocal ? _comm.localRank : _comm.mpiRank;
     MPI_Comm localCommunicator = platform->cacheLocal ? _comm.mpiCommLocal : _comm.mpiComm;
 
-    // rank0 compiles, than all load
+    // rank0 compiles + loads, then all other just load
     for (int pass = 0; pass < 2; ++pass) {
       occa::env::OCCA_CACHE_DIR = (pass == 0) ? OCCA_CACHE_DIR0 : OCCA_CACHE_DIR ;
       if ((pass == 0 && rank == 0) || (pass == 1 && rank != 0)) {
         constructedKernel = this->buildKernel(fullPath, props, suffix);
       }
 
-      if(platform->cacheBcast && pass == 0) {
-        const auto srcPath = fs::path(constructedKernel.sourceFilename()).parent_path();
-        const auto dstPath = OCCA_CACHE_DIR / fs::path("cache/");
-        fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
-      } else {
-        MPI_Barrier(localCommunicator);
+      if(pass == 0) {
+        if(platform->cacheBcast) {
+          const auto srcPath = (fs::path(constructedKernel.sourceFilename()).parent_path());
+          const auto dstPath = OCCA_CACHE_DIR / fs::path("cache/");
+          fileBcast(srcPath, dstPath, _comm.mpiComm, platform->verbose);
+        } else {
+          MPI_Barrier(localCommunicator);
+        }
       }
       occa::env::OCCA_CACHE_DIR = OCCA_CACHE_DIR0;
     }
+
+    int isInitializedMin = constructedKernel.isInitialized();
+    MPI_Allreduce(MPI_IN_PLACE, &isInitializedMin, 1, MPI_INT, MPI_MIN, _comm.mpiComm);
+    int isInitializedMax = constructedKernel.isInitialized();
+    MPI_Allreduce(MPI_IN_PLACE, &isInitializedMax, 1, MPI_INT, MPI_MAX, _comm.mpiComm);
+    nrsCheck(isInitializedMin != isInitializedMax,  _comm.mpiComm, EXIT_FAILURE,
+             "Kernel status of %s inconsistent across ranks\n", constructedKernel.name().c_str());
+
   } else {
     constructedKernel = this->buildKernel(fullPath, props, suffix);
   }
@@ -321,7 +340,8 @@ device_t::device_t(setupAide &options, comm_t &comm) : _comm(comm)
   options.getArgs("THREAD MODEL", requestedOccaMode);
 
   if (strcasecmp(requestedOccaMode.c_str(), "CUDA") == 0) {
-    setenv("CUDA_DISABLE_PTX_JIT", "1", 1);
+    if(!getenv("CUDA_DISABLE_PTX_JIT"))
+      setenv("CUDA_DISABLE_PTX_JIT", "1", 1);
     sprintf(deviceConfig, "{mode: 'CUDA', device_id: %d}", device_id);
   }
   else if (strcasecmp(requestedOccaMode.c_str(), "HIP") == 0) {

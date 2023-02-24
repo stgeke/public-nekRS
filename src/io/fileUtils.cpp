@@ -64,6 +64,11 @@ void fileBcast(const fs::path &srcPathIn,
   int rank;
   MPI_Comm_rank(comm, &rank);
 
+  if(rank == 0) {
+    nrsCheck( !fs::exists(srcPathIn), MPI_COMM_SELF, EXIT_FAILURE, 
+             "Cannot find %s!\n", std::string(srcPathIn).c_str());
+  }
+
   const auto path0 = fs::current_path();
   auto srcPath = srcPathIn;
   if(srcPathIn.is_absolute()) {
@@ -71,10 +76,6 @@ void fileBcast(const fs::path &srcPathIn,
     srcPath = fs::relative(srcPathIn, fs::current_path());
   }
 
-  if(rank == 0) {
-    nrsCheck( !fs::exists(srcPath), MPI_COMM_SELF, EXIT_FAILURE, 
-             "Cannot find %s!\n", std::string(srcPath).c_str());
-  }
 
   int localRank;
   const int localRankRoot = 0;

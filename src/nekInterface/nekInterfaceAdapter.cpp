@@ -525,13 +525,15 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
   if (!usrFileExists)
     usrFile = nek5000_dir + "/core/zero.usr"; 
 
-  int recompile = 0;
+  int buildRequired = 0;
   if(platform->comm.mpiRank == 0) {
-    if (isFileNewer(usrFile.c_str(), libFile.c_str())) {
-      recompile = 1;
+    if (platform->options.compareArgs("BUILD ONLY", "TRUE")) {
+      buildRequired = 1;
+    } else if (isFileNewer(usrFile.c_str(), libFile.c_str())) {
+      buildRequired = 1;
     }
   }
-  MPI_Bcast(&recompile, 1, MPI_INT, 0, platform->comm.mpiComm);
+  MPI_Bcast(&buildRequired, 1, MPI_INT, 0, platform->comm.mpiComm);
 
   if (platform->cacheBcast || platform->cacheLocal) {
     fileBcast(usrFile, platform->tmpDir, platform->comm.mpiComm, platform->verbose);
@@ -545,7 +547,7 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
       int nelgt, nelgv;
       const int ndim = 3;
       const std::string meshFile = options.getArgs("MESH FILE");
-      re2::nelg(meshFile, nelgt, nelgv, MPI_COMM_NULL);
+      re2::nelg(meshFile, nelgt, nelgv, MPI_COMM_SELF);
 
       int lelt = (nelgt / np) + 3;
       if (lelt > nelgt)
@@ -554,13 +556,13 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
       const std::string sizeFile = cache_dir + "/SIZE";
       mkSIZE(N + 1, 1, lelt, nelgt, ndim, np, ldimt, options, sizeFile.c_str());
 
-      if (recompile)
+      if (buildRequired)
         copyFile(usrFile.c_str(), usrFileCache.c_str());
 
       if (isFileNewer(sizeFile.c_str(), libFile.c_str()))
-        recompile = 1;
+        buildRequired = 1;
 
-      if (recompile) {
+      if (buildRequired) {
         const double tStart = MPI_Wtime();
 
         const std::string pipeToNull = (rank == 0) ? std::string("") : std::string(">/dev/null 2>&1");
@@ -570,8 +572,10 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
         std::string make_args = "-j8 ";
         if (!verbose)
           make_args += "-s ";
+
         if (rank == 0)
           printf("building nekInterface for lx1=%d, lelt=%d and lelg=%d ...", N + 1, lelt, nelgt);
+
         fflush(stdout);
 
         char buf[4096];

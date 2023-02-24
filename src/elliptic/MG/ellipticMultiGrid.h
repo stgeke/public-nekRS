@@ -80,7 +80,6 @@ public:
   inline static occa::memory o_smootherResidual2;
   inline static occa::memory o_smootherUpdate;
   occa::kernel preFDMKernel;
-  bool overlap;
   occa::kernel fusedFDMKernel;
   occa::kernel postFDMKernel;
   // Eigenvectors

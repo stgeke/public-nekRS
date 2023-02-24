@@ -4,7 +4,7 @@
 void re2::nelg(const std::string& meshFile, int& nelgt, int& nelgv, MPI_Comm comm)
 {
   int rank = 0;
-  if(comm != MPI_COMM_NULL) MPI_Comm_rank(comm, &rank);
+  MPI_Comm_rank(comm, &rank);
 
   const int re2HeaderBytes = 80;
 
@@ -37,6 +37,6 @@ void re2::nelg(const std::string& meshFile, int& nelgt, int& nelgv, MPI_Comm com
     free(buf);
   }
 
-  if(comm != MPI_COMM_NULL) MPI_Bcast(&nelgt, 1, MPI_INT, 0, comm);
-  if(comm != MPI_COMM_NULL) MPI_Bcast(&nelgv, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&nelgt, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&nelgv, 1, MPI_INT, 0, comm);
 }

@@ -119,7 +119,14 @@ public:
 
   crystal *crystalRouter();
 
+  // For use in, e.g., nek-nek
+  // If altering code, proc, el, r, or dist2 after a find call,
+  // update device arrays with this function
+  void update(data_t &data);
+
 private:
+  static constexpr int maxFields = 30;
+
   MPI_Comm comm;
   int rank;
   TimerLevel timerLevel = TimerLevel::None;
@@ -128,12 +135,19 @@ private:
   crystal *cr;
   hashData_t *hash;
   occa::kernel localEvalKernel;
+  occa::kernel localEvalMaskKernel;
   occa::kernel localKernel;
 
   // data for elx
   occa::memory o_x;
   occa::memory o_y;
   occa::memory o_z;
+
+  // results after find call
+  occa::memory o_code;
+  occa::memory o_proc;
+  occa::memory o_el;
+  occa::memory o_r;
 
   // data for wtend
   occa::memory o_wtend_x;

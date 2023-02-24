@@ -189,20 +189,21 @@ occa::kernel benchmarkFDM(int Nelements,
       kernelRunner(kernel);
       auto result = dumpResult();
 
-      FPType err = 0.0;
+      double err = 0.0;
       for (int i = 0; i < result.size(); ++i) {
-        err = std::max(err, std::abs(result[i] - referenceResult[i]));
+        err = std::max(err, (double) std::abs(result[i] - referenceResult[i]));
       }
+      MPI_Allreduce(MPI_IN_PLACE, &err, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
 
       const auto tol = 100. * std::numeric_limits<FPType>::epsilon();
-      if (platform->comm.mpiRank == 0 && verbosity > 1 && err > tol) {
-        std::cout << "Error in kernel compared to reference implementation " << kernelVariant << ": " << err
-                  << std::endl;
-      }
-
-      // error is too large -- pass an un-initialized kernel to the benchmarker
-      // to skip this kernel variant
       if (err > tol) {
+        if (platform->comm.mpiRank == 0 && verbosity > 1) {
+          std::cout << "Ignore kernel " << kernelVariant
+                    << " because error of " << err
+                    << " is too large compared to reference\n";
+        }
+
+        // pass un-initialized kernel to skip this kernel variant
         kernel = occa::kernel();
       }
 

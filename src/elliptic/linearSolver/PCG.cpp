@@ -190,8 +190,9 @@ int pcg(elliptic_t* elliptic, occa::memory &o_r, occa::memory &o_x,
 #ifdef DEBUG
     printf("rdotr: %.15e\n", rdotr);
 #endif
-    nrsCheck(std::isnan(rdotr), platform->comm.mpiComm, EXIT_FAILURE,
-             "Detected invalid resiual norm while running linear solver!\n", "");
+    if (platform->comm.mpiRank == 0)
+      nrsCheck(std::isnan(rdotr), MPI_COMM_SELF, EXIT_FAILURE,
+               "Detected invalid resiual norm while running linear solver!\n", "");
 
     if (verbose && (platform->comm.mpiRank == 0))
       printf("it %d r norm %.15e\n", iter, rdotr);

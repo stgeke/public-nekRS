@@ -27,6 +27,7 @@ SOFTWARE.
 // for platform
 #include "nrssys.hpp"
 #include "nrs.hpp"
+#include "tuple_for_each.hpp"
 
 #include <cstdlib>
 #include <vector>
@@ -195,11 +196,21 @@ void findpts_t::findptsLocal(int *const code,
                              const dfloat *const z,
                              const int pn)
 {
-  if (pn == 0)
-    return;
-
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsLocal", 0);
+    platform->timer.tic(timerName + "findptsLocal", 1);
+  }
+
+  if (pn == 0) {
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsLocal");
+    }
+
+    // provide 0-time tic/toc to allow global reduction later in timer reporting
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.tic(timerName + "findptsLocal::localKernel", 0);
+      platform->timer.toc(timerName + "findptsLocal::localKernel");
+    }
+    return;
   }
 
   pool::manageBuffers(pn, 0, 0);
@@ -232,7 +243,7 @@ void findpts_t::findptsLocal(int *const code,
   o_zint.copyFrom(z, sizeof(dfloat) * pn);
 
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "findpts_t::localKernel", 0);
+    platform->timer.tic(timerName + "findptsLocal::localKernel", 0);
   }
   this->localKernel(pn,
                     this->tol,
@@ -258,15 +269,17 @@ void findpts_t::findptsLocal(int *const code,
                     o_r,
                     o_dist2);
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::localKernel");
+    platform->timer.toc(timerName + "findptsLocal::localKernel");
   }
 
-  o_code.copyTo(code, sizeof(dlong) * pn);
-  o_el.copyTo(el, sizeof(dlong) * pn);
-  o_r.copyTo(r, dim * sizeof(dfloat) * pn);
-  o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  if (pn > 0) {
+    o_code.copyTo(code, sizeof(dlong) * pn);
+    o_el.copyTo(el, sizeof(dlong) * pn);
+    o_r.copyTo(r, dim * sizeof(dfloat) * pn);
+    o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  }
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsLocal");
+    platform->timer.toc(timerName + "findptsLocal");
   }
 }
 
@@ -279,10 +292,20 @@ void findpts_t::findptsLocal(int *const code,
                              occa::memory o_zint,
                              const int pn)
 {
-  if (pn == 0)
-    return;
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsLocal", 0);
+    platform->timer.tic(timerName + "findptsLocal", 1);
+  }
+
+  if (pn == 0) {
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsLocal");
+    }
+    // provide 0-time tic/toc to allow global reduction later in timer reporting
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.tic(timerName + "findptsLocal::localKernel", 0);
+      platform->timer.toc(timerName + "findptsLocal::localKernel");
+    }
+    return;
   }
 
   pool::manageBuffers(pn, 0, 0);
@@ -302,7 +325,7 @@ void findpts_t::findptsLocal(int *const code,
   byteOffset += sizeof(dfloat) * pn;
 
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "findpts_t::localKernel", 0);
+    platform->timer.tic(timerName + "findptsLocal::localKernel", 0);
   }
   this->localKernel(pn,
                     this->tol,
@@ -328,15 +351,17 @@ void findpts_t::findptsLocal(int *const code,
                     o_r,
                     o_dist2);
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::localKernel");
+    platform->timer.toc(timerName + "findptsLocal::localKernel");
   }
 
-  o_code.copyTo(code, sizeof(dlong) * pn);
-  o_el.copyTo(el, sizeof(dlong) * pn);
-  o_r.copyTo(r, dim * sizeof(dfloat) * pn);
-  o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  if (pn > 0) {
+    o_code.copyTo(code, sizeof(dlong) * pn);
+    o_el.copyTo(el, sizeof(dlong) * pn);
+    o_r.copyTo(r, dim * sizeof(dfloat) * pn);
+    o_dist2.copyTo(dist2, sizeof(dfloat) * pn);
+  }
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsLocal");
+    platform->timer.toc(timerName + "findptsLocal");
   }
 }
 
@@ -349,10 +374,21 @@ void findpts_t::findptsLocalEvalInternal(OutputType *opt,
                                          const int outputOffset,
                                          occa::memory &o_in)
 {
-  if (pn == 0)
-    return;
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsLocalEvalInternal", 0);
+    platform->timer.tic(timerName + "findptsLocalEvalInternal", 1);
+  }
+
+  if (pn == 0) {
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsLocalEvalInternal");
+    }
+
+    // provide 0-time tic/toc to allow global reduction later in timer reporting
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.tic(timerName + "findptsLocalEvalInternal::localEvalKernel", 0);
+      platform->timer.toc(timerName + "findptsLocalEvalInternal::localEvalKernel");
+    }
+    return;
   }
 
   pool::manageBuffers(pn, outputOffset, nFields);
@@ -380,11 +416,11 @@ void findpts_t::findptsLocalEvalInternal(OutputType *opt,
   o_el.copyFrom(pool::el, pn * sizeof(dlong));
 
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "findpts_t::localEvalKernel", 0);
+    platform->timer.tic(timerName + "findptsLocalEvalInternal::localEvalKernel", 0);
   }
   this->localEvalKernel(pn, nFields, inputOffset, outputOffset, o_el, o_r, o_in, o_out);
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::localEvalKernel");
+    platform->timer.toc(timerName + "findptsLocalEvalInternal::localEvalKernel");
   }
 
   o_out.copyTo(pool::out, nFields * outputOffset * sizeof(dfloat));
@@ -396,7 +432,7 @@ void findpts_t::findptsLocalEvalInternal(OutputType *opt,
     }
   }
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsLocalEvalInternal");
+    platform->timer.toc(timerName + "findptsLocalEvalInternal");
   }
 }
 
@@ -414,11 +450,8 @@ void findpts_t::findptsEvalImpl(occa::memory &o_out,
                                 hashData_t &hash,
                                 crystal &cr)
 {
-  int nGlobalRanks;
-  MPI_Comm_size(platform->comm.mpiCommParent, &nGlobalRanks);
-
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl", 1);
+    platform->timer.tic(timerName + "findptsEvalImpl", 1);
   }
   static std::vector<dfloat> out_base;
 
@@ -430,17 +463,34 @@ void findpts_t::findptsEvalImpl(occa::memory &o_out,
   struct array src, outpt;
   /* copy user data, weed out unfound points, send out */
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::copy data", 1);
+    platform->timer.tic(timerName + "findptsEvalImpl::copy data", 1);
   }
+  // avoid doing SoA -> AoS conversion for points that remain on the same rank
   {
     int index;
     const int *code = code_base, *proc = proc_base, *el = el_base;
     const dfloat *r = r_base;
-    evalSrcPt_t *pt;
-    array_init(evalSrcPt_t, &src, npt);
-    pt = (evalSrcPt_t *)src.ptr;
+
+    int numSend = 0;
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::copy data::count_num_send", 1);
+    }
     for (index = 0; index < npt; ++index) {
-      if (*code != CODE_NOT_FOUND) {
+      numSend += (code_base[index] != CODE_NOT_FOUND && proc_base[index] != this->rank);
+    }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::copy data::count_num_send");
+    }
+
+    evalSrcPt_t *pt;
+    array_init(evalSrcPt_t, &src, numSend);
+    pt = (evalSrcPt_t *)src.ptr;
+
+    int ctr = 0;
+
+    for (index = 0; index < npt; ++index) {
+      if (*code != CODE_NOT_FOUND && *proc != this->rank) {
         for (int d = 0; d < dim; ++d) {
           pt->r[d] = r[d];
         }
@@ -454,25 +504,27 @@ void findpts_t::findptsEvalImpl(occa::memory &o_out,
       proc++;
       el++;
     }
+
     src.n = pt - (evalSrcPt_t *)src.ptr;
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::copy data::sarray_transfer", 1);
-      }
-      sarray_transfer(evalSrcPt_t, &src, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::copy data::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::copy data::sarray_transfer", 1);
+    }
+    sarray_transfer(evalSrcPt_t, &src, proc, 1, &cr);
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::copy data::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::copy data");
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::eval points", 1);
+    platform->timer.toc(timerName + "findptsEvalImpl::copy data");
+    platform->timer.tic(timerName + "findptsEvalImpl::eval points", 1);
   }
 
   /* evaluate points, send back */
   {
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::eval points::do allocation", 1);
+    }
     int n = src.n;
     const evalSrcPt_t *spt;
     OutputType *opt;
@@ -480,7 +532,18 @@ void findpts_t::findptsEvalImpl(occa::memory &o_out,
     outpt.n = n;
     spt = (evalSrcPt_t *)src.ptr;
     opt = (OutputType *)outpt.ptr;
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::eval points::do allocation");
+    }
+
+    auto timerNameSave = timerName;
+    timerName = timerName + "findptsEvalImpl::eval points::";
     findptsLocalEvalInternal(opt, spt, src.n, nFields, inputOffset, src.n, o_in);
+    timerName = timerNameSave;
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::eval points::copy index and proc", 1);
+    }
     spt = (evalSrcPt_t *)src.ptr;
     opt = (OutputType *)outpt.ptr;
     for (; n; --n, ++spt, ++opt) {
@@ -488,37 +551,59 @@ void findpts_t::findptsEvalImpl(occa::memory &o_out,
       opt->proc = spt->proc;
     }
     array_free(&src);
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::eval points::sarray_transfer", 1);
-      }
-      sarray_transfer(OutputType, &outpt, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::eval points::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::eval points::copy index and proc");
+      platform->timer.tic(timerName + "findptsEvalImpl::eval points::sarray_transfer", 1);
+    }
+    sarray_transfer(OutputType, &outpt, proc, 1, &cr);
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::eval points::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::eval points");
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::copy results", 1);
+    platform->timer.toc(timerName + "findptsEvalImpl::eval points");
+    platform->timer.tic(timerName + "findptsEvalImpl::copy results", 1);
   }
 
   /* copy results to user data */
   {
     int n = outpt.n;
     OutputType *opt = (OutputType *)outpt.ptr;
+
     for (; n; --n, ++opt) {
       for (int field = 0; field < nFields; ++field) {
         out_base[opt->index + outputOffset * field] = opt->out[field];
       }
     }
     o_out.copyFrom(out_base.data(), nFields * outputOffset * sizeof(dfloat));
+
+    // launch local eval kernel on all points that can be evaluated on the current rank
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.tic(timerName + "findptsEvalImpl::localEvalKernel", 1);
+    }
+    if (npt > 0) {
+      this->localEvalMaskKernel(npt,
+                                nFields,
+                                inputOffset,
+                                outputOffset,
+                                this->rank,
+                                this->o_proc,
+                                this->o_code,
+                                this->o_el,
+                                this->o_r,
+                                o_in,
+                                o_out);
+    }
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.toc(timerName + "findptsEvalImpl::localEvalKernel");
+    }
+
     array_free(&outpt);
   }
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::copy results");
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl");
+    platform->timer.toc(timerName + "findptsEvalImpl::copy results");
+    platform->timer.toc(timerName + "findptsEvalImpl");
   }
 }
 
@@ -536,43 +621,57 @@ void findpts_t::findptsEvalImpl(dfloat *out,
                                 hashData_t &hash,
                                 crystal &cr)
 {
-  int nGlobalRanks;
-  MPI_Comm_size(platform->comm.mpiCommParent, &nGlobalRanks);
-
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl", 1);
+    platform->timer.tic(timerName + "findptsEvalImpl", 1);
   }
 
   static occa::memory o_in;
+  static occa::memory o_out;
 
   const auto Nbytes = inputOffset * nFields * sizeof(dfloat);
   if (o_in.size() < Nbytes) {
-    if (o_in.size())
+    if (o_in.size()) {
       o_in.free();
+      o_out.free();
+    }
 
     constexpr int growthFactor = 2;
 
-    void *buffer = std::calloc(growthFactor * Nbytes, 1);
-    o_in = platform->device.malloc(growthFactor * Nbytes, buffer);
-    std::free(buffer);
+    o_in = platform->device.malloc(growthFactor * Nbytes);
+    o_out = platform->device.malloc(growthFactor * Nbytes);
   }
-
-  o_in.copyFrom(in, Nbytes, 0, "async: true");
 
   struct array src, outpt;
   /* copy user data, weed out unfound points, send out */
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::copy data", 1);
+    platform->timer.tic(timerName + "findptsEvalImpl::copy data", 1);
   }
+  // avoid doing SoA -> AoS conversion for points that remain on the same rank
   {
     int index;
     const int *code = code_base, *proc = proc_base, *el = el_base;
     const dfloat *r = r_base;
-    evalSrcPt_t *pt;
-    array_init(evalSrcPt_t, &src, npt);
-    pt = (evalSrcPt_t *)src.ptr;
+
+    int numSend = 0;
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::copy data::count_num_send", 1);
+    }
     for (index = 0; index < npt; ++index) {
-      if (*code != CODE_NOT_FOUND) {
+      numSend += (code_base[index] != CODE_NOT_FOUND && proc_base[index] != this->rank);
+    }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::copy data::count_num_send");
+    }
+
+    evalSrcPt_t *pt;
+    array_init(evalSrcPt_t, &src, numSend);
+    pt = (evalSrcPt_t *)src.ptr;
+
+    int ctr = 0;
+
+    for (index = 0; index < npt; ++index) {
+      if (*code != CODE_NOT_FOUND && *proc != this->rank) {
         for (int d = 0; d < dim; ++d) {
           pt->r[d] = r[d];
         }
@@ -586,21 +685,20 @@ void findpts_t::findptsEvalImpl(dfloat *out,
       proc++;
       el++;
     }
+
     src.n = pt - (evalSrcPt_t *)src.ptr;
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::copy data::sarray_transfer", 1);
-      }
-      sarray_transfer(evalSrcPt_t, &src, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::copy data::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::copy data::sarray_transfer", 1);
+    }
+    sarray_transfer(evalSrcPt_t, &src, proc, 1, &cr);
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::copy data::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::copy data");
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::eval points", 1);
+    platform->timer.toc(timerName + "findptsEvalImpl::copy data");
+    platform->timer.tic(timerName + "findptsEvalImpl::eval points", 1);
   }
 
   /* evaluate points, send back */
@@ -613,10 +711,11 @@ void findpts_t::findptsEvalImpl(dfloat *out,
     spt = (evalSrcPt_t *)src.ptr;
     opt = (OutputType *)outpt.ptr;
 
-    // finish H->D transfer prior to findptsLocalEvalInternal call
-    platform->device.finish();
-
+    auto timerNameSave = timerName;
+    timerName = timerName + "findptsEvalImpl::eval points::";
     findptsLocalEvalInternal(opt, spt, src.n, nFields, inputOffset, src.n, o_in);
+    timerName = timerNameSave;
+
     spt = (evalSrcPt_t *)src.ptr;
     opt = (OutputType *)outpt.ptr;
     for (; n; --n, ++spt, ++opt) {
@@ -624,37 +723,59 @@ void findpts_t::findptsEvalImpl(dfloat *out,
       opt->proc = spt->proc;
     }
     array_free(&src);
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::eval points::sarray_transfer", 1);
-      }
-      sarray_transfer(OutputType, &outpt, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::eval points::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "findptsEvalImpl::eval points::sarray_transfer", 1);
+    }
+    sarray_transfer(OutputType, &outpt, proc, 1, &cr);
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "findptsEvalImpl::eval points::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::eval points");
-    platform->timer.tic(timerName + "findpts_t::findptsEvalImpl::copy results", 1);
+    platform->timer.toc(timerName + "findptsEvalImpl::eval points");
+    platform->timer.tic(timerName + "findptsEvalImpl::copy results", 1);
   }
 
   /* copy results to user data */
   {
     int n = outpt.n;
     OutputType *opt = (OutputType *)outpt.ptr;
+
+    // launch local eval kernel on all points that can be evaluated on the current rank
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.tic(timerName + "findptsEvalImpl::localEvalKernel", 1);
+    }
+    if (npt > 0) {
+      this->localEvalMaskKernel(npt,
+                                nFields,
+                                inputOffset,
+                                outputOffset,
+                                this->rank,
+                                this->o_proc,
+                                this->o_code,
+                                this->o_el,
+                                this->o_r,
+                                o_in,
+                                o_out);
+    }
+    if (timerLevel != TimerLevel::None) {
+      platform->timer.toc(timerName + "findptsEvalImpl::localEvalKernel");
+    }
+
+    o_out.copyTo(out, nFields * outputOffset * sizeof(dfloat));
+
     for (; n; --n, ++opt) {
       for (int field = 0; field < nFields; ++field) {
-        out[opt->index + field * outputOffset] = opt->out[field];
+        out[opt->index + outputOffset * field] = opt->out[field];
       }
     }
+
     array_free(&outpt);
   }
-
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl::copy results");
-    platform->timer.toc(timerName + "findpts_t::findptsEvalImpl");
+    platform->timer.toc(timerName + "findptsEvalImpl::copy results");
+    platform->timer.toc(timerName + "findptsEvalImpl");
   }
 }
 
@@ -769,6 +890,7 @@ findpts_t::findpts_t(MPI_Comm comm,
   this->o_hashFac.copyFrom(hashFac, dim * sizeof(dfloat));
 
   this->localEvalKernel = platform->kernels.get("findptsLocalEval");
+  this->localEvalMaskKernel = platform->kernels.get("findptsLocalEvalMask");
   this->localKernel = platform->kernels.get("findptsLocal");
 
   this->o_wtend_x = platform->device.malloc(6 * Nq * sizeof(dfloat));
@@ -827,11 +949,8 @@ void findpts_t::find(data_t *const findPtsData,
                      occa::memory o_zint,
                      const dlong npt)
 {
-  int nGlobalRanks;
-  MPI_Comm_size(platform->comm.mpiCommParent, &nGlobalRanks);
-
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "findpts_t::find", 1);
+    platform->timer.tic(timerName + "find", 1);
   }
 
   static std::vector<dfloat> x_base;
@@ -852,10 +971,13 @@ void findpts_t::find(data_t *const findPtsData,
     z_base.resize(growthFactor * npt);
   }
 
-  // start async D->H transfer of o_xint -> x_base, etc.
-  o_xint.copyTo(x_base.data(), npt * sizeof(dfloat), 0, "async: true");
-  o_yint.copyTo(y_base.data(), npt * sizeof(dfloat), 0, "async: true");
-  o_zint.copyTo(z_base.data(), npt * sizeof(dfloat), 0, "async: true");
+  platform->timer.tic(timerName + "find::initial copy op", 1);
+  if (npt) {
+    o_xint.copyTo(x_base.data(), npt * sizeof(dfloat));
+    o_yint.copyTo(y_base.data(), npt * sizeof(dfloat));
+    o_zint.copyTo(z_base.data(), npt * sizeof(dfloat));
+  }
+  platform->timer.toc(timerName + "find::initial copy op");
 
   int *const code_base = findPtsData->code_base;
   int *const proc_base = findPtsData->proc_base;
@@ -866,17 +988,16 @@ void findpts_t::find(data_t *const findPtsData,
   crystal &cr = *this->cr;
   const int np = cr.comm.np, id = cr.comm.id;
   struct array hash_pt, srcPt_t, outPt_t;
-  /* look locally first */
-  if (npt) {
-    findptsLocal(code_base, el_base, r_base, dist2_base, o_xint, o_yint, o_zint, npt);
-  }
 
-  // finish D->H transfer
-  platform->device.finish();
+  /* look locally first */
+  const auto timerNameSave = timerName;
+  timerName = timerName + "find::";
+  findptsLocal(code_base, el_base, r_base, dist2_base, o_xint, o_yint, o_zint, npt);
+  timerName = timerNameSave;
 
   /* send unfound and border points to global hash cells */
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::find::unfound", 1);
+    platform->timer.tic(timerName + "find::unfound", 1);
   }
   {
     int index;
@@ -914,36 +1035,48 @@ void findpts_t::find(data_t *const findPtsData,
       proc++;
     }
     hash_pt.n = pt - (struct srcPt_t *)hash_pt.ptr;
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::find::unfound::sarray_transfer", 1);
-      }
-      sarray_transfer(struct srcPt_t, &hash_pt, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::find::unfound::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::unfound::sarray_transfer", 1);
+    }
+    sarray_transfer(struct srcPt_t, &hash_pt, proc, 1, &cr);
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::unfound::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::unfound");
-    platform->timer.tic(timerName + "findpts_t::find::send unfound", 1);
+    platform->timer.toc(timerName + "find::unfound");
+    platform->timer.tic(timerName + "find::send unfound", 1);
   }
 
   /* look up points in hash cells, route to possible procs */
   {
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send unfound::compute hash", 1);
+    }
     const unsigned int *const hash_offset = hash.offset;
     int count = 0, *proc, *proc_p;
     const struct srcPt_t *p = (struct srcPt_t *)hash_pt.ptr, *const pe = p + hash_pt.n;
     struct srcPt_t *q;
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send unfound::compute hash::get count", 1);
+    }
     for (; p != pe; ++p) {
       const int hi = hash_index_3(&hash, p->x) / np;
       const int i = hash_offset[hi], ie = hash_offset[hi + 1];
       count += ie - i;
     }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash::get count");
+      platform->timer.tic(timerName + "find::send unfound::compute hash::do allocations", 1);
+    }
     proc = tmalloc(int, count);
     proc_p = proc;
     array_init(struct srcPt_t, &srcPt_t, count), q = (struct srcPt_t *)srcPt_t.ptr;
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash::do allocations");
+      platform->timer.tic(timerName + "find::send unfound::compute hash::doubly nested loop", 1);
+    }
     p = (struct srcPt_t *)hash_pt.ptr;
     for (; p != pe; ++p) {
       const int hi = hash_index_3(&hash, p->x) / np;
@@ -957,26 +1090,30 @@ void findpts_t::find(data_t *const findPtsData,
         *q++ = *p;
       }
     }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash::doubly nested loop");
+    }
     array_free(&hash_pt);
     srcPt_t.n = proc_p - proc;
 #ifdef DIAGNOSTICS
     printf("(proc %u) hashed; routing %u/%u\n", id, (int)srcPt_t.n, count);
 #endif
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::find::send unfound::sarray_transfer_ext", 1);
-      }
-      sarray_transfer_ext(struct srcPt_t, &srcPt_t, reinterpret_cast<unsigned int *>(proc), sizeof(int), &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::find::send unfound::sarray_transfer_ext");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash");
+      platform->timer.tic(timerName + "find::send unfound::sarray_transfer_ext", 1);
+    }
+
+    sarray_transfer_ext(struct srcPt_t, &srcPt_t, reinterpret_cast<unsigned int *>(proc), sizeof(int), &cr);
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::sarray_transfer_ext");
     }
     free(proc);
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::send unfound");
-    platform->timer.tic(timerName + "findpts_t::find::send back", 1);
+    platform->timer.toc(timerName + "find::send unfound");
+    platform->timer.tic(timerName + "find::send back", 1);
   }
 
   /* look for other procs' points, send back */
@@ -994,49 +1131,60 @@ void findpts_t::find(data_t *const findPtsData,
     }
     spt = (struct srcPt_t *)srcPt_t.ptr;
     opt = (struct outPt_t *)outPt_t.ptr;
-    if (srcPt_t.n) {
 
-      // resize result buffers
-      if (codeArr.size() < srcPt_t.n) {
-        constexpr int growthFactor = 2;
-        codeArr.resize(growthFactor * srcPt_t.n);
-        elArr.resize(growthFactor * srcPt_t.n);
-        rArr.resize(growthFactor * dim * srcPt_t.n);
-        dist2Arr.resize(growthFactor * srcPt_t.n);
+    // resize result buffers
+    if (codeArr.size() < srcPt_t.n) {
+      constexpr int growthFactor = 2;
+      codeArr.resize(growthFactor * srcPt_t.n);
+      elArr.resize(growthFactor * srcPt_t.n);
+      rArr.resize(growthFactor * dim * srcPt_t.n);
+      dist2Arr.resize(growthFactor * srcPt_t.n);
 
-        x0.resize(growthFactor * srcPt_t.n);
-        x1.resize(growthFactor * srcPt_t.n);
-        x2.resize(growthFactor * srcPt_t.n);
-      }
+      x0.resize(growthFactor * srcPt_t.n);
+      x1.resize(growthFactor * srcPt_t.n);
+      x2.resize(growthFactor * srcPt_t.n);
+    }
 
-      for (int point = 0; point < srcPt_t.n; ++point) {
-        x0[point] = spt[point].x[0];
-        x1[point] = spt[point].x[1];
-        x2[point] = spt[point].x[2];
-      }
+    for (int point = 0; point < srcPt_t.n; ++point) {
+      x0[point] = spt[point].x[0];
+      x1[point] = spt[point].x[1];
+      x2[point] = spt[point].x[2];
+    }
 
-      findptsLocal(codeArr.data(),
-                   elArr.data(),
-                   rArr.data(),
-                   dist2Arr.data(),
-                   x0.data(),
-                   x1.data(),
-                   x2.data(),
-                   srcPt_t.n);
+    const auto timerNameSave = timerName;
+    timerName = timerName + "find::send back::";
+    findptsLocal(codeArr.data(),
+                 elArr.data(),
+                 rArr.data(),
+                 dist2Arr.data(),
+                 x0.data(),
+                 x1.data(),
+                 x2.data(),
+                 srcPt_t.n);
+    timerName = timerNameSave;
 
-      // unpack arrays into opt
-      for (int point = 0; point < srcPt_t.n; point++) {
-        opt[point].code = codeArr[point];
-        opt[point].el = elArr[point];
-        opt[point].dist2 = dist2Arr[point];
-        for (int d = 0; d < dim; ++d) {
-          opt[point].r[d] = rArr[dim * point + d];
-        }
+    // unpack arrays into opt
+    for (int point = 0; point < srcPt_t.n; point++) {
+      opt[point].code = codeArr[point];
+      opt[point].el = elArr[point];
+      opt[point].dist2 = dist2Arr[point];
+      for (int d = 0; d < dim; ++d) {
+        opt[point].r[d] = rArr[dim * point + d];
       }
     }
+
     array_free(&srcPt_t);
+
     /* group by code to eliminate unfound points */
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send back::sarray_sort", 1);
+    }
+
     sarray_sort(struct outPt_t, opt, outPt_t.n, code, 0, &cr.data);
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send back::sarray_sort");
+    }
     n = outPt_t.n;
     while (n && opt[n - 1].code == CODE_NOT_FOUND)
       --n;
@@ -1044,20 +1192,20 @@ void findpts_t::find(data_t *const findPtsData,
 #ifdef DIAGNOSTICS
     printf("(proc %u) sending back %u found points\n", id, (int)outPt_t.n);
 #endif
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::find::send back::sarray_transfer", 1);
-      }
-      sarray_transfer(struct outPt_t, &outPt_t, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::find::send back::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send back::sarray_transfer", 1);
+    }
+
+    sarray_transfer(struct outPt_t, &outPt_t, proc, 1, &cr);
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send back::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::send back");
-    platform->timer.tic(timerName + "findpts_t::find::merge", 1);
+    platform->timer.toc(timerName + "find::send back");
+    platform->timer.tic(timerName + "find::merge", 1);
   }
 
   /* merge remote results with user data */
@@ -1082,10 +1230,34 @@ void findpts_t::find(data_t *const findPtsData,
     array_free(&outPt_t);
   }
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::merge");
+    platform->timer.toc(timerName + "find::merge");
+    platform->timer.tic(timerName + "find::copy to device", 1);
+  }
+
+  if (npt) {
+    if (o_code.size() < npt * sizeof(dlong)) {
+      if (o_code.size()) {
+        o_code.free();
+        o_el.free();
+        o_r.free();
+        o_proc.free();
+      }
+      o_code = platform->device.malloc(npt * sizeof(dlong));
+      o_el = platform->device.malloc(npt * sizeof(dlong));
+      o_r = platform->device.malloc(npt * dim * sizeof(dfloat));
+      o_proc = platform->device.malloc(npt * sizeof(dlong));
+    }
+
+    o_code.copyFrom(code_base, npt * sizeof(dlong));
+    o_el.copyFrom(el_base, npt * sizeof(dlong));
+    o_r.copyFrom(r_base, npt * dim * sizeof(dfloat));
+    o_proc.copyFrom(proc_base, npt * sizeof(dlong));
+  }
+  if (timerLevel == TimerLevel::Detailed) {
+    platform->timer.toc(timerName + "find::copy to device");
   }
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::find");
+    platform->timer.toc(timerName + "find");
   }
 }
 
@@ -1095,10 +1267,8 @@ void findpts_t::find(data_t *const findPtsData,
                      const dfloat *const z_base,
                      const dlong npt)
 {
-  int nGlobalRanks;
-  MPI_Comm_size(platform->comm.mpiCommParent, &nGlobalRanks);
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic("findpts_t::find", 1);
+    platform->timer.tic(timerName + "find", 1);
   }
   static std::vector<int> codeArr;
   static std::vector<int> elArr;
@@ -1117,14 +1287,16 @@ void findpts_t::find(data_t *const findPtsData,
   crystal &cr = *this->cr;
   const int np = cr.comm.np, id = cr.comm.id;
   struct array hash_pt, srcPt_t, outPt_t;
+
   /* look locally first */
-  if (npt) {
-    findptsLocal(code_base, el_base, r_base, dist2_base, x_base, y_base, z_base, npt);
-  }
+  const auto timerNameSave = timerName;
+  timerName = timerName + "find::";
+  findptsLocal(code_base, el_base, r_base, dist2_base, x_base, y_base, z_base, npt);
+  timerName = timerNameSave;
 
   /* send unfound and border points to global hash cells */
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.tic(timerName + "findpts_t::find::send unfound", 1);
+    platform->timer.tic(timerName + "find::unfound", 1);
   }
   {
     int index;
@@ -1162,36 +1334,50 @@ void findpts_t::find(data_t *const findPtsData,
       proc++;
     }
     hash_pt.n = pt - (struct srcPt_t *)hash_pt.ptr;
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::find::unfound::sarray_transfer", 1);
-      }
-      sarray_transfer(struct srcPt_t, &hash_pt, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::find::unfound::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::unfound::sarray_transfer", 1);
+    }
+
+    sarray_transfer(struct srcPt_t, &hash_pt, proc, 1, &cr);
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::unfound::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::send unfound");
-    platform->timer.tic("findpts_t::find::send unfound", 1);
+    platform->timer.toc(timerName + "find::unfound");
+    platform->timer.tic(timerName + "find::send unfound", 1);
   }
 
   /* look up points in hash cells, route to possible procs */
   {
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send unfound::compute hash", 1);
+    }
     const unsigned int *const hash_offset = hash.offset;
     int count = 0, *proc, *proc_p;
     const struct srcPt_t *p = (struct srcPt_t *)hash_pt.ptr, *const pe = p + hash_pt.n;
     struct srcPt_t *q;
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send unfound::compute hash::get count", 1);
+    }
     for (; p != pe; ++p) {
       const int hi = hash_index_3(&hash, p->x) / np;
       const int i = hash_offset[hi], ie = hash_offset[hi + 1];
       count += ie - i;
     }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash::get count");
+      platform->timer.tic(timerName + "find::send unfound::compute hash::do allocations", 1);
+    }
     proc = tmalloc(int, count);
     proc_p = proc;
     array_init(struct srcPt_t, &srcPt_t, count), q = (struct srcPt_t *)srcPt_t.ptr;
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash::do allocations");
+      platform->timer.tic(timerName + "find::send unfound::compute hash::doubly nested loop", 1);
+    }
     p = (struct srcPt_t *)hash_pt.ptr;
     for (; p != pe; ++p) {
       const int hi = hash_index_3(&hash, p->x) / np;
@@ -1205,26 +1391,30 @@ void findpts_t::find(data_t *const findPtsData,
         *q++ = *p;
       }
     }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash::doubly nested loop");
+    }
     array_free(&hash_pt);
     srcPt_t.n = proc_p - proc;
 #ifdef DIAGNOSTICS
     printf("(proc %u) hashed; routing %u/%u\n", id, (int)srcPt_t.n, count);
 #endif
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::find::send unfound::sarray_transfer_ext", 1);
-      }
-      sarray_transfer_ext(struct srcPt_t, &srcPt_t, reinterpret_cast<unsigned int *>(proc), sizeof(int), &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::find::send unfound::sarray_transfer_ext");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::compute hash");
+      platform->timer.tic(timerName + "find::send unfound::sarray_transfer_ext", 1);
+    }
+
+    sarray_transfer_ext(struct srcPt_t, &srcPt_t, reinterpret_cast<unsigned int *>(proc), sizeof(int), &cr);
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send unfound::sarray_transfer_ext");
     }
     free(proc);
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::send unfound");
-    platform->timer.tic(timerName + "findpts_t::find::send back", 1);
+    platform->timer.toc(timerName + "find::send unfound");
+    platform->timer.tic(timerName + "find::send back", 1);
   }
 
   /* look for other procs' points, send back */
@@ -1242,49 +1432,56 @@ void findpts_t::find(data_t *const findPtsData,
     }
     spt = (struct srcPt_t *)srcPt_t.ptr;
     opt = (struct outPt_t *)outPt_t.ptr;
-    if (srcPt_t.n) {
 
-      // resize result buffers
-      if (codeArr.size() < srcPt_t.n) {
-        constexpr int growthFactor = 2;
-        codeArr.resize(growthFactor * srcPt_t.n);
-        elArr.resize(growthFactor * srcPt_t.n);
-        rArr.resize(growthFactor * dim * srcPt_t.n);
-        dist2Arr.resize(growthFactor * srcPt_t.n);
+    // resize result buffers
+    if (codeArr.size() < srcPt_t.n) {
+      constexpr int growthFactor = 2;
+      codeArr.resize(growthFactor * srcPt_t.n);
+      elArr.resize(growthFactor * srcPt_t.n);
+      rArr.resize(growthFactor * dim * srcPt_t.n);
+      dist2Arr.resize(growthFactor * srcPt_t.n);
 
-        x0.resize(growthFactor * srcPt_t.n);
-        x1.resize(growthFactor * srcPt_t.n);
-        x2.resize(growthFactor * srcPt_t.n);
-      }
+      x0.resize(growthFactor * srcPt_t.n);
+      x1.resize(growthFactor * srcPt_t.n);
+      x2.resize(growthFactor * srcPt_t.n);
+    }
 
-      for (int point = 0; point < srcPt_t.n; ++point) {
-        x0[point] = spt[point].x[0];
-        x1[point] = spt[point].x[1];
-        x2[point] = spt[point].x[2];
-      }
+    for (int point = 0; point < srcPt_t.n; ++point) {
+      x0[point] = spt[point].x[0];
+      x1[point] = spt[point].x[1];
+      x2[point] = spt[point].x[2];
+    }
 
-      findptsLocal(codeArr.data(),
-                   elArr.data(),
-                   rArr.data(),
-                   dist2Arr.data(),
-                   x0.data(),
-                   x1.data(),
-                   x2.data(),
-                   srcPt_t.n);
+    const auto timerNameSave = timerName;
+    timerName = timerName + "find::send back::";
+    findptsLocal(codeArr.data(),
+                 elArr.data(),
+                 rArr.data(),
+                 dist2Arr.data(),
+                 x0.data(),
+                 x1.data(),
+                 x2.data(),
+                 srcPt_t.n);
+    timerName = timerNameSave;
 
-      // unpack arrays into opt
-      for (int point = 0; point < srcPt_t.n; point++) {
-        opt[point].code = codeArr[point];
-        opt[point].el = elArr[point];
-        opt[point].dist2 = dist2Arr[point];
-        for (int d = 0; d < dim; ++d) {
-          opt[point].r[d] = rArr[dim * point + d];
-        }
+    // unpack arrays into opt
+    for (int point = 0; point < srcPt_t.n; point++) {
+      opt[point].code = codeArr[point];
+      opt[point].el = elArr[point];
+      opt[point].dist2 = dist2Arr[point];
+      for (int d = 0; d < dim; ++d) {
+        opt[point].r[d] = rArr[dim * point + d];
       }
     }
     array_free(&srcPt_t);
     /* group by code to eliminate unfound points */
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send back::sarray_sort", 1);
+    }
     sarray_sort(struct outPt_t, opt, outPt_t.n, code, 0, &cr.data);
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send back::sarray_sort");
+    }
     n = outPt_t.n;
     while (n && opt[n - 1].code == CODE_NOT_FOUND)
       --n;
@@ -1292,20 +1489,20 @@ void findpts_t::find(data_t *const findPtsData,
 #ifdef DIAGNOSTICS
     printf("(proc %u) sending back %u found points\n", id, (int)outPt_t.n);
 #endif
-    if (nGlobalRanks > 1) {
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.tic(timerName + "findpts_t::find::send back::sarray_transfer", 1);
-      }
-      sarray_transfer(struct outPt_t, &outPt_t, proc, 1, &cr);
-      if (timerLevel == TimerLevel::Detailed) {
-        platform->timer.toc(timerName + "findpts_t::find::send back::sarray_transfer");
-      }
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.tic(timerName + "find::send back::sarray_transfer", 1);
+    }
+
+    sarray_transfer(struct outPt_t, &outPt_t, proc, 1, &cr);
+
+    if (timerLevel == TimerLevel::Detailed) {
+      platform->timer.toc(timerName + "find::send back::sarray_transfer");
     }
   }
 
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::send back");
-    platform->timer.tic(timerName + "findpts_t::find::merge", 1);
+    platform->timer.toc(timerName + "find::send back");
+    platform->timer.tic(timerName + "find::merge", 1);
   }
 
   /* merge remote results with user data */
@@ -1330,10 +1527,33 @@ void findpts_t::find(data_t *const findPtsData,
     array_free(&outPt_t);
   }
   if (timerLevel == TimerLevel::Detailed) {
-    platform->timer.toc(timerName + "findpts_t::find::merge");
+    platform->timer.toc(timerName + "find::merge");
+    platform->timer.tic(timerName + "find::copy to device", 1);
+  }
+  if (npt > 0) {
+    if (o_code.size() < npt * sizeof(dlong)) {
+      if (o_code.size()) {
+        o_code.free();
+        o_el.free();
+        o_r.free();
+        o_proc.free();
+      }
+      o_code = platform->device.malloc(npt * sizeof(dlong));
+      o_el = platform->device.malloc(npt * sizeof(dlong));
+      o_r = platform->device.malloc(npt * dim * sizeof(dfloat));
+      o_proc = platform->device.malloc(npt * sizeof(dlong));
+    }
+
+    o_code.copyFrom(code_base, npt * sizeof(dlong));
+    o_el.copyFrom(el_base, npt * sizeof(dlong));
+    o_r.copyFrom(r_base, npt * dim * sizeof(dfloat));
+    o_proc.copyFrom(proc_base, npt * sizeof(dlong));
+  }
+  if (timerLevel == TimerLevel::Detailed) {
+    platform->timer.toc(timerName + "find::copy to device");
   }
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::find");
+    platform->timer.toc(timerName + "find");
   }
 }
 
@@ -1356,46 +1576,41 @@ void findpts_t::eval(const dlong npt,
                      occa::memory o_out)
 {
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "findpts_t::eval", 1);
+    platform->timer.tic(timerName + "eval", 1);
   }
-#define FINDPTS_EVAL(fieldSize)                                                                              \
-{                                                                                                            \
-if (nFields == (fieldSize)) {                                                                                \
-findptsEvalImpl<evalOutPt_t<(fieldSize)>>(o_out,                                                             \
-                                          findPtsData->code_base,                                            \
-                                          findPtsData->proc_base,                                            \
-                                          findPtsData->el_base,                                              \
-                                          findPtsData->r_base,                                               \
-                                          npt,                                                               \
-                                          nFields,                                                           \
-                                          inputOffset,                                                       \
-                                          outputOffset,                                                      \
-                                          o_in,                                                              \
-                                          *this->hash,                                                       \
-                                          *this->cr);                                                        \
-}                                                                                                            \
-}
-  FINDPTS_EVAL(1);
-  FINDPTS_EVAL(2);
-  FINDPTS_EVAL(3);
-  FINDPTS_EVAL(4);
-  FINDPTS_EVAL(5);
-  FINDPTS_EVAL(6);
-  FINDPTS_EVAL(7);
-  FINDPTS_EVAL(8);
-  FINDPTS_EVAL(9);
-  FINDPTS_EVAL(10);
-#undef FINDPTS_EVAL
 
-  if (nFields < 1 || nFields > 10) {
-    if (this->rank == 0) {
-      printf("Error: nFields = %d is not supported.\n", nFields);
-    }
-    fflush(stdout);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
+  const auto timerNameSave = timerName;
+  timerName = timerName + "eval::";
+
+  auto fieldSizesTuple = n_tuple<int, findpts_t::maxFields>{};
+  tuple_for_each(fieldSizesTuple, [&](auto T) {
+    if (nFields != decltype(T)::value)
+      return;
+    findptsEvalImpl<evalOutPt_t<decltype(T)::value>>(o_out,
+                                                     findPtsData->code_base,
+                                                     findPtsData->proc_base,
+                                                     findPtsData->el_base,
+                                                     findPtsData->r_base,
+                                                     npt,
+                                                     nFields,
+                                                     inputOffset,
+                                                     outputOffset,
+                                                     o_in,
+                                                     *this->hash,
+                                                     *this->cr);
+  });
+
+  nrsCheck(nFields < 1 || nFields > findpts_t::maxFields,
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Error: nFields = %d is not supported. nFields must be between 1 and %d.",
+           nFields,
+           findpts_t::maxFields);
+
+  timerName = timerNameSave;
+
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::eval");
+    platform->timer.toc(timerName + "eval");
   }
 }
 
@@ -1408,49 +1623,65 @@ void findpts_t::eval(const dlong npt,
                      dfloat *out)
 {
   if (timerLevel != TimerLevel::None) {
-    platform->timer.tic(timerName + "findpts_t::eval", 1);
+    platform->timer.tic(timerName + "eval", 1);
   }
-#define FINDPTS_EVAL(fieldSize)                                                                              \
-{                                                                                                            \
-if (nFields == (fieldSize)) {                                                                                \
-findptsEvalImpl<evalOutPt_t<(fieldSize)>>(out,                                                               \
-                                          findPtsData->code_base,                                            \
-                                          findPtsData->proc_base,                                            \
-                                          findPtsData->el_base,                                              \
-                                          findPtsData->r_base,                                               \
-                                          npt,                                                               \
-                                          nFields,                                                           \
-                                          inputOffset,                                                       \
-                                          outputOffset,                                                      \
-                                          in,                                                                \
-                                          *this->hash,                                                       \
-                                          *this->cr);                                                        \
-}                                                                                                            \
-}
-  FINDPTS_EVAL(1);
-  FINDPTS_EVAL(2);
-  FINDPTS_EVAL(3);
-  FINDPTS_EVAL(4);
-  FINDPTS_EVAL(5);
-  FINDPTS_EVAL(6);
-  FINDPTS_EVAL(7);
-  FINDPTS_EVAL(8);
-  FINDPTS_EVAL(9);
-  FINDPTS_EVAL(10);
-#undef FINDPTS_EVAL
 
-  if (nFields < 1 || nFields > 10) {
-    if (this->rank == 0) {
-      printf("Error: nFields = %d is not supported.\n", nFields);
-    }
-    fflush(stdout);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-  }
+  const auto timerNameSave = timerName;
+  timerName = timerName + "eval::";
+  auto fieldSizesTuple = n_tuple<int, findpts_t::maxFields>{};
+  tuple_for_each(fieldSizesTuple, [&](auto T) {
+    if (nFields != decltype(T)::value)
+      return;
+    findptsEvalImpl<evalOutPt_t<decltype(T)::value>>(out,
+                                                     findPtsData->code_base,
+                                                     findPtsData->proc_base,
+                                                     findPtsData->el_base,
+                                                     findPtsData->r_base,
+                                                     npt,
+                                                     nFields,
+                                                     inputOffset,
+                                                     outputOffset,
+                                                     in,
+                                                     *this->hash,
+                                                     *this->cr);
+  });
+
+  nrsCheck(nFields < 1 || nFields > findpts_t::maxFields,
+           platform->comm.mpiComm,
+           EXIT_FAILURE,
+           "Error: nFields = %d is not supported. nFields must be between 1 and %d.",
+           nFields,
+           findpts_t::maxFields);
+
+  timerName = timerNameSave;
+
   if (timerLevel != TimerLevel::None) {
-    platform->timer.toc(timerName + "findpts_t::eval");
+    platform->timer.toc(timerName + "eval");
   }
 }
 
 crystal *findpts_t::crystalRouter() { return this->cr; }
+
+void findpts_t::update(data_t &data)
+{
+  auto npt = data.code.size();
+  if (o_code.size() < npt * sizeof(dlong)) {
+    if (o_code.size()) {
+      o_code.free();
+      o_el.free();
+      o_r.free();
+      o_proc.free();
+    }
+    o_code = platform->device.malloc(npt * sizeof(dlong));
+    o_el = platform->device.malloc(npt * sizeof(dlong));
+    o_r = platform->device.malloc(npt * dim * sizeof(dfloat));
+    o_proc = platform->device.malloc(npt * sizeof(dlong));
+  }
+
+  o_code.copyFrom(data.code_base, npt * sizeof(dlong));
+  o_el.copyFrom(data.el_base, npt * sizeof(dlong));
+  o_r.copyFrom(data.r_base, npt * dim * sizeof(dfloat));
+  o_proc.copyFrom(data.proc_base, npt * sizeof(dlong));
+}
 
 } // namespace findpts

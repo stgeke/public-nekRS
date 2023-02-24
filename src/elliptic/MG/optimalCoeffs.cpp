@@ -207,7 +207,7 @@ std::vector<pfloat> optimalCoeffs(int ChebyshevDegree)
         1.51427891730346,
     };
 
-  nrsAbort(platform->comm.mpiComm, EXIT_FAILURE, 
+  nrsAbort(MPI_COMM_SELF, EXIT_FAILURE, 
            "Error: maximum chebyshev iterations %d exceeded with requested iterations %d",
            maxChebyIterations, ChebyshevDegree);
   

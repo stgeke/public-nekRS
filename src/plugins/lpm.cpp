@@ -1076,7 +1076,7 @@ void lpm_t::migrate()
   }
 
   // copy data into host arrays, converting from packing as AoS to SoA structure
-  const auto nReceived = recvElem.size();
+  const int nReceived = recvElem.size();
 
   auto yRecv = std::vector<dfloat>(nReceived * nDOFs_);
   auto ydotRecv = std::vector<dfloat>(solverOrder * nReceived * nDOFs_);

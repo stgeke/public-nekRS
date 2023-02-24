@@ -51,15 +51,15 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
         degree = std::stoi(serializeString(token, '=').at(1));
       }
       else if (token.find("sweeps") != std::string::npos) {
-        errorString += "ERROR: setting number of sweeps is currently not supported!\n";
+        errorString += "setting number of sweeps is currently not supported!\n";
       }
       else {
-        errorString += "ERROR: Unknown token '" + token + "' in schedule '" + schedule + "'!\n";
+        errorString += "unknown token '" + token + "' in schedule '" + schedule + "'!\n";
       }
     }
 
     if (order == INVALID) {
-      errorString += "ERROR: Order not specified in " + entry + "\n";
+      errorString += "order not specified in " + entry + "\n";
     }
 
     if (degree == INVALID && order != minOrder){
@@ -87,7 +87,7 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
   }
 
   if (downLegOrders != upLegOrders) {
-    errorString += "ERROR: Down leg and up leg orders must be identical!\n";
+    errorString += "down leg and up leg orders must be identical!\n";
   }
 
   // all orders, except the coarse grid, must have a degree associated with them
@@ -96,14 +96,14 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
       continue;
     }
     if (entry.second == INVALID) {
-      errorString += "ERROR: Degree not specified for order " + std::to_string(entry.first.first) + "!\n";
+      errorString += "degree not specified for order " + std::to_string(entry.first.first) + "!\n";
     }
   }
 
   // all levels are positive
   for(auto&& level : levels){
     if(level < 1){
-      errorString += "ERROR: encountered level = " + std::to_string(level) + " < 1!\n";
+      errorString += "encountered level = " + std::to_string(level) + " < 1!\n";
     }
   }
 
@@ -111,7 +111,7 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
   int N;
   options.getArgs("POLYNOMIAL DEGREE", N);
   if(N != levels.front()){
-    errorString += "ERROR: Top degree " + std::to_string(levels.front())
+    errorString += "finest degree " + std::to_string(levels.front())
       + " does not match polynomial degree " + std::to_string(N) + "!\n";
   }
 
@@ -120,7 +120,7 @@ parseMultigridSchedule(const std::string &schedule, setupAide& options, int defa
   for (unsigned i = 0U; i < levels.size(); ++i) {
     if (i > 0){
       if(levels[i] >= levels[i - 1]){
-        errorString += "ERROR: order[i] = " + std::to_string(levels[i]) + " >= order[i-1] = " + std::to_string(levels[i-1]) + "!\n";
+        errorString += "order[i] = " + std::to_string(levels[i]) + " >= order[i-1] = " + std::to_string(levels[i-1]) + "!\n";
         errorString += "\tEach level in the downward leg of the V-cycle must have order less than the previous level!\n";
       }
     }

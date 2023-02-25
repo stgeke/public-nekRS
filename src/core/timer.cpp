@@ -39,7 +39,7 @@ inline void sync()
     MPI_Barrier(comm_);
 }
 
-double tElapsedTime = 0;
+double tElapsedTimeSolve = 0;
 
 auto sumAllMatchingTags(std::function<bool(std::string)> predicate, const std::string metric)
 {
@@ -316,11 +316,11 @@ void timer_t::printStatEntry(std::string name, double tTag, long long int nCalls
 {
   int rank;
   MPI_Comm_rank(comm_, &rank);
-  const bool child = (tNorm != tElapsedTime);
+  const bool child = (tNorm != tElapsedTimeSolve);
   if (tTag > 0) {
     if (rank == 0) {
       std::cout << name << tTag << "s"
-                << "  " << printPercentage(tTag, tElapsedTime);
+                << "  " << printPercentage(tTag, tElapsedTimeSolve);
       if (child)
         std::cout << "  " << printPercentage(tTag, tNorm);
       else
@@ -336,11 +336,11 @@ void timer_t::printStatEntry(std::string name, std::string tag, std::string type
   MPI_Comm_rank(comm_, &rank);
   const long long int nCalls = count(tag);
   const double tTag = query(tag, type);
-  const bool child = (tNorm != tElapsedTime);
+  const bool child = (tNorm != tElapsedTimeSolve);
   if (tTag > 0) {
     if (rank == 0) {
       std::cout << name << tTag << "s"
-                << "  " << printPercentage(tTag, tElapsedTime);
+                << "  " << printPercentage(tTag, tElapsedTimeSolve);
       if (child)
         std::cout << "  " << printPercentage(tTag, tNorm);
       else
@@ -354,11 +354,11 @@ void timer_t::printStatEntry(std::string name, double time, double tNorm)
 {
   int rank;
   MPI_Comm_rank(comm_, &rank);
-  const bool child = (tNorm != tElapsedTime);
+  const bool child = (tNorm != tElapsedTimeSolve);
   if (time > 0) {
     if (rank == 0) {
       std::cout << name << time << "s"
-                << "  " << printPercentage(time, tElapsedTime);
+                << "  " << printPercentage(time, tElapsedTimeSolve);
       if (child)
         std::cout << "  " << printPercentage(time, tNorm);
       else
@@ -392,7 +392,7 @@ void timer_t::printRunStat(int step)
   double gsTime = ogsTime(/* reportHostTime */ true);
   MPI_Allreduce(MPI_IN_PLACE, &gsTime, 1, MPI_DOUBLE, MPI_MAX, comm_);
 
-  tElapsedTime = query("elapsed", "DEVICE:MAX");
+  const double tElapsedTime = query("elapsed", "DEVICE:MAX");
 
   if (rank == 0)
     std::cout << "\n>>> runtime statistics (step= " << step << "  totalElapsed= " << tElapsedTime << "s"
@@ -409,7 +409,7 @@ void timer_t::printRunStat(int step)
               << "rel%  "
               << "calls\n";
 
-  const double tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
+  tElapsedTimeSolve = query("elapsedStepSum", "DEVICE:MAX");
   const double tSetup = query("setup", "DEVICE:MAX");
 
   const double tMinSolveStep = query("minSolveStep", "DEVICE:MAX");
@@ -418,10 +418,7 @@ void timer_t::printRunStat(int step)
       platform->flopCounter->get(platform->comm.mpiComm) / (tElapsedTimeSolve * platform->comm.mpiCommSize);
   bool printFlops = !platform->options.compareArgs("PRESSURE PRECONDITIONER", "SEMFEM");
 
-  printStatEntry("  setup                 ", "setup", "DEVICE:MAX", tElapsedTime);
-  printStatEntry("    loadKernels         ", "loadKernels", "HOST:MAX", tSetup);
-
-  printStatEntry("  solve                 ", tElapsedTimeSolve, tElapsedTime);
+  printStatEntry("  solve                 ", tElapsedTimeSolve, tElapsedTimeSolve);
   if (tElapsedTimeSolve > 0 && rank == 0) {
     std::cout << "    min                 " << tMinSolveStep << "s\n";
     std::cout << "    max                 " << tMaxSolveStep << "s\n";

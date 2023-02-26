@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(NekRS LANGUAGES C CXX Fortran VERSION 23.0.0)
 
 if(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-  MESSAGE(FATAL_ERROR "Error:  In-place builds are not supported. Please create a separate build directory")
+  MESSAGE(FATAL_ERROR "In-place builds are not supported. Please create a separate build directory")
 endif(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(CheckCCompilerFlag)
@@ -195,7 +195,7 @@ endif()
 # Build HYPRE
 ###############################################################################
 if(OCCA_CUDA_ENABLED)
-  set(ENABLE_HYPRE_GPU ON CACHE BOOL "Enable HYPRE GPU support")
+  set(ENABLE_HYPRE_GPU OFF CACHE BOOL "Enable HYPRE GPU support")
 endif()
 include(config/hypre.cmake)
 

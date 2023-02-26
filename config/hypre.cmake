@@ -39,6 +39,10 @@ if(OCCA_CUDA_ENABLED)
     set(HYPRE_CUDA_SM 70 80)
   endif()
 
+  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.0.0")
+    MESSAGE(FATAL_ERROR "HYPRE does currently not support CUDA 12.x and later")
+  endif()
+
 #  if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL "11.2.0")
 #    set(HYPRE_ENABLE_DEVICE_MALLOC_ASYNC ON)
 #  endif()

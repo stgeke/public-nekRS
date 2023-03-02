@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#ifdef _OPENMP
 #include "omp.h"
+#endif
 #include <unistd.h>
 #include "mpi.h"
 #include <vector>

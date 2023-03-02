@@ -25,7 +25,6 @@ SOFTWARE.
  
 */
 
-#include "omp.h"
 #include "limits.h"
 #include "stdio.h"
 #include "timer.hpp"

@@ -6,7 +6,6 @@
 
 #include "randomVector.hpp"
 #include "kernelBenchmarker.hpp"
-#include "omp.h"
 #include <tuple>
 #include <map>
 
@@ -219,7 +218,12 @@ occa::kernel benchmarkFDM(int Nelements,
 
       double flopsPerElem = 12 * Nq_e * Np_e + Np_e;
       const double gflops = (Nelements * flopsPerElem / elapsed) / 1.e9;
+
+#ifdef _OPENMP
       const int Nthreads = omp_get_max_threads();
+#else
+      const int Nthreads = 1;
+#endif
 
       if (platform->comm.mpiRank == 0 && !skipPrint) {
         if (verbosity > 0) {

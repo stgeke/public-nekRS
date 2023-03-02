@@ -297,7 +297,10 @@ set_property(
 add_library(nekrs-lib SHARED ${SRC})
 
 set_target_properties(nekrs-lib PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nekrs)
-target_link_libraries(nekrs-lib PUBLIC libocca OpenMP::OpenMP_CXX PRIVATE gs ${GSLIB} openblas)
+target_link_libraries(nekrs-lib PUBLIC libocca PRIVATE gs ${GSLIB} openblas)
+if(OpenMP_FOUND)
+target_link_libraries(nekrs-lib PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 target_include_directories(nekrs-lib 
   PUBLIC 

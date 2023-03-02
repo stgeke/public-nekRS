@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#include "omp.h"
 #include <unistd.h>
 #include "mpi.h"
 

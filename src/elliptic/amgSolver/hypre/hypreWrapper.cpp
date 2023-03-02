@@ -5,7 +5,10 @@
 #include <mpi.h>
 #include <vector>
 #include <map>
+
+#ifdef _OPENMP
 #include "omp.h"
+#endif
 
 #include "HYPRE.h"
 #include "HYPRE_parcsr_ls.h"
@@ -182,8 +185,12 @@ boomerAMG_t::boomerAMG_t(int _nRows,
   HYPRE_ParCSRMatrix par_A;
   HYPRE_IJMatrixGetObject(*A, (void **)&par_A);
 
+#ifdef _OPENMP
   const int NthreadsSave = omp_get_max_threads();
   omp_set_num_threads(Nthreads);
+  omp_set_num_threads(Nthreads);
+#endif
+
   const int err = HYPRE_BoomerAMGSetup(*solver, par_A, par_b, par_x);
   if (err > 0) {
     if (rank == 0)
@@ -191,7 +198,9 @@ boomerAMG_t::boomerAMG_t(int _nRows,
     MPI_Abort(comm, err);
   }
 
+#ifdef _OPENMP
   omp_set_num_threads(NthreadsSave);
+#endif
   HYPREinit = 1;
 }
 
@@ -208,8 +217,10 @@ void __attribute__((visibility("default"))) boomerAMG_t::solve(void *bin, void *
   HYPRE_IJVectorGetObject(*b, (void **)&par_b);
   HYPRE_IJMatrixGetObject(*A, (void **)&par_A);
 
+#ifdef _OPENMP
   const int _Nthreads = omp_get_max_threads();
   omp_set_num_threads(Nthreads);
+#endif
 
 #if 0
   HYPRE_IJVectorPrint(*b, "b.dat");
@@ -222,7 +233,9 @@ void __attribute__((visibility("default"))) boomerAMG_t::solve(void *bin, void *
       printf("HYPRE_BoomerAMGSolve failed with %d!\n", err);
     MPI_Abort(comm, err);
   }
+#ifdef _OPENMP
   omp_set_num_threads(_Nthreads);
+#endif
 
   HYPRE_IJVectorGetValues(*x, nRows, NULL, (HYPRE_Real *)xin);
 }

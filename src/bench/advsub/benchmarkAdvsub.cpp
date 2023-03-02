@@ -6,7 +6,9 @@
 
 #include "randomVector.hpp"
 #include "kernelBenchmarker.hpp"
+#ifdef _OPENMP
 #include "omp.h"
+#endif
 
 namespace {
 
@@ -332,7 +334,11 @@ occa::kernel benchmarkAdvsub(int Nfields,
       flopCount = Nq * Nq * Nq * (6. * Nq + 6. * nEXT + 8.) * Nfields;
     }
     const double gflops = (flopCount * Nelements / elapsed) / 1.e9;
+#ifdef _OPENMP
     const int Nthreads = omp_get_max_threads();
+#else
+    const int Nthreads = 1;
+#endif
 
     if (platform->comm.mpiRank == 0 && !skipPrint) {
 

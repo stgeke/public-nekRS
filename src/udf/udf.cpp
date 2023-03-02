@@ -187,7 +187,7 @@ void udfBuild(const char *_udfFile, setupAide &options)
 {
   std::string udfFile = fs::absolute(_udfFile);
   if (platform->comm.mpiRank == 0)
-    nrsCheck(!fs::exists(udfFile), MPI_COMM_SELF, EXIT_FAILURE, "Cannot find %s!\n", udfFile); 
+    nrsCheck(!fs::exists(udfFile), MPI_COMM_SELF, EXIT_FAILURE, "Cannot find %s!\n", udfFile.c_str()); 
 
   const int verbose = options.compareArgs("VERBOSE", "TRUE") ? 1 : 0;
   const std::string installDir(getenv("NEKRS_HOME"));

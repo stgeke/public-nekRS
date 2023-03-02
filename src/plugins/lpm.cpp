@@ -367,7 +367,7 @@ void lpm_t::initialize(int nParticles, dfloat t0, occa::memory o_y0)
   nrsCheck(o_y0.size() != nParticles * nDOFs_ * sizeof(dfloat),
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: o_y0.size() = %ld, while expecting %ld bytes!\n",
+           "ERROR: o_y0.size() = %llu, while expecting %ld bytes!\n",
            o_y0.size(),
            nParticles * nDOFs_ * sizeof(dfloat));
 
@@ -1969,7 +1969,7 @@ void lpm_t::restart(std::string restartFile)
   o_yCoord.copyFrom(yCoord.data(), nPartLocal * sizeof(dfloat));
   o_zCoord.copyFrom(zCoord.data(), nPartLocal * sizeof(dfloat));
 
-  auto readField = [&](std::string fieldName, int expectedNumComponents, int offset) {
+  auto readField = [&, &header = header](std::string fieldName, int expectedNumComponents, int offset) {
     nrsCheck(fieldType.count(fieldName) == 0,
              platform->comm.mpiComm,
              EXIT_FAILURE,

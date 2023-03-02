@@ -60,10 +60,13 @@ using dlong = long long int;
 
 #include <mpi.h>
 #include <math.h>
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <array>
 #include <string>
 #include <vector>
 #include <functional>

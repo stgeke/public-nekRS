@@ -41,9 +41,10 @@ boomerAMG_t::boomerAMG_t(int _nRows,
   MPI_Comm_rank(comm, &rank);
 
   if (sizeof(HYPRE_Real) != ((useFP32) ? sizeof(float) : sizeof(double))) {
-    if (rank == 0)
+    if (rank == 0) {
       printf("hypreWrapperDevice: HYPRE floating point precision does not match!\n");
-    MPI_Abort(comm, 1);
+      MPI_Abort(comm, 1);
+    }
   }
 
   if ((int)param[0]) {

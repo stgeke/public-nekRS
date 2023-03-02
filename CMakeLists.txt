@@ -71,6 +71,9 @@ set(NEKINTERFACEDIR "${CMAKE_CURRENT_SOURCE_DIR}/src/nekInterface/" CACHE PATH
 
 string(COMPARE EQUAL "${CMAKE_CXX_COMPILER_ID}" "GNU" USING_GNU)
 string(COMPARE EQUAL "${CMAKE_CXX_COMPILER_ID}" "IntelLLVM" USING_INTEL_LLVM)
+string(COMPARE EQUAL "${CMAKE_CXX_COMPILER_ID}" "Clang" USING_LLVM)
+string(COMPARE EQUAL "${CMAKE_CXX_COMPILER_ID}" "ARMClang" USING_LLVM)
+string(COMPARE EQUAL "${CMAKE_CXX_COMPILER_ID}" "AppleClang" USING_APPLE_LLVM)
 
 if(USING_GNU)
   set(NEKRS_COMPILER_FLAGS "-O2 -g -march=native -mtune=native -ftree-vectorize" CACHE STRING "compiler flags")
@@ -87,6 +90,10 @@ if(USING_INTEL_LLVM)
   set(OCCA_CXXFLAGS "-w -O3 -g -xHost" CACHE STRING "C++ flags for OCCA JIT compile")
 elseif(USING_GNU)
   set(OCCA_CXXFLAGS "-w -O3 -g -march=native -mtune=native" CACHE STRING "C++ flags for OCCA JIT compile")
+elseif(USING_LLVM)
+  set(OCCA_CXXFLAGS "-w -O3 -g -march=native -mtune=native" CACHE STRING "C++ flags for OCCA JIT compile")
+else()
+  set(OCCA_CXXFLAGS "-w -O3 -g" CACHE STRING "C++ flags for OCCA JIT compile")
 endif()
 
 set(OCCA_CUDA_COMPILER_FLAGS "-w -O3 -lineinfo --use_fast_math" CACHE STRING "CUDA flags for OCCA JIT compile")
@@ -117,7 +124,10 @@ set(NEKRS_GPU_MPI ON CACHE BOOL "Enable GPU aware MPI")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE on)
 
-find_package(OpenMP REQUIRED)
+if(NOT USING_APPLE_LLVM)
+  find_package(OpenMP REQUIRED)
+endif()
+
 if(OpenMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")

@@ -957,7 +957,7 @@ void printInfo(nrs_t *nrs, dfloat time, int tstep, bool printStepInfo, bool prin
   bool largeCFLCheck = (cfl > 30) && numberActiveFields(nrs);
 
   nrsCheck(largeCFLCheck || std::isnan(cfl) || std::isinf(cfl), MPI_COMM_SELF, EXIT_FAILURE,
-           "Unreasonable CFL! Dying ...\n", "");
+           "%s\n", "Unreasonable CFL!");
 }
 
 void computeDivUErr(nrs_t* nrs, dfloat& divUErrVolAvg, dfloat& divUErrL2)

@@ -256,7 +256,7 @@ void set_usr_handles(const char *session_in, int verbose)
     std::cout << "loading " << lib << std::endl;
   void *handle = dlopen(lib.c_str(), RTLD_NOW | RTLD_LOCAL);
   nrsCheck(!handle, MPI_COMM_SELF, EXIT_FAILURE, 
-           "%s\n", lib.c_str(), dlerror());
+           "%s\n", dlerror());
 
   // check if we need to append an underscore
   char us[2] = "";
@@ -621,7 +621,7 @@ void buildNekInterface(int ldimt, int N, int np, setupAide &options)
     return 0;
   }();
 
-  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "", "");
+  nrsCheck(err, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", "");
 }
 
 namespace nek {

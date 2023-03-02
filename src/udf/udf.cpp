@@ -82,6 +82,19 @@ bool udfSplit(const std::string &udfFileCache, const std::string &oudfFileCache)
 
   const bool oklSectionFound = !match.str(1).empty();
 
+  {
+    // clean-up
+    std::stringstream buffer;
+    {
+      std::ifstream f(oudfFileCache);
+      buffer << f.rdbuf();
+      f.close();
+    }
+    std::ofstream f(oudfFileCache, std::ios::trunc);
+    f << std::regex_replace(buffer.str(), std::regex(R"(#\s*\d.*\n)"), "");
+    f.close();
+  }
+
   if(oklSectionFound) {
     std::ofstream df(oudfFileCache, std::ios::trunc);
     df << match.str(1);
@@ -133,6 +146,7 @@ void adjustOudf(const std::string &filePath)
     df << "void scalarDirichletConditions(bcData *bc){}\n";
 
   df.close();
+
   fileSync(filePath.c_str());
 }
 
@@ -325,16 +339,6 @@ void udfBuild(const char *_udfFile, setupAide &options)
           if (retVal)
             return EXIT_FAILURE;
 
-          // clean-up
-          std::stringstream buffer;
-          {
-            std::ifstream f(postCppSource);
-            buffer << f.rdbuf();
-            f.close();
-          }
-          std::ofstream f(postCppSource, std::ios::trunc);
-          f << std::regex_replace(buffer.str(), std::regex(R"(#\s*\d.*\n)"), "");
-          f.close(); 
           copyFile(postCppSource.c_str(), udfFileCache.c_str());
         
           bool oklSectionFound = udfSplit(udfFileCache, oudfFileCache);

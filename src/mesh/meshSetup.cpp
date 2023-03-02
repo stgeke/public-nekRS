@@ -201,7 +201,7 @@ mesh_t *createMesh(MPI_Comm comm,
     MPI_Allreduce(MPI_IN_PLACE, &valMin, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
     MPI_Allreduce(MPI_IN_PLACE, &valMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
 
-    if (platform->comm.mpiRank == 0)
+    if (platform->comm.mpiRank == 0 && platform->comm.mpiCommSize > 1)
       printf("number of interior elements min/max: %2.0f%%  %2.0f%%\n", 100*valMin, 100*valMax);
   }
 
@@ -418,7 +418,7 @@ mesh_t *createMeshV(
     MPI_Allreduce(MPI_IN_PLACE, &valMin, 1, MPI_DOUBLE, MPI_MIN, platform->comm.mpiComm);
     MPI_Allreduce(MPI_IN_PLACE, &valMax, 1, MPI_DOUBLE, MPI_MAX, platform->comm.mpiComm);
 
-    if (platform->comm.mpiRank == 0)
+    if (platform->comm.mpiRank == 0 && platform->comm.mpiCommSize > 1)
       printf("number of interior elements min/max: %2.0f%%  %2.0f%%\n", 100*valMin, 100*valMax);
   }
 

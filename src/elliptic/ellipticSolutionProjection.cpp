@@ -111,7 +111,7 @@ void SolutionProjection::updateProjectionSpace()
     flopCount *= (type == ProjectionType::CLASSIC) ? 2 : 1;
   } else {
     if(platform->comm.mpiRank == 0) {
-      std::cout << "solutionProjection " << solverName << ": Discard new solution it is linearly dependent!\n";
+      std::cout << "solutionProjection " << solverName << ": Discard new solution as it is linearly dependent!\n";
     }
     numVecsProjection--;
   }

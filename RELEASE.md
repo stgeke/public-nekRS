@@ -35,8 +35,9 @@
 
 ## Known Bugs / Restrictions
 
-* Poor performance of Schwarz smoother on CPUs
-* Poor performance of OIFS (advSub kernel) on CPUs
+* Poor performance when using polynomialOrder < 5
+* Poor performance of ASM/RAS smoother and OIFS on CPUs
+* [485](https://github.com/Nek5000/Nek5000/issues/485)
 * [729](https://github.com/Nek5000/Nek5000/issues/759)
 * [258](https://github.com/Nek5000/nekRS/issues/258)
 

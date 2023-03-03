@@ -83,7 +83,7 @@ bool udfSplit(const std::string &udfFileCache, const std::string &oudfFileCache)
   const bool oklSectionFound = !match.str(1).empty();
 
   {
-    // clean-up
+    // clean-up preprocessor line control directives (not supported by occa's parser)
     std::stringstream buffer;
     {
       std::ifstream f(oudfFileCache);

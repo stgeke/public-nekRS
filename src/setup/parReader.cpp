@@ -645,6 +645,14 @@ void parseCoarseSolver(const int rank, setupAide &options, inipp::Ini *par, std:
       append_error("Overlap qualifier invalid if coarse solver is smoother!\n");
   }
 
+ {
+   std::string preconditioner;
+   options.getArgs(parSectionName + "MGSOLVER CYCLE", preconditioner);
+   if (preconditioner.find("additive") != std::string::npos) {
+     append_error("additive V-cycle does not support coarseSolver = smoother!\n");
+   }
+ }
+
   if(amgx && options.compareArgs(parSectionName + "COARSE SOLVER LOCATION", "CPU"))
   {
     append_error("AMGX on CPU is not supported!\n");

@@ -831,7 +831,7 @@ void ciTestErrors(nrs_t *nrs,
     // check flop count
     const auto expectedOperations = 125188214670; // from nvprof
     const auto accuracy = 0.035; // observed 3% error in result
-    const auto operations = platform->flopCounter->get(platform->comm.mpiComm)/(platform->comm.mpiCommSize);
+    const auto operations = platform->flopCounter->get(platform->comm.mpiComm);
     if (operations >= (1+accuracy) * expectedOperations || operations <= (1-accuracy) * expectedOperations) {
       if (platform->comm.mpiRank == 0) {
         printf("Expected operation count differs!\n"

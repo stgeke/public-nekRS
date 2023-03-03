@@ -36,12 +36,8 @@ void pMGLevel::Ax(occa::memory o_x, occa::memory o_Ax)
 
 void pMGLevel::residual(occa::memory o_rhs, occa::memory o_x, occa::memory o_res)
 {
-  if(smootherType != SmootherType::ASM || smootherType != SmootherType::RAS) {
-    ellipticOperator(elliptic,o_x,o_res, pfloatString);
-    platform->linAlg->paxpbyMany(Nrows, elliptic->Nfields, elliptic->fieldOffset, 1.0, o_rhs, -1.0, o_res);
-  } else {
-    o_res.copyFrom(o_rhs, Nrows*sizeof(pfloat));
-  }
+  ellipticOperator(elliptic, o_x, o_res, pfloatString);
+  platform->linAlg->paxpbyMany(Nrows, elliptic->Nfields, elliptic->fieldOffset, 1.0, o_rhs, -1.0, o_res);
 }
 
 void pMGLevel::coarsen(occa::memory o_x, occa::memory o_Rx)

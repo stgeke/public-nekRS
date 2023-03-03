@@ -33,14 +33,13 @@ namespace {
 void coarsenV(MGSolver_t* M)
 {
   for(int k = 0 ; k < M->numLevels-1; ++k){
-    MGSolver_t::multigridLevel *level = M->levels[k];
-    occa::memory o_rhs = level->o_rhs;
-    occa::memory o_x   = level->o_x;
-    occa::memory o_res = level->o_res;
-    MGSolver_t::multigridLevel *levelC = M->levels[k+1];
-    occa::memory o_rhsC = levelC->o_rhs;
-    occa::memory o_xC   = levelC->o_x;
-    level->residual(o_rhs, o_x, o_res);
+    auto level = M->levels[k];
+    auto o_rhs = level->o_rhs;
+    auto o_res = level->o_res;
+    auto levelC = M->levels[k + 1];
+    auto o_rhsC = levelC->o_rhs;
+
+    o_res.copyFrom(o_rhs, level->Nrows * sizeof(pfloat));
     levelC->coarsen(o_res, o_rhsC);
   }
 
@@ -48,36 +47,34 @@ void coarsenV(MGSolver_t* M)
 void prolongateV(MGSolver_t* M)
 {
   for(int k = M->numLevels-2; k >= 0; --k){
-    MGSolver_t::multigridLevel *level = M->levels[k];
-    occa::memory o_rhs = level->o_rhs;
-    occa::memory o_x   = level->o_x;
-    occa::memory o_res = level->o_res;
-    MGSolver_t::multigridLevel *levelC = M->levels[k+1];
-    dlong mCoarse = levelC->Nrows;
-    occa::memory o_rhsC = levelC->o_rhs;
-    occa::memory o_xC   = levelC->o_x;
+    auto level = M->levels[k];
+    auto o_x = level->o_x;
+
+    auto levelC = M->levels[k + 1];
+    auto o_xC = levelC->o_x;
+
     // x = x + P xC
     levelC->prolongate(o_xC, o_x);
-    level->smooth(o_rhs, o_x, false);
   }
 }
 void schwarzSolve(MGSolver_t* M)
 {    
   for(int k = 0 ; k < M->numLevels-1; ++k){
-      MGSolver_t::multigridLevel *level = M->levels[k];
-      occa::memory o_rhs = level->o_rhs;
-      occa::memory o_x   = level->o_x;
-      occa::memory o_res = level->o_res;
-      MGSolver_t::multigridLevel *levelC = M->levels[k+1];
-      occa::memory o_rhsC = levelC->o_rhs;
-      occa::memory o_xC   = levelC->o_x;
+    auto level = M->levels[k];
+    auto o_rhs = level->o_rhs;
+    auto o_x = level->o_x;
+    auto o_res = level->o_res;
+    auto levelC = M->levels[k + 1];
+    auto o_rhsC = levelC->o_rhs;
+    auto o_xC = levelC->o_x;
 
-      //apply smoother to x and then compute res = rhs-Ax
-      level->smooth(o_rhs, o_x, true);
-      level->residual(o_rhs, o_x, o_res);
+    // apply smoother to x and then compute res = rhs-Ax
+    level->smooth(o_rhs, o_x, true);
 
-      // rhsC = P^T res
-      levelC->coarsen(o_res, o_rhsC);
+    o_res.copyFrom(o_rhs, level->Nrows * sizeof(pfloat));
+
+    // rhsC = P^T res
+    levelC->coarsen(o_res, o_rhsC);
     }
 }
 

@@ -14,6 +14,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
   options.setArgs("SUBCYCLING STEPS", std::string("0"));
   options.setArgs("VELOCITY BLOCK SOLVER", "TRUE");
   options.setArgs("BDF ORDER", "3");
+  options.setArgs("EXT ORDER", "3");
   options.setArgs("ADVECTION", "FALSE");
   options.setArgs("VELOCITY SOLVER TOLERANCE", std::string("1e-12"));
   options.setArgs("PRESSURE SOLVER TOLERANCE", std::string("1e-08"));

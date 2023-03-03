@@ -290,7 +290,11 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
 
   for (int bid = 0; bid < velocityBCs.size(); bid++) {
     const std::string keyIn = velocityBCs[bid];
-    std::string key = "zeronvalue/zerogradient";
+
+    std::string key = "zeronvalue/zerogradient"; // default
+
+    if (keyIn.compare("zerovalue") == 0) key = "zerovalue";
+    if (keyIn.compare("codedfixedvalue") == 0) key = "codedfixedvalue";
 
     if (keyIn.compare("p") == 0) key = "periodic";
 
@@ -298,11 +302,9 @@ void deriveMeshBoundaryConditions(std::vector<std::string> velocityBCs)
     if (keyIn.compare("wall") == 0) key = "zerovalue";
     if (keyIn.compare("inlet") == 0) key = "zerovalue";
     if (keyIn.compare("v") == 0) key = "zerovalue";
-    // interpolated b.c. defaults to zero mesh movement
-    if (key.compare("int") == 0)
-      key = "zerovalue";
-    if (key.compare("interpolation") == 0)
-      key = "zerovalue";
+
+    if (key.compare("int") == 0) key = "zerovalue";
+    if (key.compare("interpolation") == 0) key = "zerovalue";
 
     if (keyIn.compare("mv") == 0) key = "codedfixedvalue";
     if (keyIn.compare("codedfixedvalue+moving") == 0) key = "codedfixedvalue";

@@ -15,16 +15,7 @@
 
 void fileSync(const char * file)
 {
-  std::string dir;
-  {
-    // POSIX allows dirname to overwrite input
-    const int len = std::char_traits<char>::length(file);
-    char *tmp = (char*) malloc((len+1) * sizeof(char));
-    strncpy(tmp, file, len);
-    tmp[len] = '\0'; 
-    dir.assign(dirname(tmp));
-    free(tmp);
-  }
+  const std::string dir(fs::path(file).parent_path());
 
   int fd; 
   fd = open(file, O_RDONLY);
@@ -138,7 +129,7 @@ void fileBcast(const fs::path &srcPathIn,
       MPI_Bcast(&bufSize, 1, MPI_INT, nodeRankRoot, commNode);
       nrsCheck(bufSize > std::numeric_limits<int>::max(),
                MPI_COMM_SELF, EXIT_FAILURE,
-               "Maximum File size buffer reached!", "");
+               "%s\n", "Maximum File size buffer reached!");
 
       fileBuf = (char *) std::realloc(fileBuf, bufSize * sizeof(char));
 

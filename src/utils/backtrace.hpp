@@ -1,5 +1,5 @@
-#ifndef backtrac_hpp_
-#define backtrace_hpp_
+#ifndef nrsbacktrace_hpp_
+#define nrsbacktrace_hpp_
 
 #include <execinfo.h>  // for backtrace
 #include <dlfcn.h>     // for dladdr

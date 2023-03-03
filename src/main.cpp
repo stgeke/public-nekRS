@@ -81,9 +81,7 @@
 #include <chrono>
 #include <csignal>
 #include "backtrace.hpp"
-#if 0
 #include <filesystem>
-#endif
 
 #include "nekrs.hpp"
 
@@ -110,29 +108,6 @@ struct session_t {
   int size;
   std::string setupFile;
 };
-
-void fileSync(const char * file)
-{
-  std::string dir;
-  {
-    // POSIX allows dirname to overwrite input
-    const int len = std::char_traits<char>::length(file);
-    char *tmp = (char*) malloc((len+1) * sizeof(char));
-    strncpy(tmp, file, len);
-    tmp[len] = '\0';
-    dir.assign(dirname(tmp));
-    free(tmp);
-  }
-
-  int fd;
-  fd = open(file, O_RDONLY);
-  fsync(fd);
-  close(fd);
-
-  fd = open(dir.c_str(), O_RDONLY);
-  fsync(fd);
-  close(fd);
-}
 
 cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
 {
@@ -207,7 +182,6 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
       }
     }
 
-#if 0
     if(cmdOpt->setupFile.empty() && cmdOpt->multiSessionFile.empty()){
       int cnt = 0;
       for (auto &p : std::filesystem::directory_iterator{"."})
@@ -222,7 +196,6 @@ cmdOptions* processCmdLineOptions(int argc, char** argv, const MPI_Comm &comm)
         err++; 
       }
     }
-#endif
   }
 
   for(auto opt: {&cmdOpt->multiSessionFile, &cmdOpt->setupFile, &cmdOpt->deviceID, &cmdOpt->backend})
@@ -383,7 +356,6 @@ void signalHandler(int signum)
    file.open (fileName);
    file << nrsbacktrace(1); 
    file.close();
-   fileSync(fileName.c_str());
 }
 
 } // namespace

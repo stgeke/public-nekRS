@@ -54,7 +54,7 @@ void compileKernels() {
 
   const double tStart = MPI_Wtime();
   if (platform->comm.mpiRank == 0)
-    printf("loading kernels (this may take awhile) ...\n");
+    printf("benchmarking hot kernels ...\n");
   fflush(stdout);
 
   registerLinAlgKernels();
@@ -107,6 +107,10 @@ void compileKernels() {
     registerEllipticKernels(section, poissonEquation);
     registerEllipticPreconditionerKernels(section, poissonEquation);
   }
+
+  if (platform->comm.mpiRank == 0)
+    printf("loading kernels (this may take awhile) ...\n");
+  fflush(stdout);
 
   {
     const bool buildNodeLocal = platform->cacheLocal;

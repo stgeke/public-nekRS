@@ -29,8 +29,8 @@ lpm_t::lpm_t(nrs_t *nrs_, dfloat newton_tol_)
   nrsCheck(!kernelsRegistered_,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: lpm_t::registerKernels has not been called prior to constructing lpm_t!\n",
-           "");
+           "%s\n",
+           "lpm_t::registerKernels has not been called prior to constructing lpm_t!");
 
   nEXT = nrs->nEXT;
   nBDF = nrs->nBDF;
@@ -65,7 +65,7 @@ void lpm_t::abOrder(int order)
            EXIT_FAILURE,
            "Integration order (%d) must be positive!\n",
            order);
-  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
+  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", "lpm_t already initialized!");
   solverOrder = order;
 
   dt.resize(solverOrder + 1);
@@ -95,9 +95,9 @@ void lpm_t::rkOrder(int order)
   nrsCheck(!supported,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: RK order (%d) is not supported!\n",
+           "RK order (%d) is not supported!\n",
            order);
-  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
+  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", "lpm_t already initialized!");
   solverOrder = order;
 
   dt.resize(solverOrder + 1);
@@ -140,7 +140,7 @@ void lpm_t::registerDOF(dlong Nfields, std::string dofName, bool output)
   nrsCheck(this->initialized(),
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: cannot register DOF %s after calling initialize!\n",
+           "cannot register DOF %s after calling initialize!\n",
            dofName.c_str());
 
   lowerCase(dofName);
@@ -160,7 +160,7 @@ int lpm_t::dofId(std::string dofName) const
   nrsCheck(dofIds.count(dofName) == 0,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: DOF %s not registered!\n",
+           "DOF %s not registered!\n",
            dofName.c_str());
   return dofIds.at(dofName);
 }
@@ -171,7 +171,7 @@ int lpm_t::numDOFs(std::string dofName) const
   nrsCheck(dofIds.count(dofName) == 0,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: DOF %s not registered!\n",
+           "DOF %s not registered!\n",
            dofName.c_str());
   return dofCounts.at(dofName);
 }
@@ -184,7 +184,7 @@ void lpm_t::registerProp(dlong Nfields, std::string propName, bool output)
   nrsCheck(this->initialized(),
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: cannot register prop %s after calling initialize!\n",
+           "cannot register prop %s after calling initialize!\n",
            propName.c_str());
   const auto nprops = propIds.size();
   if (propIds.count(propName) == 0) {
@@ -202,7 +202,7 @@ int lpm_t::propId(std::string propName) const
   nrsCheck(propIds.count(propName) == 0,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: prop %s not registered!\n",
+           "prop %s not registered!\n",
            propName.c_str());
   return propIds.at(propName);
 }
@@ -213,7 +213,7 @@ int lpm_t::numProps(std::string propName) const
   nrsCheck(propIds.count(propName) == 0,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: prop %s not registered!\n",
+           "prop %s not registered!\n",
            propName.c_str());
   return propCounts.at(propName);
 }
@@ -224,7 +224,7 @@ void lpm_t::registerInterpField(std::string interpFieldName, int Nfields, occa::
   nrsCheck(this->initialized(),
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: cannot register interpField %s after calling initialize!\n",
+           "cannot register interpField %s after calling initialize!\n",
            interpFieldName.c_str());
 
   const auto nInterpFields = interpFieldIds.size();
@@ -249,7 +249,7 @@ int lpm_t::interpFieldId(std::string interpFieldName) const
   nrsCheck(interpFieldIds.count(interpFieldName) == 0,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: interpField %s not registered!\n",
+           "interpField %s not registered!\n",
            interpFieldName.c_str());
   return interpFieldIds.at(interpFieldName);
 }
@@ -260,7 +260,7 @@ int lpm_t::numFieldsInterp(std::string interpFieldName) const
   nrsCheck(interpFieldIds.count(interpFieldName) == 0,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: interpField %s not registered!\n",
+           "interpField %s not registered!\n",
            interpFieldName.c_str());
   return interpFieldCounts.at(interpFieldName);
 }
@@ -349,11 +349,11 @@ void lpm_t::handleAllocation(int offset)
 
 void lpm_t::initialize(int nParticles, dfloat t0, std::vector<dfloat> &y0)
 {
-  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
+  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", "lpm_t already initialized!");
   nrsCheck(y0.size() != nParticles * nDOFs_,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: y0.size() = %ld, while expecting %d entries!\n",
+           "y0.size() = %ld, while expecting %d entries!\n",
            y0.size(),
            nParticles * nDOFs_);
 
@@ -363,11 +363,11 @@ void lpm_t::initialize(int nParticles, dfloat t0, std::vector<dfloat> &y0)
 
 void lpm_t::initialize(int nParticles, dfloat t0, occa::memory o_y0)
 {
-  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "ERROR: lpm_t already initialized!\n", "");
+  nrsCheck(initialized_, platform->comm.mpiComm, EXIT_FAILURE, "%s\n", "lpm_t already initialized!");
   nrsCheck(o_y0.size() != nParticles * nDOFs_ * sizeof(dfloat),
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: o_y0.size() = %llu, while expecting %ld bytes!\n",
+           "o_y0.size() = %llu, while expecting %ld bytes!\n",
            o_y0.size(),
            nParticles * nDOFs_ * sizeof(dfloat));
 
@@ -439,13 +439,13 @@ void lpm_t::integrate(dfloat tf)
   nrsCheck(!initialized_,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: cannot call integrate before calling initialize!\n",
-           "");
+           "%s\n",
+           "cannot call integrate before calling initialize!");
   nrsCheck(!userRHS_,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: cannot call integrate without setting a userRHS!\n",
-           "");
+           "%s\n",
+           "cannot call integrate without setting a userRHS!");
 
   if (timerLevel != TimerLevel::None) {
     platform->timer.tic(timerName + "integrate", 1);
@@ -627,7 +627,7 @@ void lpm_t::integrateRK()
   nrsCheck(false,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: RK solver order %d not supported!\n",
+           "RK solver order %d not supported!\n",
            solverOrder);
 }
 
@@ -1255,19 +1255,19 @@ void lpm_t::addParticles(int newNParticles,
   nrsCheck(yNewPart.size() != expectedYSize,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: yNewPart size is %ld but expected %d words!\n",
+           "yNewPart size is %ld but expected %d words!\n",
            yNewPart.size(),
            expectedYSize);
   nrsCheck(propNewPart.size() != expectedPropSize,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: propNewPart size is %ld but expected %d words!\n",
+           "propNewPart size is %ld but expected %d words!\n",
            propNewPart.size(),
            expectedPropSize);
   nrsCheck(ydotNewPart.size() != expectedYdotSize,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: ydotNewPart size is %ld but expected %d words!\n",
+           "ydotNewPart size is %ld but expected %d words!\n",
            ydotNewPart.size(),
            expectedYdotSize);
 
@@ -1315,19 +1315,19 @@ void lpm_t::addParticles(int newNParticles,
   nrsCheck(o_yNewPart.size() != expectedYSize,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: o_yNewPart size is %ld but expected %ld bytes!\n",
+           "o_yNewPart size is %ld but expected %ld bytes!\n",
            o_yNewPart.size(),
            expectedYSize);
   nrsCheck(o_propNewPart.size() != expectedPropSize,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: o_propNewPart size is %ld but expected %ld bytes!\n",
+           "o_propNewPart size is %ld but expected %ld bytes!\n",
            o_propNewPart.size(),
            expectedPropSize);
   nrsCheck(o_ydotNewPart.size() != expectedYdotSize,
            platform->comm.mpiComm,
            EXIT_FAILURE,
-           "ERROR: o_ydotNewPart size is %ld but expected %ld bytes!\n",
+           "o_ydotNewPart size is %ld but expected %ld bytes!\n",
            o_ydotNewPart.size(),
            expectedYdotSize);
 

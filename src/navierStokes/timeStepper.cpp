@@ -217,7 +217,7 @@ void extrapolate(nrs_t *nrs)
                            cds->o_Se);
 
   if (platform->options.compareArgs("MOVING MESH", "TRUE")) {
-    if(nrs->cht) mesh = nrs->cds->mesh[0];
+    if(nrs->cht) mesh = nrs->_mesh;
     nrs->extrapolateKernel(mesh->Nlocal,
                            nrs->NVfields,
                            nrs->nEXT,

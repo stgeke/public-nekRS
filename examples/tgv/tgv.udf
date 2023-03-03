@@ -5,6 +5,7 @@
 #include <math.h>
 #include "udf.hpp"
 
+static dfloat U0, V0, W0;
 occa::kernel magSqrKernel;
 
 void printDiagnostics(nrs_t *nrs, dfloat time, int tstep)
@@ -63,6 +64,13 @@ void UDF_LoadKernels(occa::properties& kernelInfo)
   magSqrKernel = oudfBuildKernel(kernelInfo, "magSqr");
 }
 
+void UDF_Setup0(MPI_Comm comm, setupAide &options)
+{
+  platform->par->extract("casedata", "U0", U0);
+  platform->par->extract("casedata", "V0", V0);
+  platform->par->extract("casedata", "W0", W0);
+}
+
 void UDF_Setup(nrs_t *nrs)
 {
  // set IC
@@ -71,9 +79,9 @@ void UDF_Setup(nrs_t *nrs)
    dfloat x = mesh->x[n];
    dfloat y = mesh->y[n];
    dfloat z = mesh->z[n];
-   nrs->U[n+0*nrs->fieldOffset] = sin(x)*cos(y)*cos(z);;
-   nrs->U[n+1*nrs->fieldOffset] = -cos(x)*sin(y)*cos(z); 
-   nrs->U[n+2*nrs->fieldOffset] = 0; 
+   nrs->U[n+0*nrs->fieldOffset] = sin(x)*cos(y)*cos(z)  + U0;
+   nrs->U[n+1*nrs->fieldOffset] = -cos(x)*sin(y)*cos(z) + V0; 
+   nrs->U[n+2*nrs->fieldOffset] = W0; 
  }
 }
 

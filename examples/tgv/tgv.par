@@ -6,9 +6,6 @@ cubaturePolynomialOrder = 9
 stopAt = endTime
 endTime = 20
 
-#timeStepper = tombo3
-#dt = targetCFL=0.5
-
 timeStepper = tombo2
 dt = targetCFL=2 + max=2e-2
 
@@ -28,3 +25,11 @@ boundaryTypeMap = none
 density = 1.0
 viscosity = -1600
 residualTol = 1e-06
+
+[SCALAR00] #lambda2
+solver = none
+
+[CASEDATA]
+U0 = 0
+V0 = 0
+W0 = 0

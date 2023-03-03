@@ -491,65 +491,33 @@ void ciTestPointInterpolation(nrs_t *nrs, dfloat time, occa::kernel exactUVWPKer
   o_UintFluid.free();
 }
 
-void surfaceArea(nrs_t *nrs, int BID, dfloat &SA)
-{
-  auto *mesh = nrs->meshV;
-
-  SA = 0.0;
-
-  for (int elem = 0; elem < mesh->Nelements; ++elem) {
-    for (int face = 0; face < mesh->Nfaces; ++face) {
-      for (int fp = 0; fp < mesh->Nfp; ++fp) {
-        const auto base = mesh->Nsgeo * (mesh->Nfaces * mesh->Nfp * elem + mesh->Nfp * face + fp);
-        /* volume index of face node */
-        const auto n = mesh->faceNodes[face * mesh->Nfp + fp];
-        const auto WsJ = mesh->sgeo[base + WSJID];
-        if (mesh->EToB[elem * mesh->Nfaces + face] == BID) {
-          SA += WsJ;
-        }
-      }
-    }
-  }
-
-  MPI_Allreduce(MPI_IN_PLACE, &SA, 1, MPI_DFLOAT, MPI_SUM, platform->comm.mpiComm);
-}
-
-void ciTestAvgBoundary(nrs_t *nrs)
+void viTestSurfaceIntegral(nrs_t *nrs)
 {
   // reserve testing to ciMode 1
   if(ciMode != 1) return;
 
   const int rank = platform->comm.mpiRank;
   auto *mesh = nrs->meshV;
-  const int BID = 1;
-  const auto testTol = 50. * std::numeric_limits<dfloat>::epsilon();
+  const int nbID = 1;
+  const auto testTol = 1e-2;
 
   constexpr int N = 5;
+  occa::memory o_fld = platform->device.malloc((N * sizeof(dfloat)) * nrs->fieldOffset);
+  platform->linAlg->fill(N * nrs->fieldOffset, 1.0, o_fld);
 
-  dfloat SA = 0.0;
+  auto bID = (int*) std::malloc(nbID * sizeof(int));
+  bID[0] = 1;
+  occa::memory o_bID = platform->device.malloc(nbID * sizeof(int), bID);
 
-  surfaceArea(nrs, BID, SA);
+  std::vector<dfloat> results = mesh->surfaceIntegral(N, nrs->fieldOffset, nbID, o_bID, o_fld);  
 
   // surface area of unit sphere
   const auto SAref = 4. * M_PI;
-  if (std::abs((SA - SAref) / SAref) > 0.02) {
-    if (rank == 0) {
-      std::cout << "ciTestAvgBoundary: surface area of unit sphere is " << SAref << " instead of " << SA
-                << std::endl;
-    }
-    CIFAIL;
-  }
-
-  occa::memory o_fld = platform->device.malloc((N * sizeof(dfloat)) * nrs->fieldOffset);
-  platform->linAlg->fill(N * nrs->fieldOffset, SA, o_fld);
-
-  std::array<dfloat, N> results;
-  mesh->avgBoundaryValue(BID, N, nrs->fieldOffset, o_fld, results.data());
-
-  for (auto &&v : results) {
-    if (std::abs(v - SA) > testTol) {
+    for (auto &&v : results) {
+    if (std::abs((v - SAref) / SAref) > testTol) {
       if (rank == 0) {
-        std::cout << "ciTestAvgBoundary: FAILED" << std::endl;
+        std::cout << "viTestSurfaceIntegral: surface area is " << v << " instead of " << SAref
+                  << std::endl;
       }
       CIFAIL;
     }
@@ -672,7 +640,7 @@ void ciTestErrors(nrs_t *nrs,
   ciTestParticles(nrs, particles, exactUVWPKernel, RKKernel);
   ciTestPointInterpolation(nrs, time, exactUVWPKernel);
 
-  ciTestAvgBoundary(nrs);
+  viTestSurfaceIntegral(nrs);
 
   ciTestLinAlg(1);
   ciTestLinAlg(BLOCKSIZE / 16);

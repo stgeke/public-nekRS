@@ -1,13 +1,16 @@
 [GENERAL]
 polynomialOrder = 7
-#startFrom = "r.fld"+time=0
+startFrom = "r.fld"+time=0
 stopAt = endTime
 endTime = 50
-dt = 2e-02
+numSteps = 5
+dt = 5e-02
 timeStepper = tombo2
 
 writeControl = simulationTime 
 writeInterval = 50
+
+constFlowRate = meanVelocity=1.0 + direction=X
 
 [PROBLEMTYPE]
 equation = navierStokes+variableViscosity
@@ -16,7 +19,7 @@ equation = navierStokes+variableViscosity
 residualTol = 1e-04
 
 [VELOCITY]
-boundaryTypeMap = wall, slipY 
+boundaryTypeMap = wall, slipY
 residualTol = 1e-06
 density = 1.0
 viscosity = -43500. 

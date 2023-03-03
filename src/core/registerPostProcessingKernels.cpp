@@ -21,6 +21,10 @@ void registerPostProcessingKernels()
   const std::string oklpath = getenv("NEKRS_KERNEL_DIR");
   std::string kernelName, fileName;
 
+  kernelName = "drag";
+  fileName = oklpath + "/postProcessing/" + kernelName + ".okl";
+  platform->kernels.add(kernelName, fileName, kernelInfo);
+
   kernelInfo["includes"] += oklpath + "/postProcessing/planarAveraging.h";
 
   for (const std::string dir : {"XY", "XZ", "YZ"}) {

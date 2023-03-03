@@ -26,7 +26,7 @@ platform->exitValue = 0;                                                        
 {                                                                                                            \
 if (platform->comm.mpiRank == 0)                                                                             \
 printf("TESTS failed!\n");                                                                                   \
-platform->exitValue = 1;                                                                                     \
+platform->exitValue += 1;                                                                                    \
 }
 
 extern "C" {

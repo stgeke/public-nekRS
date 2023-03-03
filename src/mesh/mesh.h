@@ -27,11 +27,6 @@
 #ifndef MESH_H
 #define MESH_H 1
 
-#include <unistd.h>
-
-#include <math.h>
-#include <stdlib.h>
-
 #include "nrssys.hpp"
 #include "ogs.hpp"
 #include "linAlg.hpp"
@@ -45,8 +40,11 @@ struct nrs_t;
 
 struct mesh_t
 {
-  dfloat avgBoundaryValue(int BID, occa::memory o_fld);
-  void avgBoundaryValue(int BID, int Nfields, int offsetFld, occa::memory o_flds, dfloat *avgs);
+  std::vector<dfloat> surfaceIntegral(int nbID, const occa::memory& o_bID, const occa::memory& o_fld);
+
+  std::vector<dfloat> surfaceIntegral(int Nfields, int offsetFld, int nbID,
+                                      const occa::memory o_bID, const occa::memory& o_fld);
+
   void move();
   void update();
   void computeInvLMM();
@@ -229,7 +227,7 @@ struct mesh_t
   occa::kernel nStagesSumVectorKernel;
   occa::kernel velocityDirichletKernel;
 
-  occa::kernel avgBIDValueKernel;
+  occa::kernel surfaceIntegralKernel;
 };
 
 mesh_t *createMeshMG(mesh_t* _mesh,

@@ -39,7 +39,8 @@ static dfloat coeff[] = {
     100.0,     // fb_c2
     0.52,      // alp_inf
     1e-8,      // TINY
-    0          // Pope correction
+    0,         // Pope correction
+    4.4        // crEddFactor
 };
 } // namespace
 
@@ -79,6 +80,9 @@ void RANSktau::buildKernel(occa::properties _kernelInfo)
     kernelInfo["defines/p_tiny"] = coeff[13];
   if (!kernelInfo.get<std::string>("defines/p_pope").size())
     kernelInfo["defines/p_pope"] = coeff[14];
+  if (!kernelInfo.get<std::string>("defines/p_crEddFactor").size())
+    kernelInfo["defines/p_crEddFactor"] = coeff[15];
+
 
   const int verbose = platform->options.compareArgs("VERBOSE", "TRUE") ? 1 : 0;
 

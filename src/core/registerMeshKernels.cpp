@@ -32,11 +32,11 @@ void registerMeshKernels(occa::properties kernelInfoBC)
       platform->options.getArgs("POLYNOMIAL DEGREE", N);
       const int Nq = N + 1;
       nrsCheck(BLOCKSIZE < Nq * Nq, platform->comm.mpiComm, EXIT_FAILURE,
-               "avgBIDValue kernel requires BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
+               "surfaceIntegral kernel requires BLOCKSIZE >= Nq * Nq\nBLOCKSIZE = %d, Nq*Nq = %d\n",
                BLOCKSIZE, Nq * Nq);
     }
 
-    kernelName = "avgBIDValue";
+    kernelName = "surfaceIntegral";
     fileName = oklpath + "/mesh/" + kernelName + ".okl";
     platform->kernels.add(meshPrefix + kernelName, fileName, kernelInfo);
 

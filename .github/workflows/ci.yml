@@ -189,13 +189,9 @@ jobs:
       working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl
       run: ${{ env.NEKRS_HOME }}/bin/nrsmpi mv_cyl 2 --cimode 2
 
-    - name: 'mv_cyl + subcycling + elasticity solve'
+    - name: 'mv_cyl + subcycling + elasticity solve + projection'
       working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl
       run: ${{ env.NEKRS_HOME }}/bin/nrsmpi mv_cyl 2 --cimode 3
-
-    - name: 'mv_cyl + subcycling + elasticity solve (projection)'
-      working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl
-      run: ${{ env.NEKRS_HOME }}/bin/nrsmpi mv_cyl 2 --cimode 4
 
     - name: 'mv_cyl + unaligned SYM'
       working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl
@@ -216,10 +212,6 @@ jobs:
     - name: 'mv_cyl + subcycling + elasticity solve, derived bc'
       working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl
       run: ${{ env.NEKRS_HOME }}/bin/nrsmpi mv_cyl_derived_bc 2 --cimode 3
-
-    - name: 'mv_cyl + subcycling + elasticity solve (projection), derived bc'
-      working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl
-      run: ${{ env.NEKRS_HOME }}/bin/nrsmpi mv_cyl_derived_bc 2 --cimode 4
 
     - name: 'mv_cyl + unaligned SYM, derived bc'
       working-directory: ${{ env.NEKRS_EXAMPLES }}/mv_cyl

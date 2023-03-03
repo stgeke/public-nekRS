@@ -234,7 +234,7 @@ void applyDirichletMesh(nrs_t *nrs, double time, occa::memory& o_U, occa::memory
     mesh->velocityDirichletKernel(mesh->Nelements,
                                   nrs->fieldOffset,
                                   time,
-                                  bcMap::useDerivedMeshBoundaryConditions(),
+                                  (int) bcMap::useDerivedMeshBoundaryConditions(),
                                   mesh->o_sgeo,
                                   nrs->o_zeroNormalMaskMeshVelocity,
                                   mesh->o_x,
@@ -246,7 +246,7 @@ void applyDirichletMesh(nrs_t *nrs, double time, occa::memory& o_U, occa::memory
                                   nrs->o_meshRho,
                                   nrs->o_meshMue,
                                   nrs->o_usrwrk,
-                                  o_U,
+                                  nrs->o_U,
                                   platform->o_mempool.slice3);
 
     if (sweep == 0)

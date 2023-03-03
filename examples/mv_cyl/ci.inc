@@ -39,12 +39,7 @@ void ciSetup(MPI_Comm comm, setupAide &options)
     options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
   }
   if(ciMode == 4){
-    options.setArgs("SUBCYCLING STEPS", std::string("1"));
-    options.setArgs("MESH INITIAL GUESS", "PROJECTION");
-    options.setArgs("MESH RESIDUAL PROJECTION VECTORS", std::string("1"));
-    options.setArgs("MESH SOLVER", "PCG");
-    options.setArgs("MESH BLOCK SOLVER", "TRUE");
-    options.setArgs("MESH SOLVER TOLERANCE", "1e-6");
+    nrsAbort(comm, EXIT_FAILURE, "%s\n", "ciMode=4 not defined"); 
   }
   if(ciMode == 5){
     platform->par->set("casedata", "p_rot", 0.5);
@@ -91,10 +86,6 @@ void ciTestErrors(nrs_t *nrs, dfloat time, int tstep)
     expectedErr[5] = 0.1042903E-05;
   }
   if(ciMode == 3)
-  {
-    expectedErr[5] = 0.1042903E-05;
-  }
-  if(ciMode == 4)
   {
     expectedErr[5] = 0.1042903E-05;
   }

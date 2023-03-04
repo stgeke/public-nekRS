@@ -42,6 +42,7 @@ enum class SmootherType
 };
 enum class ChebyshevSmootherType
 {  
+  NONE,
   JACOBI,
   ASM,
   RAS,
@@ -67,7 +68,7 @@ public:
 
   //smoothing params
   SmootherType smootherType;
-  ChebyshevSmootherType chebySmootherType;
+  ChebyshevSmootherType chebySmootherType = ChebyshevSmootherType::NONE;
 
   dfloat lambda1, lambda0;
   dfloat maxEig;

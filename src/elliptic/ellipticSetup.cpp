@@ -39,19 +39,19 @@ void checkConfig(elliptic_t* elliptic)
 
   if (!options.compareArgs("DISCRETIZATION", "CONTINUOUS")) {
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: Elliptic solver only supports CG\n");
+      printf("solver only supports CG\n");
     err++;
   } 
 
   if (elliptic->elementType != HEXAHEDRA) {
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: Elliptic solver only supports HEX elements\n");
+      printf("solver only supports HEX elements\n");
     err++;
   }
 
   if (elliptic->blockSolver && options.compareArgs("PRECONDITIONER", "MULTIGRID")) {
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: Block solver does not support multigrid preconditioner\n");
+      printf("Block solver does not support multigrid preconditioner\n");
     err++;
   }
 
@@ -59,7 +59,7 @@ void checkConfig(elliptic_t* elliptic)
       options.compareArgs("PRECONDITIONER","MULTIGRID") &&
       !options.compareArgs("MULTIGRID SMOOTHER","DAMPEDJACOBI")) { 
     if(platform->comm.mpiRank == 0)
-      printf("ERROR: Non-Poisson type equations require Jacobi multigrid smoother\n");
+      printf("Non-Poisson type equations require Jacobi multigrid smoother\n");
     err++;
   }
 
@@ -67,14 +67,14 @@ void checkConfig(elliptic_t* elliptic)
       options.compareArgs("MULTIGRID COARSE SOLVE", "TRUE")) {
     if (elliptic->poisson == 0) {
       if(platform->comm.mpiRank == 0)
-        printf("ERROR: Multigrid + coarse solve only supported for Poisson type equations\n");
+        printf("Multigrid + coarse solve only supported for Poisson type equations\n");
       err++;
     }
   }
 
   if(elliptic->mesh->ogs == NULL) {
     if(platform->comm.mpiRank == 0) 
-      printf("ERROR: mesh->ogs == NULL!");
+      printf("mesh->ogs == NULL!");
     err++;
   }
 
@@ -115,7 +115,7 @@ void ellipticSolveSetup(elliptic_t* elliptic)
   for (auto &entry : platform->options.keyWordToDataMap) {
     std::string prefix = elliptic->name;
     upperCase(prefix);
-    if (entry.first.find(prefix) != std::string::npos) {
+    if (entry.first.find(prefix) == 0) {
       std::string key = entry.first;
       key.erase(0, prefix.size() + 1);
       elliptic->options.setArgs(key, entry.second);

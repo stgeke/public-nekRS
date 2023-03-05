@@ -397,6 +397,9 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
   occa::memory &o_gradPCoeff = platform->o_mempool.slice0;
   occa::memory &o_Prhs = platform->o_mempool.slice3;
 
+  nrs->setEllipticCoeffPressureKernel(
+      mesh->Nlocal, nrs->fieldOffset, nrs->o_rho, nrs->o_ellipticCoeff);
+
   nrs->wgradientVolumeKernel(mesh->Nelements,
       mesh->o_vgeo,
       mesh->o_D,
@@ -420,8 +423,6 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
   platform->timer.toc("pressure rhs");
 
   platform->timer.tic("pressureSolve", 1);
-  nrs->setEllipticCoeffPressureKernel(
-      mesh->Nlocal, nrs->fieldOffset, nrs->o_rho, nrs->o_ellipticCoeff);
   ellipticSolve(nrs->pSolver, o_Prhs, nrs->o_Pc);
   platform->timer.toc("pressureSolve");
 
@@ -463,23 +464,6 @@ void compute(nrs_t *nrs, double lengthScale, dfloat time) {
         mesh->Nlocal, n_dim, o_BF, 1.0, o_RhsVel, offset, offset);
   }
 
-#if 0
-  nrs->velocityNeumannBCKernel(mesh->Nelements,
-                               nrs->fieldOffset,
-                               mesh->o_sgeo,
-                               mesh->o_vmapM,
-                               mesh->o_EToB,
-                               nrs->o_EToB,
-                               time,
-                               mesh->o_x,
-                               mesh->o_y,
-                               mesh->o_z,
-                               nrs->o_rho,
-                               nrs->o_mue,
-                               nrs->o_usrwrk,
-                               nrs->o_U,
-                               o_RhsVel);
-#endif
   platform->timer.toc("velocity rhs");
 
   platform->timer.tic("velocitySolve", 1);

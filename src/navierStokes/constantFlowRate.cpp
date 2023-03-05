@@ -269,7 +269,7 @@ bool apply(nrs_t *nrs, int tstep, dfloat time) {
     res0NormP = nrs->pSolver->res0Norm;
     resNormP = nrs->pSolver->resNorm;
 
-    ConstantFlowRate::compute(nrs, lengthScale, time);
+    ConstantFlowRate::compute(nrs, time);
 
     if(nrs->uvwSolver){
       nrs->uvwSolver->Niter += NiterUVW;
@@ -386,7 +386,7 @@ dfloat scaleFactor(){
   return constantFlowScale;
 }
 
-void compute(nrs_t *nrs, double lengthScale, dfloat time) {
+void compute(nrs_t *nrs, dfloat time) {
 
   constexpr int ndim = 3;
   mesh_t *mesh = nrs->meshV;

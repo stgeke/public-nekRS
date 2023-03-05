@@ -6,6 +6,22 @@
 #include "bcMap.hpp"
 #include <limits>
 
+
+void checkNorm(nrs_t* nrs, const std::string& txt, int nFields, occa::memory& o_u)
+{ 
+  mesh_t* mesh = nrs->meshV; 
+  const dfloat norm =
+    platform->linAlg->weightedNorm2Many(
+      mesh->Nlocal,
+      nFields, 
+      nrs->fieldOffset,
+      mesh->ogs->o_invDegree,
+      o_u,
+      platform->comm.mpiComm
+    );
+  if(platform->comm.mpiRank == 0) printf("%s norm: %.15e\n", txt.c_str(), norm);
+}
+
 namespace tombo
 {
 occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
@@ -24,6 +40,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
   flopCount += static_cast<double>(mesh->Nelements) * (18 * mesh->Np * mesh->Nq + 36 * mesh->Np);
 
   oogs::startFinish(platform->o_mempool.slice0, nrs->NVfields, nrs->fieldOffset,ogsDfloat, ogsAdd, nrs->gsh);
+
+  checkNorm(nrs, "here 01", nrs->NVfields, platform->o_mempool.slice0);
 
   platform->linAlg->axmyVector(
     mesh->Nlocal,
@@ -45,6 +63,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
     platform->o_mempool.slice3);
   flopCount += static_cast<double>(mesh->Nelements) * (18 * mesh->Np * mesh->Nq + 36 * mesh->Np);
 
+  checkNorm(nrs, "here 02", nrs->NVfields, platform->o_mempool.slice3);
+
   nrs->gradientVolumeKernel(
     mesh->Nelements,
     mesh->o_vgeo,
@@ -53,6 +73,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
     nrs->o_div,
     platform->o_mempool.slice0);
   flopCount += static_cast<double>(mesh->Nelements) * (6 * mesh->Np * mesh->Nq + 18 * mesh->Np);
+
+  checkNorm(nrs, "here 03", nrs->NVfields, platform->o_mempool.slice0);
 
   if (platform->options.compareArgs("VELOCITY STRESSFORMULATION", "TRUE")) {
     nrs->pressureStressKernel(
@@ -66,6 +88,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
          platform->o_mempool.slice3);
     flopCount += static_cast<double>(mesh->Nelements) * (18 * mesh->Nq * mesh->Np + 100 * mesh->Np);
   }
+
+  checkNorm(nrs, "here 04", nrs->NVfields, platform->o_mempool.slice3);
 
   const int viscContribution = (nrs->nBDF > 1) ? 1 : 0; 
   occa::memory o_irho = nrs->o_ellipticCoeff;
@@ -82,6 +106,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
   flopCount += 12 * static_cast<double>(mesh->Nlocal);
 
   oogs::startFinish(platform->o_mempool.slice6, nrs->NVfields, nrs->fieldOffset,ogsDfloat, ogsAdd, nrs->gsh);
+
+  checkNorm(nrs, "here 05", nrs->NVfields, platform->o_mempool.slice6);
 
   platform->linAlg->axmyVector(
     mesh->Nlocal,
@@ -101,6 +127,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
     platform->o_mempool.slice3);
   flopCount += static_cast<double>(mesh->Nelements) * (6 * mesh->Np * mesh->Nq + 18 * mesh->Np);
 
+  checkNorm(nrs, "here 06", 1, platform->o_mempool.slice3);
+
   nrs->pressureAddQtlKernel(
     mesh->Nlocal,
     mesh->o_LMM,
@@ -108,6 +136,8 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
     nrs->o_div,
     platform->o_mempool.slice3);
   flopCount += 3 * mesh->Nlocal;
+
+  checkNorm(nrs, "here 07", 1, platform->o_mempool.slice3);
 
   nrs->divergenceSurfaceKernel(
     mesh->Nelements,
@@ -121,9 +151,14 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
     platform->o_mempool.slice3);
   flopCount += 25 * static_cast<double>(mesh->Nelements) * mesh->Nq * mesh->Nq;
 
+  checkNorm(nrs, "here 08", 1, platform->o_mempool.slice3);
+
   platform->timer.toc("pressure rhs");
 
   platform->o_mempool.slice1.copyFrom(nrs->o_P, mesh->Nlocal * sizeof(dfloat));
+
+  checkNorm(nrs, "here rhs", 1, platform->o_mempool.slice3);
+
   ellipticSolve(nrs->pSolver, platform->o_mempool.slice3, platform->o_mempool.slice1);
 
   platform->flopCounter->add("pressure RHS", flopCount);

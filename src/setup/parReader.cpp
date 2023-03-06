@@ -1890,7 +1890,8 @@ void parRead(inipp::Ini *par, std::string setupFile, MPI_Comm comm, setupAide &o
     int flow = 1;
 
     options.setArgs("VELOCITY ELLIPTIC COEFF FIELD", "TRUE");
-    options.setArgs("VELOCITY STRESSFORMULATION", "FALSE");
+    if (options.getArgs("VELOCITY STRESSFORMULATION").empty())
+      options.setArgs("VELOCITY STRESSFORMULATION", "FALSE");
 
     parseInitialGuess(rank, options, par, "velocity");
 

@@ -15,6 +15,21 @@
 #include "bcMap.hpp"
 #include "bdry.hpp"
 
+static void checkNorm(nrs_t* nrs, const std::string& txt, int nFields, occa::memory& o_u)
+{
+  mesh_t* mesh = nrs->meshV;
+  const dfloat norm =
+    platform->linAlg->weightedNorm2Many(
+      mesh->Nlocal,
+      nFields,
+      nrs->fieldOffset,
+      mesh->ogs->o_invDegree,
+      o_u,
+      platform->comm.mpiComm
+    );
+  if(platform->comm.mpiRank == 0) printf("%s norm: %.15e\n", txt.c_str(), norm);
+}
+
 namespace {
 
 void advectionFlops(mesh_t *mesh, int Nfields)
@@ -238,7 +253,11 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
   setDt(nrs, dt, tstep);
 
+  checkNorm(nrs, "timestepper::step nrs->o_Ue before extrap", nrs->NVfields, nrs->o_Ue);
+
   extrapolate(nrs);
+
+  checkNorm(nrs, "timestepper::step nrs->o_Ue after extrap", nrs->NVfields, nrs->o_Ue);
 
   if (nrs->Nsubsteps) {
     mesh_t *mesh = nrs->meshV;
@@ -370,7 +389,11 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     if (nrs->neknek)
       nrs->neknek->updateBoundary(nrs, tstep, iter);
 
+    checkNorm(nrs, "timestepper::step nrs->o_Ue before applyDirichlet", nrs->NVfields, nrs->o_Ue);
+
     applyDirichlet(nrs, timeNew);
+
+    checkNorm(nrs, "timestepper::step nrs->o_Ue after applyDirichlet", nrs->NVfields, nrs->o_Ue);
     
     if (nrs->Nscalar)
       scalarSolve(nrs, timeNew, cds->o_S, iter);
@@ -381,6 +404,8 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
       platform->linAlg->fill(mesh->Nlocal, 0.0, nrs->o_div);
       udf.div(nrs, timeNew, nrs->o_div);
     }
+
+    checkNorm(nrs, "timestepper::step nrs->o_Ue before fluidSolve", nrs->NVfields, nrs->o_Ue);
 
     if (nrs->flow)
       fluidSolve(nrs, timeNew, nrs->o_P, nrs->o_U, iter, tstep);

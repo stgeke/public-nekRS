@@ -30,8 +30,6 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
   double flopCount = 0.0;
   mesh_t* mesh = nrs->meshV;
 
-  checkNorm(nrs, "tombo::pressureSolve nrs->o_Ue", nrs->NVfields, nrs->o_Ue);
-
   nrs->curlKernel(mesh->Nelements,
 	                1,
                   mesh->o_vgeo,
@@ -42,8 +40,6 @@ occa::memory pressureSolve(nrs_t* nrs, dfloat time, int stage)
   flopCount += static_cast<double>(mesh->Nelements) * (18 * mesh->Np * mesh->Nq + 36 * mesh->Np);
 
   oogs::startFinish(platform->o_mempool.slice0, nrs->NVfields, nrs->fieldOffset,ogsDfloat, ogsAdd, nrs->gsh);
-
-  checkNorm(nrs, "tombo::pressureSolve curl", nrs->NVfields, platform->o_mempool.slice0);
 
   platform->linAlg->axmyVector(
     mesh->Nlocal,

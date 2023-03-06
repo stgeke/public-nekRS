@@ -72,7 +72,7 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
   mesh_t *mesh = nrs->meshV;
 
   platform->linAlg->fill((1 + nrs->NVfields) * nrs->fieldOffset,
-                         -1.0 * std::numeric_limits<dfloat>::max(),
+                         1e-6 * std::numeric_limits<dfloat>::lowest(),
                          platform->o_mempool.slice6);
 
   occa::memory o_nullptr;
@@ -177,7 +177,7 @@ void applyDirichletScalars(nrs_t *nrs, double time, occa::memory& o_S, occa::mem
     occa::memory o_nullptr;
 
     platform->linAlg->fill(cds->fieldOffset[is],
-                           -1.0 * std::numeric_limits<dfloat>::max(),
+                           1e-6 * std::numeric_limits<dfloat>::lowest(),
                            platform->o_mempool.slice2);
     for (int sweep = 0; sweep < 2; sweep++) {
       cds->dirichletBCKernel(mesh->Nelements,
@@ -227,7 +227,7 @@ void applyDirichletMesh(nrs_t *nrs, double time, occa::memory& o_U, occa::memory
     applyZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, o_Ue);
   }
   platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset,
-                         -1.0 * std::numeric_limits<dfloat>::max(),
+                         1e-6 * std::numeric_limits<dfloat>::lowest(),
                          platform->o_mempool.slice3);
 
   for (int sweep = 0; sweep < 2; sweep++) {

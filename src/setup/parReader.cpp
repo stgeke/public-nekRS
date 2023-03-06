@@ -880,7 +880,7 @@ void parsePreconditioner(const int rank, setupAide &options, inipp::Ini *par, st
         minDegree = std::min(minDegree, polyOrder);
       }
 
-      const auto INVALID = -std::numeric_limits<int>::max();
+      const auto INVALID = std::numeric_limits<int>::lowest();
 
       // bail if degree is set _and_ it conflicts
       std::string p_smoother;

@@ -375,10 +375,10 @@ neknek_t::neknek_t(nrs_t *nrs, const session_data_t &session)
     nrs->cds->neknek = this;
   }
 
-  this->nEXT = 0;
-  platform->options.getArgs("NEKNEK BOUNDARY EXT ORDER", this->nEXT);
-  if(this->nEXT == 0) // not specified
-    platform->options.setArgs("NEKNEK BOUNDARY EXT ORDER", "1");
+  this->nEXT = 1;
+  platform->options.setArgs("NEKNEK BOUNDARY EXT ORDER", std::to_string(this->nEXT));
+  if(!platform->options.getArgs("NEKNEK BOUNDARY EXT ORDER").empty())
+    platform->options.getArgs("NEKNEK BOUNDARY EXT ORDER", this->nEXT);
 
   this->coeffEXT.resize(this->nEXT);
   this->o_coeffEXT = platform->device.malloc(this->nEXT * sizeof(dfloat));

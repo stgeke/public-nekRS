@@ -382,14 +382,12 @@ void printRuntimeStatistics(int step)
 void processUpdFile()
 {
   char* rbuf = nullptr;
-  long fsize = 0;
+  long int fsize = 0;
+  const std::string updFile = "nekrs.upd";
 
   if (rank == 0) {
-    const std::string updFile = "nekrs.upd";
     const char *ptr = realpath(updFile.c_str(), NULL);
     if (ptr) {
-      if (rank == 0)
-        std::cout << "processing " << updFile << " ...\n";
       FILE *f = fopen(updFile.c_str(), "rb");
       fseek(f, 0, SEEK_END);
       fsize = ftell(f);
@@ -400,9 +398,12 @@ void processUpdFile()
       remove(updFile.c_str());
     }
   }
-  MPI_Bcast(&fsize, sizeof(fsize), MPI_BYTE, 0, comm);
+  MPI_Bcast(&fsize, 1, MPI_LONG_INT, 0, comm);
 
-  if (fsize) {
+  if (fsize > 0) {
+    if (rank == 0)
+      std::cout << "processing " << updFile << " ...\n";
+
     if(rank != 0) rbuf = new char[fsize];
     MPI_Bcast(rbuf, fsize, MPI_CHAR, 0, comm);
     std::stringstream is;

@@ -253,6 +253,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
 
   setDt(nrs, dt, tstep);
 
+  checkNorm(nrs, "timestepper::step nrs->o_U before extrap", nrs->NVfields, nrs->o_U);
   checkNorm(nrs, "timestepper::step nrs->o_Ue before extrap", nrs->NVfields, nrs->o_Ue);
 
   extrapolate(nrs);
@@ -339,6 +340,7 @@ void step(nrs_t *nrs, dfloat time, dfloat dt, int tstep)
     platform->timer.toc("makef");
 
   }
+  checkNorm(nrs, "timestepper::step nrs->o_BF after makef", nrs->NVfields, nrs->o_BF);
 
   if (movingMesh) {
     mesh_t *mesh = nrs->_mesh;
@@ -785,12 +787,14 @@ void fluidSolve(
 
   occa::memory o_Unew = tombo::velocitySolve(nrs, time, stage);
   o_U.copyFrom(o_Unew, nrs->NVfields * nrs->fieldOffset * sizeof(dfloat));
+  checkNorm(nrs, "timestepper::step nrs->o_U after solve", nrs->NVfields, nrs->o_U);
 
   platform->timer.toc("velocitySolve");
 
   if(platform->options.compareArgs("CONSTANT FLOW RATE", "TRUE")){
     ConstantFlowRate::apply(nrs, tstep, time);
   }
+  checkNorm(nrs, "timestepper::step nrs->o_U after ConstantFlowRate::apply", nrs->NVfields, nrs->o_U);
 
 }
 

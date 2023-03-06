@@ -1,6 +1,21 @@
 #include "nrs.hpp"
 #include "bcMap.hpp"
 
+static void checkNorm(nrs_t* nrs, const std::string& txt, int nFields, occa::memory& o_u)
+{
+  mesh_t* mesh = nrs->meshV;
+  const dfloat norm =
+    platform->linAlg->weightedNorm2Many(
+      mesh->Nlocal,
+      nFields,
+      nrs->fieldOffset,
+      mesh->ogs->o_invDegree,
+      o_u,
+      platform->comm.mpiComm
+    );
+  if(platform->comm.mpiRank == 0) printf("%s norm: %.15e\n", txt.c_str(), norm);
+}
+
 void createZeroNormalMask(nrs_t *nrs, mesh_t *mesh, occa::memory &o_EToB, occa::memory& o_EToBV, occa::memory &o_mask)
 {
   nrs->initializeZeroNormalMaskKernel(mesh->Nlocal, nrs->fieldOffset, o_EToBV, o_mask);
@@ -72,7 +87,7 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
   mesh_t *mesh = nrs->meshV;
 
   platform->linAlg->fill((1 + nrs->NVfields) * nrs->fieldOffset,
-                         -1.0 * std::numeric_limits<dfloat>::max(),
+                         -1.0 * 1e12,
                          platform->o_mempool.slice6);
 
   occa::memory o_nullptr;
@@ -113,6 +128,8 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
                                    o_U,
                                    platform->o_mempool.slice7);
 
+    checkNorm(nrs, "applyDirichletVelocity platform->o_mempool.slice7 after velocityDirichletBCKernel", nrs->NVfields, platform->o_mempool.slice7);
+
     oogs::startFinish(platform->o_mempool.slice6,
                       1 + nrs->NVfields,
                       nrs->fieldOffset,
@@ -120,6 +137,10 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
                       (sweep == 0) ? ogsMax : ogsMin,
                       nrs->gsh);
   }
+
+  checkNorm(nrs, "applyDirichletVelocity platform->o_mempool.slice7 before maskCopyKernel", nrs->NVfields, platform->o_mempool.slice7);
+  checkNorm(nrs, "applyDirichletVelocity nrs->o_Ue before maskCopyKernel", nrs->NVfields, o_Ue);
+
 
   if (nrs->pSolver->Nmasked)
     nrs->maskCopyKernel(nrs->pSolver->Nmasked,
@@ -156,6 +177,10 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
                           platform->o_mempool.slice7,
                           o_U, o_Ue);
   }
+
+  checkNorm(nrs, "applyDirichletVelocity nrs->o_Ue after maskCopyKernel", nrs->NVfields, o_Ue);
+
+
 }
 
 void applyDirichletScalars(nrs_t *nrs, double time, occa::memory& o_S, occa::memory& o_Se)

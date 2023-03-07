@@ -100,9 +100,12 @@ public:
 
   //local patch data
   occa::memory o_invAP, o_patchesIndex, o_invDegreeAP;
+  void* ogs;
+  void* ogsOverlap;
+
   void* ogsExt;
   void* ogsExtOverlap;
-  void* ogs;
+
   void build(
     elliptic_t* pSolver);
   void generate_weights();

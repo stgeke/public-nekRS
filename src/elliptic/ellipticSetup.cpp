@@ -200,9 +200,7 @@ void ellipticSolveSetup(elliptic_t *elliptic)
   }
 
   { // setup an masked gs handle
-    ogs_t *ogs = NULL;
-    if (elliptic->blockSolver)
-      ogs = mesh->ogs;
+    ogs_t *ogs = (elliptic->blockSolver) ? mesh->ogs : nullptr;
     ellipticOgs(mesh,
                 elliptic->fieldOffset,
                 elliptic->Nfields,

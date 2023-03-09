@@ -1,6 +1,9 @@
 #include "nrs.hpp"
 #include "bcMap.hpp"
 
+// lower than any other possible Dirichlet value
+static constexpr dfloat TINY = -1e30;
+
 void createZeroNormalMask(nrs_t *nrs, mesh_t *mesh, occa::memory &o_EToB, occa::memory& o_EToBV, occa::memory &o_mask)
 {
   nrs->initializeZeroNormalMaskKernel(mesh->Nlocal, nrs->fieldOffset, o_EToBV, o_mask);
@@ -71,9 +74,7 @@ void applyDirichletVelocity(nrs_t *nrs, double time, occa::memory& o_U,occa::mem
 
   mesh_t *mesh = nrs->meshV;
 
-  platform->linAlg->fill((1 + nrs->NVfields) * nrs->fieldOffset,
-                         1e-6 * std::numeric_limits<dfloat>::lowest(),
-                         platform->o_mempool.slice0);
+  platform->linAlg->fill((1 + nrs->NVfields) * nrs->fieldOffset, TINY, platform->o_mempool.slice0);
 
   for (int sweep = 0; sweep < 2; sweep++) {
     nrs->pressureDirichletBCKernel(mesh->Nelements,
@@ -183,11 +184,8 @@ void applyDirichletScalars(nrs_t *nrs, double time, occa::memory& o_S, occa::mem
     auto o_diff_i = cds->o_diff + cds->fieldOffsetScan[is] * sizeof(dfloat);
     auto o_rho_i = cds->o_rho + cds->fieldOffsetScan[is] * sizeof(dfloat);
 
-    occa::memory o_nullptr;
+    platform->linAlg->fill(cds->fieldOffset[is], TINY, platform->o_mempool.slice0);
 
-    platform->linAlg->fill(cds->fieldOffset[is],
-                           1e-6 * std::numeric_limits<dfloat>::lowest(),
-                           platform->o_mempool.slice0);
     for (int sweep = 0; sweep < 2; sweep++) {
       cds->dirichletBCKernel(mesh->Nelements,
                              cds->fieldOffset[is],
@@ -203,9 +201,9 @@ void applyDirichletScalars(nrs_t *nrs, double time, occa::memory& o_S, occa::mem
                              cds->o_Ue,
                              o_diff_i,
                              o_rho_i,
-                             cds->neknek ? cds->neknek->o_pointMap : o_nullptr,
-                             cds->neknek ? cds->neknek->o_U : o_nullptr,
-                             cds->neknek ? cds->neknek->o_S : o_nullptr,
+                             cds->neknek ? cds->neknek->o_pointMap : o_NULL,
+                             cds->neknek ? cds->neknek->o_U : o_NULL,
+                             cds->neknek ? cds->neknek->o_S : o_NULL,
                              *(cds->o_usrwrk),
                              platform->o_mempool.slice0);
 
@@ -235,9 +233,8 @@ void applyDirichletMesh(nrs_t *nrs, double time, occa::memory& o_U, occa::memory
     applyZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, o_U);
     applyZeroNormalMask(nrs, mesh, nrs->meshSolver->o_EToB, nrs->o_zeroNormalMaskMeshVelocity, o_Ue);
   }
-  platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset,
-                         1e-6 * std::numeric_limits<dfloat>::lowest(),
-                         platform->o_mempool.slice0);
+
+  platform->linAlg->fill(nrs->NVfields * nrs->fieldOffset, TINY, platform->o_mempool.slice0);
 
   for (int sweep = 0; sweep < 2; sweep++) {
     mesh->velocityDirichletKernel(mesh->Nelements,
@@ -255,7 +252,7 @@ void applyDirichletMesh(nrs_t *nrs, double time, occa::memory& o_U, occa::memory
                                   nrs->o_meshRho,
                                   nrs->o_meshMue,
                                   nrs->o_usrwrk,
-                                  nrs->o_U,
+                                  o_U,
                                   platform->o_mempool.slice0);
 
     if (sweep == 0)

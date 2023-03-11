@@ -120,7 +120,7 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
       platform->options.setArgs("GS OVERLAP", "FALSE");
 
     if (platform->comm.mpiRank == 0 && platform->options.compareArgs("GS OVERLAP", "FALSE"))
-      std::cout << "gs overlap disabled\n\n";
+      std::cout << "gs comm overlap disabled\n\n";
   }
 
   nrs->flow = 1;

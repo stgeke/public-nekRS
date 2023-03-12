@@ -148,15 +148,6 @@ void RANSktau::updateSourceTerms()
   occa::memory o_BFDiag = cds->o_BFDiag + cds->fieldOffsetScan[kFieldIndex] * sizeof(dfloat);
 
   postProcessing::strainRotationRate(nrs, true, true, o_SijOij);
-#if 0
-  const int NSOfields = 9;
-  nrs->SijOijKernel(mesh->Nelements, nrs->fieldOffset, 1, 1, mesh->o_vgeo, mesh->o_D, nrs->o_U, o_SijOij);
-
-  oogs::startFinish(o_SijOij, NSOfields, nrs->fieldOffset, ogsDfloat, ogsAdd, nrs->gsh);
-
-  platform->linAlg
-      ->axmyMany(mesh->Nlocal, NSOfields, nrs->fieldOffset, 0, 1.0, nrs->meshV->o_invLMM, o_SijOij);
-#endif
 
   SijMag2OiOjSkKernel(mesh->Nelements * mesh->Np, nrs->fieldOffset, 1, o_SijOij, o_OiOjSk, o_SijMag2);
 

@@ -423,9 +423,6 @@ void nrsSetup(MPI_Comm comm, setupAide &options, nrs_t *nrs)
     kernelName = "SijOij" + suffix;
     nrs->SijOijKernel = platform->kernels.get(section + kernelName);
 
-    kernelName = "SijOijMag2";
-    nrs->SijOijMag2Kernel = platform->kernels.get(section + kernelName);
-
     kernelName = "gradientVolume" + suffix;
     nrs->gradientVolumeKernel = platform->kernels.get(section + kernelName);
 

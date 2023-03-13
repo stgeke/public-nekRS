@@ -469,7 +469,7 @@ oogs_t *oogs::setup(ogs_t *ogs,
           }
         }
 
-        const int nPass = 2;
+        const int nPass = 1; // 2;
 
         MPI_Barrier(gs->comm);
         for (int pass = 0; pass < nPass; pass++) {

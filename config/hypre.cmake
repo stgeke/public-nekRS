@@ -16,7 +16,7 @@ ExternalProject_Add(
                 -DHYPRE_ENABLE_SINGLE=ON
                 -DHYPRE_WITH_OPENMP=OFF
                 -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-                -DCMAKE_C_VISIBILITY_PRESET=hidden
+#                -DCMAKE_C_VISIBILITY_PRESET=hidden
                 -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
 )
 
@@ -26,7 +26,7 @@ target_include_directories(nekrs-hypre PRIVATE ${HYPRE_INSTALL_DIR}/include)
 # lacking of a better alternative adding dependencies manually 
 target_link_libraries(nekrs-hypre PUBLIC MPI::MPI_C 
                                   PRIVATE ${HYPRE_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}HYPRE.a)
-set_target_properties(nekrs-hypre PROPERTIES CXX_VISIBILITY_PRESET hidden)
+#set_target_properties(nekrs-hypre PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 if(ENABLE_HYPRE_GPU)
 

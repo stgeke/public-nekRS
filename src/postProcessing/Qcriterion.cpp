@@ -9,5 +9,5 @@ void postProcessing::Qcriterion(nrs_t *nrs, occa::memory& o_Q)
   strainRotationRate(nrs, true, true, o_SijOij); 
 
   auto kernel = platform->kernels.get("Qcriterion");
-  kernel(nrs->meshV->Nlocal, nrs->fieldOffset, nrs->o_div, o_Q);
+  kernel(nrs->meshV->Nlocal, nrs->fieldOffset, nrs->o_div, o_SijOij, o_Q);
 }
